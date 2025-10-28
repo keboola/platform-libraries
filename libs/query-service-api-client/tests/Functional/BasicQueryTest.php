@@ -22,7 +22,6 @@ class BasicQueryTest extends BaseFunctionalTestCase
         );
 
         $queryJobId = $response->getQueryJobId();
-        self::assertIsString($queryJobId);
         self::assertNotEmpty($queryJobId);
 
         // Wait for job completion
@@ -31,7 +30,6 @@ class BasicQueryTest extends BaseFunctionalTestCase
         self::assertEquals('completed', $finalStatus->getStatus());
         self::assertEquals($queryJobId, $finalStatus->getQueryJobId());
         $statements = $finalStatus->getStatements();
-        self::assertIsArray($statements);
         self::assertCount(1, $statements);
 
         $statement = $statements[0];
@@ -39,13 +37,10 @@ class BasicQueryTest extends BaseFunctionalTestCase
 
         // Get job results
         $statementId = $statement->getId();
-        self::assertIsString($statementId);
         $resultsResponse = $this->queryClient->getJobResults($queryJobId, $statementId);
 
         self::assertEquals('completed', $resultsResponse->getStatus());
-        self::assertNotNull($resultsResponse->getNumberOfRows());
         self::assertGreaterThanOrEqual(1, $resultsResponse->getNumberOfRows());
-        self::assertIsArray($resultsResponse->getColumns());
     }
 
 
@@ -67,7 +62,6 @@ class BasicQueryTest extends BaseFunctionalTestCase
 
         // Verify statements
         $statements = $response->getStatements();
-        self::assertIsArray($statements);
         self::assertCount(1, $statements);
 
         $statement = $statements[0];
@@ -75,15 +69,12 @@ class BasicQueryTest extends BaseFunctionalTestCase
 
         // Verify results
         $results = $response->getResults();
-        self::assertIsArray($results);
         self::assertCount(1, $results);
 
         $result = $results[0];
         self::assertInstanceOf(JobResultsResponse::class, $result);
         self::assertEquals('completed', $result->getStatus());
-        self::assertNotNull($result->getNumberOfRows());
         self::assertGreaterThanOrEqual(1, $result->getNumberOfRows());
-        self::assertIsArray($result->getColumns());
     }
 
     public function testExecuteInvalidWorkspaceQuery(): void

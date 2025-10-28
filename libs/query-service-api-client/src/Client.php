@@ -71,7 +71,9 @@ class Client
             $messages = '';
             /** @var ConstraintViolationInterface $error */
             foreach ($errors as $error) {
-                $messages .= 'Value "' . $error->getInvalidValue() . '" is invalid: ' . $error->getMessage() . "\n";
+                $invalidValue = $error->getInvalidValue();
+                $valueStr = (is_scalar($invalidValue) ? (string) $invalidValue : '');
+                $messages .= 'Value "' . $valueStr . '" is invalid: ' . $error->getMessage() . "\n";
             }
             throw new ClientException('Invalid parameters when creating client: ' . $messages);
         }

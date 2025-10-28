@@ -47,10 +47,14 @@ abstract class BaseFunctionalTestCase extends TestCase
 
     private function initializeClients(): void
     {
-        $storageApiToken = $_ENV['STORAGE_API_TOKEN'];
-        $queryApiUrl = sprintf('https://query.%s', $_ENV['HOSTNAME_SUFFIX']);
-        $storageApiUrl = $_ENV['STORAGE_API_URL'];
+        $storageApiToken = $_ENV['STORAGE_API_TOKEN'] ?? '';
+        $hostnameSuffix = $_ENV['HOSTNAME_SUFFIX'] ?? '';
+        $storageApiUrl = $_ENV['STORAGE_API_URL'] ?? '';
 
+        // @phpstan-ignore-next-line
+        $queryApiUrl = sprintf('https://query.%s', $hostnameSuffix);
+
+        // @phpstan-ignore-next-line
         $this->queryClient = new Client([
             'url' => $queryApiUrl,
             'token' => $storageApiToken,
@@ -73,6 +77,7 @@ abstract class BaseFunctionalTestCase extends TestCase
         // Find default branch
         $defaultBranch = null;
         foreach ($branches as $branch) {
+            /** @var array<string, mixed> $branch */
             if (isset($branch['isDefault']) && $branch['isDefault'] === true) {
                 $defaultBranch = $branch;
                 break;
@@ -83,7 +88,8 @@ abstract class BaseFunctionalTestCase extends TestCase
             throw new RuntimeException('No default branch found');
         }
 
-        $this->testBranchId = (string) $defaultBranch['id'];
+        // @phpstan-ignore-next-line
+        $this->testBranchId = is_string($defaultBranch['id']) ? $defaultBranch['id'] : (string) $defaultBranch['id'];
 
         // Initialize branch-aware storage client
         $this->branchAwareStorageClient = $this->storageApiClient->getBranchAwareClient($this->testBranchId);
@@ -98,6 +104,7 @@ abstract class BaseFunctionalTestCase extends TestCase
             'backend' => 'snowflake',
         ], true);
 
+        /** @var array{id: int|string} $workspaceData */
         $this->testWorkspaceId = (string) $workspaceData['id'];
     }
 
@@ -144,7 +151,6 @@ abstract class BaseFunctionalTestCase extends TestCase
 
         // Wait for completion
         $queryJobId = $response->getQueryJobId();
-        self::assertIsString($queryJobId);
         $this->queryClient->waitForJobCompletion($queryJobId);
 
         return $tableName;

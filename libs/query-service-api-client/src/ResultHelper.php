@@ -18,7 +18,7 @@ class ResultHelper
         foreach ($data as $row) {
             $transformedRow = [];
             foreach ($row as $index => $value) {
-                if (isset($columnNames[$index])) {
+                if (isset($columnNames[$index]) && is_string($columnNames[$index])) {
                     $transformedRow[$columnNames[$index]] = $value;
                 }
             }

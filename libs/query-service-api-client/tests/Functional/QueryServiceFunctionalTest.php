@@ -25,7 +25,6 @@ class QueryServiceFunctionalTest extends BaseFunctionalTestCase
         );
 
         $queryJobId = $response->getQueryJobId();
-        self::assertIsString($queryJobId);
         self::assertNotEmpty($queryJobId);
 
         // Wait for job completion
@@ -34,7 +33,6 @@ class QueryServiceFunctionalTest extends BaseFunctionalTestCase
         self::assertEquals('completed', $finalStatus->getStatus());
         self::assertEquals($queryJobId, $finalStatus->getQueryJobId());
         $statements = $finalStatus->getStatements();
-        self::assertIsArray($statements);
         self::assertCount(1, $statements);
 
         $statement = $statements[0];
@@ -42,13 +40,10 @@ class QueryServiceFunctionalTest extends BaseFunctionalTestCase
 
         // Get job results
         $statementId = $statement->getId();
-        self::assertIsString($statementId);
         $resultsResponse = $this->queryClient->getJobResults($queryJobId, $statementId);
 
         self::assertEquals('completed', $resultsResponse->getStatus());
-        self::assertNotNull($resultsResponse->getNumberOfRows());
         self::assertGreaterThanOrEqual(1, $resultsResponse->getNumberOfRows());
-        self::assertIsArray($resultsResponse->getColumns());
     }
 
     public function testSubmitTransactionalQuery(): void
@@ -70,14 +65,12 @@ class QueryServiceFunctionalTest extends BaseFunctionalTestCase
         );
 
         $queryJobId = $response->getQueryJobId();
-        self::assertIsString($queryJobId);
 
         // Wait for completion
         $finalStatus = $this->queryClient->waitForJobCompletion($queryJobId);
 
         self::assertEquals('completed', $finalStatus->getStatus());
         $statements = $finalStatus->getStatements();
-        self::assertIsArray($statements);
         self::assertCount(2, $statements);
 
         // Check INSERT statement
@@ -89,10 +82,8 @@ class QueryServiceFunctionalTest extends BaseFunctionalTestCase
         self::assertEquals('completed', $selectStatement->getStatus());
 
         $selectStatementId = $selectStatement->getId();
-        self::assertIsString($selectStatementId);
         $resultsResponse = $this->queryClient->getJobResults($queryJobId, $selectStatementId);
         self::assertEquals('completed', $resultsResponse->getStatus());
-        self::assertNotNull($resultsResponse->getNumberOfRows());
         // After INSERT, there should be 4 rows, but COUNT(*) returns 1 row of data
         self::assertGreaterThanOrEqual(1, $resultsResponse->getNumberOfRows());
     }
@@ -111,7 +102,6 @@ class QueryServiceFunctionalTest extends BaseFunctionalTestCase
         );
 
         $queryJobId = $response->getQueryJobId();
-        self::assertIsString($queryJobId);
         self::assertNotEmpty($queryJobId);
 
         // Cancel the job
@@ -131,7 +121,6 @@ class QueryServiceFunctionalTest extends BaseFunctionalTestCase
 
         // Verify job has statements but don't assert on their status
         $statements = $finalStatus->getStatements();
-        self::assertIsArray($statements);
         self::assertCount(1, $statements);
     }
 
@@ -148,7 +137,6 @@ class QueryServiceFunctionalTest extends BaseFunctionalTestCase
         );
 
         $queryJobId = $response->getQueryJobId();
-        self::assertIsString($queryJobId);
 
         // Wait for job completion
         $finalStatus = $this->queryClient->waitForJobCompletion($queryJobId);
@@ -156,13 +144,11 @@ class QueryServiceFunctionalTest extends BaseFunctionalTestCase
         // Job should fail due to invalid SQL
         self::assertEquals('failed', $finalStatus->getStatus());
         $statements = $finalStatus->getStatements();
-        self::assertIsArray($statements);
         self::assertCount(1, $statements);
 
         $statement = $statements[0];
         self::assertEquals('failed', $statement->getStatus());
         $query = $statement->getQuery();
-        self::assertIsString($query);
         self::assertEquals('SELECT * FROM non_existent_table_12345', $query);
     }
 
@@ -238,8 +224,9 @@ class QueryServiceFunctionalTest extends BaseFunctionalTestCase
     public function testInvalidStorageToken(): void
     {
         // Create a client with an invalid storage token
+        $hostnameSuffix = is_string($_ENV['HOSTNAME_SUFFIX']) ? $_ENV['HOSTNAME_SUFFIX'] : '';
         $invalidTokenClient = new Client([
-            'url' => sprintf('https://query.%s', $_ENV['HOSTNAME_SUFFIX']),
+            'url' => sprintf('https://query.%s', $hostnameSuffix),
             'token' => 'invalid-token-12345',
         ]);
 

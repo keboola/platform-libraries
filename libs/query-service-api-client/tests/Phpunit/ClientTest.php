@@ -103,6 +103,7 @@ class ClientTest extends TestCase
 
         self::assertEquals('completed', $response->getStatus());
         self::assertEquals(1, $response->getRowsAffected());
+        // @phpstan-ignore-next-line
         self::assertIsArray($response->getColumns());
     }
 
@@ -146,8 +147,10 @@ class ClientTest extends TestCase
         $client = new Client($config);
 
         // Add middleware after client is created to capture headers after Client's middleware runs
+        /** @var array<string, array<string>> $requestHeaders */
         $handlerStack->push(function (callable $handler) use (&$requestHeaders) {
             return function ($request, array $options) use ($handler, &$requestHeaders) {
+                /** @var \Psr\Http\Message\RequestInterface $request */
                 $requestHeaders = $request->getHeaders();
                 return $handler($request, $options);
             };

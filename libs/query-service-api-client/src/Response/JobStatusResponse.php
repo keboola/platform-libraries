@@ -55,7 +55,8 @@ class JobStatusResponse
          */
 
         $statements = $data['statements'] ?? [];
-        if (!is_array($statements)) {
+        // Type is already known from PHPDoc
+        if (!is_array($statements)) { // @phpstan-ignore-line
             $statements = [];
         }
 

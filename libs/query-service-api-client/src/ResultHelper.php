@@ -4,32 +4,18 @@ declare(strict_types=1);
 
 namespace Keboola\QueryApi;
 
+use Keboola\QueryApi\Response\JobResultsResponse;
+use Keboola\QueryApi\Response\Statement;
+
 class ResultHelper
 {
-    /**
-     * @param array{
-     *      "columns": array<int, array{
-     *          "name": string,
-     *          "type": "text",
-     *      }>,
-     *      "data": array<array<int, string>>,
-     * } $responseData
-     * @return array{
-     *       "columns": array<int, array{
-     *           "name": string,
-     *           "type": "text",
-     *       }>,
-     *       "data": array<array<string, string>>,
-     *   }
-     */
-    public static function mapColumnNamesIntoData(array $responseData): array
+    public static function mapColumnNamesIntoData(JobResultsResponse $response): JobResultsResponse
     {
-        $data = $responseData['data'];
-        $columnNames = array_column($responseData['columns'], 'name');
+        $data = $response->getData();
+        $columnNames = array_column($response->getColumns(), 'name');
 
         $transformedData = [];
         foreach ($data as $row) {
-            assert(is_array($row));
             $transformedRow = [];
             foreach ($row as $index => $value) {
                 if (isset($columnNames[$index])) {
@@ -38,23 +24,28 @@ class ResultHelper
             }
             $transformedData[] = $transformedRow;
         }
-        $responseData['data'] = $transformedData;
-        return $responseData;
+
+        return new JobResultsResponse(
+            $response->getStatus(),
+            $response->getNumberOfRows(),
+            $response->getRowsAffected(),
+            $transformedData,
+            $response->getColumns(),
+            $response->getMessage(),
+        );
     }
 
     /**
-     * @param array<string, mixed> $responseData
+     * @param Statement[] $statements
      */
-    public static function extractAllStatementErrors(array $responseData): string
+    public static function extractAllStatementErrors(array $statements): string
     {
         $errors = [];
-        if (isset($responseData['statements']) && is_array($responseData['statements'])) {
-            foreach ($responseData['statements'] as $statement) {
-                if (is_array($statement) && isset($statement['error']) && is_string($statement['error'])) {
-                    $err = trim($statement['error']);
-                    if ($err !== '') {
-                        $errors[] = $err;
-                    }
+        foreach ($statements as $statement) {
+            if ($statement->getError() !== null) {
+                $err = trim($statement->getError());
+                if ($err !== '') {
+                    $errors[] = $err;
                 }
             }
         }

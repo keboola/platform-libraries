@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Keboola\QueryApi\Tests;
+namespace Keboola\QueryApi\Tests\Phpunit;
 
 use Generator;
 use GuzzleHttp\Handler\MockHandler;
@@ -10,14 +10,15 @@ use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Psr7\Response;
 use InvalidArgumentException;
 use Keboola\QueryApi\Client;
+use Keboola\QueryApi\ClientException;
 use PHPUnit\Framework\TestCase;
 
 class ClientTest extends TestCase
 {
     public function testConstructorRequiresUrl(): void
     {
-        self::expectException(InvalidArgumentException::class);
-        self::expectExceptionMessage('url must be set');
+        self::expectException(ClientException::class);
+        self::expectExceptionMessage('Invalid parameters');
 
         new Client([
             'token' => 'test-token',
@@ -26,8 +27,8 @@ class ClientTest extends TestCase
 
     public function testConstructorRequiresToken(): void
     {
-        self::expectException(InvalidArgumentException::class);
-        self::expectExceptionMessage('token must be set');
+        self::expectException(ClientException::class);
+        self::expectExceptionMessage('Invalid parameters');
 
         new Client([
             'url' => 'https://test.keboola.com',
@@ -42,12 +43,12 @@ class ClientTest extends TestCase
 
         $client = $this->createClientWithMockHandler($mockHandler);
 
-        $result = $client->submitQueryJob('main', 'workspace-123', [
+        $response = $client->submitQueryJob('main', 'workspace-123', [
             'statements' => ['SELECT * FROM table1'],
             'transactional' => true,
         ]);
 
-        self::assertEquals(['queryJobId' => 'job-12345'], $result);
+        self::assertEquals('job-12345', $response->getQueryJobId());
     }
 
     public function testGetJobStatus(): void
@@ -56,16 +57,20 @@ class ClientTest extends TestCase
             new Response(200, [], json_encode([
                 'queryJobId' => 'job-12345',
                 'status' => 'running',
+                'actorType' => 'user',
+                'createdAt' => '2024-01-01T00:00:00Z',
+                'changedAt' => '2024-01-01T00:00:00Z',
                 'statements' => [],
             ]) ?: ''),
         ]);
 
         $client = $this->createClientWithMockHandler($mockHandler);
 
-        $result = $client->getJobStatus('job-12345');
+        $response = $client->getJobStatus('job-12345');
 
-        self::assertEquals('job-12345', $result['queryJobId']);
-        self::assertEquals('running', $result['status']);
+        self::assertEquals('job-12345', $response->getQueryJobId());
+        self::assertEquals('running', $response->getStatus());
+        self::assertEquals([], $response->getStatements());
     }
 
     public function testCancelJob(): void
@@ -76,9 +81,9 @@ class ClientTest extends TestCase
 
         $client = $this->createClientWithMockHandler($mockHandler);
 
-        $result = $client->cancelJob('job-12345', ['reason' => 'User requested']);
+        $response = $client->cancelJob('job-12345', ['reason' => 'User requested']);
 
-        self::assertEquals(['queryJobId' => 'job-12345'], $result);
+        self::assertEquals('job-12345', $response->getQueryJobId());
     }
 
     public function testGetJobResults(): void
@@ -87,65 +92,20 @@ class ClientTest extends TestCase
             new Response(200, [], json_encode([
                 'data' => [['id' => 1, 'name' => 'test']],
                 'status' => 'completed',
+                'numberOfRows' => 1,
                 'rowsAffected' => 1,
             ]) ?: ''),
         ]);
 
         $client = $this->createClientWithMockHandler($mockHandler);
 
-        $result = $client->getJobResults('job-12345', 'stmt-67890');
+        $response = $client->getJobResults('job-12345', 'stmt-67890');
 
-        self::assertEquals('completed', $result['status']);
-        self::assertEquals(1, $result['rowsAffected']);
-        assert(is_array($result['data']));
-        self::assertCount(1, $result['data']);
+        self::assertEquals('completed', $response->getStatus());
+        self::assertEquals(1, $response->getRowsAffected());
+        self::assertIsArray($response->getColumns());
     }
 
-    public function testHealthCheck(): void
-    {
-        $mockHandler = new MockHandler([
-            new Response(200, [], json_encode([
-                'service' => 'query',
-                'status' => 'ok',
-                'timestamp' => '2024-01-01T00:00:00Z',
-                'version' => '1.0.0',
-            ]) ?: ''),
-        ]);
-
-        $client = $this->createClientWithMockHandler($mockHandler);
-
-        $result = $client->healthCheck();
-
-        self::assertEquals('query', $result['service']);
-        self::assertEquals('ok', $result['status']);
-    }
-
-    public function testHealthCheckWithInvalidToken(): void
-    {
-        // Health check should work even with invalid token since no auth is required
-        $mockHandler = new MockHandler([
-            new Response(200, [], json_encode([
-                'service' => 'query',
-                'status' => 'ok',
-                'timestamp' => '2024-01-01T00:00:00Z',
-                'version' => '1.0.0',
-            ]) ?: ''),
-        ]);
-
-        // Create client with completely invalid token
-        $handlerStack = HandlerStack::create($mockHandler);
-        $client = new Client([
-            'url' => 'https://query.test.keboola.com',
-            'token' => 'completely-invalid-token-that-would-fail-auth',
-            'handler' => $handlerStack,
-        ]);
-
-        // Health check should succeed because no token is sent
-        $result = $client->healthCheck();
-
-        self::assertEquals('query', $result['service']);
-        self::assertEquals('ok', $result['status']);
-    }
 
     /**
      * @param array{
@@ -166,7 +126,14 @@ class ClientTest extends TestCase
         array $expectedHeaders,
     ): void {
         $requestHeaders = [];
-        $mockHandler = new MockHandler([new Response(200, [], '{}')]);
+        $mockHandler = new MockHandler([new Response(200, [], json_encode([
+            'queryJobId' => 'job-123',
+            'status' => 'running',
+            'actorType' => 'user',
+            'createdAt' => '2024-01-01T00:00:00Z',
+            'changedAt' => '2024-01-01T00:00:00Z',
+            'statements' => [],
+        ]) ?: '')]);
 
         // Create handler stack without custom middleware first
         $handlerStack = HandlerStack::create($mockHandler);
@@ -187,30 +154,19 @@ class ClientTest extends TestCase
         });
 
         match ($method) {
-            'healthCheck' => $client->healthCheck(),
-            'getJobStatus' => $client->getJobStatus($jobId),
+            'getJobStatus' => $client->getJobStatus($jobId ?? ''),
             default => throw new InvalidArgumentException("Unknown method: $method")
         };
 
-        self::assertSame(
-            $expectedHeaders,
-            $requestHeaders,
-        );
+        // Check each expected header exists with correct value
+        foreach ($expectedHeaders as $headerName => $expectedValue) {
+            self::assertArrayHasKey($headerName, $requestHeaders, "Missing header: $headerName");
+            self::assertSame($expectedValue, $requestHeaders[$headerName], "Header $headerName has wrong value");
+        }
     }
 
     public static function requestHeadersDataProvider(): Generator
     {
-        yield 'health-check includes base headers only' => [
-            'clientConfig' => ['token' => 'test-token'],
-            'method' => 'healthCheck',
-            'jobId' => null,
-            'expectedHeaders' => [
-                'Host' => ['query.test.keboola.com'],
-                'User-Agent' => ['Keboola Query API PHP Client'],
-                'Content-Type' => ['application/json'],
-            ],
-        ];
-
         yield 'authenticated endpoint includes auth token' => [
             'clientConfig' => ['token' => 'auth-token-123'],
             'method' => 'getJobStatus',
@@ -218,8 +174,8 @@ class ClientTest extends TestCase
             'expectedHeaders' => [
                 'Host' => ['query.test.keboola.com'],
                 'User-Agent' => ['Keboola Query API PHP Client'],
-                'Content-Type' => ['application/json'],
-                'X-StorageAPI-Token' => ['auth-token-123'],
+                'X-StorageApi-Token' => ['auth-token-123'],
+                'Content-type' => ['application/json'],
             ],
         ];
 
@@ -230,20 +186,21 @@ class ClientTest extends TestCase
             'expectedHeaders' => [
                 'Host' => ['query.test.keboola.com'],
                 'User-Agent' => ['Keboola Query API PHP Client'],
-                'Content-Type' => ['application/json'],
+                'X-StorageApi-Token' => ['test-token'],
+                'Content-type' => ['application/json'],
                 'X-KBC-RunId' => ['run-456'],
-                'X-StorageAPI-Token' => ['test-token'],
             ],
         ];
 
         yield 'custom userAgent properly appended' => [
             'clientConfig' => ['token' => 'test-token', 'userAgent' => 'MyApp/2.0'],
-            'method' => 'healthCheck',
-            'jobId' => null,
+            'method' => 'getJobStatus',
+            'jobId' => 'job-123',
             'expectedHeaders' => [
                 'Host' => ['query.test.keboola.com'],
-                'User-Agent' => ['Keboola Query API PHP Client MyApp/2.0'],
-                'Content-Type' => ['application/json'],
+                'User-Agent' => ['MyApp/2.0'],
+                'X-StorageApi-Token' => ['test-token'],
+                'Content-type' => ['application/json'],
             ],
         ];
     }

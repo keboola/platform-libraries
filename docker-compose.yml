@@ -157,7 +157,7 @@ services:
     image: keboola/query-service-api-client
     working_dir: /code/libs/query-service-api-client
     environment:
-      - QUERY_API_URL
+      - HOSTNAME_SUFFIX
       - STORAGE_API_TOKEN
       - STORAGE_API_URL
 

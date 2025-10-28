@@ -25,7 +25,6 @@ abstract class BaseFunctionalTestCase extends TestCase
     {
         parent::setUp();
 
-        $this->validateEnvironmentVariables();
         $this->initializeClients();
         $this->findDefaultBranch();
         $this->createTestWorkspace();
@@ -46,27 +45,10 @@ abstract class BaseFunctionalTestCase extends TestCase
         parent::tearDown();
     }
 
-    private function validateEnvironmentVariables(): void
-    {
-        $requiredVars = [
-            'STORAGE_API_TOKEN',
-            'QUERY_API_URL',
-            'STORAGE_API_URL',
-        ];
-
-        foreach ($requiredVars as $var) {
-            if (empty($_ENV[$var])) {
-                throw new RuntimeException(
-                    sprintf('Environment variable %s is required for functional tests', $var),
-                );
-            }
-        }
-    }
-
     private function initializeClients(): void
     {
         $storageApiToken = $_ENV['STORAGE_API_TOKEN'];
-        $queryApiUrl = $_ENV['QUERY_API_URL'];
+        $queryApiUrl = sprintf('https://query.%s', $_ENV['HOSTNAME_SUFFIX']);
         $storageApiUrl = $_ENV['STORAGE_API_URL'];
 
         $this->queryClient = new Client([
@@ -161,8 +143,9 @@ abstract class BaseFunctionalTestCase extends TestCase
         );
 
         // Wait for completion
-        assert(is_string($response['queryJobId']));
-        $this->queryClient->waitForJobCompletion($response['queryJobId']);
+        $queryJobId = $response->getQueryJobId();
+        self::assertIsString($queryJobId);
+        $this->queryClient->waitForJobCompletion($queryJobId);
 
         return $tableName;
     }

@@ -19,7 +19,6 @@
     <source>
         <include>
             <directory suffix=".php">src</directory>
-            <directory suffix=".php">tests</directory>
         </include>
         <exclude>
             <directory>vendor</directory>

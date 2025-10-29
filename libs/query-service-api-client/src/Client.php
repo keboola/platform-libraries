@@ -63,10 +63,6 @@ class Client
 
         $errors->addAll($validator->validate($options['backoffMaxTries'], [new Range(['min' => 0, 'max' => 100])]));
 
-        if (empty($options['userAgent'])) {
-            $options['userAgent'] = self::DEFAULT_USER_AGENT;
-        }
-
         if ($errors->count() !== 0) {
             $messages = '';
             /** @var ConstraintViolationInterface $error */
@@ -78,16 +74,12 @@ class Client
             throw new ClientException('Invalid parameters when creating client: ' . $messages);
         }
 
-        if (isset($config['runId'])) {
-            $options['runId'] = $config['runId'];
+        if (!isset($options['userAgent'])) {
+            $options['userAgent'] = self::DEFAULT_USER_AGENT;
         }
-        if (isset($config['userAgent'])) {
-            $options['userAgent'] = $config['userAgent'];
+        if (!isset($options['logger'])) {
+            $options['logger'] = new NullLogger();
         }
-        if (isset($config['handler'])) {
-            $options['handler'] = $config['handler'];
-        }
-        $options['logger'] = $config['logger'] ?? new NullLogger();
 
         /** @var array{url: string, token: string} $config */
         $this->client = $this->initClient($config['url'], $config['token'], $options);

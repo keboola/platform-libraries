@@ -54,11 +54,12 @@ abstract class BaseFunctionalTestCase extends TestCase
         // @phpstan-ignore-next-line
         $queryApiUrl = sprintf('https://query.%s', $hostnameSuffix);
 
-        // @phpstan-ignore-next-line
-        $this->queryClient = new Client([
+        /** @var array{url: string, token: string} $config */
+        $config = [
             'url' => $queryApiUrl,
             'token' => $storageApiToken,
-        ]);
+        ];
+        $this->queryClient = new Client($config);
 
         // Create Storage API client directly for tests
         $this->storageApiClient = new StorageApiClient([
@@ -77,7 +78,7 @@ abstract class BaseFunctionalTestCase extends TestCase
         // Find default branch
         $defaultBranch = null;
         foreach ($branches as $branch) {
-            /** @var array<string, mixed> $branch */
+            /** @var array{id: int|string, isDefault?: bool} $branch */
             if (isset($branch['isDefault']) && $branch['isDefault'] === true) {
                 $defaultBranch = $branch;
                 break;
@@ -88,8 +89,7 @@ abstract class BaseFunctionalTestCase extends TestCase
             throw new RuntimeException('No default branch found');
         }
 
-        // @phpstan-ignore-next-line
-        $this->testBranchId = is_string($defaultBranch['id']) ? $defaultBranch['id'] : (string) $defaultBranch['id'];
+        $this->testBranchId = (string) $defaultBranch['id'];
 
         // Initialize branch-aware storage client
         $this->branchAwareStorageClient = $this->storageApiClient->getBranchAwareClient($this->testBranchId);

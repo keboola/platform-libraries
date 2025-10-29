@@ -110,12 +110,9 @@ class ClientTest extends TestCase
 
     /**
      * @param array{
-     *     url: string,
      *     token: string,
-     *     backoffMaxTries?: int,
      *     userAgent?: string,
      *     runId?: string,
-     *     handler?: HandlerStack,
      * } $clientConfig
      * @param array<string, array<string>> $expectedHeaders
      * @dataProvider requestHeadersDataProvider
@@ -139,12 +136,22 @@ class ClientTest extends TestCase
         // Create handler stack without custom middleware first
         $handlerStack = HandlerStack::create($mockHandler);
 
-        $config = array_merge([
+        $config = [
             'url' => 'https://query.test.keboola.com',
-            'handler' => $handlerStack,
-        ], $clientConfig);
+            'token' => $clientConfig['token'],
+        ];
 
-        $client = new Client($config);
+        $options = [
+            'handler' => $handlerStack,
+        ];
+        if (isset($clientConfig['runId'])) {
+            $options['runId'] = $clientConfig['runId'];
+        }
+        if (isset($clientConfig['userAgent'])) {
+            $options['userAgent'] = $clientConfig['userAgent'];
+        }
+
+        $client = new Client($config, $options);
 
         // Add middleware after client is created to capture headers after Client's middleware runs
         /** @var array<string, array<string>> $requestHeaders */
@@ -212,10 +219,14 @@ class ClientTest extends TestCase
     {
         $handlerStack = HandlerStack::create($mockHandler);
 
-        return new Client([
-            'url' => 'https://query.test.keboola.com',
-            'token' => 'test-token',
-            'handler' => $handlerStack,
-        ]);
+        return new Client(
+            [
+                'url' => 'https://query.test.keboola.com',
+                'token' => 'test-token',
+            ],
+            [
+                'handler' => $handlerStack,
+            ],
+        );
     }
 }

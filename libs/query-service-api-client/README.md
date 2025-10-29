@@ -75,13 +75,26 @@ $cancelledJobId = $cancelResponse->getQueryJobId();
 
 ## Configuration Options
 
-The client constructor accepts the following configuration options:
+The client constructor accepts two parameters: `$config` array and `$options` array.
 
+### Config Array (required)
 - `url` (required): Query Service API URL (e.g., `https://query.keboola.com`)
 - `token` (required): Storage API token
-- `backoffMaxTries` (optional): Number of retry attempts for failed requests (default: 3)
+
+### Options Array (optional)
+- `backoffMaxTries` (optional): Number of retry attempts for failed requests (default: 3, range: 0-100)
 - `userAgent` (optional): Additional user agent string to append
+- `logger` (optional): PSR-3 logger instance for request/response logging
+- `runId` (optional): Run ID to include in request headers
 - `handler` (optional): Custom Guzzle handler stack
+
+Example with options:
+```php
+$client = new Client(
+    ['url' => 'https://query.keboola.com', 'token' => 'your-token'],
+    ['backoffMaxTries' => 5]
+);
+```
 
 ## API Methods
 

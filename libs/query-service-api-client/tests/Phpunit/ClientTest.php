@@ -11,6 +11,7 @@ use GuzzleHttp\Psr7\Response;
 use InvalidArgumentException;
 use Keboola\QueryApi\Client;
 use Keboola\QueryApi\ClientException;
+use Keboola\QueryApi\Response\JobStatusResponse;
 use PHPUnit\Framework\TestCase;
 
 class ClientTest extends TestCase
@@ -105,6 +106,62 @@ class ClientTest extends TestCase
         self::assertEquals(1, $response->getRowsAffected());
         // @phpstan-ignore-next-line
         self::assertIsArray($response->getColumns());
+    }
+
+    public function testExecuteWorkspaceQueryPassesMaxPollWaitMsToWaitForJobCompletion(): void
+    {
+        $mockHandler = new MockHandler([
+            new Response(201, [], json_encode(['queryJobId' => 'job-12345']) ?: ''),
+            new Response(200, [], json_encode([
+                'data' => [['col1' => 1]],
+                'status' => 'completed',
+                'numberOfRows' => 1,
+                'rowsAffected' => 0,
+            ]) ?: ''),
+        ]);
+
+        $statusResponse = new Response(200, [], json_encode([
+            'queryJobId' => 'job-12345',
+            'status' => 'completed',
+            'actorType' => 'user',
+            'createdAt' => '2024-01-01T00:00:00Z',
+            'changedAt' => '2024-01-01T00:00:00Z',
+            'statements' => [
+                [
+                    'id' => 'stmt-1',
+                    'status' => 'completed',
+                    'query' => 'SELECT 1',
+                ],
+            ],
+        ]) ?: '');
+        $jobStatusResponse = JobStatusResponse::fromResponse($statusResponse);
+
+        $mockClient = $this->getMockBuilder(Client::class)
+            ->setConstructorArgs([
+                ['url' => 'https://query.test.keboola.com', 'token' => 'test-token'],
+                ['handler' => HandlerStack::create($mockHandler)],
+            ])
+            ->onlyMethods(['waitForJobCompletion'])
+            ->getMock();
+
+        $expectedMaxPollWaitMs = 500;
+        $mockClient->expects(self::once())
+            ->method('waitForJobCompletion')
+            ->with(
+                'job-12345',
+                self::anything(),
+                $expectedMaxPollWaitMs,
+            )
+            ->willReturn($jobStatusResponse);
+
+        // Call executeWorkspaceQuery with custom maxPollWaitMs
+        $mockClient->executeWorkspaceQuery(
+            'branch-1',
+            'workspace-1',
+            ['statements' => ['SELECT 1']],
+            30,
+            $expectedMaxPollWaitMs,
+        );
     }
 
 

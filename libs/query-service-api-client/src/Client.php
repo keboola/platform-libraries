@@ -35,6 +35,7 @@ class Client
     private const int GUZZLE_CONNECT_TIMEOUT_SECONDS = 10;
     private const int GUZZLE_TIMEOUT_SECONDS = 120;
     private const int DEFAULT_MAX_WAIT_SECONDS = 30;
+    private const int DEFAULT_MAX_POLL_WAIT_MS = 1000;
     private GuzzleClient $client;
 
     /**
@@ -183,13 +184,14 @@ class Client
         string $workspaceId,
         array $requestBody,
         int $maxWaitSeconds = self::DEFAULT_MAX_WAIT_SECONDS,
+        int $maxPollWaitMs = self::DEFAULT_MAX_POLL_WAIT_MS,
     ): WorkspaceQueryResponse {
         // Submit the query job
         $submitResponse = $this->submitQueryJob($branchId, $workspaceId, $requestBody);
         $queryJobId = $submitResponse->getQueryJobId();
 
         // Wait for job completion
-        $finalStatus = $this->waitForJobCompletion($queryJobId, $maxWaitSeconds);
+        $finalStatus = $this->waitForJobCompletion($queryJobId, $maxWaitSeconds, $maxPollWaitMs);
 
         if ($finalStatus->getStatus() !== 'completed') {
             $errorMessage = ResultHelper::extractAllStatementErrors($finalStatus->getStatements());
@@ -265,13 +267,11 @@ class Client
         );
     }
 
-    /**
-     * Wait for job completion with timeout
-     *
-     * @param int $maxWaitSeconds Maximum time to wait in seconds
-     */
-    public function waitForJobCompletion(string $queryJobId, int $maxWaitSeconds = 30): JobStatusResponse
-    {
+    public function waitForJobCompletion(
+        string $queryJobId,
+        int $maxWaitSeconds = self::DEFAULT_MAX_WAIT_SECONDS,
+        int $maxPollWaitMs = self::DEFAULT_MAX_POLL_WAIT_MS,
+    ): JobStatusResponse {
         $startTime = time();
 
         $tries = 0;
@@ -282,8 +282,8 @@ class Client
                 return $statusResponse;
             }
 
-            // 60, 70, 90, 130, 210, 370, 690, 1000ms (max)
-            $waitMilliseconds = min(50+pow(2, $tries)*10, 1000);
+            // 60, 70, 90, 130, 210, 370, 690, 1000ms (default max)
+            $waitMilliseconds = min(50+pow(2, $tries)*10, $maxPollWaitMs);
             usleep($waitMilliseconds * 1000);
             $tries++;
         }

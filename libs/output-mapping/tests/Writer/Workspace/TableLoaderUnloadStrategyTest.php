@@ -14,7 +14,7 @@ use Keboola\StorageApi\Workspaces;
 class TableLoaderUnloadStrategyTest extends AbstractTestCase
 {
     #[NeedsEmptyOutputBucket]
-    #[NeedsTestTables]
+    #[NeedsTestTables(2)]
     public function testDirectGrantSkipsTableImport(): void
     {
         $this->initWorkspace();
@@ -133,7 +133,7 @@ class TableLoaderUnloadStrategyTest extends AbstractTestCase
     }
 
     #[NeedsEmptyOutputBucket]
-    #[NeedsTestTables]
+    #[NeedsTestTables(2)]
     public function testNoUnloadWhenNoDirectGrantMappings(): void
     {
         $this->initWorkspace();
@@ -193,7 +193,7 @@ class TableLoaderUnloadStrategyTest extends AbstractTestCase
     }
 
     #[NeedsEmptyOutputBucket]
-    #[NeedsTestTables]
+    #[NeedsTestTables(2)]
     public function testMixedMappingsWithAndWithoutDirectGrant(): void
     {
         $this->initWorkspace();

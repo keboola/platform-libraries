@@ -58,7 +58,7 @@ class BigQueryTest extends AbstractTestCase
                         'overwrite' => false,
                     ],
                 ],
-                'type' => 'view',
+                'type' => 'VIEW',
             ],
             $result,
         );

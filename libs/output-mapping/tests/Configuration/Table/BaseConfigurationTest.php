@@ -1175,19 +1175,32 @@ class BaseConfigurationTest extends TestCase
         $this->testManifestAndConfig($config, $expectedArray);
     }
 
-    public function testUnloadStrategyInvalidValue(): void
+    public function testUnloadStrategyCustomValue(): void
     {
         $config = [
             'destination' => 'in.c-main.test',
-            'unload_strategy' => 'invalid-value',
+            'unload_strategy' => 'custom-future-value',
         ];
 
-        $this->testManifestAndConfig(
-            $config,
-            [],
-            //phpcs:ignore
-            'The value "invalid-value" is not allowed for path "table.unload_strategy". Permissible values: "direct-grant".',
-        );
+        $expectedArray = [
+            'destination' => 'in.c-main.test',
+            'unload_strategy' => 'custom-future-value',
+            'primary_key' => [],
+            'distribution_key' => [],
+            'columns' => [],
+            'incremental' => false,
+            'delete_where_values' => [],
+            'delete_where_operator' => 'eq',
+            'delimiter' => ',',
+            'enclosure' => '"',
+            'metadata' => [],
+            'column_metadata' => [],
+            'write_always' => false,
+            'tags' => [],
+            'schema' => [],
+        ];
+
+        $this->testManifestAndConfig($config, $expectedArray);
     }
 
     public function testUnloadStrategyNotSet(): void

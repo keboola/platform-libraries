@@ -33,9 +33,7 @@ abstract class BaseConfiguration extends Configuration
             ->children()
                 ->scalarNode('destination')->end()
                 ->booleanNode('incremental')->defaultValue(false)->end()
-                ->enumNode('unload_strategy')
-                    ->values(['direct-grant'])
-                ->end()
+                ->scalarNode('unload_strategy')->end()
                 ->enumNode(self::FIELD_DEDUPLICATION_STRATEGY)
                     ->values([
                         DeduplicationStrategy::INSERT->value,

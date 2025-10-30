@@ -110,6 +110,7 @@ class TableLoader
                 $processedConfig['unload_strategy'] === 'direct-grant'
             ) {
                 $hasDirectGrant = true;
+                // if tables using direct-grant unload strategy skip upload
                 continue;
             }
 
@@ -160,12 +161,13 @@ class TableLoader
             $loadTableTasks[] = $loadTableTask;
         }
 
-        $tableQueue = new LoadTableQueue($this->clientWrapper, $this->logger, $loadTableTasks);
-        $tableQueue->start();
-
-        if ($strategy instanceof Writer\Table\Strategy\SqlWorkspaceTableStrategy && $hasDirectGrant) {
+        if ($hasDirectGrant) {
+            // enqueue unload for direct-grant tables
             $this->callWorkspaceUnload($strategy);
         }
+
+        $tableQueue = new LoadTableQueue($this->clientWrapper, $this->logger, $loadTableTasks);
+        $tableQueue->start();
 
         return $tableQueue;
     }

@@ -1185,6 +1185,7 @@ class BaseConfigurationTest extends TestCase
         $this->testManifestAndConfig(
             $config,
             [],
+            //phpcs:ignore
             'The value "invalid-value" is not allowed for path "table.unload_strategy". Permissible values: "direct-grant".',
         );
     }

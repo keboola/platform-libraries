@@ -110,7 +110,7 @@ class TableLoader
                 $processedConfig['unload_strategy'] === 'direct-grant'
             ) {
                 $hasDirectGrant = true;
-                // if tables using direct-grant unload strategy skip upload
+                // if table is using direct-grant unload strategy, skip upload
                 continue;
             }
 

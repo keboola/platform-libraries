@@ -161,7 +161,7 @@ class TableLoader
             $loadTableTasks[] = $loadTableTask;
         }
 
-        if ($hasDirectGrant) {
+        if ($strategy instanceof Writer\Table\Strategy\SqlWorkspaceTableStrategy && $hasDirectGrant) {
             // enqueue unload for direct-grant tables
             $this->callWorkspaceUnload($strategy);
         }

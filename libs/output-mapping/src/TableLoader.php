@@ -18,14 +18,17 @@ use Keboola\OutputMapping\Storage\TableStructureValidatorFactory;
 use Keboola\OutputMapping\Writer\Table\BranchResolver;
 use Keboola\OutputMapping\Writer\Table\MetadataSetter;
 use Keboola\OutputMapping\Writer\Table\SlicerDecider;
+use Keboola\OutputMapping\Writer\Table\Strategy\SqlWorkspaceTableStrategy;
 use Keboola\OutputMapping\Writer\Table\StrategyInterface;
 use Keboola\OutputMapping\Writer\Table\TableConfigurationResolver;
 use Keboola\OutputMapping\Writer\Table\TableConfigurationValidator;
 use Keboola\OutputMapping\Writer\Table\TableHintsConfigurationSchemaResolver;
 use Keboola\StorageApi\Workspaces;
 use Keboola\StorageApiBranch\ClientWrapper;
+use LogicException;
 use Psr\Log\LoggerInterface;
 use Throwable;
+use Webmozart\Assert\Assert;
 
 class TableLoader
 {
@@ -105,9 +108,9 @@ class TableLoader
                 continue;
             }
 
-            if ($strategy instanceof Writer\Table\Strategy\SqlWorkspaceTableStrategy &&
+            if ($strategy instanceof SqlWorkspaceTableStrategy &&
                 isset($processedConfig['unload_strategy']) &&
-                $processedConfig['unload_strategy'] === 'direct-grant'
+                $processedConfig['unload_strategy'] === SqlWorkspaceTableStrategy::DIRECT_GRANT_UNLOAD_STRATEGY
             ) {
                 $hasDirectGrant = true;
                 // if table is using direct-grant unload strategy, skip upload
@@ -161,7 +164,14 @@ class TableLoader
             $loadTableTasks[] = $loadTableTask;
         }
 
-        if ($strategy instanceof Writer\Table\Strategy\SqlWorkspaceTableStrategy && $hasDirectGrant) {
+        if ($hasDirectGrant) {
+            if (!$strategy instanceof SqlWorkspaceTableStrategy) {
+                throw new LogicException(sprintf(
+                    'Direct-grant unload strategy is only supported for %s strategy but got %s.',
+                    SqlWorkspaceTableStrategy::class,
+                    $strategy::class,
+                ));
+            }
             // enqueue unload for direct-grant tables
             $this->callWorkspaceUnload($strategy);
         }
@@ -201,7 +211,7 @@ class TableLoader
         );
     }
 
-    private function callWorkspaceUnload(Writer\Table\Strategy\SqlWorkspaceTableStrategy $strategy): void
+    private function callWorkspaceUnload(SqlWorkspaceTableStrategy $strategy): void
     {
         try {
             $workspaces = new Workspaces(

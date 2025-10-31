@@ -6,6 +6,7 @@ namespace Keboola\QueryApi\Tests\Functional;
 
 use Keboola\QueryApi\ClientException;
 use Keboola\QueryApi\Response\JobResultsResponse;
+use Keboola\QueryApi\ResultHelper;
 
 class BasicQueryTest extends BaseFunctionalTestCase
 {
@@ -38,9 +39,18 @@ class BasicQueryTest extends BaseFunctionalTestCase
         // Get job results
         $statementId = $statement->getId();
         $resultsResponse = $this->queryClient->getJobResults($queryJobId, $statementId);
+        $resultsResponse = ResultHelper::mapColumnNamesIntoData($resultsResponse);
 
         self::assertEquals('completed', $resultsResponse->getStatus());
         self::assertGreaterThanOrEqual(1, $resultsResponse->getNumberOfRows());
+
+        // Verify it's a valid timestamp (numeric string)
+
+        /**
+         * @var array{current_time: string}[] $data
+         */
+        $data = $resultsResponse->getData();
+        self::assertMatchesRegularExpression('/^\d+\.\d+$/', $data[0]['current_time']);
     }
 
 

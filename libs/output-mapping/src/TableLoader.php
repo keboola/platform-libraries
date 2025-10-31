@@ -57,7 +57,7 @@ class TableLoader
         }
 
         $loadTableTasks = [];
-        $hasDirectGrant = false;
+        $tableWithDirectGrantExists = false;
         $tableConfigurationResolver = new TableConfigurationResolver($this->logger);
         $tableConfigurationValidator = new TableConfigurationValidator($strategy, $configuration);
         $tableColumnsConfigurationHintsResolver = new TableHintsConfigurationSchemaResolver();
@@ -112,7 +112,7 @@ class TableLoader
                 isset($processedConfig['unload_strategy']) &&
                 $processedConfig['unload_strategy'] === SqlWorkspaceTableStrategy::DIRECT_GRANT_UNLOAD_STRATEGY
             ) {
-                $hasDirectGrant = true;
+                $tableWithDirectGrantExists = true;
                 // if table is using direct-grant unload strategy, skip upload
                 continue;
             }
@@ -164,7 +164,7 @@ class TableLoader
             $loadTableTasks[] = $loadTableTask;
         }
 
-        if ($hasDirectGrant) {
+        if ($tableWithDirectGrantExists) {
             if (!$strategy instanceof SqlWorkspaceTableStrategy) {
                 throw new LogicException(sprintf(
                     'Direct-grant unload strategy is only supported for %s strategy but got %s.',

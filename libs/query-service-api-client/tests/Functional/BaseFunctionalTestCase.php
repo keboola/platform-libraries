@@ -25,7 +25,6 @@ abstract class BaseFunctionalTestCase extends TestCase
     {
         parent::setUp();
 
-        $this->validateEnvironmentVariables();
         $this->initializeClients();
         $this->findDefaultBranch();
         $this->createTestWorkspace();
@@ -46,33 +45,21 @@ abstract class BaseFunctionalTestCase extends TestCase
         parent::tearDown();
     }
 
-    private function validateEnvironmentVariables(): void
-    {
-        $requiredVars = [
-            'STORAGE_API_TOKEN',
-            'QUERY_API_URL',
-            'STORAGE_API_URL',
-        ];
-
-        foreach ($requiredVars as $var) {
-            if (empty($_ENV[$var])) {
-                throw new RuntimeException(
-                    sprintf('Environment variable %s is required for functional tests', $var),
-                );
-            }
-        }
-    }
-
     private function initializeClients(): void
     {
-        $storageApiToken = $_ENV['STORAGE_API_TOKEN'];
-        $queryApiUrl = $_ENV['QUERY_API_URL'];
-        $storageApiUrl = $_ENV['STORAGE_API_URL'];
+        $storageApiToken = $_ENV['STORAGE_API_TOKEN'] ?? '';
+        $hostnameSuffix = $_ENV['HOSTNAME_SUFFIX'] ?? '';
+        $storageApiUrl = $_ENV['STORAGE_API_URL'] ?? '';
 
-        $this->queryClient = new Client([
+        // @phpstan-ignore-next-line
+        $queryApiUrl = sprintf('https://query.%s', $hostnameSuffix);
+
+        /** @var array{url: string, token: string} $config */
+        $config = [
             'url' => $queryApiUrl,
             'token' => $storageApiToken,
-        ]);
+        ];
+        $this->queryClient = new Client($config);
 
         // Create Storage API client directly for tests
         $this->storageApiClient = new StorageApiClient([
@@ -91,6 +78,7 @@ abstract class BaseFunctionalTestCase extends TestCase
         // Find default branch
         $defaultBranch = null;
         foreach ($branches as $branch) {
+            /** @var array{id: int|string, isDefault?: bool} $branch */
             if (isset($branch['isDefault']) && $branch['isDefault'] === true) {
                 $defaultBranch = $branch;
                 break;
@@ -116,6 +104,7 @@ abstract class BaseFunctionalTestCase extends TestCase
             'backend' => 'snowflake',
         ], true);
 
+        /** @var array{id: int|string} $workspaceData */
         $this->testWorkspaceId = (string) $workspaceData['id'];
     }
 
@@ -161,8 +150,8 @@ abstract class BaseFunctionalTestCase extends TestCase
         );
 
         // Wait for completion
-        assert(is_string($response['queryJobId']));
-        $this->queryClient->waitForJobCompletion($response['queryJobId']);
+        $queryJobId = $response->getQueryJobId();
+        $this->queryClient->waitForJobCompletion($queryJobId);
 
         return $tableName;
     }

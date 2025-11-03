@@ -1147,6 +1147,88 @@ class BaseConfigurationTest extends TestCase
         }
     }
 
+    public function testUnloadStrategyDirectGrant(): void
+    {
+        $config = [
+            'destination' => 'in.c-main.test',
+            'unload_strategy' => 'direct-grant',
+        ];
+
+        $expectedArray = [
+            'destination' => 'in.c-main.test',
+            'unload_strategy' => 'direct-grant',
+            'primary_key' => [],
+            'distribution_key' => [],
+            'columns' => [],
+            'incremental' => false,
+            'delete_where_values' => [],
+            'delete_where_operator' => 'eq',
+            'delimiter' => ',',
+            'enclosure' => '"',
+            'metadata' => [],
+            'column_metadata' => [],
+            'write_always' => false,
+            'tags' => [],
+            'schema' => [],
+        ];
+
+        $this->testManifestAndConfig($config, $expectedArray);
+    }
+
+    public function testUnloadStrategyCustomValue(): void
+    {
+        $config = [
+            'destination' => 'in.c-main.test',
+            'unload_strategy' => 'custom-future-value',
+        ];
+
+        $expectedArray = [
+            'destination' => 'in.c-main.test',
+            'unload_strategy' => 'custom-future-value',
+            'primary_key' => [],
+            'distribution_key' => [],
+            'columns' => [],
+            'incremental' => false,
+            'delete_where_values' => [],
+            'delete_where_operator' => 'eq',
+            'delimiter' => ',',
+            'enclosure' => '"',
+            'metadata' => [],
+            'column_metadata' => [],
+            'write_always' => false,
+            'tags' => [],
+            'schema' => [],
+        ];
+
+        $this->testManifestAndConfig($config, $expectedArray);
+    }
+
+    public function testUnloadStrategyNotSet(): void
+    {
+        $config = [
+            'destination' => 'in.c-main.test',
+        ];
+
+        $expectedArray = [
+            'destination' => 'in.c-main.test',
+            'primary_key' => [],
+            'distribution_key' => [],
+            'columns' => [],
+            'incremental' => false,
+            'delete_where_values' => [],
+            'delete_where_operator' => 'eq',
+            'delimiter' => ',',
+            'enclosure' => '"',
+            'metadata' => [],
+            'column_metadata' => [],
+            'write_always' => false,
+            'tags' => [],
+            'schema' => [],
+        ];
+
+        $this->testManifestAndConfig($config, $expectedArray);
+    }
+
     private function testManifestAndConfig(
         array $config,
         array $expectedConfig,

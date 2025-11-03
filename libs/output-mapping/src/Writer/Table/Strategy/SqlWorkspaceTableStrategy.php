@@ -33,6 +33,8 @@ use Throwable;
 
 class SqlWorkspaceTableStrategy implements StrategyInterface
 {
+    public const DIRECT_GRANT_UNLOAD_STRATEGY = 'direct-grant';
+
     private readonly WorkspaceStagingInterface $dataStorage;
 
     // @phpstan-ignore-next-line unused parameters are required by the interface

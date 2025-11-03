@@ -327,4 +327,24 @@ class MappingFromProcessedConfigurationTest extends TestCase
         yield [['deduplication_strategy' => 'insert'], DeduplicationStrategy::INSERT];
         yield [['deduplication_strategy' => 'upsert'], DeduplicationStrategy::UPSERT];
     }
+
+    /**
+     * @dataProvider unloadStrategyProvider
+     */
+    public function testGetUnloadStrategy(array $mapping, ?string $expected): void
+    {
+        $mapping += ['destination' => 'in.c-main.table'];
+        $mappingFromProcessedConfiguration = new MappingFromProcessedConfiguration(
+            $mapping,
+            $this->createMock(MappingFromRawConfigurationAndPhysicalDataWithManifest::class),
+        );
+
+        self::assertEquals($expected, $mappingFromProcessedConfiguration->getUnloadStrategy());
+    }
+
+    public function unloadStrategyProvider(): Generator
+    {
+        yield 'not set' => [[], null];
+        yield 'direct-grant' => [['unload_strategy' => 'direct-grant'], 'direct-grant'];
+    }
 }

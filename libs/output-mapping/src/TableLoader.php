@@ -18,13 +18,17 @@ use Keboola\OutputMapping\Storage\TableStructureValidatorFactory;
 use Keboola\OutputMapping\Writer\Table\BranchResolver;
 use Keboola\OutputMapping\Writer\Table\MetadataSetter;
 use Keboola\OutputMapping\Writer\Table\SlicerDecider;
+use Keboola\OutputMapping\Writer\Table\Strategy\SqlWorkspaceTableStrategy;
 use Keboola\OutputMapping\Writer\Table\StrategyInterface;
 use Keboola\OutputMapping\Writer\Table\TableConfigurationResolver;
 use Keboola\OutputMapping\Writer\Table\TableConfigurationValidator;
 use Keboola\OutputMapping\Writer\Table\TableHintsConfigurationSchemaResolver;
+use Keboola\StorageApi\Workspaces;
 use Keboola\StorageApiBranch\ClientWrapper;
+use LogicException;
 use Psr\Log\LoggerInterface;
 use Throwable;
+use Webmozart\Assert\Assert;
 
 class TableLoader
 {
@@ -53,6 +57,7 @@ class TableLoader
         }
 
         $loadTableTasks = [];
+        $tableWithDirectGrantExists = false;
         $tableConfigurationResolver = new TableConfigurationResolver($this->logger);
         $tableConfigurationValidator = new TableConfigurationValidator($strategy, $configuration);
         $tableColumnsConfigurationHintsResolver = new TableHintsConfigurationSchemaResolver();
@@ -103,6 +108,15 @@ class TableLoader
                 continue;
             }
 
+            if ($strategy instanceof SqlWorkspaceTableStrategy &&
+                isset($processedConfig['unload_strategy']) &&
+                $processedConfig['unload_strategy'] === SqlWorkspaceTableStrategy::DIRECT_GRANT_UNLOAD_STRATEGY
+            ) {
+                $tableWithDirectGrantExists = true;
+                // if table is using direct-grant unload strategy, skip upload
+                continue;
+            }
+
             $processedSource = new MappingFromProcessedConfiguration($processedConfig, $combinedSource);
 
             try {
@@ -150,8 +164,21 @@ class TableLoader
             $loadTableTasks[] = $loadTableTask;
         }
 
+        if ($tableWithDirectGrantExists) {
+            if (!$strategy instanceof SqlWorkspaceTableStrategy) {
+                throw new LogicException(sprintf(
+                    'Direct-grant unload strategy is only supported for %s strategy but got %s.',
+                    SqlWorkspaceTableStrategy::class,
+                    $strategy::class,
+                ));
+            }
+            // enqueue unload for direct-grant tables
+            $this->callWorkspaceUnload($strategy);
+        }
+
         $tableQueue = new LoadTableQueue($this->clientWrapper, $this->logger, $loadTableTasks);
         $tableQueue->start();
+
         return $tableQueue;
     }
 
@@ -182,5 +209,20 @@ class TableLoader
             $combinedSources,
             $physicalManifests,
         );
+    }
+
+    private function callWorkspaceUnload(SqlWorkspaceTableStrategy $strategy): void
+    {
+        try {
+            $workspaces = new Workspaces(
+                $this->clientWrapper->getBranchClient(),
+            );
+            $workspaces->queueUnload(
+                (int) $strategy->getDataStorage()->getWorkspaceId(),
+                ['only-direct-grants' => true],
+            );
+        } catch (Throwable $e) {
+            $this->logger->warning('Workspace unload failed: ' . $e->getMessage());
+        }
     }
 }

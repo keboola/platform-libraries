@@ -9,31 +9,6 @@ use PHPUnit\Framework\TestCase;
 
 class ColumnNameSanitizerTest extends TestCase
 {
-//    /**
-//     * @dataProvider testStrings
-//     **/
-//    public function testToAscii($testString, $expectedAscii): void
-//    {
-//        $asciid = ColumnNameSanitizer::toAscii($testString);
-//        self::assertEquals($expectedAscii, $asciid);
-//    }
-//
-//    public function testStrings()
-//    {
-//        return [
-//            [
-//                '_~dlažební  %_kostky_~',
-//                '_~dlazebni  %_kostky_~',
-//            ],[
-//                'test-vn-đá cuội',
-//                'test-vn-da cuoi',
-//            ],[
-//                'jp日本語',
-//                'jp???',
-//            ],
-//        ];
-//    }
-
     /**
      * @dataProvider namesToSanitize
      **/
@@ -62,8 +37,12 @@ class ColumnNameSanitizerTest extends TestCase
                 'jp',
             ],
             [
-                'emoji😀name',
+                'emoji 😀 name',
                 'emoji_name',
+            ],
+            [
+                'webalize | test 😁',
+                'webalize_test',
             ],
             // Edge cases
             [

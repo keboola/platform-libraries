@@ -235,7 +235,7 @@ stages:
       - template: libs/permission-checker/azure-pipelines.tests.yml
 
   - stage: tests_phpStorageNamesSanitizer
-    displayName: Tests - Sanitizer
+    displayName: Tests - PHP Storage Names Sanitizer
     lockBehavior: sequential
     dependsOn: build
     condition: and(succeeded(), dependencies.build.outputs['checkChanges.findChanges.changedProjects_phpStorageNamesSanitizer'])

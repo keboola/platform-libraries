@@ -36,6 +36,7 @@ class ColumnNameSanitizerTest extends TestCase
                 'jp日本語',
                 'jp',
             ],
+            // transliteratable emoji
             [
                 'emoji 😀 name',
                 'emoji_name',
@@ -43,6 +44,11 @@ class ColumnNameSanitizerTest extends TestCase
             [
                 'webalize | test 😁',
                 'webalize_test',
+            ],
+            // non-transliteratable emoji
+            [
+                'ipsum | kockum 🐈',
+                'ipsum_kockum',
             ],
             // Edge cases
             [

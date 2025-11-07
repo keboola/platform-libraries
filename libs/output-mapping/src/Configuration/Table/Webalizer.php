@@ -6,7 +6,7 @@ namespace Keboola\OutputMapping\Configuration\Table;
 
 use Keboola\OutputMapping\Writer\Helper\RestrictedColumnsHelper;
 use Keboola\StorageApi\Client;
-use Keboola\Utils\Sanitizer\ColumnNameSanitizer;
+use Keboola\StorageNamesSanitizer\ColumnNameSanitizer;
 use Psr\Log\LoggerInterface;
 
 class Webalizer

@@ -1,0 +1,60 @@
+{
+    "name": "keboola/php-storage-names-sanitizer",
+    "description": "Storage column name sanitizer",
+    "minimum-stability": "stable",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Keboola",
+            "email": "devel@keboola.com"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "Keboola\\StorageNamesSanitizer\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Keboola\\StorageNamesSanitizer\\Tests\\": "tests"
+        }
+    },
+    "require": {
+        "php": "^8.2",
+        "symfony/string": "^6.4"
+    },
+    "require-dev": {
+        "keboola/coding-standard": ">=16.0",
+        "phpstan/phpstan": "^2.1",
+        "phpstan/phpstan-phpunit": "^2.0",
+        "phpstan/phpstan-symfony": "^2.0",
+        "phpunit/phpunit": "^11.5"
+    },
+
+    "scripts": {
+        "tests": [
+            "@putenv XDEBUG_MODE=coverage",
+            "phpunit --coverage-clover build/logs/clover.xml --coverage-xml=build/logs/coverage-xml --log-junit=build/logs/phpunit.junit.xml"
+        ],
+        "phpstan": "phpstan analyse --no-progress -c phpstan.neon",
+        "phpcs": "phpcs --extensions=php src tests",
+        "phpcbf": "phpcbf --extensions=php src tests",
+        "check": [
+            "@composer validate --no-check-all --strict",
+            "@phpcs",
+            "@phpstan"
+        ],
+        "ci": [
+            "@check",
+            "@tests"
+        ]
+    },
+    "config": {
+        "sort-packages": true,
+        "process-timeout": 3600,
+        "optimize-autoloader": true,
+        "allow-plugins": {
+            "dealerdirect/phpcodesniffer-composer-installer": true
+        }
+    }
+}

@@ -1,0 +1,10 @@
+jobs:
+  - template: ../../azure-pipelines/jobs/run-tests.yml
+    parameters:
+      displayName: Tests
+      serviceName: dev-php-storage-names-sanitizer
+      testCommand: bash -c 'composer install && composer ci'
+      variables:
+        STORAGE_API_URL: $(STORAGE_API_URL_GCP)
+      secrets:
+        STORAGE_API_TOKEN: $(QUERY_SERVICE__STORAGE_API_TOKEN_GCP)

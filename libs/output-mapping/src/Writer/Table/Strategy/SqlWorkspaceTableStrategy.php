@@ -30,12 +30,15 @@ use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Finder\Finder;
 use Symfony\Component\Finder\SplFileInfo;
 use Throwable;
+use function PHPUnit\Framework\exactly;
 
 class SqlWorkspaceTableStrategy implements StrategyInterface
 {
     public const DIRECT_GRANT_UNLOAD_STRATEGY = 'direct-grant';
 
     private readonly WorkspaceStagingInterface $dataStorage;
+
+    private bool $hasDirectGrantUnloadStrategy = false;
 
     // @phpstan-ignore-next-line unused parameters are required by the interface
     public function __construct(
@@ -51,6 +54,25 @@ class SqlWorkspaceTableStrategy implements StrategyInterface
         }
 
         $this->dataStorage = $dataStorage;
+    }
+
+    /**
+     * @return MappingFromRawConfiguration[]
+     */
+    public function getMapping(array $configuration): array
+    {
+        $mapping = [];
+        foreach ($configuration['mapping'] ?? [] as $mappingItem) {
+            // Skip configurations with direct-grant unload strategy
+            // These will be handled separately and don't need processing OM
+            if (($mappingItem['unload_strategy'] ?? '') === SqlWorkspaceTableStrategy::DIRECT_GRANT_UNLOAD_STRATEGY) {
+                $this->hasDirectGrantUnloadStrategy = true;
+                continue;
+            }
+            $mapping[] = new MappingFromRawConfiguration($mappingItem);
+        }
+
+        return $mapping;
     }
 
     public function getDataStorage(): WorkspaceStagingInterface
@@ -165,5 +187,10 @@ class SqlWorkspaceTableStrategy implements StrategyInterface
     public function getMappingCombiner(): MappingCombinerInterface
     {
         return new WorkspaceMappingCombiner($this->dataStorage->getWorkspaceId());
+    }
+
+    public function hasDirectGrantUnloadStrategy(): bool
+    {
+        return $this->hasDirectGrantUnloadStrategy;
     }
 }

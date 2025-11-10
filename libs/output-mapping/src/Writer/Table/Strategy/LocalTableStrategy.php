@@ -9,6 +9,7 @@ use Keboola\OutputMapping\Configuration\Table\Manifest\Adapter as TableAdapter;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Exception\OutputOperationException;
 use Keboola\OutputMapping\Mapping\MappingFromProcessedConfiguration;
+use Keboola\OutputMapping\Mapping\MappingFromRawConfiguration;
 use Keboola\OutputMapping\Mapping\MappingFromRawConfigurationAndPhysicalDataWithManifest;
 use Keboola\OutputMapping\MappingCombiner\LocalMappingCombiner;
 use Keboola\OutputMapping\MappingCombiner\MappingCombinerInterface;
@@ -47,6 +48,20 @@ class LocalTableStrategy implements StrategyInterface
         }
 
         $this->dataStorage = $dataStorage;
+    }
+
+
+    /**
+     * @return MappingFromRawConfiguration[]
+     */
+    public function getMapping(array $configuration): array
+    {
+        $mapping = [];
+        foreach ($configuration['mapping'] ?? [] as $mappingItem) {
+            $mapping[] = new MappingFromRawConfiguration($mappingItem);
+        }
+
+        return $mapping;
     }
 
     public function getDataStorage(): FileStagingInterface
@@ -235,5 +250,10 @@ class LocalTableStrategy implements StrategyInterface
                 true,
             );
         }
+    }
+
+    public function hasDirectGrantUnloadStrategy(): bool
+    {
+        return false;
     }
 }

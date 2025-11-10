@@ -20,6 +20,14 @@ class Table extends Configuration
     public static function configureNode(ArrayNodeDefinition $node): void
     {
         Table\Manifest::configureNode($node);
-        $node->children()->scalarNode('source')->isRequired()->end();
+        $node->children()->scalarNode('source')->end();
+        $node->validate()
+            ->ifTrue(function ($values) {
+                $isDirectGrant = isset($values['unload_strategy']) &&
+                    $values['unload_strategy'] === 'direct-grant';
+                return !$isDirectGrant && !isset($values['source']);
+            })
+            ->thenInvalid('The child config "source" under "table" must be configured.')
+            ->end();
     }
 }

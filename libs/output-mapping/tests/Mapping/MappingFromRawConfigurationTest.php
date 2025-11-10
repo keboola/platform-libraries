@@ -53,4 +53,29 @@ class MappingFromRawConfigurationTest extends TestCase
     {
         $this->assertEquals(['column1', 'column2'], $this->mapping->getColumns());
     }
+
+    public function testSourceCanBeNull(): void
+    {
+        $mappingItem = [
+            'columns' => ['column1', 'column2'],
+            'delimiter' => ',',
+            'enclosure' => '"',
+        ];
+
+        $mapping = new MappingFromRawConfiguration($mappingItem);
+        $this->assertEquals('', $mapping->getSourceName());
+    }
+
+    public function testSourceCanBeNullWithUnloadStrategy(): void
+    {
+        $mappingItem = [
+            'unload_strategy' => 'direct-grant',
+            'destination' => 'in.c-main.test',
+            'columns' => ['column1', 'column2'],
+        ];
+
+        $mapping = new MappingFromRawConfiguration($mappingItem);
+        $this->assertEquals('', $mapping->getSourceName());
+        $this->assertEquals(['column1', 'column2'], $mapping->getColumns());
+    }
 }

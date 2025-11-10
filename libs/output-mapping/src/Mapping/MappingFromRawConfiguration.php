@@ -11,13 +11,13 @@ class MappingFromRawConfiguration
     private string $delimiter;
     private string $enclosure;
     private array $columns;
-    private string $source;
+    private ?string $source;
     private array $mappingItem;
 
     public function __construct(array $mappingItem)
     {
         $this->mappingItem = $mappingItem;
-        $this->source = $mappingItem['source'];
+        $this->source = $mappingItem['source'] ?? null;
         $this->columns = $mappingItem['columns'] ?? [];
         $this->delimiter = $mappingItem['delimiter'] ?? Manifest::DEFAULT_DELIMITER;
         $this->enclosure = $mappingItem['enclosure'] ?? Manifest::DEFAULT_ENCLOSURE;
@@ -25,7 +25,7 @@ class MappingFromRawConfiguration
 
     public function getSourceName(): string
     {
-        return $this->source;
+        return $this->source ?? '';
     }
 
     public function asArray(): array

@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace Keboola\OutputMapping\Tests\Writer\Table\Strategy;
 
 use Keboola\OutputMapping\Mapping\MappingFromProcessedConfiguration;
+use Keboola\OutputMapping\Mapping\MappingFromRawConfiguration;
 use Keboola\OutputMapping\Tests\AbstractTestCase;
 use Keboola\OutputMapping\Writer\Table\Strategy\LocalTableStrategy;
+use Keboola\OutputMapping\Writer\Table\Strategy\SqlWorkspaceTableStrategy;
 use Keboola\StagingProvider\Staging\File\FileFormat;
 use Keboola\StagingProvider\Staging\File\FileStagingInterface;
 use Psr\Log\NullLogger;
@@ -121,5 +123,77 @@ class LocalTableStrategyTest extends AbstractTestCase
         $source->expects(self::once())->method('getDelimiter')->willReturn(';');
         $source->expects(self::once())->method('getEnclosure')->willReturn('|');
         return $source;
+    }
+
+    public function testHasDirectGrantUnloadStrategyReturnsFalse(): void
+    {
+        $strategy = new LocalTableStrategy(
+            $this->clientWrapper,
+            new NullLogger(),
+            $this->createMock(FileStagingInterface::class),
+            $this->createMock(FileStagingInterface::class),
+            FileFormat::Json,
+            false,
+        );
+
+        self::assertFalse($strategy->hasDirectGrantUnloadStrategy());
+    }
+
+    public function testGetMappingReturnsAllMappingsIncludingDirectGrant(): void
+    {
+        $configuration = [
+            'mapping' => [
+                [
+                    'source' => 'source1',
+                    'destination' => 'destination1',
+                ],
+                [
+                    'source' => 'source2',
+                    'destination' => 'destination2',
+                    'unload_strategy' => SqlWorkspaceTableStrategy::DIRECT_GRANT_UNLOAD_STRATEGY,
+                ],
+                [
+                    'source' => 'source3',
+                    'destination' => 'destination3',
+                ],
+            ],
+        ];
+
+        $strategy = new LocalTableStrategy(
+            $this->clientWrapper,
+            new NullLogger(),
+            $this->createMock(FileStagingInterface::class),
+            $this->createMock(FileStagingInterface::class),
+            FileFormat::Json,
+            false,
+            $configuration,
+        );
+
+        $mapping = $strategy->getMapping();
+        self::assertCount(3, $mapping, 'LocalTableStrategy should return all mappings including direct-grant');
+
+        $sourceNames = array_map(
+            fn(MappingFromRawConfiguration $m) => $m->getSourceName(),
+            $mapping,
+        );
+        self::assertContains('source1', $sourceNames);
+        self::assertContains('source2', $sourceNames);
+        self::assertContains('source3', $sourceNames);
+    }
+
+    public function testGetMappingWithEmptyConfiguration(): void
+    {
+        $strategy = new LocalTableStrategy(
+            $this->clientWrapper,
+            new NullLogger(),
+            $this->createMock(FileStagingInterface::class),
+            $this->createMock(FileStagingInterface::class),
+            FileFormat::Json,
+            false,
+            [],
+        );
+
+        $mapping = $strategy->getMapping();
+        self::assertCount(0, $mapping);
     }
 }

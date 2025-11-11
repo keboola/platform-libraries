@@ -47,9 +47,8 @@ class OutputMappingSettingsTest extends TestCase
         self::assertEquals($configuration['bucket'], $outputMappingSettings->getDefaultBucket());
         self::assertEquals('authoritative', $outputMappingSettings->getDataTypeSupport());
 
-        foreach ($outputMappingSettings->getMapping() as $item) {
-            self::assertInstanceOf(MappingFromRawConfiguration::class, $item);
-        }
+        $rawConfig = $outputMappingSettings->getRawConfiguration();
+        self::assertEquals($configuration, $rawConfig);
 
         self::assertNull($outputMappingSettings->getTreatValuesAsNull());
     }

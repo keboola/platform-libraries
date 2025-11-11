@@ -44,6 +44,7 @@ class TableLoader
         SystemMetadata $systemMetadata,
     ): LoadTableQueue {
         $strategy = $this->strategyFactory->getTableOutputStrategy(
+            $configuration,
             $configuration->isFailedJob(),
         );
         $combinedSources = $this->getCombinedSources($strategy, $configuration);
@@ -181,24 +182,24 @@ class TableLoader
 
         $physicalDataFiles = $strategy->listSources(
             $configuration->getSourcePathPrefix(),
-            $strategy->getMapping($configuration->getRawConfiguration()),
+            $strategy->getMapping(),
         );
         $physicalManifests = $strategy->listManifests($configuration->getSourcePathPrefix());
 
         $sourcesValidator->validatePhysicalFilesWithManifest($physicalDataFiles, $physicalManifests);
         $sourcesValidator->validatePhysicalFilesWithConfiguration(
             $physicalDataFiles,
-            $strategy->getMapping($configuration->getRawConfiguration()),
+            $strategy->getMapping(),
         );
         $sourcesValidator->validateManifestWithConfiguration(
             $physicalManifests,
-            $strategy->getMapping($configuration->getRawConfiguration()),
+            $strategy->getMapping(),
         );
 
         $mappingCombiner = $strategy->getMappingCombiner();
         $combinedSources = $mappingCombiner->combineDataItemsWithConfigurations(
             $physicalDataFiles,
-            $strategy->getMapping($configuration->getRawConfiguration()),
+            $strategy->getMapping(),
         );
 
         return $mappingCombiner->combineSourcesWithManifests(

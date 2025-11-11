@@ -35,6 +35,9 @@ class LocalTableStrategy implements StrategyInterface
 {
     private readonly FileStagingInterface $dataStorage;
 
+    /** @var MappingFromRawConfiguration[] */
+    private array $mapping = [];
+
     public function __construct(
         private readonly ClientWrapper $clientWrapper,
         private readonly LoggerInterface $logger,
@@ -42,26 +45,22 @@ class LocalTableStrategy implements StrategyInterface
         private readonly FileStagingInterface $metadataStorage,
         private readonly FileFormat $format,
         private readonly bool $isFailedJob = false,
+        array $rawConfiguration = [],
     ) {
         if (!$dataStorage instanceof FileStagingInterface) {
             throw new InvalidArgumentException('Data storage must be instance of FileStagingInterface');
         }
 
         $this->dataStorage = $dataStorage;
+
+        foreach ($rawConfiguration['mapping'] ?? [] as $mappingItem) {
+            $this->mapping[] = new MappingFromRawConfiguration($mappingItem);
+        }
     }
 
-
-    /**
-     * @return MappingFromRawConfiguration[]
-     */
-    public function getMapping(array $configuration): array
+    public function getMapping(): array
     {
-        $mapping = [];
-        foreach ($configuration['mapping'] ?? [] as $mappingItem) {
-            $mapping[] = new MappingFromRawConfiguration($mappingItem);
-        }
-
-        return $mapping;
+        return $this->mapping;
     }
 
     public function getDataStorage(): FileStagingInterface

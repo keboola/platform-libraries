@@ -39,6 +39,9 @@ class SqlWorkspaceTableStrategy implements StrategyInterface
 
     private bool $hasDirectGrantUnloadStrategy = false;
 
+    /** @var MappingFromRawConfiguration[] */
+    private array $mapping = [];
+
     // @phpstan-ignore-next-line unused parameters are required by the interface
     public function __construct(
         ClientWrapper $clientWrapper,
@@ -47,31 +50,27 @@ class SqlWorkspaceTableStrategy implements StrategyInterface
         private readonly FileStagingInterface $metadataStorage,
         private readonly FileFormat $format,
         bool $isFailedJob = false,
+        array $rawConfiguration = [],
     ) {
         if (!$dataStorage instanceof WorkspaceStagingInterface) {
             throw new InvalidArgumentException('Data storage must be instance of WorkspaceStagingInterface');
         }
 
         $this->dataStorage = $dataStorage;
-    }
-
-    /**
-     * @return MappingFromRawConfiguration[]
-     */
-    public function getMapping(array $configuration): array
-    {
-        $mapping = [];
-        foreach ($configuration['mapping'] ?? [] as $mappingItem) {
+        foreach ($rawConfiguration['mapping'] ?? [] as $mappingItem) {
             // Skip configurations with direct-grant unload strategy
             // These will be handled separately and don't need processing OM
             if (($mappingItem['unload_strategy'] ?? '') === SqlWorkspaceTableStrategy::DIRECT_GRANT_UNLOAD_STRATEGY) {
                 $this->hasDirectGrantUnloadStrategy = true;
                 continue;
             }
-            $mapping[] = new MappingFromRawConfiguration($mappingItem);
+            $this->mapping[] = new MappingFromRawConfiguration($mappingItem);
         }
+    }
 
-        return $mapping;
+    public function getMapping(): array
+    {
+        return $this->mapping;
     }
 
     public function getDataStorage(): WorkspaceStagingInterface

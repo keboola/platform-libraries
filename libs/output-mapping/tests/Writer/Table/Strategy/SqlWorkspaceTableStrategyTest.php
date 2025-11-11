@@ -5,19 +5,30 @@ declare(strict_types=1);
 namespace Keboola\OutputMapping\Tests\Writer\Table\Strategy;
 
 use Keboola\OutputMapping\Mapping\MappingFromRawConfiguration;
+use Keboola\OutputMapping\OutputMappingSettings;
 use Keboola\OutputMapping\Writer\Table\Strategy\SqlWorkspaceTableStrategy;
+use Keboola\StorageApiBranch\StorageApiToken;
 
 class SqlWorkspaceTableStrategyTest extends AbstractWorkspaceTableStrategyTestCase
 {
     public function setUp(): void
     {
         parent::setUp();
+        $storageApiToken = $this->createMock(StorageApiToken::class);
+        $storageApiToken->method('hasFeature')->willReturn(false);
+        $outputMappingSettings = new OutputMappingSettings(
+            [],
+            'upload',
+            $storageApiToken,
+            false,
+            'none',
+        );
         $this->strategy = $this
             ->getWorkspaceStagingFactory(
                 clientWrapper: $this->clientWrapper,
                 workspaceId: 'fake-workspace-id',
             )
-            ->getTableOutputStrategy();
+            ->getTableOutputStrategy($outputMappingSettings);
 
         self::assertInstanceOf(SqlWorkspaceTableStrategy::class, $this->strategy);
     }
@@ -47,7 +58,23 @@ class SqlWorkspaceTableStrategyTest extends AbstractWorkspaceTableStrategyTestCa
             ],
         ];
 
-        $mapping = $this->strategy->getMapping($configuration);
+        $storageApiToken = $this->createMock(StorageApiToken::class);
+        $storageApiToken->method('hasFeature')->willReturn(false);
+        $outputMappingSettings = new OutputMappingSettings(
+            $configuration,
+            'upload',
+            $storageApiToken,
+            false,
+            'none',
+        );
+        $strategy = $this
+            ->getWorkspaceStagingFactory(
+                clientWrapper: $this->clientWrapper,
+                workspaceId: 'fake-workspace-id',
+            )
+            ->getTableOutputStrategy($outputMappingSettings);
+
+        $mapping = $strategy->getMapping();
         self::assertCount(2, $mapping, 'Direct-grant configurations should be filtered out');
 
         $sourceNames = array_map(
@@ -71,14 +98,30 @@ class SqlWorkspaceTableStrategyTest extends AbstractWorkspaceTableStrategyTestCa
             ],
         ];
 
-        self::assertFalse($this->strategy->hasDirectGrantUnloadStrategy());
-        $this->strategy->getMapping($configuration);
-        self::assertTrue($this->strategy->hasDirectGrantUnloadStrategy());
+        $storageApiToken = $this->createMock(StorageApiToken::class);
+        $storageApiToken->method('hasFeature')->willReturn(false);
+        $outputMappingSettings = new OutputMappingSettings(
+            $configuration,
+            'upload',
+            $storageApiToken,
+            false,
+            'none',
+        );
+        $strategy = $this
+            ->getWorkspaceStagingFactory(
+                clientWrapper: $this->clientWrapper,
+                workspaceId: 'fake-workspace-id',
+            )
+            ->getTableOutputStrategy($outputMappingSettings);
+
+        self::assertTrue($strategy->hasDirectGrantUnloadStrategy());
+        $mapping = $strategy->getMapping();
+        self::assertCount(0, $mapping);
     }
 
     public function testGetMappingWithEmptyConfiguration(): void
     {
-        $mapping = $this->strategy->getMapping([]);
+        $mapping = $this->strategy->getMapping();
         self::assertCount(0, $mapping);
         self::assertFalse($this->strategy->hasDirectGrantUnloadStrategy());
     }
@@ -108,9 +151,25 @@ class SqlWorkspaceTableStrategyTest extends AbstractWorkspaceTableStrategyTestCa
             ],
         ];
 
-        $mapping = $this->strategy->getMapping($configuration);
+        $storageApiToken = $this->createMock(StorageApiToken::class);
+        $storageApiToken->method('hasFeature')->willReturn(false);
+        $outputMappingSettings = new OutputMappingSettings(
+            $configuration,
+            'upload',
+            $storageApiToken,
+            false,
+            'none',
+        );
+        $strategy = $this
+            ->getWorkspaceStagingFactory(
+                clientWrapper: $this->clientWrapper,
+                workspaceId: 'fake-workspace-id',
+            )
+            ->getTableOutputStrategy($outputMappingSettings);
+
+        $mapping = $strategy->getMapping();
         self::assertCount(2, $mapping, 'All direct-grant configurations should be filtered out');
-        self::assertTrue($this->strategy->hasDirectGrantUnloadStrategy());
+        self::assertTrue($strategy->hasDirectGrantUnloadStrategy());
 
         $sourceNames = array_map(
             fn(MappingFromRawConfiguration $m) => $m->getSourceName(),

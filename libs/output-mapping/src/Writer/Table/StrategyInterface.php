@@ -31,7 +31,7 @@ interface StrategyInterface
     /**
      * @return MappingFromRawConfiguration[]
      */
-    public function getMapping(array $configuration): array;
+    public function getMapping(): array;
 
     public function getDataStorage(): StagingInterface;
 

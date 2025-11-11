@@ -141,15 +141,6 @@ class LocalTableStrategyTest extends AbstractTestCase
 
     public function testGetMappingReturnsAllMappingsIncludingDirectGrant(): void
     {
-        $strategy = new LocalTableStrategy(
-            $this->clientWrapper,
-            new NullLogger(),
-            $this->createMock(FileStagingInterface::class),
-            $this->createMock(FileStagingInterface::class),
-            FileFormat::Json,
-            false,
-        );
-
         $configuration = [
             'mapping' => [
                 [
@@ -168,7 +159,17 @@ class LocalTableStrategyTest extends AbstractTestCase
             ],
         ];
 
-        $mapping = $strategy->getMapping($configuration);
+        $strategy = new LocalTableStrategy(
+            $this->clientWrapper,
+            new NullLogger(),
+            $this->createMock(FileStagingInterface::class),
+            $this->createMock(FileStagingInterface::class),
+            FileFormat::Json,
+            false,
+            $configuration,
+        );
+
+        $mapping = $strategy->getMapping();
         self::assertCount(3, $mapping, 'LocalTableStrategy should return all mappings including direct-grant');
 
         $sourceNames = array_map(
@@ -189,9 +190,10 @@ class LocalTableStrategyTest extends AbstractTestCase
             $this->createMock(FileStagingInterface::class),
             FileFormat::Json,
             false,
+            [],
         );
 
-        $mapping = $strategy->getMapping([]);
+        $mapping = $strategy->getMapping();
         self::assertCount(0, $mapping);
     }
 }

@@ -1037,43 +1037,4 @@ class TableDefinitionV2Test extends AbstractTestCase
         }
         return $result;
     }
-
-    #[NeedsEmptyOutputBucket]
-    public function testDirectGrantUnloadStrategySkipsTableUpload(): void
-    {
-        $this->initWorkspace();
-        $tableId = $this->emptyOutputBucketId . '.tableDefinition';
-
-        $config = [
-            'destination' => $tableId,
-            'unload_strategy' => 'direct-grant',
-        ];
-
-        $strategyFactory = $this->getWorkspaceStagingFactory(
-            clientWrapper: $this->clientWrapper,
-            logger: $this->testLogger,
-        );
-
-        $tableLoader = $this->getTableLoader(
-            clientWrapper: $this->clientWrapper,
-            logger: $this->testLogger,
-            strategyFactory: $strategyFactory,
-        );
-
-        $tableQueue = $tableLoader->uploadTables(
-            configuration: new OutputMappingSettings(
-                configuration: ['mapping' => [$config]],
-                sourcePathPrefix: 'upload',
-                storageApiToken: $this->clientWrapper->getToken(),
-                isFailedJob: false,
-                dataTypeSupport: 'none',
-            ),
-            systemMetadata: new SystemMetadata(['componentId' => 'foo']),
-        );
-        $jobIds = $tableQueue->waitForAll();
-        self::assertCount(0, $jobIds, 'No jobs should be created when unload_strategy is direct-grant');
-
-        $tables = $this->clientWrapper->getTableAndFileStorageClient()->listTables($this->emptyOutputBucketId);
-        self::assertCount(0, $tables, 'No tables should be imported when unload_strategy is direct-grant');
-    }
 }

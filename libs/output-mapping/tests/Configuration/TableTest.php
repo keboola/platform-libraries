@@ -147,46 +147,4 @@ class TableTest extends TestCase
         $processedConfiguration = (new Table())->parse(['config' => $config]);
         self::assertEquals($expectedArray, $processedConfiguration);
     }
-
-    public function testSourceNotRequiredWithDirectGrantUnloadStrategy(): void
-    {
-        $config = [
-            'destination' => 'in.c-main.test',
-            'unload_strategy' => 'direct-grant',
-        ];
-
-        $expectedArray = [
-            'destination' => 'in.c-main.test',
-            'unload_strategy' => 'direct-grant',
-            'primary_key' => [],
-            'distribution_key' => [],
-            'columns' => [],
-            'incremental' => false,
-            'delete_where_values' => [],
-            'delete_where_operator' => 'eq',
-            'delimiter' => ',',
-            'enclosure' => '"',
-            'metadata' => [],
-            'column_metadata' => [],
-            'write_always' => false,
-            'tags' => [],
-            'schema' => [],
-        ];
-
-        $processedConfiguration = (new Table())->parse(['config' => $config]);
-        self::assertEquals($expectedArray, $processedConfiguration);
-    }
-
-    public function testSourceRequiredWithOtherUnloadStrategy(): void
-    {
-        $config = [
-            'destination' => 'in.c-main.test',
-            'unload_strategy' => 'other-strategy',
-        ];
-
-        self::expectException(InvalidConfigurationException::class);
-        self::expectExceptionMessage('The child config "source" under "table" must be configured.');
-
-        (new Table())->parse(['config' => $config]);
-    }
 }

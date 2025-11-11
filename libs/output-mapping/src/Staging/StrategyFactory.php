@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Keboola\OutputMapping\Staging;
 
 use Keboola\OutputMapping\Exception\InvalidOutputException;
-use Keboola\OutputMapping\OutputMappingSettings;
 use Keboola\OutputMapping\Writer\File\Strategy\Local as FileLocal;
 use Keboola\OutputMapping\Writer\File\StrategyInterface as FileStrategyInterface;
 use Keboola\OutputMapping\Writer\Table\Strategy\LocalTableStrategy;
@@ -72,7 +71,6 @@ class StrategyFactory
     }
 
     public function getTableOutputStrategy(
-        OutputMappingSettings $outputMappingSettings,
         bool $isFailedJob = false,
     ): TableStrategyInterface {
         $stagingType = $this->stagingProvider->getStagingType();
@@ -85,7 +83,6 @@ class StrategyFactory
             $this->stagingProvider->getTableMetadataStaging(),
             $this->format,
             $isFailedJob,
-            $outputMappingSettings->getRawConfiguration(),
         );
     }
 }

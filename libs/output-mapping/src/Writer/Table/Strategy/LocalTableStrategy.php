@@ -9,7 +9,6 @@ use Keboola\OutputMapping\Configuration\Table\Manifest\Adapter as TableAdapter;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Exception\OutputOperationException;
 use Keboola\OutputMapping\Mapping\MappingFromProcessedConfiguration;
-use Keboola\OutputMapping\Mapping\MappingFromRawConfiguration;
 use Keboola\OutputMapping\Mapping\MappingFromRawConfigurationAndPhysicalDataWithManifest;
 use Keboola\OutputMapping\MappingCombiner\LocalMappingCombiner;
 use Keboola\OutputMapping\MappingCombiner\MappingCombinerInterface;
@@ -35,9 +34,6 @@ class LocalTableStrategy implements StrategyInterface
 {
     private readonly FileStagingInterface $dataStorage;
 
-    /** @var MappingFromRawConfiguration[] */
-    private array $mapping = [];
-
     public function __construct(
         private readonly ClientWrapper $clientWrapper,
         private readonly LoggerInterface $logger,
@@ -45,22 +41,12 @@ class LocalTableStrategy implements StrategyInterface
         private readonly FileStagingInterface $metadataStorage,
         private readonly FileFormat $format,
         private readonly bool $isFailedJob = false,
-        array $rawConfiguration = [],
     ) {
         if (!$dataStorage instanceof FileStagingInterface) {
             throw new InvalidArgumentException('Data storage must be instance of FileStagingInterface');
         }
 
         $this->dataStorage = $dataStorage;
-
-        foreach ($rawConfiguration['mapping'] ?? [] as $mappingItem) {
-            $this->mapping[] = new MappingFromRawConfiguration($mappingItem);
-        }
-    }
-
-    public function getMapping(): array
-    {
-        return $this->mapping;
     }
 
     public function getDataStorage(): FileStagingInterface
@@ -249,10 +235,5 @@ class LocalTableStrategy implements StrategyInterface
                 true,
             );
         }
-    }
-
-    public function hasDirectGrantUnloadStrategy(): bool
-    {
-        return false;
     }
 }

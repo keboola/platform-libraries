@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Keboola\OutputMapping\Tests\Staging;
 
 use Keboola\OutputMapping\Exception\InvalidOutputException;
-use Keboola\OutputMapping\OutputMappingSettings;
 use Keboola\OutputMapping\Staging\StrategyFactory;
 use Keboola\OutputMapping\Writer\File\Strategy\Local as FileLocal;
 use Keboola\OutputMapping\Writer\Table\Strategy\LocalTableStrategy as TableLocal;
@@ -16,7 +15,6 @@ use Keboola\StagingProvider\Staging\StagingProvider;
 use Keboola\StagingProvider\Staging\StagingType;
 use Keboola\StagingProvider\Staging\Workspace\WorkspaceStagingInterface;
 use Keboola\StorageApiBranch\ClientWrapper;
-use Keboola\StorageApiBranch\StorageApiToken;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
@@ -134,17 +132,7 @@ class StrategyFactoryTest extends TestCase
             $fileFormat,
         );
 
-        $storageApiToken = $this->createMock(StorageApiToken::class);
-        $storageApiToken->method('hasFeature')->willReturn(false);
-        $outputMappingSettings = new OutputMappingSettings(
-            [],
-            'upload',
-            $storageApiToken,
-            false,
-            'none',
-        );
-
-        $strategy = $factory->getTableOutputStrategy($outputMappingSettings, isFailedJob: true);
+        $strategy = $factory->getTableOutputStrategy(isFailedJob: true);
 
         self::assertInstanceOf($expectedStrategyClass, $strategy);
         self::assertEquals(
@@ -155,7 +143,6 @@ class StrategyFactoryTest extends TestCase
                 $metadataStaging,
                 $fileFormat,
                 isFailedJob: true,
-                rawConfiguration: [],
             ),
             $strategy,
         );

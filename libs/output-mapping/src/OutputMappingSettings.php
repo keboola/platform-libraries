@@ -4,11 +4,14 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping;
 
+use Keboola\OutputMapping\Mapping\MappingFromRawConfiguration;
 use Keboola\StorageApiBranch\StorageApiToken;
 
 class OutputMappingSettings
 {
     private ?string $bucket;
+    /** @var MappingFromRawConfiguration[] */
+    private array $mapping = [];
     private string $sourcePathPrefix;
 
     public const OUTPUT_MAPPING_SLICE_FEATURE = 'output-mapping-slice';
@@ -37,8 +40,6 @@ class OutputMappingSettings
 
     private ?array $treatValuesAsNull;
 
-    private array $configuration;
-
     public function __construct(
         array $configuration,
         string $sourcePathPrefix,
@@ -49,7 +50,9 @@ class OutputMappingSettings
         // TODO: validate
         $this->bucket = $configuration['bucket'] ?? null;
         $this->treatValuesAsNull = $configuration['treat_values_as_null'] ?? null;
-        $this->configuration = $configuration;
+        foreach ($configuration['mapping'] ?? [] as $mappingItem) {
+            $this->mapping[] = new MappingFromRawConfiguration($mappingItem);
+        }
         $this->sourcePathPrefix = $sourcePathPrefix;
         $this->storageApiToken = $storageApiToken;
         $this->isFailedJob = $isFailedJob;
@@ -94,9 +97,13 @@ class OutputMappingSettings
         return $this->sourcePathPrefix;
     }
 
-    public function getRawConfiguration(): array
+    /**
+     * @return array<MappingFromRawConfiguration>
+     * @deprecated
+     */
+    public function getMapping(): array
     {
-        return $this->configuration;
+        return $this->mapping;
     }
 
     public function getDefaultBucket(): ?string

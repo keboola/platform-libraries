@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Keboola\OutputMapping\Writer\Table;
 
 use Keboola\OutputMapping\Mapping\MappingFromProcessedConfiguration;
+use Keboola\OutputMapping\Mapping\MappingFromRawConfiguration;
 use Keboola\OutputMapping\Mapping\MappingFromRawConfigurationAndPhysicalDataWithManifest;
 use Keboola\OutputMapping\MappingCombiner\MappingCombinerInterface;
 use Keboola\OutputMapping\SourcesValidator\SourcesValidatorInterface;
@@ -26,6 +27,11 @@ interface StrategyInterface
         FileFormat $format,
         bool $isFailedJob,
     );
+
+    /**
+     * @return MappingFromRawConfiguration[]
+     */
+    public function getMapping(): array;
 
     public function getDataStorage(): StagingInterface;
 
@@ -55,4 +61,6 @@ interface StrategyInterface
      * @param MappingFromRawConfigurationAndPhysicalDataWithManifest[] $combinedMapping
      */
     public function sliceFiles(array $combinedMapping, string $dataType): void;
+
+    public function hasDirectGrantUnloadStrategy(): bool;
 }

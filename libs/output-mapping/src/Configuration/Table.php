@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping\Configuration;
 
+use Keboola\OutputMapping\Writer\Table\Strategy\SqlWorkspaceTableStrategy;
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
@@ -24,7 +25,7 @@ class Table extends Configuration
         $node->validate()
             ->ifTrue(function ($values) {
                 $isDirectGrant = isset($values['unload_strategy']) &&
-                    $values['unload_strategy'] === 'direct-grant';
+                    $values['unload_strategy'] === SqlWorkspaceTableStrategy::DIRECT_GRANT_UNLOAD_STRATEGY;
                 return !$isDirectGrant && !isset($values['source']);
             })
             ->thenInvalid('The child config "source" under "table" must be configured.')

@@ -65,8 +65,12 @@ class TableLoaderUnloadStrategyTest extends AbstractTestCase
         $tables = $this->clientWrapper->getTableAndFileStorageClient()->listTables($this->emptyOutputBucketId);
         self::assertCount(0, $tables, 'No tables should be imported when unload_strategy is direct-grant');
 
-        // Direct-grant configurations are filtered,
-        // so they don't go through the loading cycle and no loading message is logged
+        $logRecords = $this->testHandler->getRecords();
+        $loadingMessages = array_filter(
+            $logRecords,
+            fn($record) => is_string($record['message']) && str_contains($record['message'], 'Loading table'),
+        );
+        self::assertCount(1, $loadingMessages, 'Should log loading message for the table');
     }
 
     #[NeedsEmptyOutputBucket]

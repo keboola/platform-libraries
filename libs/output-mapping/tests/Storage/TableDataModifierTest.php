@@ -7,7 +7,6 @@ namespace Keboola\OutputMapping\Tests\Storage;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Mapping\MappingFromConfigurationDeleteWhere;
 use Keboola\OutputMapping\Mapping\MappingFromProcessedConfiguration;
-use Keboola\OutputMapping\OutputMappingSettings;
 use Keboola\OutputMapping\Storage\TableDataModifier;
 use Keboola\OutputMapping\Tests\AbstractTestCase;
 use Keboola\OutputMapping\Tests\Needs\NeedsTestTables;
@@ -17,7 +16,6 @@ use Keboola\StorageApi\BranchAwareClient;
 use Keboola\StorageApi\Workspaces;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Keboola\StorageApiBranch\Factory\ClientOptions;
-use Keboola\StorageApiBranch\StorageApiToken;
 
 class TableDataModifierTest extends AbstractTestCase
 {
@@ -358,16 +356,7 @@ class TableDataModifierTest extends AbstractTestCase
         int $expectedDeletedRowsCount,
     ): void {
         $this->initWorkspace();
-        $storageApiToken = $this->createMock(StorageApiToken::class);
-        $storageApiToken->method('hasFeature')->willReturn(false);
-        $outputMappingSettings = new OutputMappingSettings(
-            [],
-            'upload',
-            $storageApiToken,
-            false,
-            'none',
-        );
-        $workspace = $this->getWorkspaceStagingFactory()->getTableOutputStrategy($outputMappingSettings);
+        $workspace = $this->getWorkspaceStagingFactory()->getTableOutputStrategy();
         self::assertInstanceOf(SqlWorkspaceTableStrategy::class, $workspace);
 
         $workspaces = new Workspaces($this->clientWrapper->getBasicClient());

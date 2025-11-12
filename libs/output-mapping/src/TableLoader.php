@@ -44,6 +44,7 @@ class TableLoader
         SystemMetadata $systemMetadata,
     ): LoadTableQueue {
         $strategy = $this->strategyFactory->getTableOutputStrategy(
+            $configuration,
             $configuration->isFailedJob(),
         );
         $combinedSources = $this->getCombinedSources($strategy, $configuration);
@@ -57,7 +58,6 @@ class TableLoader
         }
 
         $loadTableTasks = [];
-        $tableWithDirectGrantExists = false;
         $tableConfigurationResolver = new TableConfigurationResolver($this->logger);
         $tableConfigurationValidator = new TableConfigurationValidator($strategy, $configuration);
         $tableColumnsConfigurationHintsResolver = new TableHintsConfigurationSchemaResolver();
@@ -108,15 +108,6 @@ class TableLoader
                 continue;
             }
 
-            if ($strategy instanceof SqlWorkspaceTableStrategy &&
-                isset($processedConfig['unload_strategy']) &&
-                $processedConfig['unload_strategy'] === SqlWorkspaceTableStrategy::DIRECT_GRANT_UNLOAD_STRATEGY
-            ) {
-                $tableWithDirectGrantExists = true;
-                // if table is using direct-grant unload strategy, skip upload
-                continue;
-            }
-
             $processedSource = new MappingFromProcessedConfiguration($processedConfig, $combinedSource);
 
             try {
@@ -164,7 +155,7 @@ class TableLoader
             $loadTableTasks[] = $loadTableTask;
         }
 
-        if ($tableWithDirectGrantExists) {
+        if ($strategy->hasDirectGrantUnloadStrategy()) {
             if (!$strategy instanceof SqlWorkspaceTableStrategy) {
                 throw new LogicException(sprintf(
                     'Direct-grant unload strategy is only supported for %s strategy but got %s.',
@@ -191,18 +182,24 @@ class TableLoader
 
         $physicalDataFiles = $strategy->listSources(
             $configuration->getSourcePathPrefix(),
-            $configuration->getMapping(),
+            $strategy->getMapping(),
         );
         $physicalManifests = $strategy->listManifests($configuration->getSourcePathPrefix());
 
         $sourcesValidator->validatePhysicalFilesWithManifest($physicalDataFiles, $physicalManifests);
-        $sourcesValidator->validatePhysicalFilesWithConfiguration($physicalDataFiles, $configuration->getMapping());
-        $sourcesValidator->validateManifestWithConfiguration($physicalManifests, $configuration->getMapping());
+        $sourcesValidator->validatePhysicalFilesWithConfiguration(
+            $physicalDataFiles,
+            $strategy->getMapping(),
+        );
+        $sourcesValidator->validateManifestWithConfiguration(
+            $physicalManifests,
+            $strategy->getMapping(),
+        );
 
         $mappingCombiner = $strategy->getMappingCombiner();
         $combinedSources = $mappingCombiner->combineDataItemsWithConfigurations(
             $physicalDataFiles,
-            $configuration->getMapping(),
+            $strategy->getMapping(),
         );
 
         return $mappingCombiner->combineSourcesWithManifests(

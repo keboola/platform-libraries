@@ -8,6 +8,15 @@ class ColumnNameSanitizer
 {
     public const VALID_CHARACTERS = '_A-Za-z0-9';
     public const REPLACE_INVALID_CHARACTERS_WITH = '_';
+    public const SYSTEM_COLUMNS = [
+        'oid',
+        'tableoid',
+        'xmin',
+        'cmin',
+        'xmax',
+        'cmax',
+        'ctid',
+    ];
 
     public static function sanitize(
         string $value,
@@ -15,13 +24,18 @@ class ColumnNameSanitizer
         bool $lower = false,
         ?int $maxLength = null,
     ): string {
-        //@todo handle RS system columns ?
-        return Filter::filter(
+        $filteredColumn = Filter::filter(
             $value,
             self::VALID_CHARACTERS,
             $replaceCharactersWith,
             $maxLength,
             $lower,
         );
+
+        if (in_array(strtolower($filteredColumn), self::SYSTEM_COLUMNS, true)) {
+            $filteredColumn .= '_';
+        }
+
+        return $filteredColumn;
     }
 }

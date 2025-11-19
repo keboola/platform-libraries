@@ -19,33 +19,33 @@ class App extends AbstractAPI
     /**
      * Custom response type mappings for App CRD operations
      */
-    protected $customResponseTypes = [
-        'listAppsKeboolaComV1NamespacedApp' => [
-            '200.' => AppList::class,
-        ],
-        'readAppsKeboolaComV1NamespacedApp' => [
-            '200.' => TheApp::class,
-        ],
-        'readAppsKeboolaComV1NamespacedAppStatus' => [
-            '200.' => TheApp::class,
-        ],
-        'createAppsKeboolaComV1NamespacedApp' => [
-            '200.' => TheApp::class,
-            '201.' => TheApp::class,
-            '202.' => TheApp::class,
-        ],
-        'patchAppsKeboolaComV1NamespacedApp' => [
-            '200.' => TheApp::class,
-            '201.' => TheApp::class,
-        ],
-        'deleteAppsKeboolaComV1NamespacedApp' => [
-            '200.' => Status::class,
-            '202.' => Status::class,
-        ],
-        'deleteAppsKeboolaComV1CollectionNamespacedApp' => [
-            '200.' => Status::class,
-        ],
-    ];
+    protected static function getCustomResponseTypes(): array
+    {
+        return [
+            'listAppsKeboolaComV1NamespacedApp' => [
+                '200.' => AppList::class,
+            ],
+            'readAppsKeboolaComV1NamespacedApp' => [
+                '200.' => TheApp::class,
+            ],
+            'createAppsKeboolaComV1NamespacedApp' => [
+                '200.' => TheApp::class,
+                '201.' => TheApp::class,
+                '202.' => TheApp::class,
+            ],
+            'patchAppsKeboolaComV1NamespacedApp' => [
+                '200.' => TheApp::class,
+                '201.' => TheApp::class,
+            ],
+            'deleteAppsKeboolaComV1NamespacedApp' => [
+                '200.' => Status::class,
+                '202.' => Status::class,
+            ],
+            'deleteAppsKeboolaComV1CollectionNamespacedApp' => [
+                '200.' => Status::class,
+            ],
+        ];
+    }
 
     /**
      * List apps in a namespace
@@ -78,23 +78,6 @@ class App extends AbstractAPI
                 ],
             ),
             'readAppsKeboolaComV1NamespacedApp',
-        );
-    }
-
-    /**
-     * Read app status
-     */
-    public function readStatus(string $namespace, string $name, array $queries = []): TheApp|Status
-    {
-        return $this->parseResponse(
-            $this->client->request(
-                'get',
-                "/apis/apps.keboola.com/v1/namespaces/$namespace/apps/$name/status",
-                [
-                    'query' => $queries,
-                ],
-            ),
-            'readAppsKeboolaComV1NamespacedAppStatus',
         );
     }
 

@@ -28,11 +28,6 @@ class AppsApiClient extends BaseNamespaceApiClient
         );
     }
 
-    public function getStatus(string $name, array $queries = []): App
-    {
-        return $this->apiClient->request($this->baseApi, 'readStatus', App::class, $name, $queries);
-    }
-
     /**
      * Create or patch an app (patch if exists, create if not)
      */

@@ -6,7 +6,6 @@ namespace Keboola\K8sClient\Tests\ApiClient;
 
 use Keboola\K8sClient\ApiClient\AppsApiClient;
 use Keboola\K8sClient\BaseApi\App as AppsApi;
-use Keboola\K8sClient\Exception\ResourceNotFoundException;
 use Keboola\K8sClient\Model\Io\Keboola\Apps\V1\App;
 use Keboola\K8sClient\Model\Io\Keboola\Apps\V1\AppSpec;
 use PHPUnit\Framework\TestCase;
@@ -47,29 +46,6 @@ class AppsApiClientFunctionalTest extends TestCase
                 ],
             ],
         ]);
-    }
-
-    public function testGetStatus(): void
-    {
-        $this->baseApiClient->create((string) getenv('K8S_NAMESPACE'), $this->createResource([
-            'name' => 'test-resource-1',
-            'labels' => [
-                'app' => 'test-1',
-                self::getTestResourcesLabelName() => (string) getenv('K8S_NAMESPACE'),
-            ],
-        ]));
-
-        $result = $this->apiClient->getStatus('test-resource-1');
-        self::assertNotNull($result->metadata);
-        self::assertSame('test-resource-1', $result->metadata->name);
-        self::assertNotNull($result->status);
-    }
-
-    public function testGetStatusResourceNotFound(): void
-    {
-        $this->expectException(ResourceNotFoundException::class);
-        $this->expectExceptionMessage('Resource not found:');
-        $this->apiClient->getStatus('test-resource-1');
     }
 
     public function testCreateOrPatchCreatesNewApp(): void

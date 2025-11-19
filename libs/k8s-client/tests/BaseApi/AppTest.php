@@ -83,39 +83,6 @@ class AppTest extends TestCase
         $appApi->read($namespace, $name, $queries);
     }
 
-    public function testReadStatus(): void
-    {
-        $namespace = 'default';
-        $name = 'app-123';
-        $queries = [];
-
-        $clientMock = $this->createMock(Client::class);
-        $clientMock->expects($this->once())
-            ->method('request')
-            ->with(
-                'get',
-                "/apis/apps.keboola.com/v1/namespaces/$namespace/apps/$name/status",
-                [
-                    'query' => $queries,
-                ],
-            )
-            ->willReturn(new Response(200));
-
-        $appApi = $this->getMockBuilder(App::class)
-            ->disableOriginalConstructor()
-            ->onlyMethods(['parseResponse'])
-            ->getMock();
-
-        $appApi->expects($this->once())
-            ->method('parseResponse')
-            ->with($this->anything(), 'readAppsKeboolaComV1NamespacedAppStatus')
-            ->willReturn(new TheApp());
-
-        self::setPrivatePropertyValue($appApi, 'client', $clientMock);
-
-        $appApi->readStatus($namespace, $name, $queries);
-    }
-
     public function testCreate(): void
     {
         $namespace = 'default';

@@ -43,13 +43,12 @@ class AppsApiClient extends BaseNamespaceApiClient
             throw new InvalidArgumentException('App metadata.name is required');
         }
 
+        $data = $app->getArrayCopy();
+        $data['patchOperation'] = APIPatchOperation::MERGE_PATCH;
+        $patch = new Patch($data);
+
         try {
             // Try to patch first
-            $patch = new Patch([
-                'metadata' => $app->metadata,
-                'spec' => $app->spec,
-                'patchOperation' => APIPatchOperation::MERGE_PATCH,
-            ]);
             return $this->patch($name, $patch, $queries);
         } catch (ResourceNotFoundException) {
             // If not found, create it

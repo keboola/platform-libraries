@@ -108,7 +108,7 @@ class App extends AbstractAPI
                 'post',
                 "/apis/apps.keboola.com/v1/namespaces/$namespace/apps",
                 [
-                    'json' => $model,
+                    'json' => $model->getArrayCopy(),
                     'query' => $queries,
                 ],
             ),
@@ -126,7 +126,7 @@ class App extends AbstractAPI
                 'patch',
                 "/apis/apps.keboola.com/v1/namespaces/$namespace/apps/$name",
                 [
-                    'json' => $model,
+                    'json' => $model->getArrayCopy(),
                     'query' => $queries,
                 ],
             ),

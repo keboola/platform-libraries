@@ -129,7 +129,7 @@ class AppTest extends TestCase
                 'post',
                 "/apis/apps.keboola.com/v1/namespaces/$namespace/apps",
                 [
-                    'json' => $app,
+                    'json' => $app->getArrayCopy(),
                     'query' => $queries,
                 ],
             )
@@ -164,7 +164,7 @@ class AppTest extends TestCase
                 'patch',
                 "/apis/apps.keboola.com/v1/namespaces/$namespace/apps/$name",
                 [
-                    'json' => $patch,
+                    'json' => $patch->getArrayCopy(),
                     'query' => $queries,
                 ],
             )

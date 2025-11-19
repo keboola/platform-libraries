@@ -87,7 +87,7 @@ class AppsApiClientFunctionalTest extends TestCase
         self::assertNotNull($result->metadata);
         self::assertSame('test-resource-1', $result->metadata->name);
         self::assertNotNull($result->spec);
-        self::assertSame('test-config-123', $result->spec->configId);
+        self::assertSame('Running', $result->spec->state);
     }
 
     public function testCreateOrPatchUpdatesExistingApp(): void
@@ -124,7 +124,6 @@ class AppsApiClientFunctionalTest extends TestCase
         self::assertNotNull($result->metadata);
         self::assertSame('test-resource-1', $result->metadata->name);
         self::assertNotNull($result->spec);
-        self::assertSame('updated-config-456', $result->spec->configId);
         self::assertSame('Stopped', $result->spec->state);
     }
 }

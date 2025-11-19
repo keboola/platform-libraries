@@ -17,9 +17,40 @@ use KubernetesRuntime\AbstractAPI;
 class App extends AbstractAPI
 {
     /**
+     * Custom response type mappings for App CRD operations
+     */
+    protected $customResponseTypes = [
+        'listAppsKeboolaComV1NamespacedApp' => [
+            '200.' => AppList::class,
+        ],
+        'readAppsKeboolaComV1NamespacedApp' => [
+            '200.' => TheApp::class,
+        ],
+        'readAppsKeboolaComV1NamespacedAppStatus' => [
+            '200.' => TheApp::class,
+        ],
+        'createAppsKeboolaComV1NamespacedApp' => [
+            '200.' => TheApp::class,
+            '201.' => TheApp::class,
+            '202.' => TheApp::class,
+        ],
+        'patchAppsKeboolaComV1NamespacedApp' => [
+            '200.' => TheApp::class,
+            '201.' => TheApp::class,
+        ],
+        'deleteAppsKeboolaComV1NamespacedApp' => [
+            '200.' => Status::class,
+            '202.' => Status::class,
+        ],
+        'deleteAppsKeboolaComV1CollectionNamespacedApp' => [
+            '200.' => Status::class,
+        ],
+    ];
+
+    /**
      * List apps in a namespace
      */
-    public function list(string $namespace, array $queries = []): AppList
+    public function list(string $namespace, array $queries = []): AppList|Status
     {
         return $this->parseResponse(
             $this->client->request(
@@ -36,7 +67,7 @@ class App extends AbstractAPI
     /**
      * Read an app
      */
-    public function read(string $namespace, string $name, array $queries = []): TheApp
+    public function read(string $namespace, string $name, array $queries = []): TheApp|Status
     {
         return $this->parseResponse(
             $this->client->request(
@@ -53,7 +84,7 @@ class App extends AbstractAPI
     /**
      * Read app status
      */
-    public function readStatus(string $namespace, string $name, array $queries = []): TheApp
+    public function readStatus(string $namespace, string $name, array $queries = []): TheApp|Status
     {
         return $this->parseResponse(
             $this->client->request(
@@ -70,7 +101,7 @@ class App extends AbstractAPI
     /**
      * Create an app
      */
-    public function create(string $namespace, TheApp $model, array $queries = []): TheApp
+    public function create(string $namespace, TheApp $model, array $queries = []): TheApp|Status
     {
         return $this->parseResponse(
             $this->client->request(
@@ -88,7 +119,7 @@ class App extends AbstractAPI
     /**
      * Patch an app
      */
-    public function patch(string $namespace, string $name, Patch $model, array $queries = []): TheApp
+    public function patch(string $namespace, string $name, Patch $model, array $queries = []): TheApp|Status
     {
         return $this->parseResponse(
             $this->client->request(

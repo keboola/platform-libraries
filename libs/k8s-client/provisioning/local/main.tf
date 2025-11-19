@@ -17,7 +17,9 @@ terraform {
   }
 
   backend "s3" {
-    role_arn       = "arn:aws:iam::681277395786:role/kbc-local-dev-terraform"
+    assume_role = {
+      role_arn = "arn:aws:iam::681277395786:role/kbc-local-dev-terraform"
+    }
     region         = "eu-central-1"
     bucket         = "local-dev-terraform-bucket"
     dynamodb_table = "local-dev-terraform-table"

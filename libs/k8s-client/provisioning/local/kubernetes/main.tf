@@ -58,6 +58,24 @@ resource "kubernetes_role" "k8s_client" {
     ]
     verbs      = ["get"]
   }
+
+  rule {
+    api_groups = ["apps.keboola.com"]
+    resources  = [
+      "apps",
+      "appruns",
+    ]
+    verbs      = ["get", "list", "delete", "create", "patch", "deletecollection"]
+  }
+
+  rule {
+    api_groups = ["apps.keboola.com"]
+    resources  = [
+      "apps/status",
+      "appruns/status",
+    ]
+    verbs      = ["get"]
+  }
 }
 
 resource "kubernetes_role_binding" "k8s_client" {

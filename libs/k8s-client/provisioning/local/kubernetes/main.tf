@@ -74,7 +74,7 @@ resource "kubernetes_role" "k8s_client" {
       "apps/status",
       "appruns/status",
     ]
-    verbs      = ["get"]
+    verbs      = ["get", "patch"]
   }
 }
 

@@ -32,7 +32,6 @@ class AppsApiClientFunctionalTest extends TestCase
             'metadata' => $metadata,
             'spec' => [
                 'appId' => $metadata['name'] ?? 'test-app',
-                'configId' => 'test-config-123',
                 'projectId' => 'test-project-456',
                 'state' => 'Running',
                 'replicas' => 1,
@@ -81,7 +80,6 @@ class AppsApiClientFunctionalTest extends TestCase
         // Update the app using createOrPatch
         $app->spec = new AppSpec([
             'appId' => 'test-resource-1',
-            'configId' => 'updated-config-456',
             'projectId' => 'test-project-456',
             'state' => 'Stopped',
             'replicas' => 1,

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Keboola\K8sClient;
 
+use Keboola\K8sClient\ApiClient\AppRunsApiClient;
+use Keboola\K8sClient\ApiClient\AppsApiClient;
 use Keboola\K8sClient\ApiClient\ConfigMapsApiClient;
 use Keboola\K8sClient\ApiClient\EventsApiClient;
 use Keboola\K8sClient\ApiClient\IngressesApiClient;
@@ -14,6 +16,8 @@ use Keboola\K8sClient\ApiClient\SecretsApiClient;
 use Keboola\K8sClient\ApiClient\ServicesApiClient;
 use Keboola\K8sClient\Exception\ResourceNotFoundException;
 use Keboola\K8sClient\Exception\TimeoutException;
+use Keboola\K8sClient\Model\Io\Keboola\Apps\V1\App;
+use Keboola\K8sClient\Model\Io\Keboola\Apps\V1\AppRun;
 use Kubernetes\Model\Io\K8s\Api\Core\V1\ConfigMap;
 use Kubernetes\Model\Io\K8s\Api\Core\V1\Event;
 use Kubernetes\Model\Io\K8s\Api\Core\V1\PersistentVolume;
@@ -45,6 +49,8 @@ class KubernetesApiClientFacade
         private readonly PodsApiClient $podsApiClient,
         private readonly SecretsApiClient $secretsApiClient,
         private readonly ServicesApiClient $servicesApiClient,
+        private readonly AppsApiClient $appsApiClient,
+        private readonly AppRunsApiClient $appRunsApiClient,
     ) {
         $this->resourceTypeClientMap = [
             ConfigMap::class => $this->configMapApiClient,
@@ -55,6 +61,8 @@ class KubernetesApiClientFacade
             Service::class => $this->servicesApiClient,
             Ingress::class => $this->ingressesApiClient,
             PersistentVolume::class => $this->persistentVolumesApiClient,
+            App::class => $this->appsApiClient,
+            AppRun::class => $this->appRunsApiClient,
         ];
     }
 
@@ -98,11 +106,23 @@ class KubernetesApiClientFacade
         return $this->persistentVolumesApiClient;
     }
 
+    public function apps(): AppsApiClient
+    {
+        return $this->appsApiClient;
+    }
+
+    public function appRuns(): AppRunsApiClient
+    {
+        return $this->appRunsApiClient;
+    }
+
+    // phpcs:disable Generic.Files.LineLength.MaxExceeded
     /**
-     * @phpstan-template T of ConfigMap|Event|PersistentVolumeClaim|Pod|Secret|Service|Ingress|PersistentVolume
+     * @phpstan-template T of ConfigMap|Event|PersistentVolumeClaim|Pod|Secret|Service|Ingress|PersistentVolume|App|AppRun
      * @phpstan-param class-string<T> $resourceType
      * @phpstan-return T
      */
+    // phpcs:enable Generic.Files.LineLength.MaxExceeded
     public function get(string $resourceType, string $name, array $queries = [])
     {
         // @phpstan-ignore-next-line
@@ -123,10 +143,15 @@ class KubernetesApiClientFacade
      *       new Pod(...),
      *       new Service(...),
      *       new Ingress(...),
+     *       new PersistentVolume(...),
+     *       new App(...),
+     *       new AppRun(...),
      *     ])
      *
-     * @param array<ConfigMap|Event|PersistentVolumeClaim|Pod|Secret|Service|Ingress|PersistentVolume> $resources
-     * @return (ConfigMap|Event|PersistentVolumeClaim|Pod|Secret|Service|Ingress|PersistentVolume)[]
+     * phpcs:disable Generic.Files.LineLength.MaxExceeded
+     * @param array<ConfigMap|Event|PersistentVolumeClaim|Pod|Secret|Service|Ingress|PersistentVolume|App|AppRun> $resources
+     * @return (ConfigMap|Event|PersistentVolumeClaim|Pod|Secret|Service|Ingress|PersistentVolume|App|AppRun)[]
+     * phpcs:enable Generic.Files.LineLength.MaxExceeded
      */
     public function createModels(array $resources, array $queries = []): array
     {
@@ -151,15 +176,20 @@ class KubernetesApiClientFacade
      *       new Service(...),
      *       new Ingress(...),
      *       new PersistentVolume(...),
+     *       new App(...),
+     *       new AppRun(...),
      *     ])
      *
-     * @param array<ConfigMap|Event|PersistentVolumeClaim|Pod|Secret|Service|Ingress|PersistentVolume> $resources
+     * phpcs:disable Generic.Files.LineLength.MaxExceeded
+     * @param array<ConfigMap|Event|PersistentVolumeClaim|Pod|Secret|Service|Ingress|PersistentVolume|App|AppRun> $resources
+     * phpcs:enable Generic.Files.LineLength.MaxExceeded
      * @return Status[]
      */
     public function deleteModels(array $resources, ?DeleteOptions $deleteOptions = null, array $queries = []): array
     {
         return array_map(
             fn($resource) => $this->getApiForResource($resource::class)->delete(
+                // @phpstan-ignore-next-line metadata is always set for valid K8s resources
                 $resource->metadata->name,
                 $deleteOptions,
                 $queries,
@@ -169,7 +199,9 @@ class KubernetesApiClientFacade
     }
 
     /**
-     * @param array<ConfigMap|Event|PersistentVolumeClaim|Pod|Secret|Service|Ingress|PersistentVolume> $resources
+     * phpcs:disable Generic.Files.LineLength.MaxExceeded
+     * @param array<ConfigMap|Event|PersistentVolumeClaim|Pod|Secret|Service|Ingress|PersistentVolume|App|AppRun> $resources
+     * phpcs:enable Generic.Files.LineLength.MaxExceeded
      */
     public function waitWhileExists(array $resources, float $timeout = INF): void
     {
@@ -181,6 +213,7 @@ class KubernetesApiClientFacade
         $updateCollection = function () use (&$resources) {
             foreach ($resources as $i => $resource) {
                 try {
+                    // @phpstan-ignore-next-line metadata is always set for valid K8s resources
                     $this->getApiForResource($resource::class)->get($resource->metadata->name);
                     $this->logger->debug('Resource still exists', [
                         'resource' => $resource,
@@ -209,7 +242,7 @@ class KubernetesApiClientFacade
     }
 
     /**
-     * @template T of ConfigMap|Event|PersistentVolumeClaim|Pod|Secret|Service|Ingress|PersistentVolume
+     * @template T of ConfigMap|Event|PersistentVolumeClaim|Pod|Secret|Service|Ingress|PersistentVolume|App|AppRun
      * @param class-string<T> $resourceType
      * @return iterable<T>
      */
@@ -235,13 +268,13 @@ class KubernetesApiClientFacade
      * Resources are delete sequentially by API type. If some delete request fails, the error is logged and other APIs
      * are still called. Finally, the last exception is re-thrown.
      *
-     * @template T of ConfigMap|Event|PersistentVolumeClaim|Pod|Secret|Service|Ingress|PersistentVolume
+     * @template T of ConfigMap|Event|PersistentVolumeClaim|Pod|Secret|Service|Ingress|PersistentVolume|App|AppRun
      * @param array{
      *     resourceTypes?: class-string<T>[]
      * } $queries
      *     - resourceTypes: (optional) array of resource types to delete, by default is [ConfigMap::class,
      *         Ingress::class, PersistentVolumeClaim::class, PersistentVolume::class, Pod::class, Secret::class,
-     *         Service::class]
+     *         Service::class, App::class, AppRun::class]
      *     Other keys represent additional query parameters for the Kubernetes API's deleteCollection endpoint.
      *
      * Example:
@@ -274,7 +307,7 @@ class KubernetesApiClientFacade
     }
 
     /**
-     * @template T of ConfigMap|Event|PersistentVolumeClaim|Pod|Secret|Service|Ingress|PersistentVolume
+     * @template T of ConfigMap|Event|PersistentVolumeClaim|Pod|Secret|Service|Ingress|PersistentVolume|App|AppRun
      * @param class-string<T> $resourceType
      */
     public function checkResourceExists(string $resourceType, string $resourceName): bool
@@ -298,10 +331,12 @@ class KubernetesApiClientFacade
      *         ($resourceType is class-string<Service> ? ServicesApiClient :
      *         ($resourceType is class-string<Ingress> ? IngressesApiClient :
      *         ($resourceType is class-string<PersistentVolume> ? PersistentVolumesApiClient :
-     *         never))))))))
+     *         ($resourceType is class-string<App> ? AppsApiClient :
+     *         ($resourceType is class-string<AppRun> ? AppRunsApiClient :
+     *         never))))))))))
      */
     // phpcs:ignore Generic.Files.LineLength.MaxExceeded
-    private function getApiForResource(string $resourceType): ConfigMapsApiClient|EventsApiClient|PersistentVolumeClaimsApiClient|PodsApiClient|SecretsApiClient|ServicesApiClient|IngressesApiClient|PersistentVolumesApiClient
+    private function getApiForResource(string $resourceType): ConfigMapsApiClient|EventsApiClient|PersistentVolumeClaimsApiClient|PodsApiClient|SecretsApiClient|ServicesApiClient|IngressesApiClient|PersistentVolumesApiClient|AppsApiClient|AppRunsApiClient
     {
         if (!array_key_exists($resourceType, $this->resourceTypeClientMap)) {
             throw new RuntimeException(sprintf(

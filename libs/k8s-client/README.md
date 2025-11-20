@@ -90,6 +90,30 @@ docker compose run --rm dev composer install
 docker compose run --rm dev composer ci
 ```
 
+### Installing AppRun CRD on Dev/CI Clusters
+The functional tests require App and AppRun Custom Resource Definitions (CRDs) to be installed on the Kubernetes cluster. For manually maintained CI clusters, install CRDs manually on **all three clusters** (GCP, AWS, Azure):
+
+```bash
+# Download App and AppRun CRD definitions from keboola-operator repository:
+# - https://github.com/keboola/keboola-operator/blob/canary-operator/config/crd/bases/apps.keboola.com_apps.yaml
+# - https://github.com/keboola/keboola-operator/blob/canary-operator/config/crd/bases/apps.keboola.com_appruns.yaml
+# Save files locally as apps.keboola.com_appruns.yaml
+
+# Install on GCP CI cluster
+kubectl --context="gke_kbc-ci-platform-services_us-central1_gcp-ci-ps" apply -f apps.keboola.com_apps.yaml
+kubectl --context="gke_kbc-ci-platform-services_us-central1_gcp-ci-ps" apply -f apps.keboola.com_appruns.yaml
+
+# Install on AWS CI cluster
+kubectl --context="arn:aws:eks:eu-central-1:480319613404:cluster/ci-ps-eu-central-1" apply -f apps.keboola.com_apps.yaml
+kubectl --context="arn:aws:eks:eu-central-1:480319613404:cluster/ci-ps-eu-central-1" apply -f apps.keboola.com_appruns.yaml
+
+# Install on Azure CI cluster
+kubectl --context="sandboxes-ci-2021-aks" apply -f apps.keboola.com_apps.yaml
+kubectl --context="sandboxes-ci-2021-aks" apply -f apps.keboola.com_appruns.yaml
+```
+
+This is a one-time setup per cluster. The CRD defines the schema for AppRun resources used for billing and cost tracking.
+
 
 ## Implementing new API
 Only few K8S APIs we needed are implement so far. To implement new API, do following:

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Keboola\K8sClient\ClientFacadeFactory;
 
+use Keboola\K8sClient\ApiClient\AppRunsApiClient;
+use Keboola\K8sClient\ApiClient\AppsApiClient;
 use Keboola\K8sClient\ApiClient\ConfigMapsApiClient;
 use Keboola\K8sClient\ApiClient\EventsApiClient;
 use Keboola\K8sClient\ApiClient\IngressesApiClient;
@@ -50,6 +52,8 @@ class GenericClientFacadeFactory
             new PodsApiClient($apiClient, new PodWithLogStream()),
             new SecretsApiClient($apiClient),
             new ServicesApiClient($apiClient),
+            new AppsApiClient($apiClient),
+            new AppRunsApiClient($apiClient),
         );
     }
 }

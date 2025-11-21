@@ -43,6 +43,7 @@ class AppModelTest extends TestCase
                 'projectId' => 'project-789',
                 'state' => 'Running',
                 'replicas' => 1,
+                'autoRestartEnabled' => false,
                 'features' => [
                     'storageToken' => [
                         'description' => '[_internal][app] App 12345',
@@ -170,6 +171,7 @@ class AppModelTest extends TestCase
         self::assertSame('project-789', $app->spec->projectId);
         self::assertSame('Running', $app->spec->state);
         self::assertSame(1, $app->spec->replicas);
+        self::assertFalse($app->spec->autoRestartEnabled);
 
         // Features
         self::assertNotNull($app->spec->features);
@@ -347,6 +349,11 @@ class AppModelTest extends TestCase
         yield 'wrong observedGeneration type - string instead of int' => [
             'data' => ['status' => ['observedGeneration' => 'invalid']],
             'expectedMessage' => 'Cannot assign string to property',
+        ];
+
+        yield 'wrong autoRestartEnabled type - string instead of bool' => [
+            'data' => ['spec' => ['autoRestartEnabled' => []]],
+            'expectedMessage' => 'Cannot assign array to property',
         ];
     }
 

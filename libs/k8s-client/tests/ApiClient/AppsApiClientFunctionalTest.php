@@ -168,10 +168,16 @@ class AppsApiClientFunctionalTest extends TestCase
                 self::getTestResourcesLabelName() => (string) getenv('K8S_NAMESPACE'),
             ],
         ]);
-        $this->apiClient->create($app);
+        $created = $this->apiClient->create($app);
 
-        // Update the app using createOrPatch
+        // Verify initial state
+        self::assertNotNull($created->spec);
+        self::assertSame('Running', $created->spec->state);
+        self::assertSame(1, $created->spec->replicas);
+
+        // Update state and replicas
         self::assertNotNull($app->spec);
+        $app->spec->replicas = 3;
         $app->spec->state = 'Stopped';
 
         $result = $this->apiClient->createOrPatch($app);
@@ -179,6 +185,7 @@ class AppsApiClientFunctionalTest extends TestCase
         self::assertNotNull($result->metadata);
         self::assertSame('test-patch-existing-app', $result->metadata->name);
         self::assertNotNull($result->spec);
+        self::assertSame(3, $result->spec->replicas);
         self::assertSame('Stopped', $result->spec->state);
     }
 }

@@ -9,7 +9,6 @@ use Keboola\K8sClient\KubernetesApiClient;
 use Keboola\K8sClient\Model\Io\Keboola\Apps\V1\AppRun;
 use Keboola\K8sClient\Model\Io\Keboola\Apps\V1\AppRunList;
 use Kubernetes\Model\Io\K8s\Apimachinery\Pkg\Apis\Meta\V1\Patch;
-use KubernetesRuntime\APIPatchOperation;
 
 /**
  * @template-extends BaseNamespaceApiClient<AppRunsApi, AppRunList, AppRun>
@@ -29,10 +28,14 @@ class AppRunsApiClient extends BaseNamespaceApiClient
     /**
      * Patch an AppRun using merge-patch strategy
      */
-    public function patch(string $name, Patch $model, array $queries = []): AppRun
-    {
+    public function patch(
+        string $name,
+        Patch $model,
+        array $queries = [],
+        PatchStrategy $strategy = PatchStrategy::JsonMergePatch,
+    ): AppRun {
         $data = $model->getArrayCopy();
-        $data['patchOperation'] = APIPatchOperation::MERGE_PATCH;
+        $data['patchOperation'] = $strategy->value;
 
         /** @var AppRun $appRun */
         $appRun = parent::patch($name, new Patch($data), $queries);

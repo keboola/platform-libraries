@@ -31,10 +31,14 @@ class AppsApiClient extends BaseNamespaceApiClient
     /**
      * Patch an App using a merge-patch strategy
      */
-    public function patch(string $name, App|Patch $model, array $queries = []): App
-    {
+    public function patch(
+        string $name,
+        App|Patch $model,
+        array $queries = [],
+        PatchStrategy $strategy = PatchStrategy::JsonMergePatch,
+    ): App {
         $data = $model->getArrayCopy();
-        $data['patchOperation'] = APIPatchOperation::MERGE_PATCH;
+        $data['patchOperation'] = $strategy->value;
 
         /** @var App $app */
         $app = parent::patch($name, new Patch($data), $queries);
@@ -45,8 +49,11 @@ class AppsApiClient extends BaseNamespaceApiClient
     /**
      * Create or patch an app (patch if exists, create if not)
      */
-    public function createOrPatch(App $app, array $queries = []): App
-    {
+    public function createOrPatch(
+        App $app,
+        array $queries = [],
+        PatchStrategy $strategy = PatchStrategy::JsonMergePatch,
+    ): App {
         $name = $app->metadata?->name;
         if ($name === null) {
             throw new InvalidArgumentException('App metadata.name is required');
@@ -54,7 +61,7 @@ class AppsApiClient extends BaseNamespaceApiClient
 
         try {
             // Try to patch first
-            return $this->patch($name, $app, $queries);
+            return $this->patch($name, $app, $queries, $strategy);
         } catch (ResourceNotFoundException) {
             // If not found, create it
             return $this->create($app, $queries);

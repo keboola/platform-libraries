@@ -64,27 +64,11 @@ trait MysqlProxyTestTrait
         return DriverManager::getConnection([
             'driver' => 'pdo_mysql',
             'host' => $proxyHost,
-            'port' => (int) $this->getListenPort($mysqlProxy),
+            'port' => (int) $mysqlProxy->getListenPort(),
             'user' => $mysqlUser,
             'password' => $mysqlPassword,
             'dbname' => $mysqlDb,
         ], $configuration);
-    }
-
-    public function getListenIp(Proxy $proxy): string
-    {
-        $ip = implode(':', explode(':', $proxy->getListen(), -1));
-        if (str_starts_with($ip, '[')) {
-            $ip = substr($ip, 1, -1);
-        }
-        return $ip;
-    }
-
-    public function getListenPort(Proxy $proxy): string
-    {
-        $ip = $this->getListenIp($proxy);
-        $start = str_starts_with($proxy->getListen(), '[') ? 3 : 1;
-        return substr($proxy->getListen(), $start + strlen($ip));
     }
 
     /**

@@ -18,7 +18,6 @@ use Keboola\K8sClient\Exception\ResourceNotFoundException;
 use Keboola\K8sClient\Exception\TimeoutException;
 use Keboola\K8sClient\KubernetesApiClientFacade;
 use Keboola\K8sClient\Model\Io\Keboola\Apps\V1\App;
-use Keboola\K8sClient\PatchStrategy;
 use Kubernetes\Model\Io\K8s\Api\Core\V1\Event;
 use Kubernetes\Model\Io\K8s\Api\Core\V1\PersistentVolume;
 use Kubernetes\Model\Io\K8s\Api\Core\V1\Pod;
@@ -1050,10 +1049,7 @@ class KubernetesApiClientFacadeTest extends TestCase
         self::assertTrue($facade->checkResourceExists(Pod::class, 'pod-name'));
     }
 
-    /**
-     * @dataProvider providePatchStrategy
-     */
-    public function testPatchWithStrategy(?PatchStrategy $strategy, string $expectedOperation): void
+    public function testMergePatch(): void
     {
         $app = new App([
             'metadata' => ['name' => 'test-app'],
@@ -1063,11 +1059,14 @@ class KubernetesApiClientFacadeTest extends TestCase
         $appsApiClient = $this->createMock(AppsApiClient::class);
         $appsApiClient->expects(self::once())
             ->method('patch')
-            ->willReturnCallback(function ($name, $patch) use ($expectedOperation, $app) {
+            ->willReturnCallback(function ($name, $patch) use ($app) {
+                self::assertSame('test-app', $name);
                 self::assertInstanceOf(Patch::class, $patch);
                 $data = $patch->getArrayCopy();
                 self::assertArrayHasKey('patchOperation', $data);
-                self::assertSame($expectedOperation, $data['patchOperation']);
+                self::assertSame('merge-patch', $data['patchOperation']);
+                self::assertArrayHasKey('spec', $data);
+                self::assertSame(3, $data['spec']['replicas']);
                 return $app;
             });
 
@@ -1085,35 +1084,8 @@ class KubernetesApiClientFacadeTest extends TestCase
             $this->createMock(AppRunsApiClient::class),
         );
 
-        if ($strategy === null) {
-            $result = $facade->patch($app);
-        } else {
-            $result = $facade->patch($app, $strategy);
-        }
+        $result = $facade->mergePatch($app);
 
         self::assertSame($app, $result);
-    }
-
-    public static function providePatchStrategy(): iterable
-    {
-        yield 'default strategy (not specified)' => [
-            'strategy' => null,
-            'expectedOperation' => 'merge-patch',
-        ];
-
-        yield 'JsonPatch' => [
-            'strategy' => PatchStrategy::JsonPatch,
-            'expectedOperation' => 'patch',
-        ];
-
-        yield 'JsonMergePatch' => [
-            'strategy' => PatchStrategy::JsonMergePatch,
-            'expectedOperation' => 'merge-patch',
-        ];
-
-        yield 'StrategicMergePatch' => [
-            'strategy' => PatchStrategy::StrategicMergePatch,
-            'expectedOperation' => 'strategic-merge-patch',
-        ];
     }
 }

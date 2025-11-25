@@ -112,7 +112,7 @@ class KubernetesApiClientFacadeFunctionalTest extends TestCase
         self::assertCount(0, $noPods);
     }
 
-    public function testPatch(): void
+    public function testMergePatch(): void
     {
         // Create initial app
         $app = new App([
@@ -146,7 +146,7 @@ class KubernetesApiClientFacadeFunctionalTest extends TestCase
         $app->spec->replicas = 3;
         $app->spec->state = 'Stopped';
 
-        $patched = $this->apiClient->patch($app);
+        $patched = $this->apiClient->mergePatch($app);
 
         self::assertNotNull($patched->metadata);
         self::assertSame('test-patch-app', $patched->metadata->name);
@@ -155,7 +155,7 @@ class KubernetesApiClientFacadeFunctionalTest extends TestCase
         self::assertSame('Stopped', $patched->spec->state);
     }
 
-    public function testCreateOrPatchCreatesNewResource(): void
+    public function testCreateOrMergePatchCreatesNewResource(): void
     {
         $appRun = new AppRun([
             'metadata' => [
@@ -177,7 +177,7 @@ class KubernetesApiClientFacadeFunctionalTest extends TestCase
             ],
         ]);
 
-        $result = $this->apiClient->createOrPatch($appRun);
+        $result = $this->apiClient->createOrMergePatch($appRun);
 
         self::assertNotNull($result->metadata);
         self::assertSame('test-create-apprun', $result->metadata->name);
@@ -185,7 +185,7 @@ class KubernetesApiClientFacadeFunctionalTest extends TestCase
         self::assertSame('Running', $result->spec->state);
     }
 
-    public function testCreateOrPatchUpdatesExistingResource(): void
+    public function testCreateOrMergePatchUpdatesExistingResource(): void
     {
         // Create initial app
         $app = new App([
@@ -214,12 +214,12 @@ class KubernetesApiClientFacadeFunctionalTest extends TestCase
         self::assertSame('Running', $created->spec->state);
         self::assertSame(1, $created->spec->replicas);
 
-        // Update via createOrPatch (should patch since it exists)
+        // Update via createOrMergePatch (should patch since it exists)
         self::assertNotNull($app->spec);
         $app->spec->replicas = 5;
         $app->spec->state = 'Stopped';
 
-        $result = $this->apiClient->createOrPatch($app);
+        $result = $this->apiClient->createOrMergePatch($app);
 
         self::assertNotNull($result->metadata);
         self::assertSame('test-createorpatch-app', $result->metadata->name);

@@ -31,6 +31,7 @@ use Kubernetes\Model\Io\K8s\Apimachinery\Pkg\Apis\Meta\V1\DeleteOptions;
 use Kubernetes\Model\Io\K8s\Apimachinery\Pkg\Apis\Meta\V1\Patch;
 use Kubernetes\Model\Io\K8s\Apimachinery\Pkg\Apis\Meta\V1\Status;
 use KubernetesRuntime\AbstractModel;
+use KubernetesRuntime\APIPatchOperation;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 use Throwable;
@@ -201,19 +202,18 @@ class KubernetesApiClientFacade
     }
 
     /**
-     * Patch a resource using the specified patch strategy.
+     * Patch a resource using JSON merge-patch strategy.
      *
      * Example:
      *     $app = new App(['metadata' => ['name' => 'my-app'], 'spec' => ['replicas' => 3]]);
-     *     $updatedApp = $apiFacade->patch($app);
+     *     $updatedApp = $apiFacade->mergePatch($app);
      *
      * @template T of ConfigMap|Event|PersistentVolumeClaim|Pod|Secret|Service|Ingress|PersistentVolume|App|AppRun
      * @param T $resource The resource to patch (name extracted from metadata)
      * @return T The patched resource
      */
-    public function patch(
+    public function mergePatch(
         AbstractModel $resource,
-        PatchStrategy $strategy = PatchStrategy::JsonMergePatch,
         array $queries = [],
     ): AbstractModel {
         $name = $resource->metadata?->name;
@@ -222,34 +222,33 @@ class KubernetesApiClientFacade
         }
 
         $data = $resource->getArrayCopy();
-        $data['patchOperation'] = $strategy->value;
+        $data['patchOperation'] = APIPatchOperation::MERGE_PATCH;
 
         /** @var T */
         return $this->getApiForResource($resource::class)->patch($name, new Patch($data), $queries);
     }
 
     /**
-     * Create or patch a resource (patch if exists, create if not).
+     * Create or patch a resource using JSON merge-patch (patch if exists, create if not).
      *
      * This is a convenience method that attempts to patch the resource first and falls back to creating it
      * if it doesn't exist.
      *
      * Example:
      *     $app = new App(['metadata' => ['name' => 'my-app'], 'spec' => ['replicas' => 3]]);
-     *     $result = $apiFacade->createOrPatch($app);
+     *     $result = $apiFacade->createOrMergePatch($app);
      *
      * @template T of ConfigMap|Event|PersistentVolumeClaim|Pod|Secret|Service|Ingress|PersistentVolume|App|AppRun
      * @param T $resource The resource to create or patch
      * @return T The created/patched resource
      */
-    public function createOrPatch(
+    public function createOrMergePatch(
         AbstractModel $resource,
-        PatchStrategy $strategy = PatchStrategy::JsonMergePatch,
         array $queries = [],
     ): AbstractModel {
         try {
             /** @var T */
-            return $this->patch($resource, $strategy, $queries);
+            return $this->mergePatch($resource, $queries);
         } catch (ResourceNotFoundException) {
             /** @var T */
             return $this->getApiForResource($resource::class)->create($resource, $queries);

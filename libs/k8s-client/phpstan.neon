@@ -7,5 +7,13 @@ parameters:
         - tests/stubs/K8s.stub
     ignoreErrors:
         - identifier: missingType.iterableValue
+        -
+            # BaseApi: $this->client->request() returns mixed (Guzzle Client), but we know it returns ResponseInterface
+            message: '#Parameter \#1 \$response of method KubernetesRuntime\\AbstractAPI::parseResponse\(\) expects Psr\\Http\\Message\\ResponseInterface, mixed given\.#'
+            path: src/BaseApi/*
+        -
+            # BaseApi: parseResponse() returns mixed (external library), but actual types are defined by method return types
+            message: '#Method .+ should return .+ but returns mixed\.#'
+            path: src/BaseApi/*
 includes:
     - vendor/phpstan/phpstan-phpunit/extension.neon

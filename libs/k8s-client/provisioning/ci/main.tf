@@ -2,17 +2,17 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 4.52"
+      version = "~> 6.8"
     }
 
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "~> 3.14"
+      version = "~> 4.39"
     }
 
     kubernetes = {
       source  = "hashicorp/kubernetes"
-      version = "~> 2.17"
+      version = "~> 2.38"
     }
   }
 

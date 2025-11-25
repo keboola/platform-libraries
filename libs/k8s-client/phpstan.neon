@@ -8,15 +8,12 @@ parameters:
     ignoreErrors:
         - identifier: missingType.iterableValue
         -
+            # BaseApi: $this->client->request() returns mixed (Guzzle Client), but we know it returns ResponseInterface
             message: '#Parameter \#1 \$response of method KubernetesRuntime\\AbstractAPI::parseResponse\(\) expects Psr\\Http\\Message\\ResponseInterface, mixed given\.#'
             path: src/BaseApi/*
         -
+            # BaseApi: parseResponse() returns mixed (external library), but actual types are defined by method return types
             message: '#Method .+ should return .+ but returns mixed\.#'
             path: src/BaseApi/*
-        # AppsApiClientFunctionalTest: PHPStan is overly strict with custom CRD types in generic trait
-        # The trait correctly handles generic cases, but PHPStan proves certain branches impossible with our specific types
-        -
-            message: '#.+#'
-            path: tests/ApiClient/BaseNamespaceApiClientTestCase.php
 includes:
     - vendor/phpstan/phpstan-phpunit/extension.neon

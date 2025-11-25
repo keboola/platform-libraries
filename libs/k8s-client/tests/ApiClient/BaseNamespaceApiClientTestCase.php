@@ -116,7 +116,10 @@ trait BaseNamespaceApiClientTestCase
     {
         $result = $this->apiClient->list();
 
-        $originalItemNames = array_map(fn($resource) => $resource->metadata->name, $result->items);
+        $originalItemNames = array_map(function ($resource) {
+            self::assertNotNull($resource->metadata);
+            return $resource->metadata->name;
+        }, $result->items);
 
         $this->baseApiClient->create((string) getenv('K8S_NAMESPACE'), $this->createResource([
             'name' => 'test-resource-1',
@@ -156,7 +159,10 @@ trait BaseNamespaceApiClientTestCase
         self::assertCount(1, $result->items);
         self::assertSame(
             ['test-resource-1'],
-            array_map(fn($resource) => $resource->metadata->name, $result->items),
+            array_map(function ($resource) {
+                self::assertNotNull($resource->metadata);
+                return $resource->metadata->name;
+            }, $result->items),
         );
     }
 
@@ -171,6 +177,7 @@ trait BaseNamespaceApiClientTestCase
         ]));
 
         $result = $this->apiClient->get('test-resource-1');
+        self::assertNotNull($result->metadata);
         self::assertSame('test-resource-1', $result->metadata->name);
     }
 
@@ -195,6 +202,8 @@ trait BaseNamespaceApiClientTestCase
         $createdResource = $this->apiClient->create($resourceToCreate);
 
         self::assertNotSame($resourceToCreate, $createdResource);
+        self::assertNotNull($resourceToCreate->metadata);
+        self::assertNotNull($createdResource->metadata);
         self::assertSame($resourceToCreate->metadata->name, $createdResource->metadata->name);
 
         $result = $this->baseApiClient->list((string) getenv('K8S_NAMESPACE'), [
@@ -202,6 +211,7 @@ trait BaseNamespaceApiClientTestCase
         ]);
         assert(is_object($result) && property_exists($result, 'items'));
 
+        self::assertNotNull($createdResource->metadata);
         $this->assertResultItems([$createdResource->metadata->name], $result->items);
     }
 

@@ -17,6 +17,8 @@ use Keboola\K8sClient\ApiClient\ServicesApiClient;
 use Keboola\K8sClient\Exception\ResourceNotFoundException;
 use Keboola\K8sClient\Exception\TimeoutException;
 use Keboola\K8sClient\KubernetesApiClientFacade;
+use Keboola\K8sClient\Model\Io\Keboola\Apps\V1\App;
+use Keboola\K8sClient\PatchStrategy;
 use Kubernetes\Model\Io\K8s\Api\Core\V1\Event;
 use Kubernetes\Model\Io\K8s\Api\Core\V1\PersistentVolume;
 use Kubernetes\Model\Io\K8s\Api\Core\V1\Pod;
@@ -25,6 +27,7 @@ use Kubernetes\Model\Io\K8s\Api\Core\V1\Secret;
 use Kubernetes\Model\Io\K8s\Api\Core\V1\Service;
 use Kubernetes\Model\Io\K8s\Api\Networking\V1\Ingress;
 use Kubernetes\Model\Io\K8s\Apimachinery\Pkg\Apis\Meta\V1\DeleteOptions;
+use Kubernetes\Model\Io\K8s\Apimachinery\Pkg\Apis\Meta\V1\Patch;
 use Kubernetes\Model\Io\K8s\Apimachinery\Pkg\Apis\Meta\V1\Status;
 use Monolog\Handler\TestHandler;
 use Monolog\Logger;
@@ -1045,5 +1048,72 @@ class KubernetesApiClientFacadeTest extends TestCase
 
         self::assertFalse($facade->checkResourceExists(Secret::class, 'secret-name'));
         self::assertTrue($facade->checkResourceExists(Pod::class, 'pod-name'));
+    }
+
+    /**
+     * @dataProvider providePatchStrategy
+     */
+    public function testPatchWithStrategy(?PatchStrategy $strategy, string $expectedOperation): void
+    {
+        $app = new App([
+            'metadata' => ['name' => 'test-app'],
+            'spec' => ['replicas' => 3],
+        ]);
+
+        $appsApiClient = $this->createMock(AppsApiClient::class);
+        $appsApiClient->expects(self::once())
+            ->method('patch')
+            ->willReturnCallback(function ($name, $patch) use ($expectedOperation, $app) {
+                self::assertInstanceOf(Patch::class, $patch);
+                $data = $patch->getArrayCopy();
+                self::assertArrayHasKey('patchOperation', $data);
+                self::assertSame($expectedOperation, $data['patchOperation']);
+                return $app;
+            });
+
+        $facade = new KubernetesApiClientFacade(
+            $this->logger,
+            $this->createMock(ConfigMapsApiClient::class),
+            $this->createMock(EventsApiClient::class),
+            $this->createMock(IngressesApiClient::class),
+            $this->createMock(PersistentVolumeClaimsApiClient::class),
+            $this->createMock(PersistentVolumesApiClient::class),
+            $this->createMock(PodsApiClient::class),
+            $this->createMock(SecretsApiClient::class),
+            $this->createMock(ServicesApiClient::class),
+            $appsApiClient,
+            $this->createMock(AppRunsApiClient::class),
+        );
+
+        if ($strategy === null) {
+            $result = $facade->patch($app);
+        } else {
+            $result = $facade->patch($app, $strategy);
+        }
+
+        self::assertSame($app, $result);
+    }
+
+    public static function providePatchStrategy(): iterable
+    {
+        yield 'default strategy (not specified)' => [
+            'strategy' => null,
+            'expectedOperation' => 'merge-patch',
+        ];
+
+        yield 'JsonPatch' => [
+            'strategy' => PatchStrategy::JsonPatch,
+            'expectedOperation' => 'patch',
+        ];
+
+        yield 'JsonMergePatch' => [
+            'strategy' => PatchStrategy::JsonMergePatch,
+            'expectedOperation' => 'merge-patch',
+        ];
+
+        yield 'StrategicMergePatch' => [
+            'strategy' => PatchStrategy::StrategicMergePatch,
+            'expectedOperation' => 'strategic-merge-patch',
+        ];
     }
 }

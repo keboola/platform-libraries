@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Keboola\K8sClient\ApiClient;
+namespace Keboola\K8sClient;
 
 use KubernetesRuntime\APIPatchOperation;
 

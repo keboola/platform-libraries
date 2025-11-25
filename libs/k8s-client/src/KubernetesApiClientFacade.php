@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\K8sClient;
 
+use InvalidArgumentException;
 use Keboola\K8sClient\ApiClient\AppRunsApiClient;
 use Keboola\K8sClient\ApiClient\AppsApiClient;
 use Keboola\K8sClient\ApiClient\ConfigMapsApiClient;
@@ -27,6 +28,7 @@ use Kubernetes\Model\Io\K8s\Api\Core\V1\Secret;
 use Kubernetes\Model\Io\K8s\Api\Core\V1\Service;
 use Kubernetes\Model\Io\K8s\Api\Networking\V1\Ingress;
 use Kubernetes\Model\Io\K8s\Apimachinery\Pkg\Apis\Meta\V1\DeleteOptions;
+use Kubernetes\Model\Io\K8s\Apimachinery\Pkg\Apis\Meta\V1\Patch;
 use Kubernetes\Model\Io\K8s\Apimachinery\Pkg\Apis\Meta\V1\Status;
 use KubernetesRuntime\AbstractModel;
 use Psr\Log\LoggerInterface;
@@ -196,6 +198,62 @@ class KubernetesApiClientFacade
             ),
             $resources,
         );
+    }
+
+    /**
+     * Patch a resource using the specified patch strategy.
+     *
+     * Example:
+     *     $app = new App(['metadata' => ['name' => 'my-app'], 'spec' => ['replicas' => 3]]);
+     *     $updatedApp = $apiFacade->patch($app);
+     *
+     * @template T of ConfigMap|Event|PersistentVolumeClaim|Pod|Secret|Service|Ingress|PersistentVolume|App|AppRun
+     * @param T $resource The resource to patch (name extracted from metadata)
+     * @return T The patched resource
+     */
+    public function patch(
+        AbstractModel $resource,
+        PatchStrategy $strategy = PatchStrategy::JsonMergePatch,
+        array $queries = [],
+    ): AbstractModel {
+        $name = $resource->metadata?->name;
+        if ($name === null) {
+            throw new InvalidArgumentException('Resource metadata.name is required for patch operation');
+        }
+
+        $data = $resource->getArrayCopy();
+        $data['patchOperation'] = $strategy->value;
+
+        /** @var T */
+        return $this->getApiForResource($resource::class)->patch($name, new Patch($data), $queries);
+    }
+
+    /**
+     * Create or patch a resource (patch if exists, create if not).
+     *
+     * This is a convenience method that attempts to patch the resource first and falls back to creating it
+     * if it doesn't exist.
+     *
+     * Example:
+     *     $app = new App(['metadata' => ['name' => 'my-app'], 'spec' => ['replicas' => 3]]);
+     *     $result = $apiFacade->createOrPatch($app);
+     *
+     * @template T of ConfigMap|Event|PersistentVolumeClaim|Pod|Secret|Service|Ingress|PersistentVolume|App|AppRun
+     * @param T $resource The resource to create or patch
+     * @return T The created/patched resource
+     */
+    public function createOrPatch(
+        AbstractModel $resource,
+        PatchStrategy $strategy = PatchStrategy::JsonMergePatch,
+        array $queries = [],
+    ): AbstractModel {
+        try {
+            /** @var T */
+            return $this->patch($resource, $strategy, $queries);
+        } catch (ResourceNotFoundException) {
+            /** @var T */
+            return $this->getApiForResource($resource::class)->create($resource, $queries);
+        }
     }
 
     /**

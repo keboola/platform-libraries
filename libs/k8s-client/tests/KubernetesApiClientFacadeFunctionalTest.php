@@ -6,6 +6,8 @@ namespace Keboola\K8sClient\Tests;
 
 use Keboola\K8sClient\ClientFacadeFactory\GenericClientFacadeFactory;
 use Keboola\K8sClient\KubernetesApiClientFacade;
+use Keboola\K8sClient\Model\Io\Keboola\Apps\V1\App;
+use Keboola\K8sClient\Model\Io\Keboola\Apps\V1\AppRun;
 use Keboola\K8sClient\RetryProxyFactory;
 use Kubernetes\Model\Io\K8s\Api\Core\V1\Pod;
 use Kubernetes\Model\Io\K8s\Apimachinery\Pkg\Apis\Meta\V1\DeleteOptions;
@@ -108,5 +110,121 @@ class KubernetesApiClientFacadeFunctionalTest extends TestCase
 
         $noPods = [...$this->apiClient->listMatching(Pod::class, ['labelSelector' => 'foo=bar'])];
         self::assertCount(0, $noPods);
+    }
+
+    public function testPatch(): void
+    {
+        // Create initial app
+        $app = new App([
+            'metadata' => [
+                'name' => 'test-patch-app',
+                'labels' => ['app' => 'KubernetesApiClientFacadeFunctionalTest'],
+            ],
+            'spec' => [
+                'appId' => 'app-123',
+                'projectId' => 'project-456',
+                'state' => 'Running',
+                'replicas' => 1,
+                'podSpec' => [
+                    'restartPolicy' => 'Always',
+                    'containers' => [[
+                        'name' => 'main',
+                        'image' => 'busybox',
+                    ]],
+                ],
+            ],
+        ]);
+        $created = $this->apiClient->apps()->create($app);
+
+        // Verify initial state
+        self::assertNotNull($created->spec);
+        self::assertSame('Running', $created->spec->state);
+        self::assertSame(1, $created->spec->replicas);
+
+        // Update via patch
+        self::assertNotNull($app->spec);
+        $app->spec->replicas = 3;
+        $app->spec->state = 'Stopped';
+
+        $patched = $this->apiClient->patch($app);
+
+        self::assertNotNull($patched->metadata);
+        self::assertSame('test-patch-app', $patched->metadata->name);
+        self::assertNotNull($patched->spec);
+        self::assertSame(3, $patched->spec->replicas);
+        self::assertSame('Stopped', $patched->spec->state);
+    }
+
+    public function testCreateOrPatchCreatesNewResource(): void
+    {
+        $appRun = new AppRun([
+            'metadata' => [
+                'name' => 'test-create-apprun',
+                'labels' => ['app' => 'KubernetesApiClientFacadeFunctionalTest'],
+            ],
+            'spec' => [
+                'podRef' => [
+                    'name' => 'test-pod',
+                    'uid' => '550e8400-e29b-41d4-a716-446655440000',
+                ],
+                'appRef' => [
+                    'name' => 'test-app',
+                    'appId' => 'app-123',
+                    'projectId' => 'project-456',
+                ],
+                'createdAt' => '2025-01-15T12:00:00Z',
+                'state' => 'Running',
+            ],
+        ]);
+
+        $result = $this->apiClient->createOrPatch($appRun);
+
+        self::assertNotNull($result->metadata);
+        self::assertSame('test-create-apprun', $result->metadata->name);
+        self::assertNotNull($result->spec);
+        self::assertSame('Running', $result->spec->state);
+    }
+
+    public function testCreateOrPatchUpdatesExistingResource(): void
+    {
+        // Create initial app
+        $app = new App([
+            'metadata' => [
+                'name' => 'test-createorpatch-app',
+                'labels' => ['app' => 'KubernetesApiClientFacadeFunctionalTest'],
+            ],
+            'spec' => [
+                'appId' => 'app-123',
+                'projectId' => 'project-456',
+                'state' => 'Running',
+                'replicas' => 1,
+                'podSpec' => [
+                    'restartPolicy' => 'Always',
+                    'containers' => [[
+                        'name' => 'main',
+                        'image' => 'busybox',
+                    ]],
+                ],
+            ],
+        ]);
+        $created = $this->apiClient->apps()->create($app);
+
+        // Verify initial state
+        self::assertNotNull($created->spec);
+        self::assertSame('Running', $created->spec->state);
+        self::assertSame(1, $created->spec->replicas);
+
+        // Update via createOrPatch (should patch since it exists)
+        self::assertNotNull($app->spec);
+        $app->spec->replicas = 5;
+        $app->spec->state = 'Stopped';
+
+        $result = $this->apiClient->createOrPatch($app);
+
+        self::assertNotNull($result->metadata);
+        self::assertSame('test-createorpatch-app', $result->metadata->name);
+        self::assertNotNull($result->spec);
+        self::assertSame(5, $result->spec->replicas);
+        self::assertSame('Stopped', $result->spec->state);
     }
 }

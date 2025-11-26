@@ -25,45 +25,57 @@ class AppContainer extends AbstractModel
 {
     /**
      * Name of the container
+     *
+     * @var string|null
      */
-    public string|null $name = null;
+    public $name = null;
 
     /**
      * Image to use for the container
+     *
+     * @var string|null
      */
-    public string|null $image = null;
+    public $image = null;
 
     /**
      * Command to run in the container
      *
      * @var array<string>|null
      */
-    public array|null $command = null;
+    public $command = null;
 
     /**
      * Environment variables
      *
      * @var array<EnvVar>|null
      */
-    public array|null $env = null;
+    public $env = null;
 
     /**
      * Resources defines the compute resources
+     *
+     * @var ResourceRequirements|null
      */
-    public ResourceRequirements|null $resources = null;
+    public $resources = null;
 
     /**
      * LivenessProbe defines how to check if the container is alive
+     *
+     * @var Probe|null
      */
-    public Probe|null $livenessProbe = null;
+    public $livenessProbe = null;
 
     /**
      * ReadinessProbe defines how to check if the container is ready
+     *
+     * @var Probe|null
      */
-    public Probe|null $readinessProbe = null;
+    public $readinessProbe = null;
 
     /**
      * StartupProbe defines how to check if the container has started
+     *
+     * @var Probe|null
      */
-    public Probe|null $startupProbe = null;
+    public $startupProbe = null;
 }

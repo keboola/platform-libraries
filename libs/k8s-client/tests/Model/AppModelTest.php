@@ -23,7 +23,6 @@ use Kubernetes\Model\Io\K8s\Api\Core\V1\HTTPGetAction;
 use Kubernetes\Model\Io\K8s\Api\Core\V1\Probe;
 use Kubernetes\Model\Io\K8s\Api\Core\V1\ResourceRequirements;
 use PHPUnit\Framework\TestCase;
-use TypeError;
 
 class AppModelTest extends TestCase
 {
@@ -327,44 +326,5 @@ class AppModelTest extends TestCase
         self::assertSame('12345', $serialized['spec']['appId']);
         self::assertSame('project-789', $serialized['spec']['projectId']);
         self::assertSame('Running', $serialized['spec']['state']);
-    }
-
-    public static function provideInvalidTestData(): iterable
-    {
-        yield 'wrong replicas type - string instead of int' => [
-            'data' => ['spec' => ['replicas' => 'one']],
-            'expectedMessage' => 'Cannot assign string to property',
-        ];
-
-        yield 'wrong targetPort type - string instead of int' => [
-            'data' => ['spec' => ['features' => ['appsProxyIngress' => ['targetPort' => 'invalid']]]],
-            'expectedMessage' => 'Cannot assign string to property',
-        ];
-
-        yield 'wrong canManageBuckets type - array instead of bool' => [
-            'data' => ['spec' => ['features' => ['storageToken' => ['canManageBuckets' => []]]]],
-            'expectedMessage' => 'Cannot assign array to property',
-        ];
-
-        yield 'wrong observedGeneration type - string instead of int' => [
-            'data' => ['status' => ['observedGeneration' => 'invalid']],
-            'expectedMessage' => 'Cannot assign string to property',
-        ];
-
-        yield 'wrong autoRestartEnabled type - string instead of bool' => [
-            'data' => ['spec' => ['autoRestartEnabled' => []]],
-            'expectedMessage' => 'Cannot assign array to property',
-        ];
-    }
-
-    /**
-     * @dataProvider provideInvalidTestData
-     */
-    public function testInvalidDataTypesThrowTypeError(array $data, string $expectedMessage): void
-    {
-        $this->expectException(TypeError::class);
-        $this->expectExceptionMessageMatches('/' . preg_quote($expectedMessage, '/') . '/');
-
-        new App($data);
     }
 }

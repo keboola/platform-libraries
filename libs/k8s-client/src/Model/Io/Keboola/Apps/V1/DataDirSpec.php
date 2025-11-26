@@ -11,8 +11,13 @@ use KubernetesRuntime\AbstractModel;
  */
 class DataDirSpec extends AbstractModel
 {
-    /** @var array<DataDirMountSpec>|null */
-    public array|null $mount = null;
+    /**
+     * @var array<DataDirMountSpec>|null
+     */
+    public $mount = null;
 
-    public DataLoaderSpec|null $dataLoader = null;
+    /**
+     * @var DataLoaderSpec|null
+     */
+    public $dataLoader = null;
 }

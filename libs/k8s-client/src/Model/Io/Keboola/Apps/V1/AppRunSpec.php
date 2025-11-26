@@ -4,54 +4,69 @@ declare(strict_types=1);
 
 namespace Keboola\K8sClient\Model\Io\Keboola\Apps\V1;
 
+use Kubernetes\Model\Io\K8s\Apimachinery\Pkg\Apis\Meta\V1\Time;
 use KubernetesRuntime\AbstractModel;
 
 /**
  * AppRunSpec defines the desired state of AppRun
  *
- * @property PodReference|null $podRef
- * @property AppReference|null $appRef
- * @property string|null $createdAt
- * @property string|null $startedAt
- * @property string|null $stoppedAt
- * @property string|null $state
+ * @property PodReference $podRef
+ * @property AppReference $appRef
+ * @property Time $createdAt
+ * @property Time|null $startedAt
+ * @property Time|null $stoppedAt
+ * @property string $state
  * @property string|null $startupLogs
  */
 class AppRunSpec extends AbstractModel
 {
     /**
      * PodRef is a reference to the Pod this AppRun tracks
+     *
+     * @var PodReference
      */
-    public PodReference|null $podRef = null;
+    public $podRef = null;
 
     /**
      * AppRef is a reference to the App resource this run belongs to
+     *
+     * @var AppReference
      */
-    public AppReference|null $appRef = null;
+    public $appRef = null;
 
     /**
      * CreatedAt is the timestamp when this run was created
+     *
+     * @var Time
      */
-    public string|null $createdAt = null;
+    public $createdAt = null;
 
     /**
      * StartedAt is the timestamp when this run started
+     *
+     * @var Time
      */
-    public string|null $startedAt = null;
+    public $startedAt = null;
 
     /**
      * StoppedAt is the timestamp when this run stopped
+     *
+     * @var Time
      */
-    public string|null $stoppedAt = null;
+    public $stoppedAt = null;
 
     /**
      * State represents the current state of the run
      * Possible values: Starting, Running, Failed, Finished
+     *
+     * @var string
      */
-    public string|null $state = null;
+    public $state = null;
 
     /**
      * StartupLogs contains the startup logs from the run
+     *
+     * @var string
      */
-    public string|null $startupLogs = null;
+    public $startupLogs = null;
 }

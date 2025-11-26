@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Keboola\K8sClient;
 
-use InvalidArgumentException;
 use Keboola\K8sClient\ApiClient\AppRunsApiClient;
 use Keboola\K8sClient\ApiClient\AppsApiClient;
 use Keboola\K8sClient\ApiClient\ConfigMapsApiClient;
@@ -192,7 +191,6 @@ class KubernetesApiClientFacade
     {
         return array_map(
             fn($resource) => $this->getApiForResource($resource::class)->delete(
-                // @phpstan-ignore-next-line metadata is always set for valid K8s resources
                 $resource->metadata->name,
                 $deleteOptions,
                 $queries,
@@ -216,11 +214,7 @@ class KubernetesApiClientFacade
         AbstractModel $resource,
         array $queries = [],
     ): AbstractModel {
-        $name = $resource->metadata?->name;
-        if ($name === null) {
-            throw new InvalidArgumentException('Resource metadata.name is required for patch operation');
-        }
-
+        $name = $resource->metadata->name;
         $data = $resource->getArrayCopy();
         $data['patchOperation'] = APIPatchOperation::MERGE_PATCH;
 
@@ -270,7 +264,6 @@ class KubernetesApiClientFacade
         $updateCollection = function () use (&$resources) {
             foreach ($resources as $i => $resource) {
                 try {
-                    // @phpstan-ignore-next-line metadata is always set for valid K8s resources
                     $this->getApiForResource($resource::class)->get($resource->metadata->name);
                     $this->logger->debug('Resource still exists', [
                         'resource' => $resource,

@@ -11,11 +11,28 @@ use KubernetesRuntime\AbstractModel;
  */
 class ConfigMountSpec extends AbstractModel
 {
-    public string|null $branchId = null;
-    public string|null $componentId = null;
-    public string|null $configId = null;
-    public string|null $configVersion = null;
+    /**
+     * @var string|null
+     */
+    public $branchId = null;
 
-    /** @var array<ConfigMountItemSpec>|null */
-    public array|null $mount = null;
+    /**
+     * @var string|null
+     */
+    public $componentId = null;
+
+    /**
+     * @var string|null
+     */
+    public $configId = null;
+
+    /**
+     * @var string|null
+     */
+    public $configVersion = null;
+
+    /**
+     * @var array<ConfigMountItemSpec>|null
+     */
+    public $mount = null;
 }

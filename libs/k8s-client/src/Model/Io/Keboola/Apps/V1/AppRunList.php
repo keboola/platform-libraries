@@ -17,10 +17,23 @@ use KubernetesRuntime\AbstractModel;
  */
 class AppRunList extends AbstractModel
 {
-    public string|null $apiVersion = 'apps.keboola.com/v1';
-    public string|null $kind = 'AppRunList';
-    public ListMeta|null $metadata = null;
+    /**
+     * @var string|null
+     */
+    public $apiVersion = 'apps.keboola.com/v1';
 
-    /** @var array<AppRun> */
-    public array $items = [];
+    /**
+     * @var string|null
+     */
+    public $kind = 'AppRunList';
+
+    /**
+     * @var ListMeta|null
+     */
+    public $metadata = null;
+
+    /**
+     * @var array<AppRun>
+     */
+    public $items = [];
 }

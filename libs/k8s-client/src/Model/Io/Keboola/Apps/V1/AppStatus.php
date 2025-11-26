@@ -25,24 +25,32 @@ class AppStatus extends AbstractModel
 {
     /**
      * ObservedGeneration is the most recent generation observed for this App
+     *
+     * @var int|null
      */
-    public int|null $observedGeneration = null;
+    public $observedGeneration = null;
 
     /**
      * CurrentState represents the current state of the App
      * Possible values: Stopped, Running, Starting, Stopping
+     *
+     * @var string|null
      */
-    public string|null $currentState = null;
+    public $currentState = null;
 
     /**
      * ReadyReplicas indicates the number of ready replicas
+     *
+     * @var int|null
      */
-    public int|null $readyReplicas = null;
+    public $readyReplicas = null;
 
     /**
      * UpdatedReplicas indicates the number of updated replicas
+     *
+     * @var int|null
      */
-    public int|null $updatedReplicas = null;
+    public $updatedReplicas = null;
 
     /**
      * LastStartedTime is the timestamp when the app last transitioned to Running state
@@ -53,18 +61,22 @@ class AppStatus extends AbstractModel
 
     /**
      * StorageTokenRef contains a reference to the storage token currently used by the app
+     *
+     * @var LocalObjectReference|null
      */
-    public LocalObjectReference|null $storageTokenRef = null;
+    public $storageTokenRef = null;
 
     /**
      * AppsProxyServiceRef contains a reference to the service used for apps proxy ingress
+     *
+     * @var LocalObjectReference|null
      */
-    public LocalObjectReference|null $appsProxyServiceRef = null;
+    public $appsProxyServiceRef = null;
 
     /**
      * Conditions represents the latest available observations of the app's current state
      *
      * @var array<Condition>|null
      */
-    public array|null $conditions = null;
+    public $conditions = null;
 }

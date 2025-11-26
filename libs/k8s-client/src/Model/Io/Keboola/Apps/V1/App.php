@@ -22,27 +22,37 @@ class App extends AbstractModel
      * APIVersion defines the versioned schema of this representation of an object.
      * Servers should convert recognized schemas to the latest internal value, and
      * may reject unrecognized values.
+     *
+     * @var string|null
      */
-    public string|null $apiVersion = 'apps.keboola.com/v1';
+    public $apiVersion = 'apps.keboola.com/v1';
 
     /**
      * Kind is a string value representing the REST resource this object represents.
      * Servers may infer this from the endpoint the client submits requests to.
+     *
+     * @var string|null
      */
-    public string|null $kind = 'App';
+    public $kind = 'App';
 
     /**
      * Standard object's metadata
+     *
+     * @var ObjectMeta|null
      */
-    public ObjectMeta|null $metadata = null;
+    public $metadata = null;
 
     /**
      * Specification of the desired behavior of the App
+     *
+     * @var AppSpec|null
      */
-    public AppSpec|null $spec = null;
+    public $spec = null;
 
     /**
      * Most recently observed status of the App
+     *
+     * @var AppStatus|null
      */
-    public AppStatus|null $status = null;
+    public $status = null;
 }

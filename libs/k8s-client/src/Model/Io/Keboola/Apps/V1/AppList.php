@@ -19,23 +19,29 @@ class AppList extends AbstractModel
 {
     /**
      * APIVersion defines the versioned schema of this representation of an object
+     *
+     * @var string|null
      */
-    public string|null $apiVersion = 'apps.keboola.com/v1';
+    public $apiVersion = 'apps.keboola.com/v1';
 
     /**
      * Kind is a string value representing the REST resource this object represents
+     *
+     * @var string|null
      */
-    public string|null $kind = 'AppList';
+    public $kind = 'AppList';
 
     /**
      * Standard list metadata
+     *
+     * @var ListMeta|null
      */
-    public ListMeta|null $metadata = null;
+    public $metadata = null;
 
     /**
      * List of apps
      *
      * @var App[]
      */
-    public array $items = [];
+    public $items = [];
 }

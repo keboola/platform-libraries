@@ -20,26 +20,36 @@ class AppRun extends AbstractModel
 {
     /**
      * APIVersion defines the versioned schema of this representation of an object.
+     *
+     * @var string|null
      */
-    public string|null $apiVersion = 'apps.keboola.com/v1';
+    public $apiVersion = 'apps.keboola.com/v1';
 
     /**
      * Kind is a string value representing the REST resource this object represents.
+     *
+     * @var string|null
      */
-    public string|null $kind = 'AppRun';
+    public $kind = 'AppRun';
 
     /**
      * Standard object's metadata
+     *
+     * @var ObjectMeta|null
      */
-    public ObjectMeta|null $metadata = null;
+    public $metadata = null;
 
     /**
      * Specification of the desired state of the AppRun
+     *
+     * @var AppRunSpec|null
      */
-    public AppRunSpec|null $spec = null;
+    public $spec = null;
 
     /**
      * Most recently observed status of the AppRun
+     *
+     * @var AppRunStatus|null
      */
-    public AppRunStatus|null $status = null;
+    public $status = null;
 }

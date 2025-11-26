@@ -18,25 +18,29 @@ class AppPodSpec extends AbstractModel
 {
     /**
      * TerminationGracePeriodSeconds is the duration in seconds the pod needs to terminate gracefully
+     *
+     * @var int|null
      */
-    public int|null $terminationGracePeriodSeconds = null;
+    public $terminationGracePeriodSeconds = null;
 
     /**
      * Containers define the containers to run in the pod
      *
      * @var array<AppContainer>|null
      */
-    public array|null $containers = null;
+    public $containers = null;
 
     /**
      * RestartPolicy defines pod restart policy
+     *
+     * @var string|null
      */
-    public string|null $restartPolicy = null;
+    public $restartPolicy = null;
 
     /**
      * Annotations defines annotations to be added to the pod
      *
      * @var array<string, string>|null
      */
-    public array|null $annotations = null;
+    public $annotations = null;
 }

@@ -28,5 +28,5 @@ class AppRunStatus extends AbstractModel
      *
      * @var array<Condition>|null
      */
-    public array|null $conditions = null;
+    public $conditions = null;
 }

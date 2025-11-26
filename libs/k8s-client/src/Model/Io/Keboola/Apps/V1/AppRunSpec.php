@@ -22,13 +22,17 @@ class AppRunSpec extends AbstractModel
 {
     /**
      * PodRef is a reference to the Pod this AppRun tracks
+     *
+     * @var PodReference|null
      */
-    public PodReference|null $podRef = null;
+    public $podRef = null;
 
     /**
      * AppRef is a reference to the App resource this run belongs to
+     *
+     * @var AppReference|null
      */
-    public AppReference|null $appRef = null;
+    public $appRef = null;
 
     /**
      * CreatedAt is the timestamp when this run was created
@@ -54,11 +58,15 @@ class AppRunSpec extends AbstractModel
     /**
      * State represents the current state of the run
      * Possible values: Starting, Running, Failed, Finished
+     *
+     * @var string|null
      */
-    public string|null $state = null;
+    public $state = null;
 
     /**
      * StartupLogs contains the startup logs from the run
+     *
+     * @var string|null
      */
-    public string|null $startupLogs = null;
+    public $startupLogs = null;
 }

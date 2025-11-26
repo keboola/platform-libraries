@@ -18,21 +18,29 @@ class AppFeatures extends AbstractModel
 {
     /**
      * StorageToken defines configuration for the storage token
+     *
+     * @var StorageTokenSpec|null
      */
-    public StorageTokenSpec|null $storageToken = null;
+    public $storageToken = null;
 
     /**
      * AppsProxyIngress defines configuration for the apps proxy ingress feature
+     *
+     * @var AppsProxyIngressSpec|null
      */
-    public AppsProxyIngressSpec|null $appsProxyIngress = null;
+    public $appsProxyIngress = null;
 
     /**
      * DataDir defines configuration for the data directory feature
+     *
+     * @var DataDirSpec|null
      */
-    public DataDirSpec|null $dataDir = null;
+    public $dataDir = null;
 
     /**
      * MountConfig defines configuration for mounting config files
+     *
+     * @var ConfigMountSpec|null
      */
-    public ConfigMountSpec|null $mountConfig = null;
+    public $mountConfig = null;
 }

@@ -17,16 +17,22 @@ class AppReference extends AbstractModel
 {
     /**
      * Name is the name of the App resource
+     *
+     * @var string|null
      */
-    public string|null $name = null;
+    public $name = null;
 
     /**
      * AppID is the appId from the App spec (for easier querying)
+     *
+     * @var string|null
      */
-    public string|null $appId = null;
+    public $appId = null;
 
     /**
      * ProjectID is the projectId from the App spec (for easier querying)
+     *
+     * @var string|null
      */
-    public string|null $projectId = null;
+    public $projectId = null;
 }

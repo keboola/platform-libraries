@@ -16,11 +16,15 @@ class PodReference extends AbstractModel
 {
     /**
      * Name is the name of the Pod
+     *
+     * @var string|null
      */
-    public string|null $name = null;
+    public $name = null;
 
     /**
      * UID is the unique identifier of the Pod
+     *
+     * @var string|null
      */
-    public string|null $uid = null;
+    public $uid = null;
 }

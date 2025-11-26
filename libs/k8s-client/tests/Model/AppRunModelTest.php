@@ -10,7 +10,6 @@ use Keboola\K8sClient\Model\Io\Keboola\Apps\V1\AppRunSpec;
 use Keboola\K8sClient\Model\Io\Keboola\Apps\V1\AppRunStatus;
 use Keboola\K8sClient\Model\Io\Keboola\Apps\V1\PodReference;
 use PHPUnit\Framework\TestCase;
-use TypeError;
 
 class AppRunModelTest extends TestCase
 {
@@ -119,34 +118,5 @@ class AppRunModelTest extends TestCase
         self::assertSame('app-12345-deployment-abc123-xyz', $serialized['spec']['podRef']['name']);
         self::assertSame('app-123', $serialized['spec']['appRef']['appId']);
         self::assertSame('Finished', $serialized['spec']['state']);
-    }
-
-    public static function provideInvalidTestData(): iterable
-    {
-        yield 'wrong state type - array instead of string' => [
-            'data' => ['spec' => ['state' => []]],
-            'expectedMessage' => 'Cannot assign array to property',
-        ];
-
-        yield 'wrong podRef.name type - array instead of string' => [
-            'data' => ['spec' => ['podRef' => ['name' => []]]],
-            'expectedMessage' => 'Cannot assign array to property',
-        ];
-
-        yield 'wrong appRef.appId type - array instead of string' => [
-            'data' => ['spec' => ['appRef' => ['appId' => []]]],
-            'expectedMessage' => 'Cannot assign array to property',
-        ];
-    }
-
-    /**
-     * @dataProvider provideInvalidTestData
-     */
-    public function testInvalidDataTypesThrowTypeError(array $data, string $expectedMessage): void
-    {
-        $this->expectException(TypeError::class);
-        $this->expectExceptionMessageMatches('/' . preg_quote($expectedMessage, '/') . '/');
-
-        new AppRun($data);
     }
 }

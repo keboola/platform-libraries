@@ -69,8 +69,12 @@ class AppRunModelTest extends TestCase
         // Spec basics
         self::assertNotNull($appRun->spec);
         self::assertInstanceOf(AppRunSpec::class, $appRun->spec);
+        // Time fields with isRawObject=true are stored as strings, not Time objects
+        // @phpstan-ignore-next-line
         self::assertSame('2025-01-15T12:00:00Z', $appRun->spec->createdAt);
+        // @phpstan-ignore-next-line
         self::assertSame('2025-01-15T12:01:00Z', $appRun->spec->startedAt);
+        // @phpstan-ignore-next-line
         self::assertSame('2025-01-15T13:00:00Z', $appRun->spec->stoppedAt);
         self::assertSame('Finished', $appRun->spec->state);
         self::assertSame("foo\nbar\n", $appRun->spec->startupLogs);
@@ -91,6 +95,8 @@ class AppRunModelTest extends TestCase
         // Status
         self::assertNotNull($appRun->status);
         self::assertInstanceOf(AppRunStatus::class, $appRun->status);
+        // Time fields with isRawObject=true are stored as strings, not Time objects
+        // @phpstan-ignore-next-line
         self::assertSame('2025-01-15T13:05:00Z', $appRun->status->syncedAt);
         self::assertNotNull($appRun->status->conditions);
         self::assertCount(1, $appRun->status->conditions);

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\K8sClient\Model\Io\Keboola\Apps\V1;
 
+use Kubernetes\Model\Io\K8s\Apimachinery\Pkg\Apis\Meta\V1\Time;
 use KubernetesRuntime\AbstractModel;
 
 /**
@@ -11,9 +12,9 @@ use KubernetesRuntime\AbstractModel;
  *
  * @property PodReference|null $podRef
  * @property AppReference|null $appRef
- * @property string|null $createdAt
- * @property string|null $startedAt
- * @property string|null $stoppedAt
+ * @property Time|null $createdAt
+ * @property Time|null $startedAt
+ * @property Time|null $stoppedAt
  * @property string|null $state
  * @property string|null $startupLogs
  */
@@ -31,18 +32,24 @@ class AppRunSpec extends AbstractModel
 
     /**
      * CreatedAt is the timestamp when this run was created
+     *
+     * @var Time|null
      */
-    public string|null $createdAt = null;
+    public $createdAt = null;
 
     /**
      * StartedAt is the timestamp when this run started
+     *
+     * @var Time|null
      */
-    public string|null $startedAt = null;
+    public $startedAt = null;
 
     /**
      * StoppedAt is the timestamp when this run stopped
+     *
+     * @var Time|null
      */
-    public string|null $stoppedAt = null;
+    public $stoppedAt = null;
 
     /**
      * State represents the current state of the run

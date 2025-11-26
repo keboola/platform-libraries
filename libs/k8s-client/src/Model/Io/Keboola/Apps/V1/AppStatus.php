@@ -6,6 +6,7 @@ namespace Keboola\K8sClient\Model\Io\Keboola\Apps\V1;
 
 use Kubernetes\Model\Io\K8s\Api\Core\V1\LocalObjectReference;
 use Kubernetes\Model\Io\K8s\Apimachinery\Pkg\Apis\Meta\V1\Condition;
+use Kubernetes\Model\Io\K8s\Apimachinery\Pkg\Apis\Meta\V1\Time;
 use KubernetesRuntime\AbstractModel;
 
 /**
@@ -15,7 +16,7 @@ use KubernetesRuntime\AbstractModel;
  * @property string|null $currentState
  * @property int|null $readyReplicas
  * @property int|null $updatedReplicas
- * @property string|null $lastStartedTime
+ * @property Time|null $lastStartedTime
  * @property LocalObjectReference|null $storageTokenRef
  * @property LocalObjectReference|null $appsProxyServiceRef
  * @property array<Condition>|null $conditions
@@ -45,8 +46,10 @@ class AppStatus extends AbstractModel
 
     /**
      * LastStartedTime is the timestamp when the app last transitioned to Running state
+     *
+     * @var Time|null
      */
-    public string|null $lastStartedTime = null;
+    public $lastStartedTime = null;
 
     /**
      * StorageTokenRef contains a reference to the storage token currently used by the app

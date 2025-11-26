@@ -9,12 +9,12 @@ use KubernetesRuntime\AbstractModel;
 /**
  * AppSpec defines the desired state of App
  *
- * @property string|null $appId
- * @property string|null $projectId
- * @property string|null $state
- * @property int|null $replicas
+ * @property string $appId
+ * @property string $projectId
+ * @property string $state
+ * @property int $replicas
  * @property bool|null $autoRestartEnabled
- * @property AppPodSpec|null $podSpec
+ * @property AppPodSpec $podSpec
  * @property AppFeatures|null $features
  */
 class AppSpec extends AbstractModel
@@ -22,28 +22,28 @@ class AppSpec extends AbstractModel
     /**
      * AppID is the unique identifier of the app
      *
-     * @var string|null
+     * @var string
      */
     public $appId = null;
 
     /**
      * ProjectID is the ID of the project this app belongs to
      *
-     * @var string|null
+     * @var string
      */
     public $projectId = null;
 
     /**
      * State defines whether the app is running or stopped (Running or Stopped)
      *
-     * @var string|null
+     * @var string
      */
     public $state = null;
 
     /**
      * Replicas defines the number of app instances to run (default: 1, minimum: 1)
      *
-     * @var int|null
+     * @var int
      */
     public $replicas = null;
 
@@ -59,7 +59,7 @@ class AppSpec extends AbstractModel
     /**
      * PodSpec defines the simplified pod specification for the app
      *
-     * @var AppPodSpec|null
+     * @var AppPodSpec
      */
     public $podSpec = null;
 

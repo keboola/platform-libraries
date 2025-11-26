@@ -10,12 +10,12 @@ use KubernetesRuntime\AbstractModel;
 /**
  * AppRunSpec defines the desired state of AppRun
  *
- * @property PodReference|null $podRef
- * @property AppReference|null $appRef
- * @property Time|null $createdAt
+ * @property PodReference $podRef
+ * @property AppReference $appRef
+ * @property Time $createdAt
  * @property Time|null $startedAt
  * @property Time|null $stoppedAt
- * @property string|null $state
+ * @property string $state
  * @property string|null $startupLogs
  */
 class AppRunSpec extends AbstractModel
@@ -23,35 +23,35 @@ class AppRunSpec extends AbstractModel
     /**
      * PodRef is a reference to the Pod this AppRun tracks
      *
-     * @var PodReference|null
+     * @var PodReference
      */
     public $podRef = null;
 
     /**
      * AppRef is a reference to the App resource this run belongs to
      *
-     * @var AppReference|null
+     * @var AppReference
      */
     public $appRef = null;
 
     /**
      * CreatedAt is the timestamp when this run was created
      *
-     * @var Time|null
+     * @var Time
      */
     public $createdAt = null;
 
     /**
      * StartedAt is the timestamp when this run started
      *
-     * @var Time|null
+     * @var Time
      */
     public $startedAt = null;
 
     /**
      * StoppedAt is the timestamp when this run stopped
      *
-     * @var Time|null
+     * @var Time
      */
     public $stoppedAt = null;
 
@@ -59,14 +59,14 @@ class AppRunSpec extends AbstractModel
      * State represents the current state of the run
      * Possible values: Starting, Running, Failed, Finished
      *
-     * @var string|null
+     * @var string
      */
     public $state = null;
 
     /**
      * StartupLogs contains the startup logs from the run
      *
-     * @var string|null
+     * @var string
      */
     public $startupLogs = null;
 }

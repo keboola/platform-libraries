@@ -12,12 +12,12 @@ use KubernetesRuntime\AbstractModel;
 class SetEnvSpec extends AbstractModel
 {
     /**
-     * @var string|null
+     * @var string
      */
     public $container = null;
 
     /**
-     * @var string|null
+     * @var string
      */
     public $envName = null;
 }

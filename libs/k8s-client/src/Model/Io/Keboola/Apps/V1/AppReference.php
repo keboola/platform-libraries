@@ -9,30 +9,30 @@ use KubernetesRuntime\AbstractModel;
 /**
  * AppReference contains information to identify the App resource
  *
- * @property string|null $name
- * @property string|null $appId
- * @property string|null $projectId
+ * @property string $name
+ * @property string $appId
+ * @property string $projectId
  */
 class AppReference extends AbstractModel
 {
     /**
      * Name is the name of the App resource
      *
-     * @var string|null
+     * @var string
      */
     public $name = null;
 
     /**
      * AppID is the appId from the App spec (for easier querying)
      *
-     * @var string|null
+     * @var string
      */
     public $appId = null;
 
     /**
      * ProjectID is the projectId from the App spec (for easier querying)
      *
-     * @var string|null
+     * @var string
      */
     public $projectId = null;
 }

@@ -12,12 +12,12 @@ use KubernetesRuntime\AbstractModel;
 class MountConfigField extends AbstractModel
 {
     /**
-     * @var string|null
+     * @var string
      */
     public $source = null;
 
     /**
-     * @var string|null
+     * @var string
      */
     public $target = null;
 }

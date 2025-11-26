@@ -12,12 +12,12 @@ use KubernetesRuntime\AbstractModel;
 class AppsProxyIngressSpec extends AbstractModel
 {
     /**
-     * @var string|null
+     * @var string
      */
     public $container = null;
 
     /**
-     * @var int|null
+     * @var int
      */
     public $targetPort = null;
 }

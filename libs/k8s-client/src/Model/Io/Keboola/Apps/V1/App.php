@@ -10,10 +10,10 @@ use KubernetesRuntime\AbstractModel;
 /**
  * App is a custom resource definition for Keboola applications
  *
- * @property string|null $apiVersion
- * @property string|null $kind
- * @property ObjectMeta|null $metadata
- * @property AppSpec|null $spec
+ * @property string $apiVersion
+ * @property string $kind
+ * @property ObjectMeta $metadata
+ * @property AppSpec $spec
  * @property AppStatus|null $status
  */
 class App extends AbstractModel
@@ -23,7 +23,7 @@ class App extends AbstractModel
      * Servers should convert recognized schemas to the latest internal value, and
      * may reject unrecognized values.
      *
-     * @var string|null
+     * @var string
      */
     public $apiVersion = 'apps.keboola.com/v1';
 
@@ -31,21 +31,21 @@ class App extends AbstractModel
      * Kind is a string value representing the REST resource this object represents.
      * Servers may infer this from the endpoint the client submits requests to.
      *
-     * @var string|null
+     * @var string
      */
     public $kind = 'App';
 
     /**
      * Standard object's metadata
      *
-     * @var ObjectMeta|null
+     * @var ObjectMeta
      */
     public $metadata = null;
 
     /**
      * Specification of the desired behavior of the App
      *
-     * @var AppSpec|null
+     * @var AppSpec
      */
     public $spec = null;
 

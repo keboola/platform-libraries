@@ -12,17 +12,17 @@ use KubernetesRuntime\AbstractModel;
 class DataLoaderSpec extends AbstractModel
 {
     /**
-     * @var string|null
+     * @var string
      */
     public $branchId = null;
 
     /**
-     * @var string|null
+     * @var string
      */
     public $componentId = null;
 
     /**
-     * @var string|null
+     * @var string
      */
     public $configId = null;
 

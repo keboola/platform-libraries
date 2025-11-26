@@ -10,8 +10,8 @@ use KubernetesRuntime\AbstractModel;
 /**
  * AppList is a list of App resources
  *
- * @property string|null $apiVersion
- * @property string|null $kind
+ * @property string $apiVersion
+ * @property string $kind
  * @property ListMeta|null $metadata
  * @property App[] $items
  */
@@ -20,14 +20,14 @@ class AppList extends AbstractModel
     /**
      * APIVersion defines the versioned schema of this representation of an object
      *
-     * @var string|null
+     * @var string
      */
     public $apiVersion = 'apps.keboola.com/v1';
 
     /**
      * Kind is a string value representing the REST resource this object represents
      *
-     * @var string|null
+     * @var string
      */
     public $kind = 'AppList';
 

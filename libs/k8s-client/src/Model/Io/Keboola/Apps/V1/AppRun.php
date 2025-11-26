@@ -10,10 +10,10 @@ use KubernetesRuntime\AbstractModel;
 /**
  * AppRun is a custom resource definition for tracking Pod lifecycles for cost tracking
  *
- * @property string|null $apiVersion
- * @property string|null $kind
- * @property ObjectMeta|null $metadata
- * @property AppRunSpec|null $spec
+ * @property string $apiVersion
+ * @property string $kind
+ * @property ObjectMeta $metadata
+ * @property AppRunSpec $spec
  * @property AppRunStatus|null $status
  */
 class AppRun extends AbstractModel
@@ -21,28 +21,28 @@ class AppRun extends AbstractModel
     /**
      * APIVersion defines the versioned schema of this representation of an object.
      *
-     * @var string|null
+     * @var string
      */
     public $apiVersion = 'apps.keboola.com/v1';
 
     /**
      * Kind is a string value representing the REST resource this object represents.
      *
-     * @var string|null
+     * @var string
      */
     public $kind = 'AppRun';
 
     /**
      * Standard object's metadata
      *
-     * @var ObjectMeta|null
+     * @var ObjectMeta
      */
     public $metadata = null;
 
     /**
      * Specification of the desired state of the AppRun
      *
-     * @var AppRunSpec|null
+     * @var AppRunSpec
      */
     public $spec = null;
 

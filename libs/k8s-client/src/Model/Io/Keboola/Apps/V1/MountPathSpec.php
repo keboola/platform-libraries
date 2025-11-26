@@ -12,12 +12,12 @@ use KubernetesRuntime\AbstractModel;
 class MountPathSpec extends AbstractModel
 {
     /**
-     * @var string|null
+     * @var string
      */
     public $container = null;
 
     /**
-     * @var string|null
+     * @var string
      */
     public $path = null;
 }

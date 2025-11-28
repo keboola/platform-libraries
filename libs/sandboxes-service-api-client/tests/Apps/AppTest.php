@@ -269,4 +269,73 @@ class AppTest extends TestCase
         self::assertSame($validStrategy, $app->getProvisioningStrategy());
         self::assertSame($app, $result);
     }
+
+    public function testSettersReturnSelfForChaining(): void
+    {
+        $app = new App();
+
+        self::assertSame($app, $app->setId('test'));
+        self::assertSame($app, $app->setName('test'));
+        self::assertSame($app, $app->setProjectId('test'));
+        self::assertSame($app, $app->setComponentId('test'));
+        self::assertSame($app, $app->setBranchId('test'));
+        self::assertSame($app, $app->setConfigId('test'));
+        self::assertSame($app, $app->setConfigVersion('test'));
+        self::assertSame($app, $app->setLastRequestTimestamp('test'));
+        self::assertSame($app, $app->setUrl('test'));
+        self::assertSame($app, $app->setAutoSuspendAfterSeconds(123));
+    }
+
+    public function testFromArrayWithEmptyAutoSuspendAfterSeconds(): void
+    {
+        // Test missing autoSuspendAfterSeconds defaults to 0
+        $app = App::fromArray([
+            'id' => 'app-id',
+            'name' => 'My App',
+            'projectId' => 'project-id',
+            'componentId' => 'keboola.data-apps',
+            'configId' => 'config-id',
+            'configVersion' => '5',
+            'state' => 'running',
+            'desiredState' => 'running',
+            'provisioningStrategy' => 'operator',
+        ]);
+
+        self::assertSame(0, $app->getAutoSuspendAfterSeconds());
+    }
+
+    public function testValidationErrorContainsAllValidValues(): void
+    {
+        $app = new App();
+
+        try {
+            $app->setState('invalid');
+            self::fail('Expected exception was not thrown');
+        } catch (ClientException $e) {
+            $message = $e->getMessage();
+            foreach (App::VALID_STATES as $state) {
+                self::assertStringContainsString($state, $message);
+            }
+        }
+
+        try {
+            $app->setDesiredState('invalid');
+            self::fail('Expected exception was not thrown');
+        } catch (ClientException $e) {
+            $message = $e->getMessage();
+            foreach (App::VALID_DESIRED_STATES as $state) {
+                self::assertStringContainsString($state, $message);
+            }
+        }
+
+        try {
+            $app->setProvisioningStrategy('invalid');
+            self::fail('Expected exception was not thrown');
+        } catch (ClientException $e) {
+            $message = $e->getMessage();
+            foreach (App::VALID_PROVISIONING_STRATEGIES as $strategy) {
+                self::assertStringContainsString($strategy, $message);
+            }
+        }
+    }
 }

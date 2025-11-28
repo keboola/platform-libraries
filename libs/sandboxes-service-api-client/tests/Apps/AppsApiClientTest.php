@@ -257,4 +257,76 @@ class AppsApiClientTest extends TestCase
 
         self::assertSame($body ?? '', $request->getBody()->getContents());
     }
+
+    public function testListAppsWithOnlyOffset(): void
+    {
+        $responseBody = [];
+
+        $requestHandler = self::createRequestHandler($requestsHistory, [
+            new Response(
+                200,
+                ['Content-Type' => 'application/json'],
+                Json::encodeArray($responseBody),
+            ),
+        ]);
+
+        $client = new AppsApiClient(
+            new ApiClientConfiguration(
+                baseUrl: 'https://data-apps.keboola.com',
+                storageToken: 'my-token',
+                userAgent: 'Keboola Sandboxes Service API PHP Client',
+                requestHandler: $requestHandler(...),
+            ),
+        );
+        $result = $client->listApps(10);
+
+        self::assertEquals([], $result);
+
+        self::assertCount(1, $requestsHistory);
+        self::assertRequestEquals(
+            'GET',
+            'https://data-apps.keboola.com/apps?offset=10',
+            [
+                'X-StorageApi-Token' => 'my-token',
+            ],
+            '',
+            $requestsHistory[0]['request'],
+        );
+    }
+
+    public function testListAppsWithOnlyLimit(): void
+    {
+        $responseBody = [];
+
+        $requestHandler = self::createRequestHandler($requestsHistory, [
+            new Response(
+                200,
+                ['Content-Type' => 'application/json'],
+                Json::encodeArray($responseBody),
+            ),
+        ]);
+
+        $client = new AppsApiClient(
+            new ApiClientConfiguration(
+                baseUrl: 'https://data-apps.keboola.com',
+                storageToken: 'my-token',
+                userAgent: 'Keboola Sandboxes Service API PHP Client',
+                requestHandler: $requestHandler(...),
+            ),
+        );
+        $result = $client->listApps(null, 50);
+
+        self::assertEquals([], $result);
+
+        self::assertCount(1, $requestsHistory);
+        self::assertRequestEquals(
+            'GET',
+            'https://data-apps.keboola.com/apps?limit=50',
+            [
+                'X-StorageApi-Token' => 'my-token',
+            ],
+            '',
+            $requestsHistory[0]['request'],
+        );
+    }
 }

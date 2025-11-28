@@ -22,7 +22,6 @@ class AppsApiClientTest extends TestCase
         $responseBody = [
             [
                 'id' => 'app-id-1',
-                'name' => 'My App 1',
                 'projectId' => 'project-id',
                 'componentId' => 'keboola.data-apps',
                 'branchId' => null,
@@ -37,7 +36,6 @@ class AppsApiClientTest extends TestCase
             ],
             [
                 'id' => 'app-id-2',
-                'name' => 'My App 2',
                 'projectId' => 'project-id',
                 'componentId' => 'keboola.data-apps',
                 'branchId' => 'branch-id',
@@ -93,7 +91,6 @@ class AppsApiClientTest extends TestCase
         $responseBody = [
             [
                 'id' => 'app-id-1',
-                'name' => 'My App 1',
                 'projectId' => 'project-id',
                 'componentId' => 'keboola.data-apps',
                 'branchId' => null,
@@ -145,7 +142,6 @@ class AppsApiClientTest extends TestCase
     {
         $responseBody = [
             'id' => 'app-id',
-            'name' => 'My App',
             'projectId' => 'project-id',
             'componentId' => 'keboola.data-apps',
             'branchId' => null,

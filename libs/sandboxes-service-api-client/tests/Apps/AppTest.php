@@ -15,7 +15,6 @@ class AppTest extends TestCase
     {
         $app = App::fromArray([
             'id' => 'app-id',
-            'name' => 'My App',
             'projectId' => 'project-id',
             'componentId' => 'keboola.data-apps',
             'branchId' => 'branch-id',
@@ -30,7 +29,6 @@ class AppTest extends TestCase
         ]);
 
         self::assertSame('app-id', $app->getId());
-        self::assertSame('My App', $app->getName());
         self::assertSame('project-id', $app->getProjectId());
         self::assertSame('keboola.data-apps', $app->getComponentId());
         self::assertSame('branch-id', $app->getBranchId());
@@ -48,7 +46,6 @@ class AppTest extends TestCase
     {
         $app = App::fromArray([
             'id' => 'app-id',
-            'name' => 'My App',
             'projectId' => 'project-id',
             'componentId' => 'keboola.data-apps',
             'branchId' => null,
@@ -72,7 +69,6 @@ class AppTest extends TestCase
     {
         $expectedData = [
             'id' => 'app-id',
-            'name' => 'My App',
             'projectId' => 'project-id',
             'componentId' => 'keboola.data-apps',
             'branchId' => 'branch-id',
@@ -98,7 +94,6 @@ class AppTest extends TestCase
     {
         $requiredProps = [
             'id',
-            'name',
             'projectId',
             'componentId',
             'configId',
@@ -120,7 +115,6 @@ class AppTest extends TestCase
     {
         $data = [
             'id' => 'app-id',
-            'name' => 'My App',
             'projectId' => 'project-id',
             'componentId' => 'keboola.data-apps',
             'configId' => 'config-id',
@@ -275,7 +269,6 @@ class AppTest extends TestCase
         $app = new App();
 
         self::assertSame($app, $app->setId('test'));
-        self::assertSame($app, $app->setName('test'));
         self::assertSame($app, $app->setProjectId('test'));
         self::assertSame($app, $app->setComponentId('test'));
         self::assertSame($app, $app->setBranchId('test'));
@@ -291,7 +284,6 @@ class AppTest extends TestCase
         // Test missing autoSuspendAfterSeconds defaults to 0
         $app = App::fromArray([
             'id' => 'app-id',
-            'name' => 'My App',
             'projectId' => 'project-id',
             'componentId' => 'keboola.data-apps',
             'configId' => 'config-id',

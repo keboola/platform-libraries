@@ -10,7 +10,6 @@ class App
 {
     protected const REQUIRED_PROPERTIES = [
         'id',
-        'name',
         'projectId',
         'componentId',
         'configId',
@@ -60,7 +59,6 @@ class App
     ];
 
     private string $id;
-    private string $name;
     private string $projectId;
     private string $componentId;
     private ?string $branchId = null;
@@ -83,7 +81,6 @@ class App
 
         $app = new self();
         $app->setId((string) $in['id']);
-        $app->setName((string) $in['name']);
         $app->setProjectId((string) $in['projectId']);
         $app->setComponentId((string) $in['componentId']);
         $app->setBranchId(isset($in['branchId']) ? $in['branchId'] : null);
@@ -103,7 +100,6 @@ class App
     {
         return [
             'id' => $this->id,
-            'name' => $this->name,
             'projectId' => $this->projectId,
             'componentId' => $this->componentId,
             'branchId' => $this->branchId,
@@ -126,17 +122,6 @@ class App
     public function setId(string $id): self
     {
         $this->id = $id;
-        return $this;
-    }
-
-    public function getName(): string
-    {
-        return $this->name;
-    }
-
-    public function setName(string $name): self
-    {
-        $this->name = $name;
         return $this;
     }
 

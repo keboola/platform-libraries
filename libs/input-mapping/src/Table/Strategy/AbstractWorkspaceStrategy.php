@@ -20,6 +20,8 @@ use Psr\Log\LoggerInterface;
 
 abstract class AbstractWorkspaceStrategy extends AbstractStrategy
 {
+    private const BIGQUERY_DEFAULT_IM_VIEW_FEATURE = 'bigquery-default-im-view';
+
     protected readonly WorkspaceStagingInterface $dataStorage;
     protected readonly ManifestCreator $manifestCreator;
 
@@ -353,6 +355,19 @@ abstract class AbstractWorkspaceStrategy extends AbstractStrategy
             $this->logger->info(sprintf('Table "%s" will be cloned.', $table->getSource()));
             return WorkspaceLoadType::CLONE;
         }
+
+        // BigQuery-specific logic: default to COPY unless feature flag is enabled
+        if ($this->getWorkspaceType() === 'bigquery' &&
+            $table->getTableInfo()['bucket']['backend'] === 'bigquery'
+        ) {
+            if ($this->clientWrapper->getToken()->hasFeature(self::BIGQUERY_DEFAULT_IM_VIEW_FEATURE)) {
+                $this->logger->info(sprintf('Table "%s" will be created as view.', $table->getSource()));
+                return WorkspaceLoadType::VIEW;
+            }
+            $this->logger->info(sprintf('Table "%s" will be copied.', $table->getSource()));
+            return WorkspaceLoadType::COPY;
+        }
+
         if (LoadTypeDecider::canUseView($table->getTableInfo(), $this->getWorkspaceType())) {
             $this->logger->info(sprintf('Table "%s" will be created as view.', $table->getSource()));
             return WorkspaceLoadType::VIEW;

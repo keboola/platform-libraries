@@ -103,7 +103,7 @@ class AbstractWorkspaceStrategyTest extends TestCase
         self::assertTrue($this->testHandler->hasInfoThatContains('Table "in.c-test-bucket.table1" will be cloned.'));
     }
 
-    public function testPrepareTableLoadsToWorkspaceView(): void
+    public function testPrepareTableLoadsToWorkspaceBigQueryDefaultsCopy(): void
     {
         $clientWrapper = $this->createMock(ClientWrapper::class);
         $clientWrapper->expects($this->once())
@@ -118,7 +118,46 @@ class AbstractWorkspaceStrategyTest extends TestCase
 
         $strategy = $this->createTestStrategy($clientWrapper, 'bigquery');
 
-        // Table that can use view (BigQuery backend)
+        // BigQuery table in BigQuery workspace without feature flag defaults to COPY
+        $tableOptions = new RewrittenInputTableOptions(
+            ['source' => 'in.c-test-bucket.table1', 'destination' => 'table1'],
+            'in.c-test-bucket.table1',
+            123,
+            [
+                'id' => 'in.c-test-bucket.table1',
+                'bucket' => ['backend' => 'bigquery'],
+                'isAlias' => false,
+            ],
+        );
+
+        $instructions = $strategy->prepareTableLoadsToWorkspace([$tableOptions]);
+
+        self::assertCount(1, $instructions);
+        self::assertEquals(WorkspaceLoadType::COPY, $instructions[0]->loadType);
+        self::assertSame($tableOptions, $instructions[0]->table);
+        self::assertSame(['overwrite' => false], $instructions[0]->loadOptions);
+
+        self::assertTrue(
+            $this->testHandler->hasInfoThatContains('Table "in.c-test-bucket.table1" will be copied.'),
+        );
+    }
+
+    public function testPrepareTableLoadsToWorkspaceBigQueryViewWithFeatureFlag(): void
+    {
+        $clientWrapper = $this->createMock(ClientWrapper::class);
+        $clientWrapper->expects($this->once())
+            ->method('getToken')
+            ->willReturn(new StorageApiToken(
+                [
+                    'owner' => ['id' => 12345, 'features' => ['bigquery-default-im-view']],
+                ],
+                'my-secret-token',
+            ))
+        ;
+
+        $strategy = $this->createTestStrategy($clientWrapper, 'bigquery');
+
+        // BigQuery table in BigQuery workspace with feature flag uses VIEW
         $tableOptions = new RewrittenInputTableOptions(
             ['source' => 'in.c-test-bucket.table1', 'destination' => 'table1'],
             'in.c-test-bucket.table1',

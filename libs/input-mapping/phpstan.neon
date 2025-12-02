@@ -5,6 +5,10 @@ parameters:
         - tests
     ignoreErrors:
         - identifier: missingType.iterableValue
+        - '#Method.*getConfigTreeBuilder\(\) return type with generic class.*TreeBuilder does not specify its types: T#'
+        - '#Method.*configureNode\(\) has parameter.*with generic class.*but does not specify its types: TParent#'
+        - '#Call to method.*on an unknown class.*NodeBuilder.*#'
+        - '#PHPDoc tag @var for variable.*contains generic class.*but does not specify its types: TParent#'
 
 includes:
     - vendor/phpstan/phpstan-phpunit/extension.neon

@@ -21,7 +21,7 @@ use Psr\Log\NullLogger;
 class BigQueryTest extends AbstractTestCase
 {
     #[NeedsTestTables]
-    public function testBigQueryDownloadTableAsCopy(): void
+    public function testBigQueryDownloadTable(): void
     {
         $strategy = new BigQuery(
             $this->clientWrapper,
@@ -42,7 +42,9 @@ class BigQueryTest extends AbstractTestCase
             $this->clientWrapper->getBasicClient()->getTable($this->firstTableId),
         ));
 
-        // Without bigquery-default-im-view feature flag, BigQuery tables default to COPY
+        $hasFeatureFlag = $this->clientWrapper->getToken()->hasFeature('bigquery-default-im-view');
+        $expectedType = $hasFeatureFlag ? 'VIEW' : 'COPY';
+
         self::assertEquals(
             [
                 'table' => [
@@ -59,7 +61,7 @@ class BigQueryTest extends AbstractTestCase
                         'overwrite' => false,
                     ],
                 ],
-                'type' => 'COPY',
+                'type' => $expectedType,
             ],
             $result,
         );

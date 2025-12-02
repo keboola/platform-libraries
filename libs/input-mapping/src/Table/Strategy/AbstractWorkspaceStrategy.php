@@ -356,7 +356,6 @@ abstract class AbstractWorkspaceStrategy extends AbstractStrategy
             return WorkspaceLoadType::CLONE;
         }
 
-        // BigQuery-specific logic: default to COPY unless feature flag is enabled
         if ($this->getWorkspaceType() === 'bigquery' &&
             $table->getTableInfo()['bucket']['backend'] === 'bigquery'
         ) {

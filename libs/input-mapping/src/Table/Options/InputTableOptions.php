@@ -158,7 +158,18 @@ class InputTableOptions
                         ->getLastImportDate();
 
                     // converting to unix timestamp https://keboolaglobal.slack.com/archives/C054VSPFVST/p1723555870048739?thread_ts=1723531121.814779&cid=C054VSPFVST
-                    $exportOptions['changedSince'] = strtotime($lastImportDateString);
+                    $unixTimestamp = strtotime($lastImportDateString);
+                    if (!$unixTimestamp) {
+                        throw new InvalidInputException(
+                            sprintf(
+                                'Invalid lastImportDate value "%s" for table "%s". '
+                                . 'This value should be of type numeric|string.',
+                                $lastImportDateString,
+                                $this->getSource(),
+                            ),
+                        );
+                    }
+                    $exportOptions['changedSince'] = $unixTimestamp;
                 } catch (TableNotFoundException) {
                     // intentionally blank
                 }

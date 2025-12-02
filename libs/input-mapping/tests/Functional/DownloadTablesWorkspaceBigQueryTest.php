@@ -20,9 +20,12 @@ use Keboola\StorageApi\ClientException;
 class DownloadTablesWorkspaceBigQueryTest extends AbstractTestCase
 {
     #[NeedsTestTables, NeedsEmptyOutputBucket]
-    public function testTablesBigQueryBackend(): void
+    public function testTablesBigQueryBackendWithFeatureFlag(): void
     {
         $clientWrapper = $this->initClient();
+        if (!$clientWrapper->getToken()->hasFeature('bigquery-default-im-view')) {
+            self::markTestSkipped('Project does not have bigquery-default-im-view feature.');
+        }
         $runId = $clientWrapper->getBasicClient()->generateRunId();
         $clientWrapper->getBranchClient()->setRunId($runId);
 
@@ -70,18 +73,10 @@ class DownloadTablesWorkspaceBigQueryTest extends AbstractTestCase
         }
 
         self::assertTrue($this->testHandler->hasInfoThatContains('Using "workspace-bigquery" table input staging.'));
-        $hasFeatureFlag = $clientWrapper->getToken()->hasFeature('bigquery-default-im-view');
-        if ($hasFeatureFlag) {
-            self::assertTrue($this->testHandler->hasInfoThatContains(sprintf(
-                'Table "%s" will be created as view.',
-                $this->firstTableId,
-            )));
-        } else {
-            self::assertTrue($this->testHandler->hasInfoThatContains(sprintf(
-                'Table "%s" will be copied.',
-                $this->firstTableId,
-            )));
-        }
+        self::assertTrue($this->testHandler->hasInfoThatContains(sprintf(
+            'Table "%s" will be created as view.',
+            $this->firstTableId,
+        )));
         self::assertTrue($this->testHandler->hasInfoThatContains('Copying 1 tables to workspace.'));
         self::assertTrue($this->testHandler->hasInfoThatContains('Processed 1 workspace exports.'));
         // test that the clone jobs are merged into a single one

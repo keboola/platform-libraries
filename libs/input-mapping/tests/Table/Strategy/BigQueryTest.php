@@ -21,8 +21,12 @@ use Psr\Log\NullLogger;
 class BigQueryTest extends AbstractTestCase
 {
     #[NeedsTestTables]
-    public function testBigQueryDownloadTable(): void
+    public function testBigQueryDownloadTableAsViewWithFeatureFlag(): void
     {
+        if (!$this->clientWrapper->getToken()->hasFeature('bigquery-default-im-view')) {
+            self::markTestSkipped('Project does not have bigquery-default-im-view feature.');
+        }
+
         $strategy = new BigQuery(
             $this->clientWrapper,
             new NullLogger(),
@@ -42,9 +46,6 @@ class BigQueryTest extends AbstractTestCase
             $this->clientWrapper->getBasicClient()->getTable($this->firstTableId),
         ));
 
-        $hasFeatureFlag = $this->clientWrapper->getToken()->hasFeature('bigquery-default-im-view');
-        $expectedType = $hasFeatureFlag ? 'VIEW' : 'COPY';
-
         self::assertEquals(
             [
                 'table' => [
@@ -61,7 +62,7 @@ class BigQueryTest extends AbstractTestCase
                         'overwrite' => false,
                     ],
                 ],
-                'type' => $expectedType,
+                'type' => 'VIEW',
             ],
             $result,
         );

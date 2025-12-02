@@ -106,11 +106,11 @@ class AbstractWorkspaceStrategyTest extends TestCase
     public function testPrepareTableLoadsToWorkspaceBigQueryDefaultsCopy(): void
     {
         $clientWrapper = $this->createMock(ClientWrapper::class);
-        $clientWrapper->expects($this->once())
+        $clientWrapper->expects($this->exactly(2))
             ->method('getToken')
             ->willReturn(new StorageApiToken(
                 [
-                    'owner' => ['id' => 12345],
+                    'owner' => ['id' => 12345, 'features' => []],
                 ],
                 'my-secret-token',
             ))
@@ -145,7 +145,7 @@ class AbstractWorkspaceStrategyTest extends TestCase
     public function testPrepareTableLoadsToWorkspaceBigQueryViewWithFeatureFlag(): void
     {
         $clientWrapper = $this->createMock(ClientWrapper::class);
-        $clientWrapper->expects($this->once())
+        $clientWrapper->expects($this->exactly(2))
             ->method('getToken')
             ->willReturn(new StorageApiToken(
                 [

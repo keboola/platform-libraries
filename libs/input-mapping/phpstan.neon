@@ -5,6 +5,11 @@ parameters:
         - tests
     ignoreErrors:
         - identifier: missingType.iterableValue
+        # Symfony Config component generics introduced in Symfony 7.4 are not fully supported by phpstan-symfony yet
+        - message: '#Call to method (\w+Node\(\)|append\(\)) on an unknown class Symfony\\Component\\Config\\Definition\\Builder\\NodeBuilder<.*>#'
+          identifier: class.notFound
+        - message: '#(Method .* return type with generic class|PHPDoc tag @(var|return) for (variable|method) .* contains generic class|Method .* has parameter .* with generic class) Symfony\\Component\\Config\\Definition\\Builder\\(TreeBuilder|ArrayNodeDefinition|NodeDefinition).*does not specify its types#'
+          identifier: missingType.generics
 
 includes:
     - vendor/phpstan/phpstan-phpunit/extension.neon

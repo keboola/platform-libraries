@@ -360,18 +360,18 @@ abstract class AbstractWorkspaceStrategy extends AbstractStrategy
             $table->getTableInfo()['bucket']['backend'] === 'bigquery'
         ) {
             if ($this->clientWrapper->getToken()->hasFeature(self::BIGQUERY_DEFAULT_IM_VIEW_FEATURE)) {
-                $this->logger->info(sprintf('Table "%s" will be created as view.', $table->getSource()));
+                $this->logger->info(sprintf('Table "%s" will be created as view a.', $table->getSource()));
                 return WorkspaceLoadType::VIEW;
             }
-            $this->logger->info(sprintf('Table "%s" will be copied.', $table->getSource()));
+            $this->logger->info(sprintf('Table "%s" will be copied a.', $table->getSource()));
             return WorkspaceLoadType::COPY;
         }
 
         if (LoadTypeDecider::canUseView($table->getTableInfo(), $this->getWorkspaceType())) {
-            $this->logger->info(sprintf('Table "%s" will be created as view.', $table->getSource()));
+            $this->logger->info(sprintf('Table "%s" will be created as view b.', $table->getSource()));
             return WorkspaceLoadType::VIEW;
         }
-        $this->logger->info(sprintf('Table "%s" will be copied.', $table->getSource()));
+        $this->logger->info(sprintf('Table "%s" will be copied b.', $table->getSource()));
         return WorkspaceLoadType::COPY;
     }
 

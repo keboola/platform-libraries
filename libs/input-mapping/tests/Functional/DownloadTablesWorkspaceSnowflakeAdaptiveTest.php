@@ -181,7 +181,8 @@ class DownloadTablesWorkspaceSnowflakeAdaptiveTest extends AbstractTestCase
 
         $this->expectException(InvalidInputException::class);
         $this->expectExceptionMessageMatches(
-            '/Invalid lastImportDate value "nonsense" for table ".*". This value should be of type numeric\|string\./',
+            '/Invalid lastImportDate value "nonsense" for table ".*". '
+            . 'This value cannot be converted to a valid timestamp\./',
         );
         $reader->downloadTables(
             $configuration,

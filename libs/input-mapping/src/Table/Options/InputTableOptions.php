@@ -163,7 +163,7 @@ class InputTableOptions
                         throw new InvalidInputException(
                             sprintf(
                                 'Invalid lastImportDate value "%s" for table "%s". '
-                                . 'This value should be of type numeric|string.',
+                                . 'This value cannot be converted to a valid timestamp.',
                                 $lastImportDateString,
                                 $this->getSource(),
                             ),

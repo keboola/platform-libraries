@@ -325,4 +325,90 @@ class AppsApiClientTest extends TestCase
             $requestsHistory[0]['request'],
         );
     }
+
+    public function testCreateApp(): void
+    {
+        $responseBody = [
+            'id' => 'new-app-id',
+            'projectId' => 'project-id',
+            'componentId' => 'keboola.data-apps',
+            'branchId' => '123',
+            'configId' => 'config-id',
+            'configVersion' => '1',
+            'state' => 'created',
+            'desiredState' => 'running',
+            'lastRequestTimestamp' => null,
+            'url' => null,
+            'autoSuspendAfterSeconds' => 3600,
+            'provisioningStrategy' => 'operator',
+        ];
+
+        $requestHandler = self::createRequestHandler($requestsHistory, [
+            new Response(
+                200,
+                ['Content-Type' => 'application/json'],
+                Json::encodeArray($responseBody),
+            ),
+        ]);
+
+        $client = new AppsApiClient(
+            new ApiClientConfiguration(
+                baseUrl: 'https://data-apps.keboola.com',
+                storageToken: 'my-token',
+                userAgent: 'Keboola Sandboxes Service API PHP Client',
+                requestHandler: $requestHandler(...),
+            ),
+        );
+
+        $payload = [
+            'type' => 'streamlit',
+            'branchId' => '123',
+            'name' => 'Test App',
+            'description' => 'Test description',
+            'config' => ['key' => 'value'],
+        ];
+        $result = $client->createApp($payload);
+
+        self::assertEquals(App::fromArray($responseBody), $result);
+
+        self::assertCount(1, $requestsHistory);
+        self::assertRequestEquals(
+            'POST',
+            'https://data-apps.keboola.com/apps',
+            [
+                'X-StorageApi-Token' => 'my-token',
+                'Content-Type' => 'application/json',
+            ],
+            Json::encodeArray($payload),
+            $requestsHistory[0]['request'],
+        );
+    }
+
+    public function testDeleteApp(): void
+    {
+        $requestHandler = self::createRequestHandler($requestsHistory, [
+            new Response(202),
+        ]);
+
+        $client = new AppsApiClient(
+            new ApiClientConfiguration(
+                baseUrl: 'https://data-apps.keboola.com',
+                storageToken: 'my-token',
+                userAgent: 'Keboola Sandboxes Service API PHP Client',
+                requestHandler: $requestHandler(...),
+            ),
+        );
+        $client->deleteApp('app-id');
+
+        self::assertCount(1, $requestsHistory);
+        self::assertRequestEquals(
+            'DELETE',
+            'https://data-apps.keboola.com/apps/app-id',
+            [
+                'X-StorageApi-Token' => 'my-token',
+            ],
+            '',
+            $requestsHistory[0]['request'],
+        );
+    }
 }

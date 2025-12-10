@@ -74,4 +74,33 @@ class AppsApiClient
             ),
         );
     }
+
+    /**
+     * @param array<string, mixed> $payload
+     */
+    public function createApp(array $payload): App
+    {
+        $responseData = $this->apiClient->sendRequestAndDecodeResponse(
+            new Request(
+                'POST',
+                '/apps',
+                [
+                    'Content-Type' => 'application/json',
+                ],
+                Json::encodeArray($payload),
+            ),
+        );
+
+        return App::fromArray($responseData);
+    }
+
+    public function deleteApp(string $appId): void
+    {
+        $this->apiClient->sendRequest(
+            new Request(
+                'DELETE',
+                sprintf('/apps/%s', $appId),
+            ),
+        );
+    }
 }

@@ -62,14 +62,6 @@ $app = $client->createApp([
 $client->deleteApp('app-id');
 ```
 
-#### createApp() payload fields
-
-- `type` (string, required) - App type, e.g. `streamlit`
-- `branchId` (string|null, required) - Storage branch ID; use `null` for the default branch
-- `name` (string, required) - App name
-- `description` (string|null, optional) - Human-readable description of the app
-- `config` (object|null, optional) - Component configuration passed to the app, may contain arbitrary keys
-
 ## License
 
 MIT licensed, see [LICENSE](./LICENSE) file.

@@ -51,18 +51,24 @@ $client->patchApp('app-id', [
     'restartIfRunning' => true,
 ]);
 
-// Create new app
+// Create new app (required fields only)
 $app = $client->createApp([
     'type' => 'streamlit',
-    'branchId' => '123',
+    'branchId' => '123', // use null for default branch
     'name' => 'My App',
-    'description' => 'App description',
-    'config' => ['key' => 'value'],
 ]);
 
 // Delete app
 $client->deleteApp('app-id');
 ```
+
+#### createApp() payload fields
+
+- `type` (string, required) - App type, e.g. `streamlit`
+- `branchId` (string|null, required) - Storage branch ID; use `null` for the default branch
+- `name` (string, required) - App name
+- `description` (string|null, optional) - Human-readable description of the app
+- `config` (object|null, optional) - Component configuration passed to the app, may contain arbitrary keys
 
 ## License
 

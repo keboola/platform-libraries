@@ -50,6 +50,16 @@ $client->patchApp('app-id', [
     'desiredState' => 'running',
     'restartIfRunning' => true,
 ]);
+
+// Create new app (required fields only)
+$app = $client->createApp([
+    'type' => 'streamlit',
+    'branchId' => '123', // use null for default branch
+    'name' => 'My App',
+]);
+
+// Delete app
+$client->deleteApp('app-id');
 ```
 
 ## License

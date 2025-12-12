@@ -348,20 +348,6 @@ class LoadTypeDeciderTest extends TestCase
             // phpcs:ignore Generic.Files.LineLength.MaxExceeded
             'expected' => 'Workspace type "bigquery" does not match table backend type "snowflake" when loading Bigquery table "foo.bar".',
         ];
-
-        yield 'Non-BigQuery workspace type' => [
-            'tableInfo' => [
-                'id' => 'foo.bar',
-                'name' => 'bar',
-                'bucket' => ['backend' => 'bigquery'],
-                'isAlias' => false,
-            ],
-            'workspaceType' => 'snowflake',
-            'exportOptions' => [],
-            'hasBigQueryDefaultImViewFeature' => false,
-            // phpcs:ignore Generic.Files.LineLength.MaxExceeded
-            'expected' => 'Method checkViableBigQueryLoadMethod can only be used for BigQuery workspaces, got "snowflake".',
-        ];
     }
 
     /**

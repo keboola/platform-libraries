@@ -233,7 +233,7 @@ class AbstractWorkspaceStrategyTest extends TestCase
 
         $strategy = $this->createTestStrategy($clientWrapper, 'bigquery');
 
-        // Create a table that will cause checkViableLoadMethod to throw an exception
+        // Create a table that will cause checkViableBigQueryLoadMethod to throw an exception
         // (BigQuery workspace with alias table from the same project)
         $tableOptions = new RewrittenInputTableOptions(
             ['source' => 'in.c-test-bucket.table1', 'destination' => 'table1'],
@@ -247,7 +247,7 @@ class AbstractWorkspaceStrategyTest extends TestCase
             ],
         );
 
-        // This should throw an InvalidInputException because checkViableLoadMethod is called
+        // This should throw an InvalidInputException because checkViableBigQueryLoadMethod is called
         $this->expectException(InvalidInputException::class);
         $this->expectExceptionMessage(
             'Table "in.c-test-bucket.table1" is an alias, which is not supported when loading Bigquery tables.',

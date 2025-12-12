@@ -343,28 +343,30 @@ abstract class AbstractWorkspaceStrategy extends AbstractStrategy
 
     private function decideTableLoadMethod(RewrittenInputTableOptions $table, array $loadOptions): WorkspaceLoadType
     {
-        // Validate that table can be loaded to this workspace type
-        LoadTypeDecider::checkViableLoadMethod(
-            $table->getTableInfo(),
-            $this->getWorkspaceType(),
-            $loadOptions,
-            $this->clientWrapper->getToken()->getProjectId(),
-        );
+        if ($this->getWorkspaceType() === 'bigquery') {
+            $hasBigQueryDefaultImViewFeature = $this->clientWrapper->getToken()
+                ->hasFeature(self::BIGQUERY_DEFAULT_IM_VIEW_FEATURE);
 
-        if (LoadTypeDecider::canClone($table->getTableInfo(), $this->getWorkspaceType(), $loadOptions)) {
-            $this->logger->info(sprintf('Table "%s" will be cloned.', $table->getSource()));
-            return WorkspaceLoadType::CLONE;
-        }
+            // Validate that table can be loaded to this workspace type
+            LoadTypeDecider::checkViableBigQueryLoadMethod(
+                $table->getTableInfo(),
+                $this->getWorkspaceType(),
+                $loadOptions,
+                $this->clientWrapper->getToken()->getProjectId(),
+                $hasBigQueryDefaultImViewFeature,
+            );
 
-        if ($this->getWorkspaceType() === 'bigquery' &&
-            $table->getTableInfo()['bucket']['backend'] === 'bigquery'
-        ) {
-            if ($this->clientWrapper->getToken()->hasFeature(self::BIGQUERY_DEFAULT_IM_VIEW_FEATURE)) {
+            if ($hasBigQueryDefaultImViewFeature) {
                 $this->logger->info(sprintf('Table "%s" will be created as view.', $table->getSource()));
                 return WorkspaceLoadType::VIEW;
             }
             $this->logger->info(sprintf('Table "%s" will be copied.', $table->getSource()));
             return WorkspaceLoadType::COPY;
+        }
+
+        if (LoadTypeDecider::canClone($table->getTableInfo(), $this->getWorkspaceType(), $loadOptions)) {
+            $this->logger->info(sprintf('Table "%s" will be cloned.', $table->getSource()));
+            return WorkspaceLoadType::CLONE;
         }
 
         if (LoadTypeDecider::canUseView($table->getTableInfo(), $this->getWorkspaceType())) {

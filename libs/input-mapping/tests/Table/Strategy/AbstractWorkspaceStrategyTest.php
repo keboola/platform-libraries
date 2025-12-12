@@ -221,11 +221,11 @@ class AbstractWorkspaceStrategyTest extends TestCase
     public function testPrepareTableLoadsToWorkspaceChecksViableLoadMethod(): void
     {
         $clientWrapper = $this->createMock(ClientWrapper::class);
-        $clientWrapper->expects($this->once())
+        $clientWrapper->expects($this->exactly(2))
             ->method('getToken')
             ->willReturn(new StorageApiToken(
                 [
-                    'owner' => ['id' => 12345],
+                    'owner' => ['id' => 12345, 'features' => ['bigquery-default-im-view']],
                 ],
                 'my-secret-token',
             ))

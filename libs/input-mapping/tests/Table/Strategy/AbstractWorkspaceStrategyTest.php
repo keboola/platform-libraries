@@ -468,6 +468,155 @@ class AbstractWorkspaceStrategyTest extends TestCase
         self::assertEmpty($result->jobs);
     }
 
+    public function testBigQueryCopyLoadWithExtraOptions(): void
+    {
+        $branchClient = $this->createMock(BranchAwareClient::class);
+
+        // Verify that extra options are sent for BigQuery COPY load type
+        $branchClient->expects($this->once())
+            ->method('apiPostJson')
+            ->with(
+                'workspaces/456/load',
+                [
+                    'input' => [
+                        [
+                            'source' => 'in.c-test-bucket.table1',
+                            'destination' => 'table1',
+                            'overwrite' => true,
+                            'sourceBranchId' => 123,
+                            'loadType' => 'COPY',
+                            'columns' => [['source' => 'col1'], ['source' => 'col2']],
+                            'whereColumn' => 'status',
+                            'whereValues' => ['active', 'pending'],
+                            'whereOperator' => 'eq',
+                        ],
+                    ],
+                    'preserve' => 0,
+                ],
+                false,
+            )
+            ->willReturn(['id' => 789]);
+
+        $branchClient->expects($this->never())
+            ->method('handleAsyncTasks');
+
+        $clientWrapper = $this->createMock(ClientWrapper::class);
+        $clientWrapper->expects($this->exactly(2))
+            ->method('getToken')
+            ->willReturn(new StorageApiToken(
+                [
+                    'owner' => ['id' => 12345, 'features' => []], // No feature flag - will use COPY
+                ],
+                'my-secret-token',
+            ));
+        $clientWrapper->expects($this->once())
+            ->method('getBranchClient')
+            ->willReturn($branchClient);
+
+        $dataStorage = $this->createMock(WorkspaceStagingInterface::class);
+        $dataStorage->expects(self::once())
+            ->method('getWorkspaceId')
+            ->willReturn('456');
+
+        $strategy = $this->createTestStrategyWithDataStorage($clientWrapper, 'bigquery', $dataStorage);
+
+        // Create table with extra options
+        $tableOptions = new RewrittenInputTableOptions(
+            [
+                'source' => 'in.c-test-bucket.table1',
+                'destination' => 'table1',
+                'overwrite' => true,
+                'columns' => ['col1', 'col2'],
+                'where_column' => 'status',
+                'where_values' => ['active', 'pending'],
+                'where_operator' => 'eq',
+            ],
+            'in.c-test-bucket.table1',
+            123,
+            [
+                'id' => 'in.c-test-bucket.table1',
+                'bucket' => ['backend' => 'bigquery'],
+                'isAlias' => false,
+            ],
+        );
+
+        $result = $strategy->prepareAndExecuteTableLoads([$tableOptions], false);
+
+        self::assertCount(1, $result->jobs);
+        self::assertTrue($this->testHandler->hasInfoThatContains('Copying 1 tables to workspace.'));
+    }
+
+    public function testBigQueryCopyLoadWithAliasTable(): void
+    {
+        $branchClient = $this->createMock(BranchAwareClient::class);
+
+        // Verify that alias table is sent for BigQuery COPY load type
+        $branchClient->expects($this->once())
+            ->method('apiPostJson')
+            ->with(
+                'workspaces/456/load',
+                [
+                    'input' => [
+                        [
+                            'source' => 'in.c-test-bucket.table1',
+                            'destination' => 'table1',
+                            'overwrite' => true,
+                            'sourceBranchId' => 123,
+                            'loadType' => 'COPY',
+                        ],
+                    ],
+                    'preserve' => 0,
+                ],
+                false,
+            )
+            ->willReturn(['id' => 789]);
+
+        $branchClient->expects($this->never())
+            ->method('handleAsyncTasks');
+
+        $clientWrapper = $this->createMock(ClientWrapper::class);
+        $clientWrapper->expects($this->exactly(2))
+            ->method('getToken')
+            ->willReturn(new StorageApiToken(
+                [
+                    'owner' => ['id' => 12345, 'features' => []], // No feature flag - will use COPY
+                ],
+                'my-secret-token',
+            ));
+        $clientWrapper->expects($this->once())
+            ->method('getBranchClient')
+            ->willReturn($branchClient);
+
+        $dataStorage = $this->createMock(WorkspaceStagingInterface::class);
+        $dataStorage->expects(self::once())
+            ->method('getWorkspaceId')
+            ->willReturn('456');
+
+        $strategy = $this->createTestStrategyWithDataStorage($clientWrapper, 'bigquery', $dataStorage);
+
+        // Create alias table (from different project - should be allowed)
+        $tableOptions = new RewrittenInputTableOptions(
+            [
+                'source' => 'in.c-test-bucket.table1',
+                'destination' => 'table1',
+                'overwrite' => true,
+            ],
+            'in.c-test-bucket.table1',
+            123,
+            [
+                'id' => 'in.c-test-bucket.table1',
+                'bucket' => ['backend' => 'bigquery'],
+                'isAlias' => true,
+                'sourceTable' => ['project' => ['id' => 99999]], // Different project - should be allowed
+            ],
+        );
+
+        $result = $strategy->prepareAndExecuteTableLoads([$tableOptions], false);
+
+        self::assertCount(1, $result->jobs);
+        self::assertTrue($this->testHandler->hasInfoThatContains('Copying 1 tables to workspace.'));
+    }
+
     private function createTestStrategy(
         ClientWrapper $clientWrapper,
         string $workspaceType,

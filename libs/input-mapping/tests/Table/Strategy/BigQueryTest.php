@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Keboola\InputMapping\Tests\Table\Strategy;
 
 use Keboola\InputMapping\Exception\InvalidInputException;
-
 use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Options\RewrittenInputTableOptions;
 use Keboola\InputMapping\Table\Strategy\BigQuery;
@@ -16,13 +15,18 @@ use Keboola\StagingProvider\Staging\File\FileFormat;
 use Keboola\StagingProvider\Staging\File\FileStagingInterface;
 use Keboola\StagingProvider\Staging\Workspace\WorkspaceStagingInterface;
 use Psr\Log\NullLogger;
+use RuntimeException;
 
 #[NeedsStorageBackend('bigquery')]
 class BigQueryTest extends AbstractTestCase
 {
     #[NeedsTestTables]
-    public function testBigQueryDownloadTableAsView(): void
+    public function testBigQueryDownloadTableAsViewWithFeatureFlag(): void
     {
+        if (!$this->clientWrapper->getToken()->hasFeature('bigquery-default-im-view')) {
+            throw new RuntimeException('Project does not have bigquery-default-im-view feature.');
+        }
+
         $strategy = new BigQuery(
             $this->clientWrapper,
             new NullLogger(),

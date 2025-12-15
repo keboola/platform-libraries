@@ -6,6 +6,7 @@ namespace Keboola\InputMapping\Tests\Functional;
 
 use Keboola\Csv\CsvFile;
 use Keboola\InputMapping\Configuration\Table\Manifest\Adapter;
+use Keboola\InputMapping\Exception\InvalidInputException;
 use Keboola\InputMapping\Reader;
 use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Options\InputTableOptions;
@@ -178,8 +179,11 @@ class DownloadTablesWorkspaceSnowflakeAdaptiveTest extends AbstractTestCase
             ],
         ]);
 
-        $this->expectException(ClientException::class);
-        $this->expectExceptionMessage('This value should be of type numeric|string');
+        $this->expectException(InvalidInputException::class);
+        $this->expectExceptionMessageMatches(
+            '/Invalid lastImportDate value "nonsense" for table ".*". '
+            . 'This value cannot be converted to a valid timestamp\./',
+        );
         $reader->downloadTables(
             $configuration,
             $inputTablesState,

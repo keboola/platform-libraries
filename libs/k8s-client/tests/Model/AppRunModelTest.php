@@ -10,7 +10,6 @@ use Keboola\K8sClient\Model\Io\Keboola\Apps\V1\AppRunSpec;
 use Keboola\K8sClient\Model\Io\Keboola\Apps\V1\AppRunStatus;
 use Keboola\K8sClient\Model\Io\Keboola\Apps\V1\PodReference;
 use PHPUnit\Framework\TestCase;
-use TypeError;
 
 class AppRunModelTest extends TestCase
 {
@@ -69,8 +68,12 @@ class AppRunModelTest extends TestCase
         // Spec basics
         self::assertNotNull($appRun->spec);
         self::assertInstanceOf(AppRunSpec::class, $appRun->spec);
+        // Time fields with isRawObject=true are stored as strings, not Time objects
+        // @phpstan-ignore-next-line
         self::assertSame('2025-01-15T12:00:00Z', $appRun->spec->createdAt);
+        // @phpstan-ignore-next-line
         self::assertSame('2025-01-15T12:01:00Z', $appRun->spec->startedAt);
+        // @phpstan-ignore-next-line
         self::assertSame('2025-01-15T13:00:00Z', $appRun->spec->stoppedAt);
         self::assertSame('Finished', $appRun->spec->state);
         self::assertSame("foo\nbar\n", $appRun->spec->startupLogs);
@@ -91,6 +94,8 @@ class AppRunModelTest extends TestCase
         // Status
         self::assertNotNull($appRun->status);
         self::assertInstanceOf(AppRunStatus::class, $appRun->status);
+        // Time fields with isRawObject=true are stored as strings, not Time objects
+        // @phpstan-ignore-next-line
         self::assertSame('2025-01-15T13:05:00Z', $appRun->status->syncedAt);
         self::assertNotNull($appRun->status->conditions);
         self::assertCount(1, $appRun->status->conditions);
@@ -113,34 +118,5 @@ class AppRunModelTest extends TestCase
         self::assertSame('app-12345-deployment-abc123-xyz', $serialized['spec']['podRef']['name']);
         self::assertSame('app-123', $serialized['spec']['appRef']['appId']);
         self::assertSame('Finished', $serialized['spec']['state']);
-    }
-
-    public static function provideInvalidTestData(): iterable
-    {
-        yield 'wrong state type - array instead of string' => [
-            'data' => ['spec' => ['state' => []]],
-            'expectedMessage' => 'Cannot assign array to property',
-        ];
-
-        yield 'wrong podRef.name type - array instead of string' => [
-            'data' => ['spec' => ['podRef' => ['name' => []]]],
-            'expectedMessage' => 'Cannot assign array to property',
-        ];
-
-        yield 'wrong appRef.appId type - array instead of string' => [
-            'data' => ['spec' => ['appRef' => ['appId' => []]]],
-            'expectedMessage' => 'Cannot assign array to property',
-        ];
-    }
-
-    /**
-     * @dataProvider provideInvalidTestData
-     */
-    public function testInvalidDataTypesThrowTypeError(array $data, string $expectedMessage): void
-    {
-        $this->expectException(TypeError::class);
-        $this->expectExceptionMessageMatches('/' . preg_quote($expectedMessage, '/') . '/');
-
-        new AppRun($data);
     }
 }

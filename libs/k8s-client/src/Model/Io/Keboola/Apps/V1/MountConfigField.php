@@ -11,6 +11,13 @@ use KubernetesRuntime\AbstractModel;
  */
 class MountConfigField extends AbstractModel
 {
-    public string|null $source = null;
-    public string|null $target = null;
+    /**
+     * @var string
+     */
+    public $source = null;
+
+    /**
+     * @var string
+     */
+    public $target = null;
 }

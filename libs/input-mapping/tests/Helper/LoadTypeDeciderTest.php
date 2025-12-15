@@ -207,20 +207,27 @@ class LoadTypeDeciderTest extends TestCase
     }
 
     /**
-     * @dataProvider checkViableLoadMethodExceptionProvider
+     * @dataProvider checkViableBigQueryLoadMethodExceptionProvider
      */
-    public function testCheckViableLoadMethodException(
+    public function testCheckViableBigQueryLoadMethodException(
         array $tableInfo,
         string $workspaceType,
         array $exportOptions,
+        bool $hasBigQueryDefaultImViewFeature,
         string $expected,
     ): void {
         $this->expectException(InvalidInputException::class);
         $this->expectExceptionMessage($expected);
-        LoadTypeDecider::checkViableLoadMethod($tableInfo, $workspaceType, $exportOptions, '123');
+        LoadTypeDecider::checkViableBigQueryLoadMethod(
+            $tableInfo,
+            $workspaceType,
+            $exportOptions,
+            '123',
+            $hasBigQueryDefaultImViewFeature,
+        );
     }
 
-    public function checkViableLoadMethodExceptionProvider(): Generator
+    public function checkViableBigQueryLoadMethodExceptionProvider(): Generator
     {
         yield 'BigQuery Table Alias' => [
             'tableInfo' => [
@@ -232,6 +239,7 @@ class LoadTypeDeciderTest extends TestCase
             ],
             'workspaceType' => 'bigquery',
             'exportOptions' => [],
+            'hasBigQueryDefaultImViewFeature' => true,
             'expected' => 'Table "foo.bar" is an alias, which is not supported when loading Bigquery tables.',
         ];
 
@@ -246,6 +254,7 @@ class LoadTypeDeciderTest extends TestCase
             'exportOptions' => [
                 'seconds' => 5,
             ],
+            'hasBigQueryDefaultImViewFeature' => true,
             'expected' => 'Option "seconds" is not supported when loading Bigquery table "foo.bar".',
         ];
 
@@ -260,6 +269,7 @@ class LoadTypeDeciderTest extends TestCase
             'exportOptions' => [
                 'rows' => 1,
             ],
+            'hasBigQueryDefaultImViewFeature' => true,
             'expected' => 'Option "rows" is not supported when loading Bigquery table "foo.bar".',
         ];
 
@@ -274,6 +284,7 @@ class LoadTypeDeciderTest extends TestCase
             'exportOptions' => [
                 'whereOperator' => 'and',
             ],
+            'hasBigQueryDefaultImViewFeature' => true,
             'expected' => 'Option "whereOperator" is not supported when loading Bigquery table "foo.bar".',
         ];
 
@@ -288,6 +299,7 @@ class LoadTypeDeciderTest extends TestCase
             'exportOptions' => [
                 'whereColumn' => 'name',
             ],
+            'hasBigQueryDefaultImViewFeature' => true,
             'expected' => 'Option "whereColumn" is not supported when loading Bigquery table "foo.bar".',
         ];
 
@@ -302,6 +314,7 @@ class LoadTypeDeciderTest extends TestCase
             'exportOptions' => [
                 'whereValues' => ['foo'],
             ],
+            'hasBigQueryDefaultImViewFeature' => true,
             'expected' => 'Option "whereValues" is not supported when loading Bigquery table "foo.bar".',
         ];
 
@@ -316,6 +329,7 @@ class LoadTypeDeciderTest extends TestCase
             'exportOptions' => [
                 'columns' => [],
             ],
+            'hasBigQueryDefaultImViewFeature' => true,
             'expected' => 'Option "columns" is not supported when loading Bigquery table "foo.bar".',
         ];
 
@@ -330,24 +344,32 @@ class LoadTypeDeciderTest extends TestCase
             'exportOptions' => [
                 'columns' => [],
             ],
+            'hasBigQueryDefaultImViewFeature' => false,
             // phpcs:ignore Generic.Files.LineLength.MaxExceeded
             'expected' => 'Workspace type "bigquery" does not match table backend type "snowflake" when loading Bigquery table "foo.bar".',
         ];
     }
 
     /**
-     * @dataProvider checkViableLoadMethodPassProvider
+     * @dataProvider checkViableBigQueryLoadMethodPassProvider
      */
-    public function testCheckViableLoadMethodPass(
+    public function testCheckViableBigQueryLoadMethodPass(
         array $tableInfo,
         string $workspaceType,
         array $exportOptions,
+        bool $hasBigQueryDefaultImViewFeature,
     ): void {
         $this->expectNotToPerformAssertions();
-        LoadTypeDecider::checkViableLoadMethod($tableInfo, $workspaceType, $exportOptions, '123');
+        LoadTypeDecider::checkViableBigQueryLoadMethod(
+            $tableInfo,
+            $workspaceType,
+            $exportOptions,
+            '123',
+            $hasBigQueryDefaultImViewFeature,
+        );
     }
 
-    public function checkViableLoadMethodPassProvider(): Generator
+    public function checkViableBigQueryLoadMethodPassProvider(): Generator
     {
         yield 'BigQuery Table Alias' => [
             'tableInfo' => [
@@ -359,6 +381,7 @@ class LoadTypeDeciderTest extends TestCase
             ],
             'workspaceType' => 'bigquery',
             'exportOptions' => [],
+            'hasBigQueryDefaultImViewFeature' => true,
         ];
 
         yield 'Filtered BigQuery Table' => [
@@ -372,19 +395,19 @@ class LoadTypeDeciderTest extends TestCase
             'exportOptions' => [
                 'overwrite' => true,
             ],
+            'hasBigQueryDefaultImViewFeature' => true,
         ];
 
-        yield 'Snowflake workspace' => [
+        yield 'BigQuery Table without feature flag' => [
             'tableInfo' => [
                 'id' => 'foo.bar',
                 'name' => 'bar',
                 'bucket' => ['backend' => 'bigquery'],
                 'isAlias' => false,
             ],
-            'workspaceType' => 'snowflake',
-            'exportOptions' => [
-                'columns' => [],
-            ],
+            'workspaceType' => 'bigquery',
+            'exportOptions' => [],
+            'hasBigQueryDefaultImViewFeature' => false,
         ];
     }
 }

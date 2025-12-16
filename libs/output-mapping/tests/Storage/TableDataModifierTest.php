@@ -64,8 +64,10 @@ class TableDataModifierTest extends AbstractTestCase
                     'changedUntil' => null,
                     'whereFilters' => [
                         [
+                            'type' => 'SCALAR',
                             'column' => 'Id',
                             'values' => ['id1', 'id2'],
+                            'dataType' => null,
                             'operator' => 'eq',
                         ],
                     ],
@@ -110,8 +112,10 @@ class TableDataModifierTest extends AbstractTestCase
                             'changedUntil' => null,
                             'whereFilters' => [
                                 [
+                                    'type' => 'SCALAR',
                                     'column' => 'Id',
                                     'values' => ['id1', 'id2'],
+                                    'dataType' => null,
                                     'operator' => 'eq',
                                 ],
                             ],
@@ -158,8 +162,10 @@ class TableDataModifierTest extends AbstractTestCase
                             'changedUntil' => null,
                             'whereFilters' => [
                                 [
+                                    'type' => 'SCALAR',
                                     'column' => 'Id',
                                     'values' => ['id2'],
+                                    'dataType' => null,
                                     'operator' => 'eq',
                                 ],
                             ],
@@ -179,8 +185,10 @@ class TableDataModifierTest extends AbstractTestCase
                             'changedUntil' => null,
                             'whereFilters' => [
                                 [
+                                    'type' => 'SCALAR',
                                     'column' => 'Id',
                                     'values' => ['id1'],
+                                    'dataType' => null,
                                     'operator' => 'eq',
                                 ],
                             ],
@@ -223,13 +231,17 @@ class TableDataModifierTest extends AbstractTestCase
                             'changedUntil' => null,
                             'whereFilters' => [
                                 [
+                                    'type' => 'SCALAR',
                                     'column' => 'Id',
                                     'values' => ['id1'],
+                                    'dataType' => null,
                                     'operator' => 'eq',
                                 ],
                                 [
+                                    'type' => 'SCALAR',
                                     'column' => 'Id',
                                     'values' => ['id2'],
+                                    'dataType' => null,
                                     'operator' => 'eq',
                                 ],
                             ],

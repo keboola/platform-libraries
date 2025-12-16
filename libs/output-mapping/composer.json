@@ -35,7 +35,7 @@
         "keboola/php-storage-names-sanitizer": "*@dev",
         "keboola/slicer": "*@dev",
         "keboola/staging-provider": "*@dev",
-        "keboola/storage-api-client": "^18.0",
+        "keboola/storage-api-client": "^18.5",
         "keboola/storage-api-php-client-branch-wrapper": "^6.0",
         "microsoft/azure-storage-blob": "^1.5",
         "psr/log": "^2.0|^3.0",

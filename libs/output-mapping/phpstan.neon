@@ -5,6 +5,10 @@ parameters:
         - tests
     ignoreErrors:
         - identifier: missingType.iterableValue
+        # Symfony Config component uses generic types (NodeBuilder<T>, ExprBuilder<T>) that phpstan-symfony 1.x doesn't fully support
+        - message: '#Call to method \w+\(\) on an unknown class Symfony\\Component\\Config\\Definition\\Builder\\(NodeBuilder|ExprBuilder)<.+>#'
+          paths:
+            - src/Configuration/
 includes:
     - vendor/phpstan/phpstan-phpunit/extension.neon
     - vendor/phpstan/phpstan-symfony/extension.neon

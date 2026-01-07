@@ -42,12 +42,13 @@ class AttributeAuthenticator extends AbstractAuthenticator
             $authenticator = $this->authenticators->get($authAttribute->getName());
             assert($authenticator instanceof TokenAuthenticatorInterface);
 
-            $token = $this->getTokenFromRequest($request, $authenticator);
+            $tokenHeaders = $authenticator instanceof MultiHeaderTokenAuthenticatorInterface
+                ? $authenticator->getTokenHeaders()
+                : [$authenticator->getTokenHeader()];
+
+            $token = $this->getTokenFromHeaders($request, $tokenHeaders);
 
             if ($token === null) {
-                $tokenHeaders = $authenticator instanceof MultiHeaderTokenAuthenticatorInterface
-                    ? $authenticator->getTokenHeaders()
-                    : [$authenticator->getTokenHeader()];
                 $error = new CustomUserMessageAuthenticationException(sprintf(
                     'Authentication header "%s" is missing',
                     implode('" or "', $tokenHeaders),
@@ -129,27 +130,19 @@ class AttributeAuthenticator extends AbstractAuthenticator
     }
 
     /**
-     * Gets the token from the request, trying multiple headers if the authenticator supports it.
-     * For Bearer tokens, extracts the token value from "Bearer <token>" format.
-     *
-     * @param TokenAuthenticatorInterface<TokenInterface> $authenticator
+     * @param list<string> $tokenHeaders
      */
-    private function getTokenFromRequest(Request $request, TokenAuthenticatorInterface $authenticator): ?string
+    private function getTokenFromHeaders(Request $request, array $tokenHeaders): ?string
     {
-        if ($authenticator instanceof MultiHeaderTokenAuthenticatorInterface) {
-            foreach ($authenticator->getTokenHeaders() as $header) {
-                $value = $request->headers->get($header);
-                if ($value !== null) {
-                    // Handle Bearer token format
-                    if ($header === 'Authorization' && str_starts_with($value, 'Bearer ')) {
-                        return substr($value, 7);
-                    }
-                    return $value;
+        foreach ($tokenHeaders as $header) {
+            $value = $request->headers->get($header);
+            if ($value !== null) {
+                if ($header === 'Authorization' && str_starts_with($value, 'Bearer ')) {
+                    return substr($value, 7);
                 }
+                return $value;
             }
-            return null;
         }
-
-        return $request->headers->get($authenticator->getTokenHeader());
+        return null;
     }
 }

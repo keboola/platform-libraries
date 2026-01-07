@@ -42,13 +42,15 @@ class AttributeAuthenticator extends AbstractAuthenticator
             $authenticator = $this->authenticators->get($authAttribute->getName());
             assert($authenticator instanceof TokenAuthenticatorInterface);
 
-            $tokenHeader = $authenticator->getTokenHeader();
-            $token = $request->headers->get($tokenHeader);
+            $token = $this->getTokenFromRequest($request, $authenticator);
 
             if ($token === null) {
+                $tokenHeaders = $authenticator instanceof MultiHeaderTokenAuthenticatorInterface
+                    ? $authenticator->getTokenHeaders()
+                    : [$authenticator->getTokenHeader()];
                 $error = new CustomUserMessageAuthenticationException(sprintf(
                     'Authentication header "%s" is missing',
-                    $tokenHeader,
+                    implode('" or "', $tokenHeaders),
                 ));
                 continue;
             }
@@ -124,5 +126,30 @@ class AttributeAuthenticator extends AbstractAuthenticator
             AuthAttributeInterface::class,
             ReflectionAttribute::IS_INSTANCEOF,
         );
+    }
+
+    /**
+     * Gets the token from the request, trying multiple headers if the authenticator supports it.
+     * For Bearer tokens, extracts the token value from "Bearer <token>" format.
+     *
+     * @param TokenAuthenticatorInterface<TokenInterface> $authenticator
+     */
+    private function getTokenFromRequest(Request $request, TokenAuthenticatorInterface $authenticator): ?string
+    {
+        if ($authenticator instanceof MultiHeaderTokenAuthenticatorInterface) {
+            foreach ($authenticator->getTokenHeaders() as $header) {
+                $value = $request->headers->get($header);
+                if ($value !== null) {
+                    // Handle Bearer token format
+                    if ($header === 'Authorization' && str_starts_with($value, 'Bearer ')) {
+                        return substr($value, 7);
+                    }
+                    return $value;
+                }
+            }
+            return null;
+        }
+
+        return $request->headers->get($authenticator->getTokenHeader());
     }
 }

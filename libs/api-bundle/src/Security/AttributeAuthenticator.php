@@ -42,13 +42,16 @@ class AttributeAuthenticator extends AbstractAuthenticator
             $authenticator = $this->authenticators->get($authAttribute->getName());
             assert($authenticator instanceof TokenAuthenticatorInterface);
 
-            $tokenHeader = $authenticator->getTokenHeader();
-            $token = $request->headers->get($tokenHeader);
+            $tokenHeaders = $authenticator instanceof MultiHeaderTokenAuthenticatorInterface
+                ? $authenticator->getTokenHeaders()
+                : [$authenticator->getTokenHeader()];
+
+            $token = $this->getTokenFromHeaders($request, $tokenHeaders);
 
             if ($token === null) {
                 $error = new CustomUserMessageAuthenticationException(sprintf(
                     'Authentication header "%s" is missing',
-                    $tokenHeader,
+                    implode('" or "', $tokenHeaders),
                 ));
                 continue;
             }
@@ -124,5 +127,22 @@ class AttributeAuthenticator extends AbstractAuthenticator
             AuthAttributeInterface::class,
             ReflectionAttribute::IS_INSTANCEOF,
         );
+    }
+
+    /**
+     * @param list<string> $tokenHeaders
+     */
+    private function getTokenFromHeaders(Request $request, array $tokenHeaders): ?string
+    {
+        foreach ($tokenHeaders as $header) {
+            $value = $request->headers->get($header);
+            if ($value !== null) {
+                if ($header === 'Authorization' && str_starts_with($value, 'Bearer ')) {
+                    return substr($value, 7);
+                }
+                return $value;
+            }
+        }
+        return null;
     }
 }

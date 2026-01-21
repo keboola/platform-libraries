@@ -16,6 +16,8 @@ use KubernetesRuntime\AbstractModel;
  * @property string|null $stoppedAt
  * @property string|null $state
  * @property string|null $startupLogs
+ * @property string|null $runtimeSize
+ * @property string|null $configVersion
  */
 class AppRunSpec extends AbstractModel
 {
@@ -54,4 +56,15 @@ class AppRunSpec extends AbstractModel
      * StartupLogs contains the startup logs from the run
      */
     public string|null $startupLogs = null;
+
+    /**
+     * RuntimeSize specifies the dynamic backend size for this run
+     * Possible values: micro, tiny, small, medium, large, external
+     */
+    public string|null $runtimeSize = null;
+
+    /**
+     * ConfigVersion specifies the configuration version used for this run
+     */
+    public string|null $configVersion = null;
 }

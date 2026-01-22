@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Keboola\QueryApi\Tests\Functional;
 
 use Keboola\QueryApi\Client;
+use Keboola\QueryApi\Tests\TestEnvVarsTrait;
 use Keboola\StorageApi\BranchAwareClient;
 use Keboola\StorageApi\Client as StorageApiClient;
 use Keboola\StorageApi\DevBranches;
@@ -15,6 +16,7 @@ use Throwable;
 
 abstract class BaseFunctionalTestCase extends TestCase
 {
+    use TestEnvVarsTrait;
     protected Client $queryClient;
     protected StorageApiClient $storageApiClient;
     protected BranchAwareClient $branchAwareStorageClient;
@@ -47,9 +49,9 @@ abstract class BaseFunctionalTestCase extends TestCase
 
     private function initializeClients(): void
     {
-        $storageApiToken = $this->getEnvString('STORAGE_API_TOKEN');
-        $hostnameSuffix = $this->getEnvString('HOSTNAME_SUFFIX');
-        $storageApiUrl = $this->getEnvString('STORAGE_API_URL');
+        $storageApiToken = self::getRequiredEnv('STORAGE_API_TOKEN');
+        $hostnameSuffix = self::getRequiredEnv('HOSTNAME_SUFFIX');
+        $storageApiUrl = self::getRequiredEnv('STORAGE_API_URL');
 
         $queryApiUrl = sprintf('https://query.%s', $hostnameSuffix);
 
@@ -64,12 +66,6 @@ abstract class BaseFunctionalTestCase extends TestCase
             'url' => $storageApiUrl,
             'token' => $storageApiToken,
         ]);
-    }
-
-    private function getEnvString(string $name): string
-    {
-        $value = $_ENV[$name] ?? getenv($name);
-        return is_string($value) ? $value : '';
     }
 
     private function findDefaultBranch(): void

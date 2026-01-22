@@ -47,14 +47,12 @@ abstract class BaseFunctionalTestCase extends TestCase
 
     private function initializeClients(): void
     {
-        $storageApiToken = $_ENV['STORAGE_API_TOKEN'] ?? '';
-        $hostnameSuffix = $_ENV['HOSTNAME_SUFFIX'] ?? '';
-        $storageApiUrl = $_ENV['STORAGE_API_URL'] ?? '';
+        $storageApiToken = $this->getEnvString('STORAGE_API_TOKEN');
+        $hostnameSuffix = $this->getEnvString('HOSTNAME_SUFFIX');
+        $storageApiUrl = $this->getEnvString('STORAGE_API_URL');
 
-        // @phpstan-ignore-next-line
         $queryApiUrl = sprintf('https://query.%s', $hostnameSuffix);
 
-        /** @var array{url: string, token: string} $config */
         $config = [
             'url' => $queryApiUrl,
             'token' => $storageApiToken,
@@ -66,6 +64,12 @@ abstract class BaseFunctionalTestCase extends TestCase
             'url' => $storageApiUrl,
             'token' => $storageApiToken,
         ]);
+    }
+
+    private function getEnvString(string $name): string
+    {
+        $value = $_ENV[$name] ?? getenv($name);
+        return is_string($value) ? $value : '';
     }
 
     private function findDefaultBranch(): void

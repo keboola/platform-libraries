@@ -33,7 +33,7 @@ class AzureServiceBusSerializerTest extends TestCase
     {
         yield 'empty encoded envelope' => [
             'data' => [],
-            'error' => 'Message is missing body',
+            'error' => 'Message body is missing or invalid',
         ];
 
         yield 'body not JSON' => [

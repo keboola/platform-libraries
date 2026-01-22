@@ -27,10 +27,12 @@ $tokenEnvVariables = [
 ];
 
 foreach ($tokenEnvVariables as $tokenEnvVariable) {
-    $hostNameSuffix = (string) getenv('HOSTNAME_SUFFIX');
-    assert($hostNameSuffix !== '');
+    $hostNameSuffix = getenv('HOSTNAME_SUFFIX');
+    $token = getenv($tokenEnvVariable);
+    assert(is_string($hostNameSuffix) && $hostNameSuffix !== '');
+    assert(is_string($token) && $token !== '');
     $client = new Client([
-        'token' => getenv($tokenEnvVariable),
+        'token' => $token,
         'url' => new ServiceClient($hostNameSuffix)->getConnectionServiceUrl(),
     ]);
     $tokenInfo = $client->verifyToken();

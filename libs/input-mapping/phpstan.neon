@@ -5,7 +5,6 @@ parameters:
         - tests
     ignoreErrors:
         - identifier: missingType.iterableValue
-        - '#Method.*configureNode\(\) has parameter.*with generic class.*but does not specify its types: TParent#'
         - '#Call to method.*on an unknown class.*NodeBuilder.*#'
 
 includes:

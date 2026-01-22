@@ -59,7 +59,6 @@ class AppRunSpec extends AbstractModel
 
     /**
      * RuntimeSize specifies the dynamic backend size for this run
-     * Possible values: micro, tiny, small, medium, large, external
      */
     public string|null $runtimeSize = null;
 

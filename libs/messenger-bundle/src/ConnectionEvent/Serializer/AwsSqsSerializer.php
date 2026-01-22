@@ -20,13 +20,13 @@ class AwsSqsSerializer implements SerializerInterface
     }
 
     /**
-     * @param array<string, mixed> $encodedEnvelope
+     * @param array<mixed, mixed> $encodedEnvelope
      */
     public function decode(array $encodedEnvelope): Envelope
     {
         $messageBody = $encodedEnvelope['body'] ?? null;
         if ($messageBody === null || !is_string($messageBody)) {
-            throw new MessageDecodingFailedException('Message is missing body');
+            throw new MessageDecodingFailedException('Message body is missing or invalid');
         }
 
         try {

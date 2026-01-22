@@ -19,7 +19,7 @@ class GooglePubSubSerializer implements SerializerInterface
     }
 
     /**
-     * @param array<string, mixed> $encodedEnvelope
+     * @param array<mixed, mixed> $encodedEnvelope
      */
     public function decode(array $encodedEnvelope): Envelope
     {

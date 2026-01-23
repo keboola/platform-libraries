@@ -12,6 +12,7 @@ use Keboola\ApiBundle\Security\ManageApiToken\ManageApiTokenAuthenticator;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Security\Core\Exception\AccessDeniedException;
+use Symfony\Component\Security\Core\Exception\CustomUserMessageAuthenticationException;
 
 class ManageApiTokenAuthenticatorTest extends TestCase
 {
@@ -314,5 +315,26 @@ class ManageApiTokenAuthenticatorTest extends TestCase
             ]),
             'Authentication token must not be super admin',
         ];
+    }
+
+    public function testGetTokenHeader(): void
+    {
+        $authenticator = new ManageApiTokenAuthenticator(
+            $this->createMock(ManageApiClientFactory::class),
+        );
+
+        self::assertSame('X-KBC-ManageApiToken', $authenticator->getTokenHeader());
+    }
+
+    public function testGetAuthorizationHeaderThrowsException(): void
+    {
+        $authenticator = new ManageApiTokenAuthenticator(
+            $this->createMock(ManageApiClientFactory::class),
+        );
+
+        $this->expectException(CustomUserMessageAuthenticationException::class);
+        $this->expectExceptionMessage('Authorization header is not supported for Manage API tokens');
+
+        $authenticator->getAuthorizationHeader();
     }
 }

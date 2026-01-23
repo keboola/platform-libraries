@@ -107,6 +107,10 @@ class AttributeAuthenticatorTest extends TestCase
             ->method('getTokenHeader')
             ->willReturn('X-Auth-Token')
         ;
+        $tokenAuthenticator->expects(self::once())
+            ->method('getAuthorizationHeader')
+            ->willReturn('Authorization')
+        ;
 
         $authenticator = $this->createAuthenticator(
             $controller,
@@ -116,7 +120,102 @@ class AttributeAuthenticatorTest extends TestCase
         );
 
         $this->expectException(CustomUserMessageAuthenticationException::class);
-        $this->expectExceptionMessage('Authentication header "X-Auth-Token" is missing');
+        $this->expectExceptionMessage('Authentication header "X-Auth-Token" or "Authorization: Bearer" is missing');
+
+        $authenticator->authenticate($request);
+    }
+
+    public function testAuthenticateRequestWithBearerToken(): void
+    {
+        $controller = new
+            #[StorageApiTokenAuth(['foo-feature'])]
+            class {
+                public function __invoke(): void {}
+            };
+
+        $request = $this->createControllerRequest($controller, [
+            'Authorization' => 'Bearer my-bearer-token',
+        ]);
+
+        $token = $this->createToken('user-id');
+
+        $tokenAuthenticator = $this->createMock(TokenAuthenticatorInterface::class);
+        $tokenAuthenticator->expects(self::once())
+            ->method('getTokenHeader')
+            ->willReturn('X-Auth-Token')
+        ;
+
+        $tokenAuthenticator->expects(self::once())
+            ->method('getAuthorizationHeader')
+            ->willReturn('Authorization')
+        ;
+
+        $tokenAuthenticator->expects(self::once())
+            ->method('authenticateToken')
+            ->with(
+                $this->isInstanceOf(StorageApiTokenAuth::class),
+                'Bearer my-bearer-token',
+            )
+            ->willReturn($token)
+        ;
+
+        $tokenAuthenticator->expects(self::once())
+            ->method('authorizeToken')
+            ->with(
+                $this->isInstanceOf(StorageApiTokenAuth::class),
+                $token,
+            )
+        ;
+
+        $authenticator = $this->createAuthenticator(
+            $controller,
+            [
+                StorageApiTokenAuth::class => $tokenAuthenticator,
+            ],
+        );
+
+        $passport = $authenticator->authenticate($request);
+
+        self::assertSame($token, $passport->getUser());
+    }
+
+    public function testAuthenticateRequestWithBothHeadersThrowsException(): void
+    {
+        $controller = new
+            #[StorageApiTokenAuth(['foo-feature'])]
+            class {
+                public function __invoke(): void {}
+            };
+
+        $request = $this->createControllerRequest($controller, [
+            'X-Auth-Token' => 'primary-token',
+            'Authorization' => 'Bearer bearer-token',
+        ]);
+
+        $tokenAuthenticator = $this->createMock(TokenAuthenticatorInterface::class);
+        $tokenAuthenticator->expects(self::once())
+            ->method('getTokenHeader')
+            ->willReturn('X-Auth-Token')
+        ;
+
+        $tokenAuthenticator->expects(self::once())
+            ->method('getAuthorizationHeader')
+            ->willReturn('Authorization')
+        ;
+
+        $tokenAuthenticator->expects(self::never())
+            ->method('authenticateToken')
+        ;
+
+        $authenticator = $this->createAuthenticator(
+            $controller,
+            [
+                StorageApiTokenAuth::class => $tokenAuthenticator,
+            ],
+        );
+
+        $this->expectException(CustomUserMessageAuthenticationException::class);
+        $this->expectExceptionMessage('Cannot use both "X-Auth-Token" and "Authorization" headers simultaneously');
 
         $authenticator->authenticate($request);
     }
@@ -195,6 +294,10 @@ class AttributeAuthenticatorTest extends TestCase
         $failingAuthenticator->expects(self::once())
             ->method('getTokenHeader')
             ->willReturn('X-Other-Token')
+        ;
+        $failingAuthenticator->expects(self::once())
+            ->method('getAuthorizationHeader')
+            ->willThrowException(new AuthenticationException('Authorization header not supported'))
         ;
 
         $authenticator = $this->createAuthenticator(
@@ -315,6 +418,11 @@ class AttributeAuthenticatorTest extends TestCase
         ;
 
         $authenticator->expects(self::once())
+            ->method('getAuthorizationHeader')
+            ->willThrowException(new AuthenticationException('Authorization header not supported'))
+        ;
+
+        $authenticator->expects(self::once())
             ->method('authenticateToken')
             ->with(
                 $this->isInstanceOf(StorageApiTokenAuth::class),
@@ -345,6 +453,10 @@ class AttributeAuthenticatorTest extends TestCase
             ->willReturn($tokenHeader)
         ;
         $authenticator->expects(self::once())
+            ->method('getAuthorizationHeader')
+            ->willThrowException(new AuthenticationException('Authorization header not supported'))
+        ;
+        $authenticator->expects(self::once())
             ->method('authenticateToken')
             ->willThrowException(new AuthenticationException('Token is not valid'))
         ;
@@ -364,6 +476,10 @@ class AttributeAuthenticatorTest extends TestCase
         $authenticator->expects(self::once())
             ->method('getTokenHeader')
             ->willReturn($tokenHeader)
+        ;
+        $authenticator->expects(self::once())
+            ->method('getAuthorizationHeader')
+            ->willThrowException(new AuthenticationException('Authorization header not supported'))
         ;
         $authenticator->expects(self::once())
             ->method('authenticateToken')

@@ -21,9 +21,14 @@ class AzureServiceBusSerializer implements SerializerInterface
 
     public function decode(array $encodedEnvelope): Envelope
     {
-        $messageBody = $encodedEnvelope['body'] ?? null;
-        if ($messageBody === null) {
-            throw new MessageDecodingFailedException('Message is missing body');
+        if (!array_key_exists('body', $encodedEnvelope)) {
+            throw new MessageDecodingFailedException('Message body is missing');
+        }
+
+        $messageBody = $encodedEnvelope['body'];
+
+        if (!is_string($messageBody)) {
+            throw new MessageDecodingFailedException('Message body is not a string');
         }
 
         try {

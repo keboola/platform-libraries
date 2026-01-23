@@ -41,6 +41,8 @@ class AppRunModelTest extends TestCase
                 'stoppedAt' => '2025-01-15T13:00:00Z',
                 'state' => 'Finished',
                 'startupLogs' => "foo\nbar\n",
+                'runtimeSize' => 'small',
+                'configVersion' => '1',
             ],
             'status' => [
                 'syncedAt' => '2025-01-15T13:05:00Z',
@@ -74,6 +76,8 @@ class AppRunModelTest extends TestCase
         self::assertSame('2025-01-15T13:00:00Z', $appRun->spec->stoppedAt);
         self::assertSame('Finished', $appRun->spec->state);
         self::assertSame("foo\nbar\n", $appRun->spec->startupLogs);
+        self::assertSame('small', $appRun->spec->runtimeSize);
+        self::assertSame('1', $appRun->spec->configVersion);
 
         // PodRef
         self::assertNotNull($appRun->spec->podRef);
@@ -113,6 +117,8 @@ class AppRunModelTest extends TestCase
         self::assertSame('app-12345-deployment-abc123-xyz', $serialized['spec']['podRef']['name']);
         self::assertSame('app-123', $serialized['spec']['appRef']['appId']);
         self::assertSame('Finished', $serialized['spec']['state']);
+        self::assertSame('small', $serialized['spec']['runtimeSize']);
+        self::assertSame('1', $serialized['spec']['configVersion']);
     }
 
     public static function provideInvalidTestData(): iterable
@@ -129,6 +135,16 @@ class AppRunModelTest extends TestCase
 
         yield 'wrong appRef.appId type - array instead of string' => [
             'data' => ['spec' => ['appRef' => ['appId' => []]]],
+            'expectedMessage' => 'Cannot assign array to property',
+        ];
+
+        yield 'wrong runtimeSize type - array instead of string' => [
+            'data' => ['spec' => ['runtimeSize' => []]],
+            'expectedMessage' => 'Cannot assign array to property',
+        ];
+
+        yield 'wrong configVersion type - array instead of string' => [
+            'data' => ['spec' => ['configVersion' => []]],
             'expectedMessage' => 'Cannot assign array to property',
         ];
     }

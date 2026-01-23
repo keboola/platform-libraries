@@ -30,6 +30,11 @@ class StorageApiTokenAuthenticator implements TokenAuthenticatorInterface
         return 'X-StorageApi-Token';
     }
 
+    public function getAuthorizationHeader(): string
+    {
+        return 'Authorization';
+    }
+
     public function authenticateToken(AuthAttributeInterface $authAttribute, string $token): StorageApiToken
     {
         assert($authAttribute instanceof StorageApiTokenAuth);

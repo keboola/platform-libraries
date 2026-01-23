@@ -110,4 +110,24 @@ class StorageApiTokenAuthenticatorTest extends TestCase
             'expectedExceptionCode' => 500,
         ];
     }
+
+    public function testGetTokenHeader(): void
+    {
+        $authenticator = new StorageApiTokenAuthenticator(
+            $this->createMock(StorageClientRequestFactory::class),
+            new RequestStack(),
+        );
+
+        self::assertSame('X-StorageApi-Token', $authenticator->getTokenHeader());
+    }
+
+    public function testGetAuthorizationHeader(): void
+    {
+        $authenticator = new StorageApiTokenAuthenticator(
+            $this->createMock(StorageClientRequestFactory::class),
+            new RequestStack(),
+        );
+
+        self::assertSame('Authorization', $authenticator->getAuthorizationHeader());
+    }
 }

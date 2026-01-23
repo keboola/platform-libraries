@@ -15,6 +15,14 @@ interface TokenAuthenticatorInterface
     public function getTokenHeader(): string;
 
     /**
+     * Returns the Authorization header name if the authenticator supports
+     * extracting tokens from the Authorization header, or null if not supported.
+     *
+     * @throws AuthenticationException if the Authorization header is not supported
+     */
+    public function getAuthorizationHeader(): string;
+
+    /**
      * @return TokenType
      * @throws AuthenticationException
      */

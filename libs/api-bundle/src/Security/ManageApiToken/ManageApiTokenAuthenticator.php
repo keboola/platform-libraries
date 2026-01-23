@@ -27,6 +27,13 @@ class ManageApiTokenAuthenticator implements TokenAuthenticatorInterface
         return 'X-KBC-ManageApiToken';
     }
 
+    public function getAuthorizationHeader(): string
+    {
+        throw new CustomUserMessageAuthenticationException(
+            'Authorization header is not supported for Manage API tokens',
+        );
+    }
+
     public function authenticateToken(AuthAttributeInterface $authAttribute, string $token): ManageApiToken
     {
         assert($authAttribute instanceof ManageApiTokenAuth);

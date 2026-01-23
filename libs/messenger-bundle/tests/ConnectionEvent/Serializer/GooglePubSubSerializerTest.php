@@ -32,7 +32,7 @@ class GooglePubSubSerializerTest extends TestCase
         $this->expectException(MessageDecodingFailedException::class);
         $this->expectExceptionMessage($expectedError);
 
-        $serializer->decode($encodedEnvelope);
+        $serializer->decode($encodedEnvelope); // @phpstan-ignore argument.type
     }
 
     public function testValidMessageDecode(): void
@@ -53,7 +53,7 @@ class GooglePubSubSerializerTest extends TestCase
             ],
         ];
 
-        $envelope = $serializer->decode($eventData);
+        $envelope = $serializer->decode($eventData); // @phpstan-ignore argument.type
 
         $stamps = $envelope->all();
         self::assertCount(0, $stamps);

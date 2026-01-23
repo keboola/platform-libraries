@@ -26,7 +26,7 @@ class AwsSqsSerializerTest extends TestCase
         $this->expectException(MessageDecodingFailedException::class);
         $this->expectExceptionMessage($expectedError);
 
-        $serializer->decode($encodedEnvelope);
+        $serializer->decode($encodedEnvelope); // @phpstan-ignore argument.type
     }
 
     public function provideInvalidMessageDecodeTestData(): iterable

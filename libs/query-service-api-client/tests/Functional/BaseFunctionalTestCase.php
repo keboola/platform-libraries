@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Keboola\QueryApi\Tests\Functional;
 
 use Keboola\QueryApi\Client;
+use Keboola\QueryApi\Tests\TestEnvVarsTrait;
 use Keboola\StorageApi\BranchAwareClient;
 use Keboola\StorageApi\Client as StorageApiClient;
 use Keboola\StorageApi\DevBranches;
@@ -15,6 +16,7 @@ use Throwable;
 
 abstract class BaseFunctionalTestCase extends TestCase
 {
+    use TestEnvVarsTrait;
     protected Client $queryClient;
     protected StorageApiClient $storageApiClient;
     protected BranchAwareClient $branchAwareStorageClient;
@@ -47,14 +49,12 @@ abstract class BaseFunctionalTestCase extends TestCase
 
     private function initializeClients(): void
     {
-        $storageApiToken = $_ENV['STORAGE_API_TOKEN'] ?? '';
-        $hostnameSuffix = $_ENV['HOSTNAME_SUFFIX'] ?? '';
-        $storageApiUrl = $_ENV['STORAGE_API_URL'] ?? '';
+        $storageApiToken = self::getRequiredEnv('STORAGE_API_TOKEN');
+        $hostnameSuffix = self::getRequiredEnv('HOSTNAME_SUFFIX');
+        $storageApiUrl = self::getRequiredEnv('STORAGE_API_URL');
 
-        // @phpstan-ignore-next-line
         $queryApiUrl = sprintf('https://query.%s', $hostnameSuffix);
 
-        /** @var array{url: string, token: string} $config */
         $config = [
             'url' => $queryApiUrl,
             'token' => $storageApiToken,

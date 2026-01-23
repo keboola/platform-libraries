@@ -21,11 +21,7 @@ class AwsSqsSerializer implements SerializerInterface
 
     public function decode(array $encodedEnvelope): Envelope
     {
-        $messageBody = $encodedEnvelope['body'] ?? null; // @phpstan-ignore nullCoalesce.offset
-        // @phpstan-ignore booleanOr.alwaysFalse, identical.alwaysFalse
-        if ($messageBody === null || !is_string($messageBody)) {
-            throw new MessageDecodingFailedException('Message body is missing or invalid');
-        }
+        $messageBody = $encodedEnvelope['body'];
 
         try {
             $messageBody = json_decode($messageBody, true, 512, JSON_THROW_ON_ERROR);

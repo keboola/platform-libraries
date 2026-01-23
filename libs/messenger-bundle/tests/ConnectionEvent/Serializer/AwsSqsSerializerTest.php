@@ -31,11 +31,6 @@ class AwsSqsSerializerTest extends TestCase
 
     public function provideInvalidMessageDecodeTestData(): iterable
     {
-        yield 'empty encoded envelope' => [
-            'data' => [],
-            'error' => 'Message body is missing or invalid',
-        ];
-
         yield 'body not JSON' => [
             'data' => ['body' => '[}'],
             'error' => 'Message body is not a valid JSON: State mismatch (invalid or malformed JSON)',

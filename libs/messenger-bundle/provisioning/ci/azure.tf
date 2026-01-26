@@ -27,7 +27,7 @@ resource "azuread_application" "messenger_bundle" {
 }
 
 resource "azuread_service_principal" "messenger_bundle" {
-  application_id = azuread_application.messenger_bundle.application_id
+  client_id = azuread_application.messenger_bundle.client_id
   owners         = [data.azuread_client_config.current.object_id]
 }
 
@@ -52,7 +52,7 @@ output "az_tenant_id" {
 }
 
 output "az_application_id" {
-  value = azuread_application.messenger_bundle.application_id
+  value = azuread_application.messenger_bundle.client_id
 }
 
 output "az_application_secret" {

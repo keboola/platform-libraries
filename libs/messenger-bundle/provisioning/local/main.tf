@@ -19,11 +19,6 @@ terraform {
       source  = "hashicorp/google"
       version = "~> 4.74.0"
     }
-
-    time = {
-      source  = "hashicorp/time"
-      version = "~> 0.9"
-    }
   }
 
   backend "s3" {

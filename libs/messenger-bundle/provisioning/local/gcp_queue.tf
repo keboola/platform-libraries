@@ -13,8 +13,6 @@ resource "google_pubsub_subscription" "testing_queue" {
 }
 
 resource "google_pubsub_topic_iam_binding" "messenger_bundle_iam" {
-  depends_on = [time_sleep.wait_for_service_account]
-
   topic = google_pubsub_topic.testing_queue.name
   role  = "roles/pubsub.publisher"
 
@@ -24,8 +22,6 @@ resource "google_pubsub_topic_iam_binding" "messenger_bundle_iam" {
 }
 
 resource "google_pubsub_subscription_iam_binding" "messenger_bundle_iam" {
-  depends_on = [time_sleep.wait_for_service_account]
-
   subscription = google_pubsub_subscription.testing_queue.name
   role         = "roles/pubsub.subscriber"
 

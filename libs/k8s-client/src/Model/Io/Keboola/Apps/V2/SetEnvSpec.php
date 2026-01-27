@@ -11,6 +11,13 @@ use KubernetesRuntime\AbstractModel;
  */
 class SetEnvSpec extends AbstractModel
 {
+    /**
+     * Container is the name of the container to set the environment variable in.
+     *
+     * Deprecated: In v2, container field is ignored as there is only one container
+     * defined in containerSpec.
+     */
     public string|null $container = null;
+
     public string|null $envName = null;
 }

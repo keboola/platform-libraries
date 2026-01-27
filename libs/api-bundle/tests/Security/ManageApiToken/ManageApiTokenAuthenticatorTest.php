@@ -11,8 +11,8 @@ use Keboola\ApiBundle\Security\ManageApiToken\ManageApiToken;
 use Keboola\ApiBundle\Security\ManageApiToken\ManageApiTokenAuthenticator;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Security\Core\Exception\AccessDeniedException;
-use Symfony\Component\Security\Core\Exception\CustomUserMessageAuthenticationException;
 
 class ManageApiTokenAuthenticatorTest extends TestCase
 {
@@ -317,24 +317,26 @@ class ManageApiTokenAuthenticatorTest extends TestCase
         ];
     }
 
-    public function testGetTokenHeader(): void
+    public function testExtractTokenFromHeader(): void
     {
         $authenticator = new ManageApiTokenAuthenticator(
             $this->createMock(ManageApiClientFactory::class),
         );
 
-        self::assertSame('X-KBC-ManageApiToken', $authenticator->getTokenHeader());
+        $request = Request::create('https://keboola.com');
+        $request->headers->set('X-KBC-ManageApiToken', 'my-manage-token');
+
+        self::assertSame('my-manage-token', $authenticator->extractToken($request));
     }
 
-    public function testGetAuthorizationHeaderThrowsException(): void
+    public function testExtractTokenReturnsNullWhenNoHeader(): void
     {
         $authenticator = new ManageApiTokenAuthenticator(
             $this->createMock(ManageApiClientFactory::class),
         );
 
-        $this->expectException(CustomUserMessageAuthenticationException::class);
-        $this->expectExceptionMessage('Authorization header is not supported for Manage API tokens');
+        $request = Request::create('https://keboola.com');
 
-        $authenticator->getAuthorizationHeader();
+        self::assertNull($authenticator->extractToken($request));
     }
 }

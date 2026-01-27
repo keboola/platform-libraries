@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Keboola\K8sClient\Tests\BaseApi;
+namespace Keboola\K8sClient\Tests\BaseApi\V1;
 
 use GuzzleHttp\Psr7\Response;
 use Keboola\K8sClient\BaseApi\App;

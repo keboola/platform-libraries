@@ -2,11 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Keboola\K8sClient\Tests\ApiClient;
+namespace Keboola\K8sClient\Tests\ApiClient\V1;
 
 use Keboola\K8sClient\ApiClient\AppsApiClient;
 use Keboola\K8sClient\BaseApi\App as AppsApi;
 use Keboola\K8sClient\Model\Io\Keboola\Apps\V1\App;
+use Keboola\K8sClient\Tests\ApiClient\BaseNamespaceApiClientTestCase;
 use PHPUnit\Framework\TestCase;
 
 class AppsApiClientFunctionalTest extends TestCase

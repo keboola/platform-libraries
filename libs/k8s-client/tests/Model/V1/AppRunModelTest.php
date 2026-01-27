@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Keboola\K8sClient\Tests\Model;
+namespace Keboola\K8sClient\Tests\Model\V1;
 
 use Keboola\K8sClient\Model\Io\Keboola\Apps\V1\AppReference;
 use Keboola\K8sClient\Model\Io\Keboola\Apps\V1\AppRun;

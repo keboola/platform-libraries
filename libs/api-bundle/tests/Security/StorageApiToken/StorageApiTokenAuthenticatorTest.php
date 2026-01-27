@@ -150,7 +150,7 @@ class StorageApiTokenAuthenticatorTest extends TestCase
         self::assertSame('some-token-without-bearer', $authenticator->extractToken($request));
     }
 
-    public function testExtractTokenPrefersStorageApiTokenHeader(): void
+    public function testExtractTokenPrefersAuthorizationHeader(): void
     {
         $authenticator = new StorageApiTokenAuthenticator(
             $this->createMock(StorageClientRequestFactory::class),
@@ -158,10 +158,10 @@ class StorageApiTokenAuthenticatorTest extends TestCase
         );
 
         $request = Request::create('https://keboola.com');
-        $request->headers->set('X-StorageApi-Token', 'primary-token');
+        $request->headers->set('X-StorageApi-Token', 'storage-token');
         $request->headers->set('Authorization', 'Bearer bearer-token');
 
-        self::assertSame('primary-token', $authenticator->extractToken($request));
+        self::assertSame('bearer-token', $authenticator->extractToken($request));
     }
 
     public function testExtractTokenReturnsNullWhenNoHeader(): void

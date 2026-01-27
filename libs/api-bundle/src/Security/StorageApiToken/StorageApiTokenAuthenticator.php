@@ -28,13 +28,7 @@ class StorageApiTokenAuthenticator implements TokenAuthenticatorInterface
 
     public function extractToken(Request $request): ?string
     {
-        // Check primary header first
-        $token = $request->headers->get('X-StorageApi-Token');
-        if ($token !== null) {
-            return $token;
-        }
-
-        // Check Authorization header
+        // Check Authorization header first
         $authHeader = $request->headers->get('Authorization');
         if ($authHeader !== null) {
             // Validate it's a Bearer token and strip prefix
@@ -44,7 +38,8 @@ class StorageApiTokenAuthenticator implements TokenAuthenticatorInterface
             return $authHeader;
         }
 
-        return null;
+        // Check X-StorageApi-Token header
+        return $request->headers->get('X-StorageApi-Token');
     }
 
     public function authenticateToken(AuthAttributeInterface $authAttribute, string $token): StorageApiToken

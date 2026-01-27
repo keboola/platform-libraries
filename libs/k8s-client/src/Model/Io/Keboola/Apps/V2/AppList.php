@@ -20,7 +20,7 @@ class AppList extends AbstractModel
     /**
      * APIVersion defines the versioned schema of this representation of an object
      */
-    public string|null $apiVersion = 'apps.keboola.com/v1';
+    public string|null $apiVersion = 'apps.keboola.com/v2';
 
     /**
      * Kind is a string value representing the REST resource this object represents

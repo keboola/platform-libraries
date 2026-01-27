@@ -23,7 +23,7 @@ class App extends AbstractModel
      * Servers should convert recognized schemas to the latest internal value, and
      * may reject unrecognized values.
      */
-    public string|null $apiVersion = 'apps.keboola.com/v1';
+    public string|null $apiVersion = 'apps.keboola.com/v2';
 
     /**
      * Kind is a string value representing the REST resource this object represents.

@@ -6,28 +6,22 @@ namespace Keboola\K8sClient\Model\Io\Keboola\Apps\V2;
 
 use Kubernetes\Model\Io\K8s\Api\Core\V1\EnvVar;
 use Kubernetes\Model\Io\K8s\Api\Core\V1\Probe;
-use Kubernetes\Model\Io\K8s\Api\Core\V1\ResourceRequirements;
 use KubernetesRuntime\AbstractModel;
 
 /**
- * AppContainer defines a simplified container specification
+ * ContainerSpec defines a simplified container specification for v2 API.
+ * Unlike v1's AppContainer, this does not include name (single container)
+ * or resources (managed by runtimeSize).
  *
- * @property string|null $name
  * @property string|null $image
  * @property array<string>|null $command
  * @property array<EnvVar>|null $env
- * @property ResourceRequirements|null $resources
  * @property Probe|null $livenessProbe
  * @property Probe|null $readinessProbe
  * @property Probe|null $startupProbe
  */
-class AppContainer extends AbstractModel
+class ContainerSpec extends AbstractModel
 {
-    /**
-     * Name of the container
-     */
-    public string|null $name = null;
-
     /**
      * Image to use for the container
      */
@@ -46,11 +40,6 @@ class AppContainer extends AbstractModel
      * @var array<EnvVar>|null
      */
     public array|null $env = null;
-
-    /**
-     * Resources defines the compute resources
-     */
-    public ResourceRequirements|null $resources = null;
 
     /**
      * LivenessProbe defines how to check if the container is alive

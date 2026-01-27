@@ -18,7 +18,6 @@ use Symfony\Component\Security\Core\Exception\AuthenticationException;
 use Symfony\Component\Security\Core\Exception\CustomUserMessageAuthenticationException;
 use Symfony\Component\Security\Http\Authenticator\AbstractAuthenticator;
 use Symfony\Component\Security\Http\Authenticator\Passport\Badge\UserBadge;
-use Symfony\Component\Security\Http\Authenticator\Passport\Passport;
 use Symfony\Component\Security\Http\Authenticator\Passport\SelfValidatingPassport;
 
 class AttributeAuthenticator extends AbstractAuthenticator
@@ -42,47 +41,10 @@ class AttributeAuthenticator extends AbstractAuthenticator
             $authenticator = $this->authenticators->get($authAttribute->getName());
             assert($authenticator instanceof TokenAuthenticatorInterface);
 
-            $tokenHeader = $authenticator->getTokenHeader();
-            $hasPrimaryHeader = $request->headers->has($tokenHeader);
-
-            // Try to get authorization header name
-            try {
-                $authorizationHeaderName = $authenticator->getAuthorizationHeader();
-                $hasAuthorizationHeader = $request->headers->has($authorizationHeaderName);
-            } catch (AuthenticationException $e) {
-                $authorizationHeaderName = null;
-                $hasAuthorizationHeader = false;
-            }
-
-            // Check if both headers are present
-            if ($hasPrimaryHeader && $hasAuthorizationHeader) {
-                $error = new CustomUserMessageAuthenticationException(sprintf(
-                    'Cannot use both "%s" and "%s" headers simultaneously',
-                    $tokenHeader,
-                    $authorizationHeaderName,
-                ));
-                continue;
-            }
-
-            // Get token from primary header or Authorization header
-            $token = null;
-            if ($hasPrimaryHeader) {
-                $token = $request->headers->get($tokenHeader);
-            } elseif ($hasAuthorizationHeader) {
-                assert($authorizationHeaderName !== null);
-                $token = $request->headers->get($authorizationHeaderName);
-            }
+            $token = $authenticator->extractToken($request);
 
             if ($token === null) {
-                $errorMessage = $authorizationHeaderName !== null
-                    ? sprintf(
-                        'Authentication header "%s" or "%s: Bearer" is missing',
-                        $tokenHeader,
-                        $authorizationHeaderName,
-                    )
-                    : sprintf('Authentication header "%s" is missing', $tokenHeader);
-
-                $error = new CustomUserMessageAuthenticationException($errorMessage);
+                $error = new CustomUserMessageAuthenticationException('Authentication token is missing');
                 continue;
             }
 

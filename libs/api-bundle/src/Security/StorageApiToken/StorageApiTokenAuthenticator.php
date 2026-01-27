@@ -10,6 +10,7 @@ use Keboola\ApiBundle\Security\TokenAuthenticatorInterface;
 use Keboola\ApiBundle\Security\TokenInterface;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApiBranch\Factory\StorageClientRequestFactory;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 use Symfony\Component\Security\Core\Exception\CustomUserMessageAuthenticationException;
@@ -25,14 +26,25 @@ class StorageApiTokenAuthenticator implements TokenAuthenticatorInterface
     ) {
     }
 
-    public function getTokenHeader(): string
+    public function extractToken(Request $request): ?string
     {
-        return 'X-StorageApi-Token';
-    }
+        // Check primary header first
+        $token = $request->headers->get('X-StorageApi-Token');
+        if ($token !== null) {
+            return $token;
+        }
 
-    public function getAuthorizationHeader(): string
-    {
-        return 'Authorization';
+        // Check Authorization header
+        $authHeader = $request->headers->get('Authorization');
+        if ($authHeader !== null) {
+            // Validate it's a Bearer token and strip prefix
+            if (preg_match('/^Bearer\s+(.+)$/i', $authHeader, $matches)) {
+                return $matches[1];
+            }
+            return $authHeader;
+        }
+
+        return null;
     }
 
     public function authenticateToken(AuthAttributeInterface $authAttribute, string $token): StorageApiToken

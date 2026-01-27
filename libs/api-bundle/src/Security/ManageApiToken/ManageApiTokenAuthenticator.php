@@ -9,6 +9,7 @@ use Keboola\ApiBundle\Attribute\ManageApiTokenAuth;
 use Keboola\ApiBundle\Security\TokenAuthenticatorInterface;
 use Keboola\ApiBundle\Security\TokenInterface;
 use Keboola\ManageApi\ClientException as ManageApiClientException;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 use Symfony\Component\Security\Core\Exception\CustomUserMessageAuthenticationException;
 
@@ -22,16 +23,9 @@ class ManageApiTokenAuthenticator implements TokenAuthenticatorInterface
     ) {
     }
 
-    public function getTokenHeader(): string
+    public function extractToken(Request $request): ?string
     {
-        return 'X-KBC-ManageApiToken';
-    }
-
-    public function getAuthorizationHeader(): string
-    {
-        throw new CustomUserMessageAuthenticationException(
-            'Authorization header is not supported for Manage API tokens',
-        );
+        return $request->headers->get('X-KBC-ManageApiToken');
     }
 
     public function authenticateToken(AuthAttributeInterface $authAttribute, string $token): ManageApiToken

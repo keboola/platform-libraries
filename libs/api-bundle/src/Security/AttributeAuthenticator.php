@@ -18,7 +18,6 @@ use Symfony\Component\Security\Core\Exception\AuthenticationException;
 use Symfony\Component\Security\Core\Exception\CustomUserMessageAuthenticationException;
 use Symfony\Component\Security\Http\Authenticator\AbstractAuthenticator;
 use Symfony\Component\Security\Http\Authenticator\Passport\Badge\UserBadge;
-use Symfony\Component\Security\Http\Authenticator\Passport\Passport;
 use Symfony\Component\Security\Http\Authenticator\Passport\SelfValidatingPassport;
 
 class AttributeAuthenticator extends AbstractAuthenticator
@@ -42,14 +41,10 @@ class AttributeAuthenticator extends AbstractAuthenticator
             $authenticator = $this->authenticators->get($authAttribute->getName());
             assert($authenticator instanceof TokenAuthenticatorInterface);
 
-            $tokenHeader = $authenticator->getTokenHeader();
-            $token = $request->headers->get($tokenHeader);
+            $token = $authenticator->extractToken($request);
 
             if ($token === null) {
-                $error = new CustomUserMessageAuthenticationException(sprintf(
-                    'Authentication header "%s" is missing',
-                    $tokenHeader,
-                ));
+                $error = new CustomUserMessageAuthenticationException('Authentication token is missing');
                 continue;
             }
 

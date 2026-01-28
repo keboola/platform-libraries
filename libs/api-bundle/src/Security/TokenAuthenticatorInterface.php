@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Keboola\ApiBundle\Security;
 
 use Keboola\ApiBundle\Attribute\AuthAttributeInterface;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Security\Core\Exception\AuthenticationException;
 
 /**
@@ -12,7 +13,10 @@ use Symfony\Component\Security\Core\Exception\AuthenticationException;
  */
 interface TokenAuthenticatorInterface
 {
-    public function getTokenHeader(): string;
+    /**
+     * Extract token from request. Returns null if no valid token header found.
+     */
+    public function extractToken(Request $request): ?string;
 
     /**
      * @return TokenType

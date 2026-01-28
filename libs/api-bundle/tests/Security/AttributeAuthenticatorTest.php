@@ -82,7 +82,7 @@ class AttributeAuthenticatorTest extends TestCase
         $authenticator = $this->createAuthenticator(
             $controller,
             [
-                StorageApiTokenAuth::class => $this->createSuccessAuthenticator($token),
+                StorageApiTokenAuth::class => $this->createSuccessAuthenticator($token, $request),
             ],
         );
         $passport = $authenticator->authenticate($request);
@@ -100,12 +100,11 @@ class AttributeAuthenticatorTest extends TestCase
 
         $request = $this->createControllerRequest($controller, []);
 
-        $token = $this->createToken('user-id');
-
         $tokenAuthenticator = $this->createMock(TokenAuthenticatorInterface::class);
         $tokenAuthenticator->expects(self::once())
-            ->method('getTokenHeader')
-            ->willReturn('X-Auth-Token')
+            ->method('extractToken')
+            ->with($request)
+            ->willReturn(null)
         ;
 
         $authenticator = $this->createAuthenticator(
@@ -116,7 +115,7 @@ class AttributeAuthenticatorTest extends TestCase
         );
 
         $this->expectException(CustomUserMessageAuthenticationException::class);
-        $this->expectExceptionMessage('Authentication header "X-Auth-Token" is missing');
+        $this->expectExceptionMessage('Authentication token is missing');
 
         $authenticator->authenticate($request);
     }
@@ -136,7 +135,7 @@ class AttributeAuthenticatorTest extends TestCase
         $authenticator = $this->createAuthenticator(
             $controller,
             [
-                StorageApiTokenAuth::class => $this->createAuthenticatorWithFailingAuthentication('X-Auth-Token'),
+                StorageApiTokenAuth::class => $this->createAuthenticatorWithFailingAuthentication($request),
             ],
         );
 
@@ -164,7 +163,7 @@ class AttributeAuthenticatorTest extends TestCase
             $controller,
             [
                 StorageApiTokenAuth::class => $this->createAuthenticatorWithFailingAuthorization(
-                    'X-Auth-Token',
+                    $request,
                     $token,
                 ),
             ],
@@ -193,15 +192,16 @@ class AttributeAuthenticatorTest extends TestCase
 
         $failingAuthenticator = $this->createMock(TokenAuthenticatorInterface::class);
         $failingAuthenticator->expects(self::once())
-            ->method('getTokenHeader')
-            ->willReturn('X-Other-Token')
+            ->method('extractToken')
+            ->with($request)
+            ->willReturn(null)
         ;
 
         $authenticator = $this->createAuthenticator(
             $controller,
             [
                 ManageApiTokenAuth::class => $failingAuthenticator,
-                StorageApiTokenAuth::class => $this->createSuccessAuthenticator($token),
+                StorageApiTokenAuth::class => $this->createSuccessAuthenticator($token, $request),
             ],
         );
         $passport = $authenticator->authenticate($request);
@@ -228,8 +228,8 @@ class AttributeAuthenticatorTest extends TestCase
         $authenticator = $this->createAuthenticator(
             $controller,
             [
-                ManageApiTokenAuth::class => $this->createAuthenticatorWithFailingAuthentication('X-Other-Token'),
-                StorageApiTokenAuth::class => $this->createSuccessAuthenticator($token),
+                ManageApiTokenAuth::class => $this->createAuthenticatorWithFailingAuthentication($request),
+                StorageApiTokenAuth::class => $this->createSuccessAuthenticator($token, $request),
             ],
         );
         $passport = $authenticator->authenticate($request);
@@ -258,10 +258,10 @@ class AttributeAuthenticatorTest extends TestCase
             $controller,
             [
                 ManageApiTokenAuth::class => $this->createAuthenticatorWithFailingAuthorization(
-                    'X-Other-Token',
+                    $request,
                     $otherToken,
                 ),
-                StorageApiTokenAuth::class => $this->createSuccessAuthenticator($token),
+                StorageApiTokenAuth::class => $this->createSuccessAuthenticator($token, $request),
             ],
         );
         $passport = $authenticator->authenticate($request);
@@ -306,12 +306,15 @@ class AttributeAuthenticatorTest extends TestCase
     /**
      * @return TokenAuthenticatorInterface<TokenInterface>
      */
-    private function createSuccessAuthenticator(TokenInterface $token): TokenAuthenticatorInterface
-    {
+    private function createSuccessAuthenticator(
+        TokenInterface $token,
+        ?Request $request = null,
+    ): TokenAuthenticatorInterface {
         $authenticator = $this->createMock(TokenAuthenticatorInterface::class);
         $authenticator->expects(self::once())
-            ->method('getTokenHeader')
-            ->willReturn('X-Auth-Token')
+            ->method('extractToken')
+            ->with($request ?? $this->anything())
+            ->willReturn('token')
         ;
 
         $authenticator->expects(self::once())
@@ -337,12 +340,13 @@ class AttributeAuthenticatorTest extends TestCase
     /**
      * @return TokenAuthenticatorInterface<TokenInterface>
      */
-    private function createAuthenticatorWithFailingAuthentication(string $tokenHeader): TokenAuthenticatorInterface
+    private function createAuthenticatorWithFailingAuthentication(Request $request): TokenAuthenticatorInterface
     {
         $authenticator = $this->createMock(TokenAuthenticatorInterface::class);
         $authenticator->expects(self::once())
-            ->method('getTokenHeader')
-            ->willReturn($tokenHeader)
+            ->method('extractToken')
+            ->with($request)
+            ->willReturn('token')
         ;
         $authenticator->expects(self::once())
             ->method('authenticateToken')
@@ -357,13 +361,14 @@ class AttributeAuthenticatorTest extends TestCase
      * @return TokenAuthenticatorInterface<TokenInterface>
      */
     private function createAuthenticatorWithFailingAuthorization(
-        string $tokenHeader,
+        Request $request,
         TokenInterface $authenticatedToken,
     ): TokenAuthenticatorInterface {
         $authenticator = $this->createMock(TokenAuthenticatorInterface::class);
         $authenticator->expects(self::once())
-            ->method('getTokenHeader')
-            ->willReturn($tokenHeader)
+            ->method('extractToken')
+            ->with($request)
+            ->willReturn('token')
         ;
         $authenticator->expects(self::once())
             ->method('authenticateToken')

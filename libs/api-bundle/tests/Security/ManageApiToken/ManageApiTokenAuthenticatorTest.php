@@ -11,6 +11,7 @@ use Keboola\ApiBundle\Security\ManageApiToken\ManageApiToken;
 use Keboola\ApiBundle\Security\ManageApiToken\ManageApiTokenAuthenticator;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 
 class ManageApiTokenAuthenticatorTest extends TestCase
@@ -314,5 +315,28 @@ class ManageApiTokenAuthenticatorTest extends TestCase
             ]),
             'Authentication token must not be super admin',
         ];
+    }
+
+    public function testExtractTokenFromHeader(): void
+    {
+        $authenticator = new ManageApiTokenAuthenticator(
+            $this->createMock(ManageApiClientFactory::class),
+        );
+
+        $request = Request::create('https://keboola.com');
+        $request->headers->set('X-KBC-ManageApiToken', 'my-manage-token');
+
+        self::assertSame('my-manage-token', $authenticator->extractToken($request));
+    }
+
+    public function testExtractTokenReturnsNullWhenNoHeader(): void
+    {
+        $authenticator = new ManageApiTokenAuthenticator(
+            $this->createMock(ManageApiClientFactory::class),
+        );
+
+        $request = Request::create('https://keboola.com');
+
+        self::assertNull($authenticator->extractToken($request));
     }
 }

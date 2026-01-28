@@ -7,6 +7,7 @@ namespace Keboola\ApiBundle\Tests\Security;
 use Keboola\ApiBundle\Attribute\ManageApiTokenAuth;
 use Keboola\ApiBundle\Attribute\StorageApiTokenAuth;
 use Keboola\ApiBundle\Security\AttributeAuthenticator;
+use Keboola\ApiBundle\Security\MultiHeaderTokenAuthenticatorInterface;
 use Keboola\ApiBundle\Security\TokenAuthenticatorInterface;
 use Keboola\ApiBundle\Security\TokenInterface;
 use Keboola\ApiBundle\Util\ControllerReflector;
@@ -372,6 +373,184 @@ class AttributeAuthenticatorTest extends TestCase
         $authenticator->expects(self::once())
             ->method('authorizeToken')
             ->willThrowException(new AccessDeniedException('Token is not authorized'))
+        ;
+
+        return $authenticator;
+    }
+
+    public function testAuthenticateRequestWithBearerToken(): void
+    {
+        $controller = new
+            #[StorageApiTokenAuth(['foo-feature'])]
+            class {
+                public function __invoke(): void {}
+            };
+
+        $request = $this->createControllerRequest($controller, [
+            'Authorization' => 'Bearer my-oauth-token',
+        ]);
+
+        $token = $this->createToken('user-id');
+
+        $authenticator = $this->createAuthenticator(
+            $controller,
+            [
+                StorageApiTokenAuth::class => $this->createMultiHeaderSuccessAuthenticator(
+                    $token,
+                    'my-oauth-token',
+                ),
+            ],
+        );
+        $passport = $authenticator->authenticate($request);
+
+        self::assertSame($token, $passport->getUser());
+    }
+
+    public function testAuthenticateRequestWithXStorageApiTokenFallback(): void
+    {
+        $controller = new
+            #[StorageApiTokenAuth(['foo-feature'])]
+            class {
+                public function __invoke(): void {}
+            };
+
+        $request = $this->createControllerRequest($controller, [
+            'X-StorageApi-Token' => 'my-storage-token',
+        ]);
+
+        $token = $this->createToken('user-id');
+
+        $authenticator = $this->createAuthenticator(
+            $controller,
+            [
+                StorageApiTokenAuth::class => $this->createMultiHeaderSuccessAuthenticator(
+                    $token,
+                    'my-storage-token',
+                ),
+            ],
+        );
+        $passport = $authenticator->authenticate($request);
+
+        self::assertSame($token, $passport->getUser());
+    }
+
+    public function testAuthenticateRequestBearerTokenTakesPrecedence(): void
+    {
+        $controller = new
+            #[StorageApiTokenAuth(['foo-feature'])]
+            class {
+                public function __invoke(): void {}
+            };
+
+        // Both headers present - Bearer should take precedence
+        $request = $this->createControllerRequest($controller, [
+            'Authorization' => 'Bearer my-oauth-token',
+            'X-StorageApi-Token' => 'my-storage-token',
+        ]);
+
+        $token = $this->createToken('user-id');
+
+        // The authenticator should receive the Bearer token, not the X-StorageApi-Token
+        $authenticator = $this->createAuthenticator(
+            $controller,
+            [
+                StorageApiTokenAuth::class => $this->createMultiHeaderSuccessAuthenticator(
+                    $token,
+                    'my-oauth-token', // Bearer token value (without "Bearer " prefix)
+                ),
+            ],
+        );
+        $passport = $authenticator->authenticate($request);
+
+        self::assertSame($token, $passport->getUser());
+    }
+
+    public function testAuthenticateRequestWithMultiHeaderAuthenticatorNoToken(): void
+    {
+        $controller = new
+            #[StorageApiTokenAuth(['foo-feature'])]
+            class {
+                public function __invoke(): void {}
+            };
+
+        $request = $this->createControllerRequest($controller, []);
+
+        $multiHeaderAuthenticator = $this->createMock(MultiHeaderTokenAuthenticatorInterface::class);
+        $multiHeaderAuthenticator->expects(self::once())
+            ->method('getTokenHeaders')
+            ->willReturn(['Authorization', 'X-StorageApi-Token'])
+        ;
+
+        $authenticator = $this->createAuthenticator(
+            $controller,
+            [
+                StorageApiTokenAuth::class => $multiHeaderAuthenticator,
+            ],
+        );
+
+        $this->expectException(CustomUserMessageAuthenticationException::class);
+        $this->expectExceptionMessage('Authentication header "Authorization" or "X-StorageApi-Token" is missing');
+
+        $authenticator->authenticate($request);
+    }
+
+    public function testAuthenticateRequestWithAuthorizationHeaderWithoutBearerPrefix(): void
+    {
+        $controller = new
+            #[StorageApiTokenAuth(['foo-feature'])]
+            class {
+                public function __invoke(): void {}
+            };
+
+        // Authorization header without "Bearer " prefix should be used as-is
+        $request = $this->createControllerRequest($controller, [
+            'Authorization' => 'Basic some-basic-auth',
+        ]);
+
+        $token = $this->createToken('user-id');
+
+        $authenticator = $this->createAuthenticator(
+            $controller,
+            [
+                StorageApiTokenAuth::class => $this->createMultiHeaderSuccessAuthenticator(
+                    $token,
+                    'Basic some-basic-auth', // Full value since it's not Bearer
+                ),
+            ],
+        );
+        $passport = $authenticator->authenticate($request);
+
+        self::assertSame($token, $passport->getUser());
+    }
+
+    /**
+     * @return MultiHeaderTokenAuthenticatorInterface<TokenInterface>
+     */
+    private function createMultiHeaderSuccessAuthenticator(
+        TokenInterface $token,
+        string $expectedTokenValue,
+    ): MultiHeaderTokenAuthenticatorInterface {
+        $authenticator = $this->createMock(MultiHeaderTokenAuthenticatorInterface::class);
+        $authenticator->expects(self::once())
+            ->method('getTokenHeaders')
+            ->willReturn(['Authorization', 'X-StorageApi-Token'])
+        ;
+
+        $authenticator->expects(self::once())
+            ->method('authenticateToken')
+            ->with(
+                $this->isInstanceOf(StorageApiTokenAuth::class),
+                $expectedTokenValue,
+            )
+            ->willReturn($token)
+        ;
+
+        $authenticator->expects(self::once())
+            ->method('authorizeToken')
+            ->with(
+                $this->isInstanceOf(StorageApiTokenAuth::class),
+                $token,
+            )
         ;
 
         return $authenticator;

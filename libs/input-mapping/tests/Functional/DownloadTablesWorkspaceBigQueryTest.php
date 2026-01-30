@@ -15,18 +15,14 @@ use Keboola\InputMapping\Tests\Needs\NeedsStorageBackend;
 use Keboola\InputMapping\Tests\Needs\NeedsTestTables;
 use Keboola\StagingProvider\Staging\StagingType;
 use Keboola\StorageApi\ClientException;
-use RuntimeException;
 
 #[NeedsStorageBackend('bigquery')]
 class DownloadTablesWorkspaceBigQueryTest extends AbstractTestCase
 {
     #[NeedsTestTables, NeedsEmptyOutputBucket]
-    public function testTablesBigQueryBackendWithFeatureFlag(): void
+    public function testTablesBigQueryBackend(): void
     {
         $clientWrapper = $this->initClient();
-        if (!$clientWrapper->getToken()->hasFeature('bigquery-default-im-view')) {
-            throw new RuntimeException('Project does not have bigquery-default-im-view feature.');
-        }
         $runId = $clientWrapper->getBasicClient()->generateRunId();
         $clientWrapper->getBranchClient()->setRunId($runId);
 

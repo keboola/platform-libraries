@@ -97,7 +97,7 @@ class AbstractWorkspaceStrategyTest extends TestCase
         self::assertTrue($this->testHandler->hasInfoThatContains('Table "in.c-test-bucket.table1" will be cloned.'));
     }
 
-    public function testPrepareTableLoadsToWorkspaceBigQueryDefaultsCopy(): void
+    public function testPrepareTableLoadsToWorkspaceBigQueryDefaultsView(): void
     {
         $clientWrapper = $this->createMock(ClientWrapper::class);
         $clientWrapper->expects($this->exactly(2))
@@ -112,7 +112,7 @@ class AbstractWorkspaceStrategyTest extends TestCase
 
         $strategy = $this->createTestStrategy($clientWrapper, 'bigquery');
 
-        // BigQuery table in BigQuery workspace without feature flag defaults to COPY
+        // BigQuery table in BigQuery workspace defaults to VIEW
         $tableOptions = new RewrittenInputTableOptions(
             ['source' => 'in.c-test-bucket.table1', 'destination' => 'table1'],
             'in.c-test-bucket.table1',
@@ -127,23 +127,23 @@ class AbstractWorkspaceStrategyTest extends TestCase
         $instructions = $strategy->prepareTableLoadsToWorkspace([$tableOptions]);
 
         self::assertCount(1, $instructions);
-        self::assertEquals(WorkspaceLoadType::COPY, $instructions[0]->loadType);
+        self::assertEquals(WorkspaceLoadType::VIEW, $instructions[0]->loadType);
         self::assertSame($tableOptions, $instructions[0]->table);
         self::assertSame(['overwrite' => false], $instructions[0]->loadOptions);
 
         self::assertTrue(
-            $this->testHandler->hasInfoThatContains('Table "in.c-test-bucket.table1" will be copied.'),
+            $this->testHandler->hasInfoThatContains('Table "in.c-test-bucket.table1" will be created as view.'),
         );
     }
 
-    public function testPrepareTableLoadsToWorkspaceBigQueryViewWithFeatureFlag(): void
+    public function testPrepareTableLoadsToWorkspaceBigQuerySharedTableFromDifferentProject(): void
     {
         $clientWrapper = $this->createMock(ClientWrapper::class);
         $clientWrapper->expects($this->exactly(2))
             ->method('getToken')
             ->willReturn(new StorageApiToken(
                 [
-                    'owner' => ['id' => 12345, 'features' => ['bigquery-default-im-view']],
+                    'owner' => ['id' => 12345, 'features' => []],
                 ],
                 'my-secret-token',
             ))
@@ -151,7 +151,7 @@ class AbstractWorkspaceStrategyTest extends TestCase
 
         $strategy = $this->createTestStrategy($clientWrapper, 'bigquery');
 
-        // BigQuery table in BigQuery workspace with feature flag uses VIEW
+        // BigQuery shared table from different project uses VIEW
         $tableOptions = new RewrittenInputTableOptions(
             ['source' => 'in.c-test-bucket.table1', 'destination' => 'table1'],
             'in.c-test-bucket.table1',
@@ -159,7 +159,8 @@ class AbstractWorkspaceStrategyTest extends TestCase
             [
                 'id' => 'in.c-test-bucket.table1',
                 'bucket' => ['backend' => 'bigquery'],
-                'isAlias' => false,
+                'isAlias' => true,
+                'sourceTable' => ['project' => ['id' => 99999]], // Different project
             ],
         );
 
@@ -206,14 +207,14 @@ class AbstractWorkspaceStrategyTest extends TestCase
         self::assertTrue($this->testHandler->hasInfoThatContains('Table "in.c-test-bucket.table1" will be copied.'));
     }
 
-    public function testPrepareTableLoadsToWorkspaceChecksViableLoadMethod(): void
+    public function testPrepareTableLoadsToWorkspaceBigQueryAliasInCurrentProjectUsesCopy(): void
     {
         $clientWrapper = $this->createMock(ClientWrapper::class);
         $clientWrapper->expects($this->exactly(2))
             ->method('getToken')
             ->willReturn(new StorageApiToken(
                 [
-                    'owner' => ['id' => 12345, 'features' => ['bigquery-default-im-view']],
+                    'owner' => ['id' => 12345, 'features' => []],
                 ],
                 'my-secret-token',
             ))
@@ -221,8 +222,7 @@ class AbstractWorkspaceStrategyTest extends TestCase
 
         $strategy = $this->createTestStrategy($clientWrapper, 'bigquery');
 
-        // Create a table that will cause checkViableBigQueryLoadMethod to throw an exception
-        // (BigQuery workspace with alias table from the same project)
+        // BigQuery alias table from the same project uses COPY (view not supported for aliases)
         $tableOptions = new RewrittenInputTableOptions(
             ['source' => 'in.c-test-bucket.table1', 'destination' => 'table1'],
             'in.c-test-bucket.table1',
@@ -235,13 +235,16 @@ class AbstractWorkspaceStrategyTest extends TestCase
             ],
         );
 
-        // This should throw an InvalidInputException because checkViableBigQueryLoadMethod is called
-        $this->expectException(InvalidInputException::class);
-        $this->expectExceptionMessage(
-            'Table "in.c-test-bucket.table1" is an alias, which is not supported when loading Bigquery tables.',
-        );
+        $tables = $strategy->prepareTableLoadsToWorkspace([$tableOptions]);
 
-        $strategy->prepareTableLoadsToWorkspace([$tableOptions]);
+        self::assertCount(1, $tables);
+        self::assertEquals(WorkspaceLoadType::COPY, $tables[0]->loadType);
+        self::assertSame($tableOptions, $tables[0]->table);
+        self::assertSame(['overwrite' => false], $tables[0]->loadOptions);
+
+        self::assertTrue(
+            $this->testHandler->hasInfoThatContains('Table "in.c-test-bucket.table1" will be copied.'),
+        );
     }
 
     public function testExecuteTableLoadsToWorkspaceWithCleanAndPreserveFalse(): void
@@ -473,6 +476,7 @@ class AbstractWorkspaceStrategyTest extends TestCase
         $branchClient = $this->createMock(BranchAwareClient::class);
 
         // Verify that extra options are sent for BigQuery COPY load type
+        // Tables with filter options can't use VIEW, so they use COPY
         $branchClient->expects($this->once())
             ->method('apiPostJson')
             ->with(
@@ -505,7 +509,7 @@ class AbstractWorkspaceStrategyTest extends TestCase
             ->method('getToken')
             ->willReturn(new StorageApiToken(
                 [
-                    'owner' => ['id' => 12345, 'features' => []], // No feature flag - will use COPY
+                    'owner' => ['id' => 12345, 'features' => []],
                 ],
                 'my-secret-token',
             ));
@@ -520,7 +524,7 @@ class AbstractWorkspaceStrategyTest extends TestCase
 
         $strategy = $this->createTestStrategyWithDataStorage($clientWrapper, 'bigquery', $dataStorage);
 
-        // Create table with extra options
+        // Create table with extra options - these prevent VIEW, so COPY is used
         $tableOptions = new RewrittenInputTableOptions(
             [
                 'source' => 'in.c-test-bucket.table1',
@@ -546,11 +550,11 @@ class AbstractWorkspaceStrategyTest extends TestCase
         self::assertTrue($this->testHandler->hasInfoThatContains('Copying 1 tables to workspace.'));
     }
 
-    public function testBigQueryCopyLoadWithAliasTable(): void
+    public function testBigQueryViewLoadWithAliasTableFromDifferentProject(): void
     {
         $branchClient = $this->createMock(BranchAwareClient::class);
 
-        // Verify that alias table is sent for BigQuery COPY load type
+        // Alias table from different project uses VIEW
         $branchClient->expects($this->once())
             ->method('apiPostJson')
             ->with(
@@ -562,7 +566,7 @@ class AbstractWorkspaceStrategyTest extends TestCase
                             'destination' => 'table1',
                             'overwrite' => true,
                             'sourceBranchId' => 123,
-                            'loadType' => 'COPY',
+                            'loadType' => 'VIEW',
                         ],
                     ],
                     'preserve' => 0,
@@ -579,7 +583,7 @@ class AbstractWorkspaceStrategyTest extends TestCase
             ->method('getToken')
             ->willReturn(new StorageApiToken(
                 [
-                    'owner' => ['id' => 12345, 'features' => []], // No feature flag - will use COPY
+                    'owner' => ['id' => 12345, 'features' => []],
                 ],
                 'my-secret-token',
             ));
@@ -594,7 +598,7 @@ class AbstractWorkspaceStrategyTest extends TestCase
 
         $strategy = $this->createTestStrategyWithDataStorage($clientWrapper, 'bigquery', $dataStorage);
 
-        // Create alias table (from different project - should be allowed)
+        // Create alias table from different project - should use VIEW
         $tableOptions = new RewrittenInputTableOptions(
             [
                 'source' => 'in.c-test-bucket.table1',
@@ -607,7 +611,7 @@ class AbstractWorkspaceStrategyTest extends TestCase
                 'id' => 'in.c-test-bucket.table1',
                 'bucket' => ['backend' => 'bigquery'],
                 'isAlias' => true,
-                'sourceTable' => ['project' => ['id' => 99999]], // Different project - should be allowed
+                'sourceTable' => ['project' => ['id' => 99999]], // Different project - uses VIEW
             ],
         );
 

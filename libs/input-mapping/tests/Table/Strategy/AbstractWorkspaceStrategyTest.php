@@ -100,7 +100,7 @@ class AbstractWorkspaceStrategyTest extends TestCase
     public function testPrepareTableLoadsToWorkspaceBigQueryDefaultsView(): void
     {
         $clientWrapper = $this->createMock(ClientWrapper::class);
-        $clientWrapper->expects($this->exactly(2))
+        $clientWrapper->expects($this->once())
             ->method('getToken')
             ->willReturn(new StorageApiToken(
                 [
@@ -139,7 +139,7 @@ class AbstractWorkspaceStrategyTest extends TestCase
     public function testPrepareTableLoadsToWorkspaceBigQuerySharedTableFromDifferentProject(): void
     {
         $clientWrapper = $this->createMock(ClientWrapper::class);
-        $clientWrapper->expects($this->exactly(2))
+        $clientWrapper->expects($this->once())
             ->method('getToken')
             ->willReturn(new StorageApiToken(
                 [
@@ -179,9 +179,15 @@ class AbstractWorkspaceStrategyTest extends TestCase
     public function testPrepareTableLoadsToWorkspaceCopy(): void
     {
         $clientWrapper = $this->createMock(ClientWrapper::class);
-        // getToken() is not called for non-BigQuery workspaces
-        $clientWrapper->expects($this->never())
-            ->method('getToken');
+        // getToken() is called for canUseView check
+        $clientWrapper->expects($this->once())
+            ->method('getToken')
+            ->willReturn(new StorageApiToken(
+                [
+                    'owner' => ['id' => 12345, 'features' => []],
+                ],
+                'my-secret-token',
+            ));
 
         $strategy = $this->createTestStrategy($clientWrapper, 'snowflake');
 
@@ -210,7 +216,7 @@ class AbstractWorkspaceStrategyTest extends TestCase
     public function testPrepareTableLoadsToWorkspaceBigQueryAliasInCurrentProjectUsesCopy(): void
     {
         $clientWrapper = $this->createMock(ClientWrapper::class);
-        $clientWrapper->expects($this->exactly(2))
+        $clientWrapper->expects($this->once())
             ->method('getToken')
             ->willReturn(new StorageApiToken(
                 [
@@ -505,7 +511,7 @@ class AbstractWorkspaceStrategyTest extends TestCase
             ->method('handleAsyncTasks');
 
         $clientWrapper = $this->createMock(ClientWrapper::class);
-        $clientWrapper->expects($this->exactly(2))
+        $clientWrapper->expects($this->once())
             ->method('getToken')
             ->willReturn(new StorageApiToken(
                 [
@@ -579,7 +585,7 @@ class AbstractWorkspaceStrategyTest extends TestCase
             ->method('handleAsyncTasks');
 
         $clientWrapper = $this->createMock(ClientWrapper::class);
-        $clientWrapper->expects($this->exactly(2))
+        $clientWrapper->expects($this->once())
             ->method('getToken')
             ->willReturn(new StorageApiToken(
                 [
@@ -723,9 +729,15 @@ class AbstractWorkspaceStrategyTest extends TestCase
             ->willReturn(['id' => 789]);
 
         $clientWrapper = $this->createMock(ClientWrapper::class);
-        // getToken() is not called for non-BigQuery workspaces
-        $clientWrapper->expects($this->never())
-            ->method('getToken');
+        // getToken() is called for canUseView check on non-cloneable tables
+        $clientWrapper->expects($this->once())
+            ->method('getToken')
+            ->willReturn(new StorageApiToken(
+                [
+                    'owner' => ['id' => 12345, 'features' => []],
+                ],
+                'my-secret-token',
+            ));
         $clientWrapper->expects($this->once())
             ->method('getBranchClient')
             ->willReturn($branchClient);

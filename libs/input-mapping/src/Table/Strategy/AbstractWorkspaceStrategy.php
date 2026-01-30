@@ -20,8 +20,6 @@ use Psr\Log\LoggerInterface;
 
 abstract class AbstractWorkspaceStrategy extends AbstractStrategy
 {
-    private const BIGQUERY_DEFAULT_IM_VIEW_FEATURE = 'bigquery-default-im-view';
-
     protected readonly WorkspaceStagingInterface $dataStorage;
     protected readonly ManifestCreator $manifestCreator;
 
@@ -344,19 +342,18 @@ abstract class AbstractWorkspaceStrategy extends AbstractStrategy
     private function decideTableLoadMethod(RewrittenInputTableOptions $table, array $loadOptions): WorkspaceLoadType
     {
         if ($this->getWorkspaceType() === 'bigquery') {
-            $hasBigQueryDefaultImViewFeature = $this->clientWrapper->getToken()
-                ->hasFeature(self::BIGQUERY_DEFAULT_IM_VIEW_FEATURE);
-
             // Validate that table can be loaded to this workspace type
             LoadTypeDecider::checkViableBigQueryLoadMethod(
                 $table->getTableInfo(),
                 $this->getWorkspaceType(),
-                $loadOptions,
-                $this->clientWrapper->getToken()->getProjectId(),
-                $hasBigQueryDefaultImViewFeature,
             );
 
-            if ($hasBigQueryDefaultImViewFeature) {
+            if (LoadTypeDecider::canUseView(
+                $table->getTableInfo(),
+                $this->getWorkspaceType(),
+                $loadOptions,
+                $this->clientWrapper->getToken()->getProjectId(),
+            )) {
                 $this->logger->info(sprintf('Table "%s" will be created as view.', $table->getSource()));
                 return WorkspaceLoadType::VIEW;
             }
@@ -369,7 +366,12 @@ abstract class AbstractWorkspaceStrategy extends AbstractStrategy
             return WorkspaceLoadType::CLONE;
         }
 
-        if (LoadTypeDecider::canUseView($table->getTableInfo(), $this->getWorkspaceType())) {
+        if (LoadTypeDecider::canUseView(
+            $table->getTableInfo(),
+            $this->getWorkspaceType(),
+            $loadOptions,
+            $this->clientWrapper->getToken()->getProjectId(),
+        )) {
             $this->logger->info(sprintf('Table "%s" will be created as view.', $table->getSource()));
             return WorkspaceLoadType::VIEW;
         }

@@ -6,7 +6,7 @@ namespace Keboola\K8sClient\Tests\ApiClient\V1;
 
 use Keboola\K8sClient\ApiClient\AppsApiClient;
 use Keboola\K8sClient\BaseApi\App as AppsApi;
-use Keboola\K8sClient\Model\Io\Keboola\Apps\V1\App;
+use Keboola\K8sClient\Model\Io\Keboola\Apps\V2\App;
 use Keboola\K8sClient\Tests\ApiClient\BaseNamespaceApiClientTestCase;
 use PHPUnit\Framework\TestCase;
 
@@ -35,6 +35,7 @@ class AppsApiClientFunctionalTest extends TestCase
                 'projectId' => 'project-456',
                 'state' => 'Running',
                 'replicas' => 1,
+                'runtimeSize' => 'small',
                 'features' => [
                     'storageToken' => [
                         'description' => 'test-token',
@@ -66,26 +67,18 @@ class AppsApiClientFunctionalTest extends TestCase
                         ]],
                     ],
                 ],
-                'podSpec' => [
-                    'restartPolicy' => 'Always',
-                    'containers' => [[
-                        'name' => 'main',
-                        'image' => 'busybox',
-                        'env' => [['name' => 'FOO', 'value' => 'bar']],
-                        'resources' => [
-                            'requests' => ['memory' => '64M', 'cpu' => '100m'],
-                            'limits' => ['memory' => '128M', 'cpu' => '200m'],
-                        ],
-                        'startupProbe' => [
-                            'httpGet' => ['path' => '/', 'port' => 8080],
-                            'periodSeconds' => 1,
-                            'failureThreshold' => 30,
-                        ],
-                        'readinessProbe' => [
-                            'httpGet' => ['path' => '/', 'port' => 8080],
-                            'periodSeconds' => 10,
-                        ],
-                    ]],
+                'containerSpec' => [
+                    'image' => 'busybox',
+                    'env' => [['name' => 'FOO', 'value' => 'bar']],
+                    'startupProbe' => [
+                        'httpGet' => ['path' => '/', 'port' => 8080],
+                        'periodSeconds' => 1,
+                        'failureThreshold' => 30,
+                    ],
+                    'readinessProbe' => [
+                        'httpGet' => ['path' => '/', 'port' => 8080],
+                        'periodSeconds' => 10,
+                    ],
                 ],
             ],
         ]);

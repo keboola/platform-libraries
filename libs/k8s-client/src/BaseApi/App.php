@@ -4,15 +4,15 @@ declare(strict_types=1);
 
 namespace Keboola\K8sClient\BaseApi;
 
-use Keboola\K8sClient\Model\Io\Keboola\Apps\V1\App as TheApp;
-use Keboola\K8sClient\Model\Io\Keboola\Apps\V1\AppList;
+use Keboola\K8sClient\Model\Io\Keboola\Apps\V2\App as TheApp;
+use Keboola\K8sClient\Model\Io\Keboola\Apps\V2\AppList;
 use Kubernetes\Model\Io\K8s\Apimachinery\Pkg\Apis\Meta\V1\DeleteOptions;
 use Kubernetes\Model\Io\K8s\Apimachinery\Pkg\Apis\Meta\V1\Patch;
 use Kubernetes\Model\Io\K8s\Apimachinery\Pkg\Apis\Meta\V1\Status;
 use KubernetesRuntime\AbstractAPI;
 
 /**
- * BaseApi for App custom resources (apps.keboola.com/v1)
+ * BaseApi for App custom resources (apps.keboola.com/v2)
  */
 class App extends AbstractAPI
 {
@@ -22,26 +22,26 @@ class App extends AbstractAPI
     protected static function getCustomResponseTypes(): array
     {
         return [
-            'listAppsKeboolaComV1NamespacedApp' => [
+            'listAppsKeboolaComV2NamespacedApp' => [
                 '200.' => AppList::class,
             ],
-            'readAppsKeboolaComV1NamespacedApp' => [
+            'readAppsKeboolaComV2NamespacedApp' => [
                 '200.' => TheApp::class,
             ],
-            'createAppsKeboolaComV1NamespacedApp' => [
+            'createAppsKeboolaComV2NamespacedApp' => [
                 '200.' => TheApp::class,
                 '201.' => TheApp::class,
                 '202.' => TheApp::class,
             ],
-            'patchAppsKeboolaComV1NamespacedApp' => [
+            'patchAppsKeboolaComV2NamespacedApp' => [
                 '200.' => TheApp::class,
                 '201.' => TheApp::class,
             ],
-            'deleteAppsKeboolaComV1NamespacedApp' => [
+            'deleteAppsKeboolaComV2NamespacedApp' => [
                 '200.' => Status::class,
                 '202.' => Status::class,
             ],
-            'deleteAppsKeboolaComV1CollectionNamespacedApp' => [
+            'deleteAppsKeboolaComV2CollectionNamespacedApp' => [
                 '200.' => Status::class,
             ],
         ];
@@ -55,12 +55,12 @@ class App extends AbstractAPI
         return $this->parseResponse(
             $this->client->request(
                 'get',
-                "/apis/apps.keboola.com/v1/namespaces/$namespace/apps",
+                "/apis/apps.keboola.com/v2/namespaces/$namespace/apps",
                 [
                     'query' => $queries,
                 ],
             ),
-            'listAppsKeboolaComV1NamespacedApp',
+            'listAppsKeboolaComV2NamespacedApp',
         );
     }
 
@@ -72,12 +72,12 @@ class App extends AbstractAPI
         return $this->parseResponse(
             $this->client->request(
                 'get',
-                "/apis/apps.keboola.com/v1/namespaces/$namespace/apps/$name",
+                "/apis/apps.keboola.com/v2/namespaces/$namespace/apps/$name",
                 [
                     'query' => $queries,
                 ],
             ),
-            'readAppsKeboolaComV1NamespacedApp',
+            'readAppsKeboolaComV2NamespacedApp',
         );
     }
 
@@ -89,13 +89,13 @@ class App extends AbstractAPI
         return $this->parseResponse(
             $this->client->request(
                 'post',
-                "/apis/apps.keboola.com/v1/namespaces/$namespace/apps",
+                "/apis/apps.keboola.com/v2/namespaces/$namespace/apps",
                 [
                     'json' => $model->getArrayCopy(),
                     'query' => $queries,
                 ],
             ),
-            'createAppsKeboolaComV1NamespacedApp',
+            'createAppsKeboolaComV2NamespacedApp',
         );
     }
 
@@ -107,13 +107,13 @@ class App extends AbstractAPI
         return $this->parseResponse(
             $this->client->request(
                 'patch',
-                "/apis/apps.keboola.com/v1/namespaces/$namespace/apps/$name",
+                "/apis/apps.keboola.com/v2/namespaces/$namespace/apps/$name",
                 [
                     'json' => $model->getArrayCopy(),
                     'query' => $queries,
                 ],
             ),
-            'patchAppsKeboolaComV1NamespacedApp',
+            'patchAppsKeboolaComV2NamespacedApp',
         );
     }
 
@@ -125,13 +125,13 @@ class App extends AbstractAPI
         return $this->parseResponse(
             $this->client->request(
                 'delete',
-                "/apis/apps.keboola.com/v1/namespaces/$namespace/apps/$name",
+                "/apis/apps.keboola.com/v2/namespaces/$namespace/apps/$name",
                 [
                     'json' => $options,
                     'query' => $queries,
                 ],
             ),
-            'deleteAppsKeboolaComV1NamespacedApp',
+            'deleteAppsKeboolaComV2NamespacedApp',
         );
     }
 
@@ -143,13 +143,13 @@ class App extends AbstractAPI
         return $this->parseResponse(
             $this->client->request(
                 'delete',
-                "/apis/apps.keboola.com/v1/namespaces/$namespace/apps",
+                "/apis/apps.keboola.com/v2/namespaces/$namespace/apps",
                 [
                     'json' => $options,
                     'query' => $queries,
                 ],
             ),
-            'deleteAppsKeboolaComV1CollectionNamespacedApp',
+            'deleteAppsKeboolaComV2CollectionNamespacedApp',
         );
     }
 }

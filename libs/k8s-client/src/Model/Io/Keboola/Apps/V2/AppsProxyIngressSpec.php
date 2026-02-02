@@ -11,13 +11,5 @@ use KubernetesRuntime\AbstractModel;
  */
 class AppsProxyIngressSpec extends AbstractModel
 {
-    /**
-     * Container is the name of the container to expose via ingress.
-     *
-     * Deprecated: In v2, container field is ignored as there is only one container
-     * defined in containerSpec.
-     */
-    public string|null $container = null;
-
     public int|null $targetPort = null;
 }

@@ -11,13 +11,5 @@ use KubernetesRuntime\AbstractModel;
  */
 class MountPathSpec extends AbstractModel
 {
-    /**
-     * Container is the name of the container to mount the storage token in.
-     *
-     * Deprecated: In v2, container field is ignored as there is only one container
-     * defined in containerSpec.
-     */
-    public string|null $container = null;
-
     public string|null $path = null;
 }

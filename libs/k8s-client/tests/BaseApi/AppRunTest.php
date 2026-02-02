@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Keboola\K8sClient\Tests\BaseApi\V1;
+namespace Keboola\K8sClient\Tests\BaseApi;
 
 use GuzzleHttp\Psr7\Response;
-use Keboola\K8sClient\BaseApi\App;
-use Keboola\K8sClient\Model\Io\Keboola\Apps\V2\App as TheApp;
-use Keboola\K8sClient\Model\Io\Keboola\Apps\V2\AppList;
+use Keboola\K8sClient\BaseApi\AppRun;
+use Keboola\K8sClient\Model\Io\Keboola\Apps\V1\AppRun as TheAppRun;
+use Keboola\K8sClient\Model\Io\Keboola\Apps\V1\AppRunList;
 use Keboola\K8sClient\Tests\ReflectionPropertyAccessTestCase;
 use Kubernetes\Model\Io\K8s\Apimachinery\Pkg\Apis\Meta\V1\DeleteOptions;
 use Kubernetes\Model\Io\K8s\Apimachinery\Pkg\Apis\Meta\V1\Patch;
@@ -15,7 +15,7 @@ use Kubernetes\Model\Io\K8s\Apimachinery\Pkg\Apis\Meta\V1\Status;
 use KubernetesRuntime\Client;
 use PHPUnit\Framework\TestCase;
 
-class AppTest extends TestCase
+class AppRunTest extends TestCase
 {
     use ReflectionPropertyAccessTestCase;
 
@@ -29,31 +29,31 @@ class AppTest extends TestCase
             ->method('request')
             ->with(
                 'get',
-                "/apis/apps.keboola.com/v2/namespaces/$namespace/apps",
+                "/apis/apps.keboola.com/v1/namespaces/$namespace/appruns",
                 [
                     'query' => $queries,
                 ],
             )
             ->willReturn(new Response(200));
 
-        $appApi = $this->getMockBuilder(App::class)
+        $appRunApi = $this->getMockBuilder(AppRun::class)
             ->disableOriginalConstructor()
             ->onlyMethods(['parseResponse'])
             ->getMock();
 
-        $appApi->expects($this->once())
+        $appRunApi->expects($this->once())
             ->method('parseResponse')
-            ->willReturn(new AppList());
+            ->willReturn(new AppRunList());
 
-        self::setPrivatePropertyValue($appApi, 'client', $clientMock);
+        self::setPrivatePropertyValue($appRunApi, 'client', $clientMock);
 
-        $appApi->list($namespace, $queries);
+        $appRunApi->list($namespace, $queries);
     }
 
     public function testRead(): void
     {
         $namespace = 'default';
-        $name = 'app-123';
+        $name = 'apprun-123';
         $queries = [];
 
         $clientMock = $this->createMock(Client::class);
@@ -61,32 +61,32 @@ class AppTest extends TestCase
             ->method('request')
             ->with(
                 'get',
-                "/apis/apps.keboola.com/v2/namespaces/$namespace/apps/$name",
+                "/apis/apps.keboola.com/v1/namespaces/$namespace/appruns/$name",
                 [
                     'query' => $queries,
                 ],
             )
             ->willReturn(new Response(200));
 
-        $appApi = $this->getMockBuilder(App::class)
+        $appRunApi = $this->getMockBuilder(AppRun::class)
             ->disableOriginalConstructor()
             ->onlyMethods(['parseResponse'])
             ->getMock();
 
-        $appApi->expects($this->once())
+        $appRunApi->expects($this->once())
             ->method('parseResponse')
-            ->with($this->anything(), 'readAppsKeboolaComV2NamespacedApp')
-            ->willReturn(new TheApp());
+            ->with($this->anything(), 'readAppsKeboolaComV1NamespacedAppRun')
+            ->willReturn(new TheAppRun());
 
-        self::setPrivatePropertyValue($appApi, 'client', $clientMock);
+        self::setPrivatePropertyValue($appRunApi, 'client', $clientMock);
 
-        $appApi->read($namespace, $name, $queries);
+        $appRunApi->read($namespace, $name, $queries);
     }
 
     public function testCreate(): void
     {
         $namespace = 'default';
-        $app = new TheApp(['metadata' => ['name' => 'app-123']]);
+        $appRun = new TheAppRun(['metadata' => ['name' => 'apprun-123']]);
         $queries = [];
 
         $clientMock = $this->createMock(Client::class);
@@ -94,33 +94,33 @@ class AppTest extends TestCase
             ->method('request')
             ->with(
                 'post',
-                "/apis/apps.keboola.com/v2/namespaces/$namespace/apps",
+                "/apis/apps.keboola.com/v1/namespaces/$namespace/appruns",
                 [
-                    'json' => $app->getArrayCopy(),
+                    'json' => $appRun->getArrayCopy(),
                     'query' => $queries,
                 ],
             )
             ->willReturn(new Response(201));
 
-        $appApi = $this->getMockBuilder(App::class)
+        $appRunApi = $this->getMockBuilder(AppRun::class)
             ->disableOriginalConstructor()
             ->onlyMethods(['parseResponse'])
             ->getMock();
 
-        $appApi->expects($this->once())
+        $appRunApi->expects($this->once())
             ->method('parseResponse')
-            ->with($this->anything(), 'createAppsKeboolaComV2NamespacedApp')
-            ->willReturn(new TheApp());
+            ->with($this->anything(), 'createAppsKeboolaComV1NamespacedAppRun')
+            ->willReturn(new TheAppRun());
 
-        self::setPrivatePropertyValue($appApi, 'client', $clientMock);
+        self::setPrivatePropertyValue($appRunApi, 'client', $clientMock);
 
-        $appApi->create($namespace, $app, $queries);
+        $appRunApi->create($namespace, $appRun, $queries);
     }
 
     public function testPatch(): void
     {
         $namespace = 'default';
-        $name = 'app-123';
+        $name = 'apprun-123';
         $patch = new Patch(['spec' => ['state' => 'Running']]);
         $queries = [];
 
@@ -129,7 +129,7 @@ class AppTest extends TestCase
             ->method('request')
             ->with(
                 'patch',
-                "/apis/apps.keboola.com/v2/namespaces/$namespace/apps/$name",
+                "/apis/apps.keboola.com/v1/namespaces/$namespace/appruns/$name",
                 [
                     'json' => $patch->getArrayCopy(),
                     'query' => $queries,
@@ -137,25 +137,25 @@ class AppTest extends TestCase
             )
             ->willReturn(new Response(200));
 
-        $appApi = $this->getMockBuilder(App::class)
+        $appRunApi = $this->getMockBuilder(AppRun::class)
             ->disableOriginalConstructor()
             ->onlyMethods(['parseResponse'])
             ->getMock();
 
-        $appApi->expects($this->once())
+        $appRunApi->expects($this->once())
             ->method('parseResponse')
-            ->with($this->anything(), 'patchAppsKeboolaComV2NamespacedApp')
-            ->willReturn(new TheApp());
+            ->with($this->anything(), 'patchAppsKeboolaComV1NamespacedAppRun')
+            ->willReturn(new TheAppRun());
 
-        self::setPrivatePropertyValue($appApi, 'client', $clientMock);
+        self::setPrivatePropertyValue($appRunApi, 'client', $clientMock);
 
-        $appApi->patch($namespace, $name, $patch, $queries);
+        $appRunApi->patch($namespace, $name, $patch, $queries);
     }
 
     public function testDelete(): void
     {
         $namespace = 'default';
-        $name = 'app-123';
+        $name = 'apprun-123';
         $deleteOptions = new DeleteOptions();
         $queries = [];
 
@@ -164,7 +164,7 @@ class AppTest extends TestCase
             ->method('request')
             ->with(
                 'delete',
-                "/apis/apps.keboola.com/v2/namespaces/$namespace/apps/$name",
+                "/apis/apps.keboola.com/v1/namespaces/$namespace/appruns/$name",
                 [
                     'json' => $deleteOptions,
                     'query' => $queries,
@@ -172,19 +172,19 @@ class AppTest extends TestCase
             )
             ->willReturn(new Response(200));
 
-        $appApi = $this->getMockBuilder(App::class)
+        $appRunApi = $this->getMockBuilder(AppRun::class)
             ->disableOriginalConstructor()
             ->onlyMethods(['parseResponse'])
             ->getMock();
 
-        $appApi->expects($this->once())
+        $appRunApi->expects($this->once())
             ->method('parseResponse')
-            ->with($this->anything(), 'deleteAppsKeboolaComV2NamespacedApp')
+            ->with($this->anything(), 'deleteAppsKeboolaComV1NamespacedAppRun')
             ->willReturn(new Status());
 
-        self::setPrivatePropertyValue($appApi, 'client', $clientMock);
+        self::setPrivatePropertyValue($appRunApi, 'client', $clientMock);
 
-        $appApi->delete($namespace, $name, $deleteOptions, $queries);
+        $appRunApi->delete($namespace, $name, $deleteOptions, $queries);
     }
 
     public function testDeleteCollection(): void
@@ -198,7 +198,7 @@ class AppTest extends TestCase
             ->method('request')
             ->with(
                 'delete',
-                "/apis/apps.keboola.com/v2/namespaces/$namespace/apps",
+                "/apis/apps.keboola.com/v1/namespaces/$namespace/appruns",
                 [
                     'json' => $deleteOptions,
                     'query' => $queries,
@@ -206,18 +206,18 @@ class AppTest extends TestCase
             )
             ->willReturn(new Response(200));
 
-        $appApi = $this->getMockBuilder(App::class)
+        $appRunApi = $this->getMockBuilder(AppRun::class)
             ->disableOriginalConstructor()
             ->onlyMethods(['parseResponse'])
             ->getMock();
 
-        $appApi->expects($this->once())
+        $appRunApi->expects($this->once())
             ->method('parseResponse')
-            ->with($this->anything(), 'deleteAppsKeboolaComV2CollectionNamespacedApp')
+            ->with($this->anything(), 'deleteAppsKeboolaComV1CollectionNamespacedAppRun')
             ->willReturn(new Status());
 
-        self::setPrivatePropertyValue($appApi, 'client', $clientMock);
+        self::setPrivatePropertyValue($appRunApi, 'client', $clientMock);
 
-        $appApi->deleteCollection($namespace, $deleteOptions, $queries);
+        $appRunApi->deleteCollection($namespace, $deleteOptions, $queries);
     }
 }

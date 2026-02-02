@@ -2,12 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Keboola\K8sClient\Tests\ApiClient\V1;
+namespace Keboola\K8sClient\Tests\ApiClient;
 
 use Keboola\K8sClient\ApiClient\AppsApiClient;
 use Keboola\K8sClient\BaseApi\App as AppsApi;
 use Keboola\K8sClient\Model\Io\Keboola\Apps\V2\App;
-use Keboola\K8sClient\Tests\ApiClient\BaseNamespaceApiClientTestCase;
 use PHPUnit\Framework\TestCase;
 
 class AppsApiClientFunctionalTest extends TestCase
@@ -42,14 +41,13 @@ class AppsApiClientFunctionalTest extends TestCase
                         'canManageBuckets' => true,
                         'canReadAllFileUploads' => true,
                         'canPurgeTrash' => false,
-                        'setEnvs' => [['container' => 'main', 'envName' => 'KBC_TOKEN']],
+                        'setEnvs' => [['envName' => 'KBC_TOKEN']],
                     ],
                     'appsProxyIngress' => [
-                        'container' => 'main',
                         'targetPort' => 8080,
                     ],
                     'dataDir' => [
-                        'mount' => [['container' => 'main']],
+                        'mount' => [[]],
                         'dataLoader' => [
                             'branchId' => 'main',
                             'componentId' => 'component-1',
@@ -61,7 +59,6 @@ class AppsApiClientFunctionalTest extends TestCase
                         'componentId' => 'component-1',
                         'configId' => 'config-1',
                         'mount' => [[
-                            'container' => 'main',
                             'path' => '/config.json',
                             'fields' => [['source' => '$.foo', 'target' => 'bar']],
                         ]],

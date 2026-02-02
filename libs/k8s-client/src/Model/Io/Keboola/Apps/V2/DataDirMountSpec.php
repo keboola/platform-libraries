@@ -11,13 +11,5 @@ use KubernetesRuntime\AbstractModel;
  */
 class DataDirMountSpec extends AbstractModel
 {
-    /**
-     * Container is the name of the container to mount the data directory in.
-     *
-     * Deprecated: In v2, container field is ignored as there is only one container
-     * defined in containerSpec.
-     */
-    public string|null $container = null;
-
     public string|null $path = null;
 }

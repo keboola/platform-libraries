@@ -58,20 +58,16 @@ class AppModelTest extends TestCase
                         'canPurgeTrash' => false,
                         'setEnvs' => [
                             [
-                                'container' => 'app',
                                 'envName' => 'KBC_TOKEN',
                             ],
                         ],
                     ],
                     'appsProxyIngress' => [
-                        'container' => 'app',
                         'targetPort' => 8888,
                     ],
                     'dataDir' => [
                         'mount' => [
-                            [
-                                'container' => 'app',
-                            ],
+                            [],
                         ],
                         'dataLoader' => [
                             'branchId' => 'main',
@@ -86,7 +82,6 @@ class AppModelTest extends TestCase
                         'configVersion' => '3',
                         'mount' => [
                             [
-                                'container' => 'app',
                                 'path' => '/data/config.json',
                                 'fields' => [
                                     [
@@ -201,7 +196,6 @@ class AppModelTest extends TestCase
         self::assertNotNull($storageToken->setEnvs);
         self::assertCount(1, $storageToken->setEnvs);
         self::assertInstanceOf(SetEnvSpec::class, $storageToken->setEnvs[0]);
-        self::assertSame('app', $storageToken->setEnvs[0]->container);
         self::assertSame('KBC_TOKEN', $storageToken->setEnvs[0]->envName);
     }
 
@@ -209,7 +203,6 @@ class AppModelTest extends TestCase
     {
         self::assertNotNull($appsProxyIngress);
         self::assertInstanceOf(AppsProxyIngressSpec::class, $appsProxyIngress);
-        self::assertSame('app', $appsProxyIngress->container);
         self::assertSame(8888, $appsProxyIngress->targetPort);
     }
 
@@ -222,7 +215,6 @@ class AppModelTest extends TestCase
         self::assertNotNull($dataDir->mount);
         self::assertCount(1, $dataDir->mount);
         self::assertInstanceOf(DataDirMountSpec::class, $dataDir->mount[0]);
-        self::assertSame('app', $dataDir->mount[0]->container);
 
         // dataLoader
         self::assertNotNull($dataDir->dataLoader);
@@ -245,7 +237,6 @@ class AppModelTest extends TestCase
         self::assertNotNull($mountConfig->mount);
         self::assertCount(1, $mountConfig->mount);
         self::assertInstanceOf(ConfigMountItemSpec::class, $mountConfig->mount[0]);
-        self::assertSame('app', $mountConfig->mount[0]->container);
         self::assertSame('/data/config.json', $mountConfig->mount[0]->path);
 
         // fields
@@ -369,27 +360,6 @@ class AppModelTest extends TestCase
         self::assertInstanceOf(StorageTokenSpec::class, $app->spec->features->storageToken);
         self::assertInstanceOf(DataDirSpec::class, $app->spec->features->dataDir);
         self::assertInstanceOf(ConfigMountSpec::class, $app->spec->features->mountConfig);
-    }
-
-    public function testDeprecatedContainerFields(): void
-    {
-        $data = self::getAppTestData();
-        $app = new App($data);
-
-        // Verify deprecated 'container' fields are present in features
-        self::assertNotNull($app->spec);
-        self::assertNotNull($app->spec->features);
-        self::assertNotNull($app->spec->features->storageToken);
-        self::assertNotNull($app->spec->features->storageToken->setEnvs);
-        self::assertSame('app', $app->spec->features->storageToken->setEnvs[0]->container);
-        self::assertNotNull($app->spec->features->appsProxyIngress);
-        self::assertSame('app', $app->spec->features->appsProxyIngress->container);
-        self::assertNotNull($app->spec->features->dataDir);
-        self::assertNotNull($app->spec->features->dataDir->mount);
-        self::assertSame('app', $app->spec->features->dataDir->mount[0]->container);
-        self::assertNotNull($app->spec->features->mountConfig);
-        self::assertNotNull($app->spec->features->mountConfig->mount);
-        self::assertSame('app', $app->spec->features->mountConfig->mount[0]->container);
     }
 
     public static function provideInvalidTestData(): Generator

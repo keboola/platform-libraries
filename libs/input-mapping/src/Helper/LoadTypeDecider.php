@@ -11,44 +11,12 @@ class LoadTypeDecider
     public static function checkViableBigQueryLoadMethod(
         array $tableInfo,
         string $workspaceType,
-        array $exportOptions,
-        string $currentProjectId,
-        bool $hasBigQueryDefaultImViewFeature,
     ): void {
-
         if ($tableInfo['bucket']['backend'] !== 'bigquery') {
             throw new InvalidInputException(sprintf(
                 'Workspace type "%s" does not match table backend type "%s" when loading Bigquery table "%s".',
                 $workspaceType,
                 $tableInfo['bucket']['backend'],
-                $tableInfo['id'],
-            ));
-        }
-
-        // Only validate export options and aliases when the feature flag is enabled
-        if (!$hasBigQueryDefaultImViewFeature) {
-            return;
-        }
-
-        $hasOtherThanOverwriteOptions = $exportOptions && array_keys($exportOptions) !== ['overwrite'];
-        $isAliasInCurrentProject = $tableInfo['isAlias'] &&
-            ((string) $tableInfo['sourceTable']['project']['id'] === $currentProjectId);
-
-        if ($hasOtherThanOverwriteOptions) {
-            throw new InvalidInputException(sprintf(
-                'Option "%s" is not supported when loading Bigquery table "%s".',
-                implode(', ', array_keys($exportOptions)),
-                $tableInfo['id'],
-            ));
-        }
-
-        /* isAlias means that the table is EITHER an alias OR a table shared from a different project.
-            Surprisingly, the table shared from different project IS supported, but the alias is not.
-            https://keboolaglobal.slack.com/archives/C055HSMKX51/p1699434828910109
-        */
-        if ($isAliasInCurrentProject) {
-            throw new InvalidInputException(sprintf(
-                'Table "%s" is an alias, which is not supported when loading Bigquery tables.',
                 $tableInfo['id'],
             ));
         }
@@ -79,22 +47,43 @@ class LoadTypeDecider
     public static function canUseView(
         array $tableInfo,
         string $workspaceType,
+        array $exportOptions,
+        string $currentProjectId,
     ): bool {
         $backend = $tableInfo['bucket']['backend'];
         $isBackendMatch = $backend === $workspaceType;
-        if ($isBackendMatch && $workspaceType === 'bigquery') {
-            return true;
+
+        // backend mismatch, view is not supported
+        if (!$isBackendMatch) {
+            return false;
         }
 
-        if ($isBackendMatch
-            && $backend === 'snowflake'
-            && array_key_exists('hasExternalSchema', $tableInfo['bucket'])
-            && $tableInfo['bucket']['hasExternalSchema'] === true
+        // BigQuery always supports views when backend matches
+        // Snowflake with external schema also supports views
+        // For other cases, additional validation is required
+        if ($workspaceType !== 'bigquery'
+            && !($backend === 'snowflake'
+                && array_key_exists('hasExternalSchema', $tableInfo['bucket'])
+                && $tableInfo['bucket']['hasExternalSchema'] === true)
         ) {
-            // allow view for buckets with external schema
-            return true;
+            return false;
         }
 
-        return false;
+        $hasOtherThanOverwriteOptions = $exportOptions && array_keys($exportOptions) !== ['overwrite'];
+        if ($hasOtherThanOverwriteOptions) {
+            return false; // aka filters are not allowed
+        }
+
+        /* isAlias means that the table is EITHER an alias OR a table shared from a different project.
+            Surprisingly, the table shared from different project IS supported, but the alias is not.
+            https://keboolaglobal.slack.com/archives/C055HSMKX51/p1699434828910109
+        */
+        $isAliasInCurrentProject = $tableInfo['isAlias'] &&
+            ((string) $tableInfo['sourceTable']['project']['id'] === $currentProjectId);
+        if ($isAliasInCurrentProject) {
+            return false;
+        }
+
+        return true;
     }
 }

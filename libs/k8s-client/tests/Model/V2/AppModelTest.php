@@ -67,7 +67,9 @@ class AppModelTest extends TestCase
                     ],
                     'dataDir' => [
                         'mount' => [
-                            [],
+                            [
+                                'path' => '/data',
+                            ],
                         ],
                         'dataLoader' => [
                             'branchId' => 'main',

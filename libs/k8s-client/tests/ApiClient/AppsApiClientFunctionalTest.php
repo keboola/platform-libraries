@@ -47,7 +47,9 @@ class AppsApiClientFunctionalTest extends TestCase
                         'targetPort' => 8080,
                     ],
                     'dataDir' => [
-                        'mount' => [[]],
+                        'mount' => [[
+                            'path' => '/data',
+                        ]],
                         'dataLoader' => [
                             'branchId' => 'main',
                             'componentId' => 'component-1',

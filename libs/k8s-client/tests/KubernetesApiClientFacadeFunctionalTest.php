@@ -6,8 +6,8 @@ namespace Keboola\K8sClient\Tests;
 
 use Keboola\K8sClient\ClientFacadeFactory\GenericClientFacadeFactory;
 use Keboola\K8sClient\KubernetesApiClientFacade;
-use Keboola\K8sClient\Model\Io\Keboola\Apps\V1\App;
 use Keboola\K8sClient\Model\Io\Keboola\Apps\V1\AppRun;
+use Keboola\K8sClient\Model\Io\Keboola\Apps\V2\App;
 use Keboola\K8sClient\RetryProxyFactory;
 use Kubernetes\Model\Io\K8s\Api\Core\V1\Pod;
 use Kubernetes\Model\Io\K8s\Apimachinery\Pkg\Apis\Meta\V1\DeleteOptions;
@@ -125,12 +125,9 @@ class KubernetesApiClientFacadeFunctionalTest extends TestCase
                 'projectId' => 'project-456',
                 'state' => 'Running',
                 'replicas' => 1,
-                'podSpec' => [
-                    'restartPolicy' => 'Always',
-                    'containers' => [[
-                        'name' => 'main',
-                        'image' => 'busybox',
-                    ]],
+                'runtimeSize' => 'small',
+                'containerSpec' => [
+                    'image' => 'busybox',
                 ],
             ],
         ]);
@@ -198,12 +195,9 @@ class KubernetesApiClientFacadeFunctionalTest extends TestCase
                 'projectId' => 'project-456',
                 'state' => 'Running',
                 'replicas' => 1,
-                'podSpec' => [
-                    'restartPolicy' => 'Always',
-                    'containers' => [[
-                        'name' => 'main',
-                        'image' => 'busybox',
-                    ]],
+                'runtimeSize' => 'small',
+                'containerSpec' => [
+                    'image' => 'busybox',
                 ],
             ],
         ]);

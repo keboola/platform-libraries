@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Keboola\K8sClient\Model\Io\Keboola\Apps\V1;
+namespace Keboola\K8sClient\Model\Io\Keboola\Apps\V2;
 
 use Kubernetes\Model\Io\K8s\Apimachinery\Pkg\Apis\Meta\V1\ObjectMeta;
 use KubernetesRuntime\AbstractModel;
@@ -23,7 +23,7 @@ class App extends AbstractModel
      * Servers should convert recognized schemas to the latest internal value, and
      * may reject unrecognized values.
      */
-    public string|null $apiVersion = 'apps.keboola.com/v1';
+    public string|null $apiVersion = 'apps.keboola.com/v2';
 
     /**
      * Kind is a string value representing the REST resource this object represents.

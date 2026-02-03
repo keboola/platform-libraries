@@ -6,8 +6,8 @@ namespace Keboola\K8sClient\ApiClient;
 
 use Keboola\K8sClient\BaseApi\App as AppsApi;
 use Keboola\K8sClient\KubernetesApiClient;
-use Keboola\K8sClient\Model\Io\Keboola\Apps\V1\App;
-use Keboola\K8sClient\Model\Io\Keboola\Apps\V1\AppList;
+use Keboola\K8sClient\Model\Io\Keboola\Apps\V2\App;
+use Keboola\K8sClient\Model\Io\Keboola\Apps\V2\AppList;
 
 /**
  * @template-extends BaseNamespaceApiClient<AppsApi, AppList, App>

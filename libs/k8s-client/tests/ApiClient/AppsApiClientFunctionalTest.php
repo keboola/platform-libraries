@@ -6,7 +6,7 @@ namespace Keboola\K8sClient\Tests\ApiClient;
 
 use Keboola\K8sClient\ApiClient\AppsApiClient;
 use Keboola\K8sClient\BaseApi\App as AppsApi;
-use Keboola\K8sClient\Model\Io\Keboola\Apps\V1\App;
+use Keboola\K8sClient\Model\Io\Keboola\Apps\V2\App;
 use PHPUnit\Framework\TestCase;
 
 class AppsApiClientFunctionalTest extends TestCase
@@ -34,20 +34,22 @@ class AppsApiClientFunctionalTest extends TestCase
                 'projectId' => 'project-456',
                 'state' => 'Running',
                 'replicas' => 1,
+                'runtimeSize' => 'small',
                 'features' => [
                     'storageToken' => [
                         'description' => 'test-token',
                         'canManageBuckets' => true,
                         'canReadAllFileUploads' => true,
                         'canPurgeTrash' => false,
-                        'setEnvs' => [['container' => 'main', 'envName' => 'KBC_TOKEN']],
+                        'setEnvs' => [['envName' => 'KBC_TOKEN']],
                     ],
                     'appsProxyIngress' => [
-                        'container' => 'main',
                         'targetPort' => 8080,
                     ],
                     'dataDir' => [
-                        'mount' => [['container' => 'main']],
+                        'mount' => [[
+                            'path' => '/data',
+                        ]],
                         'dataLoader' => [
                             'branchId' => 'main',
                             'componentId' => 'component-1',
@@ -59,32 +61,23 @@ class AppsApiClientFunctionalTest extends TestCase
                         'componentId' => 'component-1',
                         'configId' => 'config-1',
                         'mount' => [[
-                            'container' => 'main',
                             'path' => '/config.json',
                             'fields' => [['source' => '$.foo', 'target' => 'bar']],
                         ]],
                     ],
                 ],
-                'podSpec' => [
-                    'restartPolicy' => 'Always',
-                    'containers' => [[
-                        'name' => 'main',
-                        'image' => 'busybox',
-                        'env' => [['name' => 'FOO', 'value' => 'bar']],
-                        'resources' => [
-                            'requests' => ['memory' => '64M', 'cpu' => '100m'],
-                            'limits' => ['memory' => '128M', 'cpu' => '200m'],
-                        ],
-                        'startupProbe' => [
-                            'httpGet' => ['path' => '/', 'port' => 8080],
-                            'periodSeconds' => 1,
-                            'failureThreshold' => 30,
-                        ],
-                        'readinessProbe' => [
-                            'httpGet' => ['path' => '/', 'port' => 8080],
-                            'periodSeconds' => 10,
-                        ],
-                    ]],
+                'containerSpec' => [
+                    'image' => 'busybox',
+                    'env' => [['name' => 'FOO', 'value' => 'bar']],
+                    'startupProbe' => [
+                        'httpGet' => ['path' => '/', 'port' => 8080],
+                        'periodSeconds' => 1,
+                        'failureThreshold' => 30,
+                    ],
+                    'readinessProbe' => [
+                        'httpGet' => ['path' => '/', 'port' => 8080],
+                        'periodSeconds' => 10,
+                    ],
                 ],
             ],
         ]);

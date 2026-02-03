@@ -6,8 +6,8 @@ namespace Keboola\K8sClient\Tests\BaseApi;
 
 use GuzzleHttp\Psr7\Response;
 use Keboola\K8sClient\BaseApi\App;
-use Keboola\K8sClient\Model\Io\Keboola\Apps\V1\App as TheApp;
-use Keboola\K8sClient\Model\Io\Keboola\Apps\V1\AppList;
+use Keboola\K8sClient\Model\Io\Keboola\Apps\V2\App as TheApp;
+use Keboola\K8sClient\Model\Io\Keboola\Apps\V2\AppList;
 use Keboola\K8sClient\Tests\ReflectionPropertyAccessTestCase;
 use Kubernetes\Model\Io\K8s\Apimachinery\Pkg\Apis\Meta\V1\DeleteOptions;
 use Kubernetes\Model\Io\K8s\Apimachinery\Pkg\Apis\Meta\V1\Patch;
@@ -29,7 +29,7 @@ class AppTest extends TestCase
             ->method('request')
             ->with(
                 'get',
-                "/apis/apps.keboola.com/v1/namespaces/$namespace/apps",
+                "/apis/apps.keboola.com/v2/namespaces/$namespace/apps",
                 [
                     'query' => $queries,
                 ],
@@ -61,7 +61,7 @@ class AppTest extends TestCase
             ->method('request')
             ->with(
                 'get',
-                "/apis/apps.keboola.com/v1/namespaces/$namespace/apps/$name",
+                "/apis/apps.keboola.com/v2/namespaces/$namespace/apps/$name",
                 [
                     'query' => $queries,
                 ],
@@ -75,7 +75,7 @@ class AppTest extends TestCase
 
         $appApi->expects($this->once())
             ->method('parseResponse')
-            ->with($this->anything(), 'readAppsKeboolaComV1NamespacedApp')
+            ->with($this->anything(), 'readAppsKeboolaComV2NamespacedApp')
             ->willReturn(new TheApp());
 
         self::setPrivatePropertyValue($appApi, 'client', $clientMock);
@@ -94,7 +94,7 @@ class AppTest extends TestCase
             ->method('request')
             ->with(
                 'post',
-                "/apis/apps.keboola.com/v1/namespaces/$namespace/apps",
+                "/apis/apps.keboola.com/v2/namespaces/$namespace/apps",
                 [
                     'json' => $app->getArrayCopy(),
                     'query' => $queries,
@@ -109,7 +109,7 @@ class AppTest extends TestCase
 
         $appApi->expects($this->once())
             ->method('parseResponse')
-            ->with($this->anything(), 'createAppsKeboolaComV1NamespacedApp')
+            ->with($this->anything(), 'createAppsKeboolaComV2NamespacedApp')
             ->willReturn(new TheApp());
 
         self::setPrivatePropertyValue($appApi, 'client', $clientMock);
@@ -129,7 +129,7 @@ class AppTest extends TestCase
             ->method('request')
             ->with(
                 'patch',
-                "/apis/apps.keboola.com/v1/namespaces/$namespace/apps/$name",
+                "/apis/apps.keboola.com/v2/namespaces/$namespace/apps/$name",
                 [
                     'json' => $patch->getArrayCopy(),
                     'query' => $queries,
@@ -144,7 +144,7 @@ class AppTest extends TestCase
 
         $appApi->expects($this->once())
             ->method('parseResponse')
-            ->with($this->anything(), 'patchAppsKeboolaComV1NamespacedApp')
+            ->with($this->anything(), 'patchAppsKeboolaComV2NamespacedApp')
             ->willReturn(new TheApp());
 
         self::setPrivatePropertyValue($appApi, 'client', $clientMock);
@@ -164,7 +164,7 @@ class AppTest extends TestCase
             ->method('request')
             ->with(
                 'delete',
-                "/apis/apps.keboola.com/v1/namespaces/$namespace/apps/$name",
+                "/apis/apps.keboola.com/v2/namespaces/$namespace/apps/$name",
                 [
                     'json' => $deleteOptions,
                     'query' => $queries,
@@ -179,7 +179,7 @@ class AppTest extends TestCase
 
         $appApi->expects($this->once())
             ->method('parseResponse')
-            ->with($this->anything(), 'deleteAppsKeboolaComV1NamespacedApp')
+            ->with($this->anything(), 'deleteAppsKeboolaComV2NamespacedApp')
             ->willReturn(new Status());
 
         self::setPrivatePropertyValue($appApi, 'client', $clientMock);
@@ -198,7 +198,7 @@ class AppTest extends TestCase
             ->method('request')
             ->with(
                 'delete',
-                "/apis/apps.keboola.com/v1/namespaces/$namespace/apps",
+                "/apis/apps.keboola.com/v2/namespaces/$namespace/apps",
                 [
                     'json' => $deleteOptions,
                     'query' => $queries,
@@ -213,7 +213,7 @@ class AppTest extends TestCase
 
         $appApi->expects($this->once())
             ->method('parseResponse')
-            ->with($this->anything(), 'deleteAppsKeboolaComV1CollectionNamespacedApp')
+            ->with($this->anything(), 'deleteAppsKeboolaComV2CollectionNamespacedApp')
             ->willReturn(new Status());
 
         self::setPrivatePropertyValue($appApi, 'client', $clientMock);

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Keboola\K8sClient\Model\Io\Keboola\Apps\V1;
+namespace Keboola\K8sClient\Model\Io\Keboola\Apps\V2;
 
 use KubernetesRuntime\AbstractModel;
 
@@ -14,7 +14,8 @@ use KubernetesRuntime\AbstractModel;
  * @property string|null $state
  * @property int|null $replicas
  * @property bool|null $autoRestartEnabled
- * @property AppPodSpec|null $podSpec
+ * @property string|null $runtimeSize
+ * @property ContainerSpec|null $containerSpec
  * @property AppFeatures|null $features
  */
 class AppSpec extends AbstractModel
@@ -47,9 +48,19 @@ class AppSpec extends AbstractModel
     public bool|null $autoRestartEnabled = null;
 
     /**
-     * PodSpec defines the simplified pod specification for the app
+     * RuntimeSize specifies the size of the runtime (defines resource allocation).
+     * The actual resource values are configured via JSON file loaded from
+     * RUNTIME_SIZES_CONFIG env variable. Fallback default is taken from
+     * RUNTIME_SIZE_DEFAULT env variable if not specified.
      */
-    public AppPodSpec|null $podSpec = null;
+    public string|null $runtimeSize = null;
+
+    /**
+     * ContainerSpec defines the container specification for the app.
+     * In v2, apps run a single container (unlike v1 which supported
+     * multiple containers via podSpec).
+     */
+    public ContainerSpec|null $containerSpec = null;
 
     /**
      * Features defines optional features that can be enabled for the app

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Keboola\K8sClient\Model\Io\Keboola\Apps\V1;
+namespace Keboola\K8sClient\Model\Io\Keboola\Apps\V2;
 
 use Kubernetes\Model\Io\K8s\Api\Core\V1\LocalObjectReference;
 use Kubernetes\Model\Io\K8s\Apimachinery\Pkg\Apis\Meta\V1\Condition;

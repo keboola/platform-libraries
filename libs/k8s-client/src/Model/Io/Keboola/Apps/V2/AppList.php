@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Keboola\K8sClient\Model\Io\Keboola\Apps\V1;
+namespace Keboola\K8sClient\Model\Io\Keboola\Apps\V2;
 
 use Kubernetes\Model\Io\K8s\Apimachinery\Pkg\Apis\Meta\V1\ListMeta;
 use KubernetesRuntime\AbstractModel;
@@ -20,7 +20,7 @@ class AppList extends AbstractModel
     /**
      * APIVersion defines the versioned schema of this representation of an object
      */
-    public string|null $apiVersion = 'apps.keboola.com/v1';
+    public string|null $apiVersion = 'apps.keboola.com/v2';
 
     /**
      * Kind is a string value representing the REST resource this object represents

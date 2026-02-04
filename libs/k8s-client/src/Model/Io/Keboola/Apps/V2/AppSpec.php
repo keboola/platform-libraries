@@ -14,6 +14,7 @@ use KubernetesRuntime\AbstractModel;
  * @property string|null $state
  * @property int|null $replicas
  * @property bool|null $autoRestartEnabled
+ * @property string|null $restartRequestedAt
  * @property string|null $runtimeSize
  * @property ContainerSpec|null $containerSpec
  * @property AppFeatures|null $features
@@ -46,6 +47,15 @@ class AppSpec extends AbstractModel
      * will stop the app if it enters CrashLoopBackOff, preventing infinite restart loops.
      */
     public bool|null $autoRestartEnabled = null;
+
+    /**
+     * RestartRequestedAt is a timestamp that signals a restart request.
+     * When this field is updated (typically by sandboxes-service during redeployment),
+     * the operator detects the change and triggers a rolling restart of the app
+     * by updating the Deployment's apps.keboola.com/startedAt annotation.
+     * Format: ISO-8601 timestamp (e.g., "2024-01-15T10:30:00Z")
+     */
+    public string|null $restartRequestedAt = null;
 
     /**
      * RuntimeSize specifies the size of the runtime (defines resource allocation).

@@ -2320,7 +2320,11 @@ CSV;
 
         $exporter = new TableExporter($this->clientWrapper->getTableAndFileStorageClient());
         $downloadedFile = $root . DIRECTORY_SEPARATOR . 'download.csv';
-        $exporter->exportTable($this->emptyOutputBucketId . '.test1', $downloadedFile, []);
+        $exporter->exportTable($this->emptyOutputBucketId . '.test1', $downloadedFile, [
+            'orderBy' => [
+                ['column' => 'Id', 'order' => 'ASC'],
+            ],
+        ]);
 
         $expectedData = <<<CSV
 "Id","Name","foo","bar"

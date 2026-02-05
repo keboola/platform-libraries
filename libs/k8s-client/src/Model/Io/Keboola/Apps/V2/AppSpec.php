@@ -49,10 +49,6 @@ class AppSpec extends AbstractModel
     public bool|null $autoRestartEnabled = null;
 
     /**
-     * RestartRequestedAt is a timestamp that signals a restart request.
-     * When this field is updated (typically by sandboxes-service during redeployment),
-     * the operator detects the change and triggers a rolling restart of the app
-     * by updating the Deployment's apps.keboola.com/startedAt annotation.
      * Format: ISO-8601 timestamp (e.g., "2024-01-15T10:30:00Z")
      */
     public string|null $restartRequestedAt = null;

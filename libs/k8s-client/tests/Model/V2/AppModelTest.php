@@ -49,6 +49,7 @@ class AppModelTest extends TestCase
                 'state' => 'Running',
                 'replicas' => 1,
                 'autoRestartEnabled' => false,
+                'restartRequestedAt' => '2024-01-15T10:30:00Z',
                 'runtimeSize' => 'small',
                 'features' => [
                     'storageToken' => [
@@ -169,6 +170,7 @@ class AppModelTest extends TestCase
         self::assertSame('Running', $app->spec->state);
         self::assertSame(1, $app->spec->replicas);
         self::assertFalse($app->spec->autoRestartEnabled);
+        self::assertSame('2024-01-15T10:30:00Z', $app->spec->restartRequestedAt);
         self::assertSame('small', $app->spec->runtimeSize);
 
         // Features
@@ -388,6 +390,11 @@ class AppModelTest extends TestCase
 
         yield 'wrong autoRestartEnabled type - string instead of bool' => [
             'data' => ['spec' => ['autoRestartEnabled' => []]],
+            'expectedMessage' => 'Cannot assign array to property',
+        ];
+
+        yield 'wrong restartRequestedAt type - array instead of string' => [
+            'data' => ['spec' => ['restartRequestedAt' => []]],
             'expectedMessage' => 'Cannot assign array to property',
         ];
     }

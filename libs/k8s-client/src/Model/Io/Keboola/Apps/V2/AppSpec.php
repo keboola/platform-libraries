@@ -14,6 +14,7 @@ use KubernetesRuntime\AbstractModel;
  * @property string|null $state
  * @property int|null $replicas
  * @property bool|null $autoRestartEnabled
+ * @property string|null $restartRequestedAt
  * @property string|null $runtimeSize
  * @property ContainerSpec|null $containerSpec
  * @property AppFeatures|null $features
@@ -46,6 +47,11 @@ class AppSpec extends AbstractModel
      * will stop the app if it enters CrashLoopBackOff, preventing infinite restart loops.
      */
     public bool|null $autoRestartEnabled = null;
+
+    /**
+     * Format: ISO-8601 timestamp (e.g., "2024-01-15T10:30:00Z")
+     */
+    public string|null $restartRequestedAt = null;
 
     /**
      * RuntimeSize specifies the size of the runtime (defines resource allocation).

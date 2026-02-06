@@ -60,7 +60,12 @@ class LocalSourcesValidator implements SourcesValidatorInterface
             // well, we probably should care about missing write-always sources :-/
             if (!$this->isFailedJob) {
                 throw new InvalidOutputException(
-                    sprintf('Table sources not found: %s', implode(', ', $invalidSources)),
+                    sprintf(
+                        'Output mapping error: The source file %s was not found. '
+                        . 'Verify that the transformation code creates this file in the output directory, '
+                        . 'or remove the corresponding output mapping if the file is no longer needed.',
+                        implode(', ', $invalidSources),
+                    ),
                     404,
                 );
             }

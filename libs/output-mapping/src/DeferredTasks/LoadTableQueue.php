@@ -104,6 +104,10 @@ class LoadTableQueue
                             'importedRowsCount',
                             (int) ($jobResult['results']['importedRowsCount'] ?? 0),
                         );
+                        $this->tableResult->addGenericVariable(
+                            (string) ($jobResult['results']['name'] ?? ''),
+                            (array) ($jobResult['results']['columns'] ?? []),
+                        );
                         $jobResults[] = $jobResult;
                         break;
                     case 'tableCreate':

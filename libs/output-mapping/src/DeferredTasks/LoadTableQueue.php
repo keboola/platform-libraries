@@ -140,4 +140,15 @@ class LoadTableQueue
     {
         return $this->loadTableTasks;
     }
+
+    public function loadCustomVariables(string $variablesFilePath): void
+    {
+        if (!file_exists($variablesFilePath)) {
+            return;
+        }
+        $content = json_decode((string) file_get_contents($variablesFilePath), true);
+        if (is_array($content)) {
+            $this->tableResult->setCustomVariables($content);
+        }
+    }
 }

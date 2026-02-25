@@ -75,6 +75,53 @@ class ResultTest extends TestCase
         self::assertSame($expectedImportData, $table1->getLastImportDate());
     }
 
+    public function testAddGenericVariableStoresData(): void
+    {
+        $result = new Result();
+
+        $result->addGenericVariable('my.table', ['col1', 'col2']);
+
+        self::assertSame(
+            ['my.table' => ['columns' => ['col1', 'col2']]],
+            $result->getGenericVariables(),
+        );
+    }
+
+    public function testGetGenericVariablesReturnsAllStoredVariables(): void
+    {
+        $result = new Result();
+
+        $result->addGenericVariable('bucket.table1', ['id', 'name']);
+        $result->addGenericVariable('bucket.table2', ['foo', 'bar', 'baz']);
+
+        self::assertSame(
+            [
+                'bucket.table1' => ['columns' => ['id', 'name']],
+                'bucket.table2' => ['columns' => ['foo', 'bar', 'baz']],
+            ],
+            $result->getGenericVariables(),
+        );
+    }
+
+    public function testAddGenericVariableWithEmptyColumnsArray(): void
+    {
+        $result = new Result();
+
+        $result->addGenericVariable('my.empty.table', []);
+
+        self::assertSame(
+            ['my.empty.table' => ['columns' => []]],
+            $result->getGenericVariables(),
+        );
+    }
+
+    public function testGetGenericVariablesInitiallyEmpty(): void
+    {
+        $result = new Result();
+
+        self::assertSame([], $result->getGenericVariables());
+    }
+
     public function testSetResults(): void
     {
         $tablesResult = new Result();

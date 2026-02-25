@@ -100,6 +100,10 @@ class LoadTableQueue
                                 $jobResult['tableId'],
                             )),
                         );
+                        $this->tableResult->addGenericVariable(
+                            (string) ($jobResult['results']['name'] ?? ''),
+                            (array) ($jobResult['results']['columns'] ?? []),
+                        );
                         $jobResults[] = $jobResult;
                         break;
                     case 'tableCreate':

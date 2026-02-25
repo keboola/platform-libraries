@@ -626,4 +626,50 @@ class LoadTableQueueTest extends TestCase
         $this->expectExceptionMessage('Failed to load table "my-table": Hi');
         $loadQueue->waitForAll();
     }
+
+    public function testLoadCustomVariablesSetsVariablesFromValidJson(): void
+    {
+        $clientWrapperMock = $this->createMock(ClientWrapper::class);
+        $clientWrapperMock->method('getTableAndFileStorageClient')
+            ->willReturn($this->createMock(Client::class));
+
+        $tmpFile = tempnam(sys_get_temp_dir(), 'variables') . '.json';
+        file_put_contents($tmpFile, (string) json_encode(['my_var' => 'hello', 'count' => 42]));
+
+        $loadQueue = new LoadTableQueue($clientWrapperMock, new NullLogger(), []);
+        $loadQueue->loadCustomVariables($tmpFile);
+
+        self::assertSame(['my_var' => 'hello', 'count' => 42], $loadQueue->getTableResult()->getCustomVariables());
+
+        unlink($tmpFile);
+    }
+
+    public function testLoadCustomVariablesDoesNothingWhenFileMissing(): void
+    {
+        $clientWrapperMock = $this->createMock(ClientWrapper::class);
+        $clientWrapperMock->method('getTableAndFileStorageClient')
+            ->willReturn($this->createMock(Client::class));
+
+        $loadQueue = new LoadTableQueue($clientWrapperMock, new NullLogger(), []);
+        $loadQueue->loadCustomVariables('/nonexistent/path/variables.json');
+
+        self::assertSame([], $loadQueue->getTableResult()->getCustomVariables());
+    }
+
+    public function testLoadCustomVariablesIgnoresInvalidJson(): void
+    {
+        $clientWrapperMock = $this->createMock(ClientWrapper::class);
+        $clientWrapperMock->method('getTableAndFileStorageClient')
+            ->willReturn($this->createMock(Client::class));
+
+        $tmpFile = tempnam(sys_get_temp_dir(), 'variables') . '.json';
+        file_put_contents($tmpFile, 'not valid json {{{');
+
+        $loadQueue = new LoadTableQueue($clientWrapperMock, new NullLogger(), []);
+        $loadQueue->loadCustomVariables($tmpFile);
+
+        self::assertSame([], $loadQueue->getTableResult()->getCustomVariables());
+
+        unlink($tmpFile);
+    }
 }

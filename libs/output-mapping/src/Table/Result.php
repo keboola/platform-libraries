@@ -17,6 +17,9 @@ class Result
     /** @var array<string, array{columns: string[]}> */
     private array $genericVariables = [];
 
+    /** @var array<string, mixed> */
+    private array $customVariables = [];
+
     public function addTable(TableInfo $table): void
     {
         $this->tables[] = $table;
@@ -52,5 +55,17 @@ class Result
     public function getGenericVariables(): array
     {
         return $this->genericVariables;
+    }
+
+    /** @param array<string, mixed> $variables */
+    public function setCustomVariables(array $variables): void
+    {
+        $this->customVariables = $variables;
+    }
+
+    /** @return array<string, mixed> */
+    public function getCustomVariables(): array
+    {
+        return $this->customVariables;
     }
 }

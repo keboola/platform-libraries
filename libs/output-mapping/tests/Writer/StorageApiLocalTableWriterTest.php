@@ -2729,4 +2729,78 @@ CSV;
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
     }
+
+    #[NeedsEmptyOutputBucket]
+    public function testUploadTablesLoadsCustomVariablesFromVariablesJson(): void
+    {
+        $root = $this->temp->getTmpFolder();
+        file_put_contents($root . '/upload/table1a.csv', "\"Id\",\"Name\"\n\"test\",\"test\"\n");
+        file_put_contents($root . '/upload/variables.json', (string) json_encode([
+            'my_var' => 'hello',
+            'count' => 42,
+        ]));
+
+        $configs = [['source' => 'table1a.csv', 'destination' => $this->emptyOutputBucketId . '.table1a']];
+        $tableQueue = $this->getTableLoader()->uploadTables(
+            configuration: new OutputMappingSettings(
+                configuration: ['mapping' => $configs],
+                sourcePathPrefix: 'upload',
+                storageApiToken: $this->clientWrapper->getToken(),
+                isFailedJob: false,
+                dataTypeSupport: 'none',
+            ),
+            systemMetadata: new SystemMetadata(['componentId' => 'foo']),
+        );
+        $tableQueue->waitForAll();
+
+        self::assertSame(
+            ['my_var' => 'hello', 'count' => 42],
+            $tableQueue->getTableResult()->getCustomVariables(),
+        );
+    }
+
+    #[NeedsEmptyOutputBucket]
+    public function testUploadTablesCustomVariablesEmptyWhenVariablesJsonMissing(): void
+    {
+        $root = $this->temp->getTmpFolder();
+        file_put_contents($root . '/upload/table1a.csv', "\"Id\",\"Name\"\n\"test\",\"test\"\n");
+
+        $configs = [['source' => 'table1a.csv', 'destination' => $this->emptyOutputBucketId . '.table1a']];
+        $tableQueue = $this->getTableLoader()->uploadTables(
+            configuration: new OutputMappingSettings(
+                configuration: ['mapping' => $configs],
+                sourcePathPrefix: 'upload',
+                storageApiToken: $this->clientWrapper->getToken(),
+                isFailedJob: false,
+                dataTypeSupport: 'none',
+            ),
+            systemMetadata: new SystemMetadata(['componentId' => 'foo']),
+        );
+        $tableQueue->waitForAll();
+
+        self::assertSame([], $tableQueue->getTableResult()->getCustomVariables());
+    }
+
+    #[NeedsEmptyOutputBucket]
+    public function testUploadTablesIgnoresInvalidVariablesJson(): void
+    {
+        $root = $this->temp->getTmpFolder();
+        file_put_contents($root . '/upload/table1a.csv', "\"Id\",\"Name\"\n\"test\",\"test\"\n");
+        file_put_contents($root . '/upload/variables.json', 'not valid json {{{');
+
+        $configs = [['source' => 'table1a.csv', 'destination' => $this->emptyOutputBucketId . '.table1a']];
+        $tableQueue = $this->getTableLoader()->uploadTables(
+            configuration: new OutputMappingSettings(
+                configuration: ['mapping' => $configs],
+                sourcePathPrefix: 'upload',
+                storageApiToken: $this->clientWrapper->getToken(),
+                isFailedJob: false,
+                dataTypeSupport: 'none',
+            ),
+            systemMetadata: new SystemMetadata(['componentId' => 'foo']),
+        );
+        $tableQueue->waitForAll();
+
+        self::assertSame([], $tableQueue->getTableResult()->getCustomVariables());
+    }
 }

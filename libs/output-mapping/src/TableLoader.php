@@ -170,10 +170,8 @@ class TableLoader
 
         $tableQueue = new LoadTableQueue($this->clientWrapper, $this->logger, $loadTableTasks);
         $tableQueue->start();
-        $tableQueue->loadCustomVariables(Path::join(
-            $strategy->getMetadataStorage()->getPath(),
-            'variables.json',
-        ));
+        $tablesDir = Path::join($strategy->getMetadataStorage()->getPath(), $configuration->getSourcePathPrefix());
+        $tableQueue->loadCustomVariables(dirname($tablesDir) . '/variables.json');
 
         return $tableQueue;
     }

@@ -15,6 +15,7 @@ use Keboola\OutputMapping\Staging\StrategyFactory;
 use Keboola\OutputMapping\Storage\StoragePreparer;
 use Keboola\OutputMapping\Storage\TableChangesStore;
 use Keboola\OutputMapping\Storage\TableStructureValidatorFactory;
+use Keboola\OutputMapping\Writer\Helper\Path;
 use Keboola\OutputMapping\Writer\Table\BranchResolver;
 use Keboola\OutputMapping\Writer\Table\MetadataSetter;
 use Keboola\OutputMapping\Writer\Table\SlicerDecider;
@@ -169,6 +170,8 @@ class TableLoader
 
         $tableQueue = new LoadTableQueue($this->clientWrapper, $this->logger, $loadTableTasks);
         $tableQueue->start();
+        $tablesDir = Path::join($strategy->getMetadataStorage()->getPath(), $configuration->getSourcePathPrefix());
+        $tableQueue->loadCustomVariables(dirname($tablesDir) . '/variables.json');
 
         return $tableQueue;
     }

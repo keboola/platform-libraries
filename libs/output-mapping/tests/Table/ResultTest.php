@@ -122,6 +122,32 @@ class ResultTest extends TestCase
         self::assertSame([], $result->getGenericVariables());
     }
 
+    public function testSetCustomVariablesStoresData(): void
+    {
+        $result = new Result();
+
+        $result->setCustomVariables(['my_var' => 'value', 'count' => 42]);
+
+        self::assertSame(['my_var' => 'value', 'count' => 42], $result->getCustomVariables());
+    }
+
+    public function testGetCustomVariablesInitiallyEmpty(): void
+    {
+        $result = new Result();
+
+        self::assertSame([], $result->getCustomVariables());
+    }
+
+    public function testSetCustomVariablesOverwritesPreviousValues(): void
+    {
+        $result = new Result();
+
+        $result->setCustomVariables(['old' => 'value']);
+        $result->setCustomVariables(['new' => 'data']);
+
+        self::assertSame(['new' => 'data'], $result->getCustomVariables());
+    }
+
     public function testSetResults(): void
     {
         $tablesResult = new Result();

@@ -139,4 +139,22 @@ class LoadTableQueue
     {
         return $this->loadTableTasks;
     }
+
+    public function loadCustomVariables(string $variablesFilePath): void
+    {
+        if (!file_exists($variablesFilePath)) {
+            return;
+        }
+        $content = json_decode((string) file_get_contents($variablesFilePath), true);
+        if (!is_array($content)) {
+            return;
+        }
+        $variables = [];
+        foreach ($content as $key => $value) {
+            if (is_scalar($value) || $value === null) {
+                $variables[(string) $key] = $value;
+            }
+        }
+        $this->tableResult->setCustomVariables($variables);
+    }
 }

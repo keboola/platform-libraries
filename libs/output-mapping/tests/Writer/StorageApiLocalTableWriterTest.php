@@ -2735,7 +2735,7 @@ CSV;
     {
         $root = $this->temp->getTmpFolder();
         file_put_contents($root . '/upload/table1a.csv', "\"Id\",\"Name\"\n\"test\",\"test\"\n");
-        file_put_contents($root . '/upload/variables.json', (string) json_encode([
+        file_put_contents($root . '/variables.json', (string) json_encode([
             'my_var' => 'hello',
             'count' => 42,
         ]));
@@ -2786,7 +2786,7 @@ CSV;
     {
         $root = $this->temp->getTmpFolder();
         file_put_contents($root . '/upload/table1a.csv', "\"Id\",\"Name\"\n\"test\",\"test\"\n");
-        file_put_contents($root . '/upload/variables.json', 'not valid json {{{');
+        file_put_contents($root . '/variables.json', 'not valid json {{{');
 
         $configs = [['source' => 'table1a.csv', 'destination' => $this->emptyOutputBucketId . '.table1a']];
         $tableQueue = $this->getTableLoader()->uploadTables(

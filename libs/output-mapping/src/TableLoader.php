@@ -172,7 +172,6 @@ class TableLoader
         $tableQueue->start();
         $tableQueue->loadCustomVariables(Path::join(
             $strategy->getMetadataStorage()->getPath(),
-            $configuration->getSourcePathPrefix(),
             'variables.json',
         ));
 

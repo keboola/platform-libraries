@@ -458,11 +458,14 @@ class LoadTableQueueTest extends TestCase
      * @dataProvider genericVariablesData
      * @param array<string, mixed> $jobResult
      * @param array<string, array{columns: string[]}> $expectedGenericVariables
+     * @param string[] $getTableColumns
      */
     public function testWaitForAllExtractsGenericVariables(
         array $jobResult,
         string $expectedTableId,
         array $expectedGenericVariables,
+        array $getTableColumns = [],
+        string $getTableName = 'my-name',
     ): void {
         $clientMock = $this->createMock(Client::class);
         $clientMock->expects(self::once())
@@ -470,9 +473,9 @@ class LoadTableQueueTest extends TestCase
             ->with($expectedTableId)
             ->willReturn([
                 'id' => $expectedTableId,
-                'displayName' => 'my-name',
-                'name' => 'my-name',
-                'columns' => [],
+                'displayName' => $getTableName,
+                'name' => $getTableName,
+                'columns' => $getTableColumns,
                 'lastImportDate' => null,
                 'lastChangeDate' => null,
             ])
@@ -521,8 +524,7 @@ class LoadTableQueueTest extends TestCase
                 'status' => 'success',
                 'tableId' => 'in.c-myBucket.tableImported',
                 'results' => [
-                    'name' => 'tableImported',
-                    'columns' => ['col1', 'col2'],
+                    'importedColumns' => ['col1', 'col2'],
                 ],
                 'metrics' => [
                     'inBytes' => 10,
@@ -533,6 +535,8 @@ class LoadTableQueueTest extends TestCase
             'expectedGenericVariables' => [
                 'tableImported' => ['columns' => ['col1', 'col2']],
             ],
+            'getTableColumns' => [],
+            'getTableName' => 'tableImported',
         ];
 
         yield 'tableCreate does not add generic variables' => [
@@ -552,9 +556,10 @@ class LoadTableQueueTest extends TestCase
             ],
             'expectedTableId' => 'in.c-myBucket.tableCreated',
             'expectedGenericVariables' => [],
+            'getTableColumns' => [],
         ];
 
-        yield 'tableImport missing results.name and results.columns defaults to empty' => [
+        yield 'tableImport without importedColumns defaults to empty columns' => [
             'jobResult' => [
                 'operationName' => 'tableImport',
                 'status' => 'success',
@@ -566,8 +571,10 @@ class LoadTableQueueTest extends TestCase
             ],
             'expectedTableId' => 'in.c-myBucket.tableImported',
             'expectedGenericVariables' => [
-                '' => ['columns' => []],
+                'tableImported' => ['columns' => []],
             ],
+            'getTableColumns' => [],
+            'getTableName' => 'tableImported',
         ];
 
         yield 'tableCreate missing results.name and results.columns still adds no generic variables' => [
@@ -585,6 +592,7 @@ class LoadTableQueueTest extends TestCase
             ],
             'expectedTableId' => 'in.c-myBucket.tableCreated',
             'expectedGenericVariables' => [],
+            'getTableColumns' => [],
         ];
     }
 

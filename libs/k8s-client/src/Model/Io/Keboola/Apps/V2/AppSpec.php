@@ -15,7 +15,7 @@ use KubernetesRuntime\AbstractModel;
  * @property int|null $replicas
  * @property bool|null $autoRestartEnabled
  * @property string|null $restartRequestedAt
- * @property string|null $runtimeSize
+ * @property AppRuntime|null $runtime
  * @property ContainerSpec|null $containerSpec
  * @property AppFeatures|null $features
  */
@@ -53,13 +53,7 @@ class AppSpec extends AbstractModel
      */
     public string|null $restartRequestedAt = null;
 
-    /**
-     * RuntimeSize specifies the size of the runtime (defines resource allocation).
-     * The actual resource values are configured via JSON file loaded from
-     * RUNTIME_SIZES_CONFIG env variable. Fallback default is taken from
-     * RUNTIME_SIZE_DEFAULT env variable if not specified.
-     */
-    public string|null $runtimeSize = null;
+    public AppRuntime|null $runtime = null;
 
     /**
      * ContainerSpec defines the container specification for the app.

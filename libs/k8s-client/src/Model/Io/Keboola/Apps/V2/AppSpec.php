@@ -15,6 +15,8 @@ use KubernetesRuntime\AbstractModel;
  * @property int|null $replicas
  * @property bool|null $autoRestartEnabled
  * @property string|null $restartRequestedAt
+ * @property bool|null $updateDependencies
+ * @property bool|null $updateGitCommit
  * @property string|null $runtimeSize
  * @property ContainerSpec|null $containerSpec
  * @property AppFeatures|null $features
@@ -52,6 +54,20 @@ class AppSpec extends AbstractModel
      * Format: ISO-8601 timestamp (e.g., "2024-01-15T10:30:00Z")
      */
     public string|null $restartRequestedAt = null;
+
+    /**
+     * UpdateDependencies indicates that pip packages should be reinstalled to their latest versions
+     * on next app start. Operator reads this flag when triggering a restart, injects it into the
+     * mounted config as parameters.dataApp.updateDependencies = true, then clears this flag.
+     */
+    public bool|null $updateDependencies = null;
+
+    /**
+     * UpdateGitCommit indicates that the app should pull the latest git commit on next start.
+     * Operator reads this flag when triggering a restart, injects it into the mounted config as
+     * parameters.dataApp.updateGitCommit = true, then clears this flag.
+     */
+    public bool|null $updateGitCommit = null;
 
     /**
      * RuntimeSize specifies the size of the runtime (defines resource allocation).

@@ -7,14 +7,17 @@ namespace Keboola\K8sClient\Tests\Model\V2;
 use Generator;
 use Keboola\K8sClient\Model\Io\Keboola\Apps\V2\App;
 use Keboola\K8sClient\Model\Io\Keboola\Apps\V2\AppFeatures;
+use Keboola\K8sClient\Model\Io\Keboola\Apps\V2\AppRuntime;
 use Keboola\K8sClient\Model\Io\Keboola\Apps\V2\AppSpec;
 use Keboola\K8sClient\Model\Io\Keboola\Apps\V2\AppsProxyIngressSpec;
+use Keboola\K8sClient\Model\Io\Keboola\Apps\V2\Backend;
 use Keboola\K8sClient\Model\Io\Keboola\Apps\V2\ConfigMountItemSpec;
 use Keboola\K8sClient\Model\Io\Keboola\Apps\V2\ConfigMountSpec;
 use Keboola\K8sClient\Model\Io\Keboola\Apps\V2\ContainerSpec;
 use Keboola\K8sClient\Model\Io\Keboola\Apps\V2\DataDirMountSpec;
 use Keboola\K8sClient\Model\Io\Keboola\Apps\V2\DataDirSpec;
 use Keboola\K8sClient\Model\Io\Keboola\Apps\V2\DataLoaderSpec;
+use Keboola\K8sClient\Model\Io\Keboola\Apps\V2\E2bSandboxRuntime;
 use Keboola\K8sClient\Model\Io\Keboola\Apps\V2\MountConfigField;
 use Keboola\K8sClient\Model\Io\Keboola\Apps\V2\SetEnvSpec;
 use Keboola\K8sClient\Model\Io\Keboola\Apps\V2\StorageTokenSpec;
@@ -32,7 +35,7 @@ class AppModelTest extends TestCase
      * - apiVersion is v2
      * - Uses containerSpec instead of podSpec
      * - ContainerSpec has no 'name' or 'resources' fields
-     * - Added runtimeSize field for resource allocation
+     * - Added runtime field for resource allocation and backend configuration
      * - Deprecated 'container' fields still present in features
      */
     private static function getAppTestData(): array
@@ -50,7 +53,16 @@ class AppModelTest extends TestCase
                 'replicas' => 1,
                 'autoRestartEnabled' => false,
                 'restartRequestedAt' => '2024-01-15T10:30:00Z',
-                'runtimeSize' => 'small',
+                'runtime' => [
+                    'size' => 'small',
+                    'backend' => [
+                        'type' => 'e2bSandbox',
+                        'e2bSandbox' => [
+                            'templateId' => 'tpl-abc123',
+                            'timeout' => '3600',
+                        ],
+                    ],
+                ],
                 'features' => [
                     'storageToken' => [
                         'description' => '[_internal][app] App 12345',
@@ -171,7 +183,16 @@ class AppModelTest extends TestCase
         self::assertSame(1, $app->spec->replicas);
         self::assertFalse($app->spec->autoRestartEnabled);
         self::assertSame('2024-01-15T10:30:00Z', $app->spec->restartRequestedAt);
-        self::assertSame('small', $app->spec->runtimeSize);
+        self::assertNotNull($app->spec->runtime);
+        self::assertInstanceOf(AppRuntime::class, $app->spec->runtime);
+        self::assertSame('small', $app->spec->runtime->size);
+        self::assertNotNull($app->spec->runtime->backend);
+        self::assertInstanceOf(Backend::class, $app->spec->runtime->backend);
+        self::assertSame('e2bSandbox', $app->spec->runtime->backend->type);
+        self::assertNotNull($app->spec->runtime->backend->e2bSandbox);
+        self::assertInstanceOf(E2bSandboxRuntime::class, $app->spec->runtime->backend->e2bSandbox);
+        self::assertSame('tpl-abc123', $app->spec->runtime->backend->e2bSandbox->templateId);
+        self::assertSame('3600', $app->spec->runtime->backend->e2bSandbox->timeout);
 
         // Features
         self::assertNotNull($app->spec->features);
@@ -322,7 +343,11 @@ class AppModelTest extends TestCase
         self::assertSame('12345', $serialized['spec']['appId']);
         self::assertSame('project-789', $serialized['spec']['projectId']);
         self::assertSame('Running', $serialized['spec']['state']);
-        self::assertSame('small', $serialized['spec']['runtimeSize']);
+        self::assertArrayHasKey('runtime', $serialized['spec']);
+        self::assertSame('small', $serialized['spec']['runtime']['size']);
+        self::assertSame('e2bSandbox', $serialized['spec']['runtime']['backend']['type']);
+        self::assertSame('tpl-abc123', $serialized['spec']['runtime']['backend']['e2bSandbox']['templateId']);
+        self::assertArrayNotHasKey('runtimeSize', $serialized['spec']);
 
         // Verify containerSpec is present and podSpec is not
         self::assertArrayHasKey('containerSpec', $serialized['spec']);

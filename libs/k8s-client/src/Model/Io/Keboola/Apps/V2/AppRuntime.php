@@ -13,8 +13,13 @@ class AppRuntime extends AbstractModel
      * The actual resource values are configured via JSON file loaded from
      * RUNTIME_SIZES_CONFIG env variable. Fallback default is taken from
      * RUNTIME_SIZE_DEFAULT env variable if not specified.
+     *
+     * @var string
      */
-    public ?string $size = null;
+    public $size = null;
 
-    public ?Backend $backend = null;
+    /**
+     * @var Backend
+     */
+    public $backend = null;
 }

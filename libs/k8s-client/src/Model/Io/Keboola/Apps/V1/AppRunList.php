@@ -9,18 +9,34 @@ use KubernetesRuntime\AbstractModel;
 
 /**
  * AppRunList contains a list of AppRun
- *
- * @property string|null $apiVersion
- * @property string|null $kind
- * @property ListMeta|null $metadata
- * @property array<AppRun> $items
  */
 class AppRunList extends AbstractModel
 {
-    public string|null $apiVersion = 'apps.keboola.com/v1';
-    public string|null $kind = 'AppRunList';
-    public ListMeta|null $metadata = null;
+    /**
+     * APIVersion defines the versioned schema of this representation of an object.
+     *
+     * @var string
+     */
+    public $apiVersion = 'apps.keboola.com/v1';
 
-    /** @var array<AppRun> */
-    public array $items = [];
+    /**
+     * Kind is a string value representing the REST resource this object represents.
+     *
+     * @var string
+     */
+    public $kind = 'AppRunList';
+
+    /**
+     * Standard list metadata
+     *
+     * @var ListMeta
+     */
+    public $metadata = null;
+
+    /**
+     * List of AppRuns
+     *
+     * @var AppRun[]
+     */
+    public $items = null;
 }

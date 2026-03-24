@@ -11,5 +11,8 @@ use KubernetesRuntime\AbstractModel;
  */
 class DataDirMountSpec extends AbstractModel
 {
-    public string|null $path = null;
+    /**
+     * @var string
+     */
+    public $path = null;
 }

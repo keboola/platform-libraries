@@ -6,62 +6,68 @@ namespace Keboola\K8sClient\Model\Io\Keboola\Apps\V2;
 
 use Kubernetes\Model\Io\K8s\Api\Core\V1\LocalObjectReference;
 use Kubernetes\Model\Io\K8s\Apimachinery\Pkg\Apis\Meta\V1\Condition;
+use Kubernetes\Model\Io\K8s\Apimachinery\Pkg\Apis\Meta\V1\Time;
 use KubernetesRuntime\AbstractModel;
 
 /**
  * AppStatus defines the observed state of App
- *
- * @property int|null $observedGeneration
- * @property string|null $currentState
- * @property int|null $readyReplicas
- * @property int|null $updatedReplicas
- * @property string|null $lastStartedTime
- * @property LocalObjectReference|null $storageTokenRef
- * @property LocalObjectReference|null $appsProxyServiceRef
- * @property array<Condition>|null $conditions
  */
 class AppStatus extends AbstractModel
 {
     /**
      * ObservedGeneration is the most recent generation observed for this App
+     *
+     * @var integer
      */
-    public int|null $observedGeneration = null;
+    public $observedGeneration = null;
 
     /**
      * CurrentState represents the current state of the App
      * Possible values: Stopped, Running, Starting, Stopping
+     *
+     * @var string
      */
-    public string|null $currentState = null;
+    public $currentState = null;
 
     /**
      * ReadyReplicas indicates the number of ready replicas
+     *
+     * @var integer
      */
-    public int|null $readyReplicas = null;
+    public $readyReplicas = null;
 
     /**
      * UpdatedReplicas indicates the number of updated replicas
+     *
+     * @var integer
      */
-    public int|null $updatedReplicas = null;
+    public $updatedReplicas = null;
 
     /**
      * LastStartedTime is the timestamp when the app last transitioned to Running state
+     *
+     * @var Time
      */
-    public string|null $lastStartedTime = null;
+    public $lastStartedTime = null;
 
     /**
      * StorageTokenRef contains a reference to the storage token currently used by the app
+     *
+     * @var LocalObjectReference
      */
-    public LocalObjectReference|null $storageTokenRef = null;
+    public $storageTokenRef = null;
 
     /**
      * AppsProxyServiceRef contains a reference to the service used for apps proxy ingress
+     *
+     * @var LocalObjectReference
      */
-    public LocalObjectReference|null $appsProxyServiceRef = null;
+    public $appsProxyServiceRef = null;
 
     /**
      * Conditions represents the latest available observations of the app's current state
      *
-     * @var array<Condition>|null
+     * @var Condition[]
      */
-    public array|null $conditions = null;
+    public $conditions = null;
 }

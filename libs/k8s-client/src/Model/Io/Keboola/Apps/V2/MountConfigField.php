@@ -11,9 +11,23 @@ use KubernetesRuntime\AbstractModel;
  */
 class MountConfigField extends AbstractModel
 {
-    public string|null $target = null;
-    public string|null $source = null;
-    public null|int|string|bool|array|object $value = null;
-    /** @var "replace"|"fallback"|"merge"|null  */
-    public string|null $strategy = null;
+    /**
+     * @var string
+     */
+    public $target = null;
+
+    /**
+     * @var string
+     */
+    public $source = null;
+
+    /**
+     * @var mixed
+     */
+    public $value = null;
+
+    /**
+     * @var string
+     */
+    public $strategy = null;
 }

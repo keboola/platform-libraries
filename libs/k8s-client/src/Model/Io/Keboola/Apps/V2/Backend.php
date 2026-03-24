@@ -8,8 +8,13 @@ use KubernetesRuntime\AbstractModel;
 
 class Backend extends AbstractModel
 {
-    /** @var "k8sDeployment"|"e2bSandbox"|null  */
-    public ?string $type = null;
+    /**
+     * @var string
+     */
+    public $type = null;
 
-    public ?E2bSandboxRuntime $e2bSandbox = null;
+    /**
+     * @var E2bSandboxRuntime
+     */
+    public $e2bSandbox = null;
 }

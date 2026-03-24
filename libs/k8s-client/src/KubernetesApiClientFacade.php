@@ -192,7 +192,6 @@ class KubernetesApiClientFacade
     {
         return array_map(
             fn($resource) => $this->getApiForResource($resource::class)->delete(
-                // @phpstan-ignore-next-line metadata is always set for valid K8s resources
                 $resource->metadata->name,
                 $deleteOptions,
                 $queries,
@@ -216,7 +215,7 @@ class KubernetesApiClientFacade
         AbstractModel $resource,
         array $queries = [],
     ): AbstractModel {
-        $name = $resource->metadata?->name;
+        $name = $resource->metadata->name ?? null;
         if ($name === null) {
             throw new InvalidArgumentException('Resource metadata.name is required for patch operation');
         }
@@ -270,7 +269,6 @@ class KubernetesApiClientFacade
         $updateCollection = function () use (&$resources) {
             foreach ($resources as $i => $resource) {
                 try {
-                    // @phpstan-ignore-next-line metadata is always set for valid K8s resources
                     $this->getApiForResource($resource::class)->get($resource->metadata->name);
                     $this->logger->debug('Resource still exists', [
                         'resource' => $resource,

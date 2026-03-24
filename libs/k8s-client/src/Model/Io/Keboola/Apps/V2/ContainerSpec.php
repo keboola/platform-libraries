@@ -12,47 +12,48 @@ use KubernetesRuntime\AbstractModel;
  * ContainerSpec defines a simplified container specification for v2 API.
  * Unlike v1's AppContainer, this does not include name (single container)
  * or resources (managed by runtimeSize).
- *
- * @property string|null $image
- * @property array<string>|null $command
- * @property array<EnvVar>|null $env
- * @property Probe|null $livenessProbe
- * @property Probe|null $readinessProbe
- * @property Probe|null $startupProbe
  */
 class ContainerSpec extends AbstractModel
 {
     /**
      * Image to use for the container
+     *
+     * @var string
      */
-    public string|null $image = null;
+    public $image = null;
 
     /**
      * Command to run in the container
      *
-     * @var array<string>|null
+     * @var string[]
      */
-    public array|null $command = null;
+    public $command = null;
 
     /**
      * Environment variables
      *
-     * @var array<EnvVar>|null
+     * @var EnvVar[]
      */
-    public array|null $env = null;
+    public $env = null;
 
     /**
      * LivenessProbe defines how to check if the container is alive
+     *
+     * @var Probe
      */
-    public Probe|null $livenessProbe = null;
+    public $livenessProbe = null;
 
     /**
      * ReadinessProbe defines how to check if the container is ready
+     *
+     * @var Probe
      */
-    public Probe|null $readinessProbe = null;
+    public $readinessProbe = null;
 
     /**
      * StartupProbe defines how to check if the container has started
+     *
+     * @var Probe
      */
-    public Probe|null $startupProbe = null;
+    public $startupProbe = null;
 }

@@ -168,10 +168,23 @@ class Client
     /**
      * Get job results
      */
-    public function getJobResults(string $queryJobId, string $statementId): JobResultsResponse
-    {
+    public function getJobResults(
+        string $queryJobId,
+        string $statementId,
+        ?int $pageSize = null,
+        ?int $offset = null,
+    ): JobResultsResponse {
         $url = sprintf('/api/v1/queries/%s/%s/results', $queryJobId, $statementId);
-        return JobResultsResponse::fromResponse($this->sendRequest('GET', $url));
+        $queryParams = [];
+        if ($pageSize !== null) {
+            $queryParams['pageSize'] = $pageSize;
+        }
+        if ($offset !== null) {
+            $queryParams['offset'] = $offset;
+        }
+        return JobResultsResponse::fromResponse(
+            $this->sendRequest('GET', $url, null, $queryParams !== [] ? $queryParams : null),
+        );
     }
 
     /**
@@ -185,6 +198,8 @@ class Client
         array $requestBody,
         int $maxWaitSeconds = self::DEFAULT_MAX_WAIT_SECONDS,
         int $maxPollWaitMs = self::DEFAULT_MAX_POLL_WAIT_MS,
+        ?int $pageSize = null,
+        ?int $offset = null,
     ): WorkspaceQueryResponse {
         // Submit the query job
         $submitResponse = $this->submitQueryJob($branchId, $workspaceId, $requestBody);
@@ -205,7 +220,7 @@ class Client
         $results = [];
         foreach ($finalStatus->getStatements() as $statement) {
             if ($statement->getStatus() === 'completed') {
-                $statementResponse = $this->getJobResults($queryJobId, $statement->getId());
+                $statementResponse = $this->getJobResults($queryJobId, $statement->getId(), $pageSize, $offset);
                 $results[] = $statementResponse;
             }
         }
@@ -221,9 +236,14 @@ class Client
 
     /**
      * @param array<string, mixed>|null $requestBody
+     * @param array<string, int>|null $queryParams
      */
-    private function sendRequest(string $method, string $url, ?array $requestBody = null): ResponseInterface
-    {
+    private function sendRequest(
+        string $method,
+        string $url,
+        ?array $requestBody = null,
+        ?array $queryParams = null,
+    ): ResponseInterface {
         $options = [];
 
         if ($requestBody !== null) {
@@ -232,6 +252,10 @@ class Client
             } catch (JsonException $e) {
                 throw new ClientException('Failed to encode request body as JSON: ' . $e->getMessage(), 0, $e);
             }
+        }
+
+        if ($queryParams !== null) {
+            $options['query'] = $queryParams;
         }
 
         try {

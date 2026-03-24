@@ -199,7 +199,6 @@ class Client
         int $maxWaitSeconds = self::DEFAULT_MAX_WAIT_SECONDS,
         int $maxPollWaitMs = self::DEFAULT_MAX_POLL_WAIT_MS,
         ?int $pageSize = null,
-        ?int $offset = null,
     ): WorkspaceQueryResponse {
         // Submit the query job
         $submitResponse = $this->submitQueryJob($branchId, $workspaceId, $requestBody);
@@ -220,7 +219,7 @@ class Client
         $results = [];
         foreach ($finalStatus->getStatements() as $statement) {
             if ($statement->getStatus() === 'completed') {
-                $statementResponse = $this->getJobResults($queryJobId, $statement->getId(), $pageSize, $offset);
+                $statementResponse = $this->getJobResults($queryJobId, $statement->getId(), $pageSize);
                 $results[] = $statementResponse;
             }
         }

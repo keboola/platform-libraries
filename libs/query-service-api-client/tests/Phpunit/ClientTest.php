@@ -263,14 +263,13 @@ class ClientTest extends TestCase
             30,
             1000,
             50,
-            100,
         );
 
         // capturedUris[0] = submitQueryJob POST, capturedUris[1] = getJobResults GET
         self::assertCount(2, $capturedUris);
         $resultsUri = $capturedUris[1];
         self::assertStringContainsString('pageSize=50', $resultsUri->getQuery());
-        self::assertStringContainsString('offset=100', $resultsUri->getQuery());
+        self::assertStringNotContainsString('offset', $resultsUri->getQuery());
     }
 
     public function testExecuteWorkspaceQueryPassesMaxPollWaitMsToWaitForJobCompletion(): void

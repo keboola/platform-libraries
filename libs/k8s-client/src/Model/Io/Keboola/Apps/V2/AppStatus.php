@@ -65,6 +65,27 @@ class AppStatus extends AbstractModel
     public $appsProxyServiceRef = null;
 
     /**
+     * RunStartRequestedAt is the timestamp when a run start was requested
+     *
+     * @var Time
+     */
+    public $runStartRequestedAt = null;
+
+    /**
+     * AppsProxy defines the observed state of the apps proxy
+     *
+     * @var AppsProxyStatus
+     */
+    public $appsProxy = null;
+
+    /**
+     * E2bSandbox defines the observed state of the E2B sandbox
+     *
+     * @var E2bSandboxStatus
+     */
+    public $e2bSandbox = null;
+
+    /**
      * Conditions represents the latest available observations of the app's current state
      *
      * @var Condition[]

@@ -12,6 +12,15 @@ use KubernetesRuntime\AbstractModel;
 class ConfigMountItemSpec extends AbstractModel
 {
     /**
+     * Container is the name of the container to mount the config in
+     *
+     * @var string
+     */
+    public $container = null;
+
+    /**
+     * Path is the mount path for the config file in the container
+     *
      * @var string
      */
     public $path = null;

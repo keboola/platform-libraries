@@ -57,6 +57,13 @@ class AppSpec extends AbstractModel
     public $restartRequestedAt = null;
 
     /**
+     * RuntimeSize specifies the dynamic backend size for this app
+     *
+     * @var string
+     */
+    public $runtimeSize = null;
+
+    /**
      * @var AppRuntime
      */
     public $runtime = null;

@@ -32,7 +32,7 @@ class JobResultsResponseTest extends TestCase
         $response = new Response(200, [], json_encode($responseData) ?: '');
         $results = JobResultsResponse::fromResponse($response);
 
-        self::assertEquals('completed', $results->getStatus());
+        self::assertSame('completed', $results->getStatus());
         self::assertEquals(2, $results->getNumberOfRows());
         self::assertEquals(0, $results->getRowsAffected());
         self::assertCount(2, $results->getColumns());
@@ -51,7 +51,7 @@ class JobResultsResponseTest extends TestCase
         $response = new Response(200, [], json_encode($responseData) ?: '');
         $results = JobResultsResponse::fromResponse($response);
 
-        self::assertEquals('completed', $results->getStatus());
+        self::assertSame('completed', $results->getStatus());
         self::assertEquals(1, $results->getNumberOfRows());
         self::assertEquals(0, $results->getRowsAffected());
         self::assertEmpty($results->getColumns());

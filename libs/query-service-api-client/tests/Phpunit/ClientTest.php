@@ -11,7 +11,6 @@ use GuzzleHttp\Psr7\Response;
 use InvalidArgumentException;
 use Keboola\QueryApi\Client;
 use Keboola\QueryApi\ClientException;
-use Keboola\QueryApi\Response\JobStatusResponse;
 use PHPUnit\Framework\TestCase;
 
 class ClientTest extends TestCase
@@ -70,7 +69,7 @@ class ClientTest extends TestCase
         $response = $client->getJobStatus('job-12345');
 
         self::assertEquals('job-12345', $response->getQueryJobId());
-        self::assertEquals('running', $response->getStatus());
+        self::assertSame('running', $response->getStatus());
         self::assertEquals([], $response->getStatements());
     }
 
@@ -102,68 +101,78 @@ class ClientTest extends TestCase
 
         $response = $client->getJobResults('job-12345', 'stmt-67890');
 
-        self::assertEquals('completed', $response->getStatus());
+        self::assertSame('completed', $response->getStatus());
         self::assertEquals(1, $response->getRowsAffected());
         // @phpstan-ignore-next-line
         self::assertIsArray($response->getColumns());
     }
 
-    public function testExecuteWorkspaceQueryPassesMaxPollWaitMsToWaitForJobCompletion(): void
+    public function testGetJobResultsWithBothQueryParams(): void
     {
-        $mockHandler = new MockHandler([
-            new Response(201, [], json_encode(['queryJobId' => 'job-12345']) ?: ''),
-            new Response(200, [], json_encode([
-                'data' => [['col1' => 1]],
-                'status' => 'completed',
-                'numberOfRows' => 1,
-                'rowsAffected' => 0,
-            ]) ?: ''),
-        ]);
-
-        $statusResponse = new Response(200, [], json_encode([
-            'queryJobId' => 'job-12345',
-            'status' => 'completed',
-            'actorType' => 'user',
-            'createdAt' => '2024-01-01T00:00:00Z',
-            'changedAt' => '2024-01-01T00:00:00Z',
-            'statements' => [
-                [
-                    'id' => 'stmt-1',
-                    'status' => 'completed',
-                    'query' => 'SELECT 1',
-                ],
-            ],
-        ]) ?: '');
-        $jobStatusResponse = JobStatusResponse::fromResponse($statusResponse);
-
-        $mockClient = $this->getMockBuilder(Client::class)
-            ->setConstructorArgs([
-                ['url' => 'https://query.test.keboola.com', 'token' => 'test-token'],
-                ['handler' => HandlerStack::create($mockHandler)],
-            ])
-            ->onlyMethods(['waitForJobCompletion'])
-            ->getMock();
-
-        $expectedMaxPollWaitMs = 500;
-        $mockClient->expects(self::once())
-            ->method('waitForJobCompletion')
-            ->with(
-                'job-12345',
-                self::anything(),
-                $expectedMaxPollWaitMs,
-            )
-            ->willReturn($jobStatusResponse);
-
-        // Call executeWorkspaceQuery with custom maxPollWaitMs
-        $mockClient->executeWorkspaceQuery(
-            'branch-1',
-            'workspace-1',
-            ['statements' => ['SELECT 1']],
-            30,
-            $expectedMaxPollWaitMs,
+        $capturedUris = [];
+        $client = $this->createClientCapturingUris(
+            new MockHandler([new Response(200, [], json_encode([
+                'data' => [], 'status' => 'completed', 'numberOfRows' => 0, 'rowsAffected' => 0,
+            ]) ?: '')]),
+            $capturedUris,
         );
+
+        $client->getJobResults('job-12345', 'stmt-67890', 100, 200);
+
+        self::assertCount(1, $capturedUris);
+        self::assertStringContainsString('pageSize=100', $capturedUris[0]->getQuery());
+        self::assertStringContainsString('offset=200', $capturedUris[0]->getQuery());
     }
 
+    public function testGetJobResultsWithOnlyPageSize(): void
+    {
+        $capturedUris = [];
+        $client = $this->createClientCapturingUris(
+            new MockHandler([new Response(200, [], json_encode([
+                'data' => [], 'status' => 'completed', 'numberOfRows' => 0, 'rowsAffected' => 0,
+            ]) ?: '')]),
+            $capturedUris,
+        );
+
+        $client->getJobResults('job-12345', 'stmt-67890', 100);
+
+        self::assertCount(1, $capturedUris);
+        self::assertStringContainsString('pageSize=100', $capturedUris[0]->getQuery());
+        self::assertStringNotContainsString('offset', $capturedUris[0]->getQuery());
+    }
+
+    public function testGetJobResultsWithOnlyOffset(): void
+    {
+        $capturedUris = [];
+        $client = $this->createClientCapturingUris(
+            new MockHandler([new Response(200, [], json_encode([
+                'data' => [], 'status' => 'completed', 'numberOfRows' => 0, 'rowsAffected' => 0,
+            ]) ?: '')]),
+            $capturedUris,
+        );
+
+        $client->getJobResults('job-12345', 'stmt-67890', null, 50);
+
+        self::assertCount(1, $capturedUris);
+        self::assertStringContainsString('offset=50', $capturedUris[0]->getQuery());
+        self::assertStringNotContainsString('pageSize', $capturedUris[0]->getQuery());
+    }
+
+    public function testGetJobResultsWithNoQueryParams(): void
+    {
+        $capturedUris = [];
+        $client = $this->createClientCapturingUris(
+            new MockHandler([new Response(200, [], json_encode([
+                'data' => [], 'status' => 'completed', 'numberOfRows' => 0, 'rowsAffected' => 0,
+            ]) ?: '')]),
+            $capturedUris,
+        );
+
+        $client->getJobResults('job-12345', 'stmt-67890');
+
+        self::assertCount(1, $capturedUris);
+        self::assertSame('', $capturedUris[0]->getQuery());
+    }
 
     /**
      * @param array{
@@ -270,6 +279,35 @@ class ClientTest extends TestCase
                 'Content-type' => ['application/json'],
             ],
         ];
+    }
+
+    /**
+     * @param list<\Psr\Http\Message\UriInterface> $capturedUris
+     */
+    private function createClientCapturingUris(MockHandler $mockHandler, array &$capturedUris): Client
+    {
+        $handlerStack = $this->createHandlerStackCapturingUris($mockHandler, $capturedUris);
+
+        return new Client(
+            ['url' => 'https://query.test.keboola.com', 'token' => 'test-token'],
+            ['handler' => $handlerStack],
+        );
+    }
+
+    /**
+     * @param list<\Psr\Http\Message\UriInterface> $capturedUris
+     */
+    private function createHandlerStackCapturingUris(MockHandler $mockHandler, array &$capturedUris): HandlerStack
+    {
+        $handlerStack = HandlerStack::create($mockHandler);
+        $handlerStack->push(function (callable $handler) use (&$capturedUris) {
+            return function ($request, array $options) use ($handler, &$capturedUris) {
+                /** @var \Psr\Http\Message\RequestInterface $request */
+                $capturedUris[] = $request->getUri();
+                return $handler($request, $options);
+            };
+        });
+        return $handlerStack;
     }
 
     private function createClientWithMockHandler(MockHandler $mockHandler): Client

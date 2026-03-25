@@ -30,19 +30,19 @@ class QueryServiceFunctionalTest extends BaseFunctionalTestCase
         // Wait for job completion
         $finalStatus = $this->queryClient->waitForJobCompletion($queryJobId);
 
-        self::assertEquals('completed', $finalStatus->getStatus());
+        self::assertSame('completed', $finalStatus->getStatus());
         self::assertEquals($queryJobId, $finalStatus->getQueryJobId());
         $statements = $finalStatus->getStatements();
         self::assertCount(1, $statements);
 
         $statement = $statements[0];
-        self::assertEquals('completed', $statement->getStatus());
+        self::assertSame('completed', $statement->getStatus());
 
         // Get job results
         $statementId = $statement->getId();
         $resultsResponse = $this->queryClient->getJobResults($queryJobId, $statementId);
 
-        self::assertEquals('completed', $resultsResponse->getStatus());
+        self::assertSame('completed', $resultsResponse->getStatus());
         self::assertGreaterThanOrEqual(1, $resultsResponse->getNumberOfRows());
     }
 
@@ -69,21 +69,21 @@ class QueryServiceFunctionalTest extends BaseFunctionalTestCase
         // Wait for completion
         $finalStatus = $this->queryClient->waitForJobCompletion($queryJobId);
 
-        self::assertEquals('completed', $finalStatus->getStatus());
+        self::assertSame('completed', $finalStatus->getStatus());
         $statements = $finalStatus->getStatements();
         self::assertCount(2, $statements);
 
         // Check INSERT statement
         $insertStatement = $statements[0];
-        self::assertEquals('completed', $insertStatement->getStatus());
+        self::assertSame('completed', $insertStatement->getStatus());
 
         // Check SELECT statement and its results
         $selectStatement = $statements[1];
-        self::assertEquals('completed', $selectStatement->getStatus());
+        self::assertSame('completed', $selectStatement->getStatus());
 
         $selectStatementId = $selectStatement->getId();
         $resultsResponse = $this->queryClient->getJobResults($queryJobId, $selectStatementId);
-        self::assertEquals('completed', $resultsResponse->getStatus());
+        self::assertSame('completed', $resultsResponse->getStatus());
         // After INSERT, there should be 4 rows, but COUNT(*) returns 1 row of data
         self::assertGreaterThanOrEqual(1, $resultsResponse->getNumberOfRows());
     }
@@ -115,7 +115,7 @@ class QueryServiceFunctionalTest extends BaseFunctionalTestCase
         $finalStatus = $this->queryClient->waitForJobCompletion($queryJobId, 15);
 
         // Job should be canceled
-        self::assertEquals('canceled', $finalStatus->getStatus());
+        self::assertSame('canceled', $finalStatus->getStatus());
         self::assertEquals('Test cancellation', $finalStatus->getCancellationReason());
         self::assertNotNull($finalStatus->getCanceledAt());
 
@@ -142,12 +142,12 @@ class QueryServiceFunctionalTest extends BaseFunctionalTestCase
         $finalStatus = $this->queryClient->waitForJobCompletion($queryJobId);
 
         // Job should fail due to invalid SQL
-        self::assertEquals('failed', $finalStatus->getStatus());
+        self::assertSame('failed', $finalStatus->getStatus());
         $statements = $finalStatus->getStatements();
         self::assertCount(1, $statements);
 
         $statement = $statements[0];
-        self::assertEquals('failed', $statement->getStatus());
+        self::assertSame('failed', $statement->getStatus());
         $query = $statement->getQuery();
         self::assertEquals('SELECT * FROM non_existent_table_12345', $query);
     }

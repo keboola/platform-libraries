@@ -33,7 +33,7 @@ class StatementTest extends TestCase
         self::assertEquals('query-456', $statement->getQueryId());
         self::assertEquals('session-789', $statement->getSessionId());
         self::assertEquals('SELECT * FROM table', $statement->getQuery());
-        self::assertEquals('completed', $statement->getStatus());
+        self::assertSame('completed', $statement->getStatus());
         self::assertSame(10, $statement->getNumberOfRows());
         self::assertSame(0, $statement->getRowsAffected());
         self::assertEquals('2024-01-01T10:00:00Z', $statement->getExecutedAt());

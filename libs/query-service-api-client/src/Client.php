@@ -16,7 +16,6 @@ use Keboola\QueryApi\Response\CancelJobResponse;
 use Keboola\QueryApi\Response\JobResultsResponse;
 use Keboola\QueryApi\Response\JobStatusResponse;
 use Keboola\QueryApi\Response\SubmitQueryJobResponse;
-use Keboola\QueryApi\Response\WorkspaceQueryResponse;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Log\LoggerInterface;
@@ -168,62 +167,35 @@ class Client
     /**
      * Get job results
      */
-    public function getJobResults(string $queryJobId, string $statementId): JobResultsResponse
-    {
+    public function getJobResults(
+        string $queryJobId,
+        string $statementId,
+        ?int $pageSize = null,
+        ?int $offset = null,
+    ): JobResultsResponse {
         $url = sprintf('/api/v1/queries/%s/%s/results', $queryJobId, $statementId);
-        return JobResultsResponse::fromResponse($this->sendRequest('GET', $url));
-    }
-
-    /**
-     * Execute a workspace query and wait for results
-     *
-     * @param array{statements: string[], transactional?: bool} $requestBody
-     */
-    public function executeWorkspaceQuery(
-        string $branchId,
-        string $workspaceId,
-        array $requestBody,
-        int $maxWaitSeconds = self::DEFAULT_MAX_WAIT_SECONDS,
-        int $maxPollWaitMs = self::DEFAULT_MAX_POLL_WAIT_MS,
-    ): WorkspaceQueryResponse {
-        // Submit the query job
-        $submitResponse = $this->submitQueryJob($branchId, $workspaceId, $requestBody);
-        $queryJobId = $submitResponse->getQueryJobId();
-
-        // Wait for job completion
-        $finalStatus = $this->waitForJobCompletion($queryJobId, $maxWaitSeconds, $maxPollWaitMs);
-
-        if ($finalStatus->getStatus() !== 'completed') {
-            $errorMessage = ResultHelper::extractAllStatementErrors($finalStatus->getStatements());
-            throw new ClientException(
-                sprintf('Query job failed with error: %s', $errorMessage),
-                400,
-            );
+        $queryParams = [];
+        if ($pageSize !== null) {
+            $queryParams['pageSize'] = $pageSize;
         }
-
-        // Get results for all completed statements
-        $results = [];
-        foreach ($finalStatus->getStatements() as $statement) {
-            if ($statement->getStatus() === 'completed') {
-                $statementResponse = $this->getJobResults($queryJobId, $statement->getId());
-                $results[] = $statementResponse;
-            }
+        if ($offset !== null) {
+            $queryParams['offset'] = $offset;
         }
-
-        return new WorkspaceQueryResponse(
-            $queryJobId,
-            $finalStatus->getStatus(),
-            $finalStatus->getStatements(),
-            $results,
+        return JobResultsResponse::fromResponse(
+            $this->sendRequest('GET', $url, null, $queryParams),
         );
     }
 
-
     /**
      * @param array<string, mixed>|null $requestBody
+     * @param array<string, int>|null $queryParams
      */
-    private function sendRequest(string $method, string $url, ?array $requestBody = null): ResponseInterface
-    {
+    private function sendRequest(
+        string $method,
+        string $url,
+        ?array $requestBody = null,
+        ?array $queryParams = null,
+    ): ResponseInterface {
         $options = [];
 
         if ($requestBody !== null) {
@@ -232,6 +204,10 @@ class Client
             } catch (JsonException $e) {
                 throw new ClientException('Failed to encode request body as JSON: ' . $e->getMessage(), 0, $e);
             }
+        }
+
+        if ($queryParams !== null) {
+            $options['query'] = $queryParams;
         }
 
         try {

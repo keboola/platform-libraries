@@ -35,7 +35,7 @@ class ResultHelperTest extends TestCase
 
         $actual = ResultHelper::mapColumnNamesIntoData($input);
 
-        self::assertEquals('completed', $actual->getStatus());
+        self::assertSame('completed', $actual->getStatus());
         self::assertEquals(3, $actual->getNumberOfRows());
         self::assertEquals(3, $actual->getRowsAffected());
         self::assertNull($actual->getMessage());

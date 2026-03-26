@@ -40,7 +40,7 @@ class JobStatusResponseTest extends TestCase
         $jobStatus = JobStatusResponse::fromResponse($response);
 
         self::assertEquals('job-123', $jobStatus->getQueryJobId());
-        self::assertEquals('processing', $jobStatus->getStatus());
+        self::assertSame('processing', $jobStatus->getStatus());
         self::assertEquals('user', $jobStatus->getActorType());
         self::assertEquals('2024-01-01T10:00:00Z', $jobStatus->getCreatedAt());
         self::assertEquals('2024-01-01T10:01:00Z', $jobStatus->getChangedAt());
@@ -66,7 +66,7 @@ class JobStatusResponseTest extends TestCase
         $jobStatus = JobStatusResponse::fromResponse($response);
 
         self::assertEquals('job-456', $jobStatus->getQueryJobId());
-        self::assertEquals('canceled', $jobStatus->getStatus());
+        self::assertSame('canceled', $jobStatus->getStatus());
         self::assertEquals('2024-01-01T11:02:10Z', $jobStatus->getCanceledAt());
         self::assertEquals('User requested cancellation', $jobStatus->getCancellationReason());
     }

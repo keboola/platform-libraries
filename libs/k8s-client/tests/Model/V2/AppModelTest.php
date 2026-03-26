@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Keboola\K8sClient\Tests\Model\V2;
 
-use Generator;
 use Keboola\K8sClient\Model\Io\Keboola\Apps\V2\App;
 use Keboola\K8sClient\Model\Io\Keboola\Apps\V2\AppFeatures;
 use Keboola\K8sClient\Model\Io\Keboola\Apps\V2\AppRuntime;
@@ -25,7 +24,6 @@ use Kubernetes\Model\Io\K8s\Api\Core\V1\EnvVar;
 use Kubernetes\Model\Io\K8s\Api\Core\V1\HTTPGetAction;
 use Kubernetes\Model\Io\K8s\Api\Core\V1\Probe;
 use PHPUnit\Framework\TestCase;
-use TypeError;
 
 class AppModelTest extends TestCase
 {
@@ -389,49 +387,5 @@ class AppModelTest extends TestCase
         self::assertInstanceOf(StorageTokenSpec::class, $app->spec->features->storageToken);
         self::assertInstanceOf(DataDirSpec::class, $app->spec->features->dataDir);
         self::assertInstanceOf(ConfigMountSpec::class, $app->spec->features->mountConfig);
-    }
-
-    public static function provideInvalidTestData(): Generator
-    {
-        yield 'wrong replicas type - string instead of int' => [
-            'data' => ['spec' => ['replicas' => 'one']],
-            'expectedMessage' => 'Cannot assign string to property',
-        ];
-
-        yield 'wrong targetPort type - string instead of int' => [
-            'data' => ['spec' => ['features' => ['appsProxyIngress' => ['targetPort' => 'invalid']]]],
-            'expectedMessage' => 'Cannot assign string to property',
-        ];
-
-        yield 'wrong canManageBuckets type - array instead of bool' => [
-            'data' => ['spec' => ['features' => ['storageToken' => ['canManageBuckets' => []]]]],
-            'expectedMessage' => 'Cannot assign array to property',
-        ];
-
-        yield 'wrong observedGeneration type - string instead of int' => [
-            'data' => ['status' => ['observedGeneration' => 'invalid']],
-            'expectedMessage' => 'Cannot assign string to property',
-        ];
-
-        yield 'wrong autoRestartEnabled type - string instead of bool' => [
-            'data' => ['spec' => ['autoRestartEnabled' => []]],
-            'expectedMessage' => 'Cannot assign array to property',
-        ];
-
-        yield 'wrong restartRequestedAt type - array instead of string' => [
-            'data' => ['spec' => ['restartRequestedAt' => []]],
-            'expectedMessage' => 'Cannot assign array to property',
-        ];
-    }
-
-    /**
-     * @dataProvider provideInvalidTestData
-     */
-    public function testInvalidDataTypesThrowTypeError(array $data, string $expectedMessage): void
-    {
-        $this->expectException(TypeError::class);
-        $this->expectExceptionMessageMatches('/' . preg_quote($expectedMessage, '/') . '/');
-
-        new App($data);
     }
 }

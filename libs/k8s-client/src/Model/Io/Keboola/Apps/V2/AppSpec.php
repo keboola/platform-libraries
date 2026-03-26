@@ -4,66 +4,76 @@ declare(strict_types=1);
 
 namespace Keboola\K8sClient\Model\Io\Keboola\Apps\V2;
 
+use Kubernetes\Model\Io\K8s\Apimachinery\Pkg\Apis\Meta\V1\Time;
 use KubernetesRuntime\AbstractModel;
 
 /**
  * AppSpec defines the desired state of App
- *
- * @property string|null $appId
- * @property string|null $projectId
- * @property string|null $state
- * @property int|null $replicas
- * @property bool|null $autoRestartEnabled
- * @property string|null $restartRequestedAt
- * @property AppRuntime|null $runtime
- * @property ContainerSpec|null $containerSpec
- * @property AppFeatures|null $features
  */
 class AppSpec extends AbstractModel
 {
     /**
      * AppID is the unique identifier of the app
+     *
+     * @var string
      */
-    public string|null $appId = null;
+    public $appId = null;
 
     /**
      * ProjectID is the ID of the project this app belongs to
+     *
+     * @var string
      */
-    public string|null $projectId = null;
+    public $projectId = null;
 
     /**
      * State defines whether the app is running or stopped (Running or Stopped)
+     *
+     * @var string
      */
-    public string|null $state = null;
+    public $state = null;
 
     /**
      * Replicas defines the number of app instances to run (default: 1, minimum: 1)
+     *
+     * @var integer
      */
-    public int|null $replicas = null;
+    public $replicas = null;
 
     /**
      * AutoRestartEnabled determines if the app should automatically restart on startup probe failures.
      * Default is true. When set to false during deployment of new versions, the PodFailure controller
      * will stop the app if it enters CrashLoopBackOff, preventing infinite restart loops.
+     *
+     * @var boolean
      */
-    public bool|null $autoRestartEnabled = null;
+    public $autoRestartEnabled = null;
 
     /**
-     * Format: ISO-8601 timestamp (e.g., "2024-01-15T10:30:00Z")
+     * RestartRequestedAt is the timestamp when the restart was requested.
+     *
+     * @var Time
      */
-    public string|null $restartRequestedAt = null;
+    public $restartRequestedAt = null;
 
-    public AppRuntime|null $runtime = null;
+    /**
+     * @var AppRuntime
+     */
+    public $runtime = null;
 
     /**
      * ContainerSpec defines the container specification for the app.
      * In v2, apps run a single container (unlike v1 which supported
      * multiple containers via podSpec).
+     *
+     * @var ContainerSpec
      */
-    public ContainerSpec|null $containerSpec = null;
+    public $containerSpec = null;
 
     /**
      * Features defines optional features that can be enabled for the app
+     *
+     * @var AppFeatures
      */
-    public AppFeatures|null $features = null;
+    public $features = null;
 }

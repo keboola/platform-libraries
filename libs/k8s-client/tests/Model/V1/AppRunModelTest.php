@@ -10,7 +10,6 @@ use Keboola\K8sClient\Model\Io\Keboola\Apps\V1\AppRunSpec;
 use Keboola\K8sClient\Model\Io\Keboola\Apps\V1\AppRunStatus;
 use Keboola\K8sClient\Model\Io\Keboola\Apps\V1\PodReference;
 use PHPUnit\Framework\TestCase;
-use TypeError;
 
 class AppRunModelTest extends TestCase
 {
@@ -119,44 +118,5 @@ class AppRunModelTest extends TestCase
         self::assertSame('Finished', $serialized['spec']['state']);
         self::assertSame('small', $serialized['spec']['runtimeSize']);
         self::assertSame('1', $serialized['spec']['configVersion']);
-    }
-
-    public static function provideInvalidTestData(): iterable
-    {
-        yield 'wrong state type - array instead of string' => [
-            'data' => ['spec' => ['state' => []]],
-            'expectedMessage' => 'Cannot assign array to property',
-        ];
-
-        yield 'wrong podRef.name type - array instead of string' => [
-            'data' => ['spec' => ['podRef' => ['name' => []]]],
-            'expectedMessage' => 'Cannot assign array to property',
-        ];
-
-        yield 'wrong appRef.appId type - array instead of string' => [
-            'data' => ['spec' => ['appRef' => ['appId' => []]]],
-            'expectedMessage' => 'Cannot assign array to property',
-        ];
-
-        yield 'wrong runtimeSize type - array instead of string' => [
-            'data' => ['spec' => ['runtimeSize' => []]],
-            'expectedMessage' => 'Cannot assign array to property',
-        ];
-
-        yield 'wrong configVersion type - array instead of string' => [
-            'data' => ['spec' => ['configVersion' => []]],
-            'expectedMessage' => 'Cannot assign array to property',
-        ];
-    }
-
-    /**
-     * @dataProvider provideInvalidTestData
-     */
-    public function testInvalidDataTypesThrowTypeError(array $data, string $expectedMessage): void
-    {
-        $this->expectException(TypeError::class);
-        $this->expectExceptionMessageMatches('/' . preg_quote($expectedMessage, '/') . '/');
-
-        new AppRun($data);
     }
 }

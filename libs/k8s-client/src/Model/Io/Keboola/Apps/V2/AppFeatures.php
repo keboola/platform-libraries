@@ -8,31 +8,34 @@ use KubernetesRuntime\AbstractModel;
 
 /**
  * AppFeatures defines optional features that can be enabled for the app
- *
- * @property StorageTokenSpec|null $storageToken
- * @property AppsProxyIngressSpec|null $appsProxyIngress
- * @property DataDirSpec|null $dataDir
- * @property ConfigMountSpec|null $mountConfig
  */
 class AppFeatures extends AbstractModel
 {
     /**
      * StorageToken defines configuration for the storage token
+     *
+     * @var StorageTokenSpec
      */
-    public StorageTokenSpec|null $storageToken = null;
+    public $storageToken = null;
 
     /**
      * AppsProxyIngress defines configuration for the apps proxy ingress feature
+     *
+     * @var AppsProxyIngressSpec
      */
-    public AppsProxyIngressSpec|null $appsProxyIngress = null;
+    public $appsProxyIngress = null;
 
     /**
      * DataDir defines configuration for the data directory feature
+     *
+     * @var DataDirSpec
      */
-    public DataDirSpec|null $dataDir = null;
+    public $dataDir = null;
 
     /**
      * MountConfig defines configuration for mounting config files
+     *
+     * @var ConfigMountSpec
      */
-    public ConfigMountSpec|null $mountConfig = null;
+    public $mountConfig = null;
 }

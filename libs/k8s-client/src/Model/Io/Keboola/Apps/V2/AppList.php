@@ -9,33 +9,34 @@ use KubernetesRuntime\AbstractModel;
 
 /**
  * AppList is a list of App resources
- *
- * @property string|null $apiVersion
- * @property string|null $kind
- * @property ListMeta|null $metadata
- * @property App[] $items
  */
 class AppList extends AbstractModel
 {
     /**
      * APIVersion defines the versioned schema of this representation of an object
+     *
+     * @var string
      */
-    public string|null $apiVersion = 'apps.keboola.com/v2';
+    public $apiVersion = 'apps.keboola.com/v2';
 
     /**
      * Kind is a string value representing the REST resource this object represents
+     *
+     * @var string
      */
-    public string|null $kind = 'AppList';
+    public $kind = 'AppList';
 
     /**
      * Standard list metadata
+     *
+     * @var ListMeta
      */
-    public ListMeta|null $metadata = null;
+    public $metadata = null;
 
     /**
      * List of apps
      *
      * @var App[]
      */
-    public array $items = [];
+    public $items = null;
 }

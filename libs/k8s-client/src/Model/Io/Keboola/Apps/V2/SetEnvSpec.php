@@ -11,5 +11,8 @@ use KubernetesRuntime\AbstractModel;
  */
 class SetEnvSpec extends AbstractModel
 {
-    public string|null $envName = null;
+    /**
+     * @var string
+     */
+    public $envName = null;
 }

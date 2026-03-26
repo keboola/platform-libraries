@@ -8,6 +8,13 @@ use KubernetesRuntime\AbstractModel;
 
 class E2bSandboxRuntime extends AbstractModel
 {
-    public ?string $templateId = null;
-    public ?string $timeout = null;
+    /**
+     * @var string
+     */
+    public $templateId = null;
+
+    /**
+     * @var string
+     */
+    public $timeout = null;
 }

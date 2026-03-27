@@ -454,6 +454,148 @@ class LoadTableQueueTest extends TestCase
         ];
     }
 
+    /**
+     * @dataProvider genericVariablesData
+     * @param array<string, mixed> $jobResult
+     * @param array<string, array{columns: string[]}> $expectedGenericVariables
+     * @param string[] $getTableColumns
+     */
+    public function testWaitForAllExtractsGenericVariables(
+        array $jobResult,
+        string $expectedTableId,
+        array $expectedGenericVariables,
+        array $getTableColumns = [],
+        string $getTableName = 'my-name',
+    ): void {
+        $clientMock = $this->createMock(Client::class);
+        $clientMock->expects(self::once())
+            ->method('getTable')
+            ->with($expectedTableId)
+            ->willReturn([
+                'id' => $expectedTableId,
+                'displayName' => $getTableName,
+                'name' => $getTableName,
+                'columns' => $getTableColumns,
+                'lastImportDate' => null,
+                'lastChangeDate' => null,
+            ])
+        ;
+
+        $branchClientMock = $this->createMock(BranchAwareClient::class);
+        $branchClientMock->expects(self::once())
+            ->method('waitForJob')
+            ->with(123)
+            ->willReturn($jobResult)
+        ;
+
+        $loadTask = $this->createMock(LoadTableTask::class);
+        $loadTask->expects(self::never())
+            ->method('startImport')
+        ;
+        $loadTask->expects(self::once())
+            ->method('getStorageJobId')
+            ->willReturn('123')
+        ;
+        $loadTask->expects(self::once())
+            ->method('applyMetadata')
+            ->with($this->callback(function ($client): bool {
+                self::assertInstanceOf(Metadata::class, $client);
+                return true;
+            }))
+        ;
+
+        $clientWrapperMock = $this->createMock(ClientWrapper::class);
+        $clientWrapperMock->method('getTableAndFileStorageClient')
+            ->willReturn($clientMock);
+        $clientWrapperMock->method('getBranchClient')
+            ->willReturn($branchClientMock);
+
+        $loadQueue = new LoadTableQueue($clientWrapperMock, new NullLogger(), [$loadTask]);
+        $loadQueue->waitForAll();
+
+        self::assertSame($expectedGenericVariables, $loadQueue->getTableResult()->getGenericVariables());
+    }
+
+    public function genericVariablesData(): Generator
+    {
+        yield 'tableImport with name and columns' => [
+            'jobResult' => [
+                'operationName' => 'tableImport',
+                'status' => 'success',
+                'tableId' => 'in.c-myBucket.tableImported',
+                'results' => [
+                    'importedColumns' => ['col1', 'col2'],
+                ],
+                'metrics' => [
+                    'inBytes' => 10,
+                    'inBytesUncompressed' => 20,
+                ],
+            ],
+            'expectedTableId' => 'in.c-myBucket.tableImported',
+            'expectedGenericVariables' => [
+                'tableImported' => ['columns' => ['col1', 'col2']],
+            ],
+            'getTableColumns' => [],
+            'getTableName' => 'tableImported',
+        ];
+
+        yield 'tableCreate does not add generic variables' => [
+            'jobResult' => [
+                'operationName' => 'tableCreate',
+                'tableId' => null,
+                'status' => 'success',
+                'results' => [
+                    'id' => 'in.c-myBucket.tableCreated',
+                    'name' => 'tableCreated',
+                    'columns' => ['id', 'name', 'value'],
+                ],
+                'metrics' => [
+                    'inBytes' => 0,
+                    'inBytesUncompressed' => 5,
+                ],
+            ],
+            'expectedTableId' => 'in.c-myBucket.tableCreated',
+            'expectedGenericVariables' => [],
+            'getTableColumns' => [],
+        ];
+
+        yield 'tableImport without importedColumns defaults to empty columns' => [
+            'jobResult' => [
+                'operationName' => 'tableImport',
+                'status' => 'success',
+                'tableId' => 'in.c-myBucket.tableImported',
+                'metrics' => [
+                    'inBytes' => 5,
+                    'inBytesUncompressed' => 10,
+                ],
+            ],
+            'expectedTableId' => 'in.c-myBucket.tableImported',
+            'expectedGenericVariables' => [
+                'tableImported' => ['columns' => []],
+            ],
+            'getTableColumns' => [],
+            'getTableName' => 'tableImported',
+        ];
+
+        yield 'tableCreate missing results.name and results.columns still adds no generic variables' => [
+            'jobResult' => [
+                'operationName' => 'tableCreate',
+                'tableId' => null,
+                'status' => 'success',
+                'results' => [
+                    'id' => 'in.c-myBucket.tableCreated',
+                ],
+                'metrics' => [
+                    'inBytes' => 0,
+                    'inBytesUncompressed' => 5,
+                ],
+            ],
+            'expectedTableId' => 'in.c-myBucket.tableCreated',
+            'expectedGenericVariables' => [],
+            'getTableColumns' => [],
+        ];
+    }
+
     public function testWaitForAllDeleteTableAfterFailedLoad(): void
     {
         $branchClientMock = $this->createMock(BranchAwareClient::class);

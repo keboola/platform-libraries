@@ -95,10 +95,13 @@ class LoadTableQueue
 
                 switch ($jobResult['operationName']) {
                     case 'tableImport':
-                        $this->tableResult->addTable(
-                            new TableInfo($this->clientWrapper->getTableAndFileStorageClient()->getTable(
-                                $jobResult['tableId'],
-                            )),
+                        $tableData = $this->clientWrapper->getTableAndFileStorageClient()->getTable(
+                            $jobResult['tableId'],
+                        );
+                        $this->tableResult->addTable(new TableInfo($tableData));
+                        $this->tableResult->addGenericVariable(
+                            $tableData['name'],
+                            (array) ($jobResult['results']['importedColumns'] ?? []),
                         );
                         $jobResults[] = $jobResult;
                         break;

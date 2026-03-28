@@ -12,6 +12,15 @@ use KubernetesRuntime\AbstractModel;
 class DataDirMountSpec extends AbstractModel
 {
     /**
+     * Container is the name of the container to mount the data directory in
+     *
+     * @var string
+     */
+    public $container = null;
+
+    /**
+     * Path is the mount path for the data directory in the container
+     *
      * @var string
      */
     public $path = null;

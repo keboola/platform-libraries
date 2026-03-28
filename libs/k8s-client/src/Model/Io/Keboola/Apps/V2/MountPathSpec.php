@@ -12,6 +12,15 @@ use KubernetesRuntime\AbstractModel;
 class MountPathSpec extends AbstractModel
 {
     /**
+     * Container is the name of the container to mount the token in
+     *
+     * @var string
+     */
+    public $container = null;
+
+    /**
+     * Path is the mount path for the token in the container
+     *
      * @var string
      */
     public $path = null;

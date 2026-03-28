@@ -38,4 +38,11 @@ class AppFeatures extends AbstractModel
      * @var ConfigMountSpec
      */
     public $mountConfig = null;
+
+    /**
+     * Workspace defines configuration for the workspace feature
+     *
+     * @var WorkspaceSpec
+     */
+    public $workspace = null;
 }

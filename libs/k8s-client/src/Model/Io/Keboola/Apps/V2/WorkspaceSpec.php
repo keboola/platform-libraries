@@ -66,4 +66,26 @@ class WorkspaceSpec extends AbstractModel
      * @var string
      */
     public $networkPolicy = null;
+
+    /**
+     * PublicKey is the SSH public key to use for workspace access
+     *
+     * @var string
+     */
+    public $publicKey = null;
+
+    /**
+     * ReadOnlyStorageAccess when true creates the workspace with read-only storage access.
+     * When false (default), the workspace has write access to storage.
+     *
+     * @var bool
+     */
+    public $readOnlyStorageAccess = null;
+
+    /**
+     * UseCase defines the use case for the workspace
+     *
+     * @var string
+     */
+    public $useCase = null;
 }

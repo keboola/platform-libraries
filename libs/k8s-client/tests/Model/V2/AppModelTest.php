@@ -146,6 +146,9 @@ class AppModelTest extends TestCase
                         'configId' => 'config-456',
                         'backend' => 'snowflake',
                         'backendSize' => 'small',
+                        'publicKey' => 'ssh-rsa AAAAB3...',
+                        'readOnlyStorageAccess' => true,
+                        'useCase' => 'analytics',
                     ],
                 ],
                 'containerSpec' => [
@@ -414,6 +417,9 @@ class AppModelTest extends TestCase
         self::assertSame('config-456', $workspace->configId);
         self::assertSame('snowflake', $workspace->backend);
         self::assertSame('small', $workspace->backendSize);
+        self::assertSame('ssh-rsa AAAAB3...', $workspace->publicKey);
+        self::assertTrue($workspace->readOnlyStorageAccess);
+        self::assertSame('analytics', $workspace->useCase);
     }
 
     private function assertContainerSpec(ContainerSpec $containerSpec): void

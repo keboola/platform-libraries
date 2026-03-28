@@ -56,6 +56,8 @@ class SandboxTest extends TestCase
             'persistentStorage' => [
                 'pvcName' => 'pvc-name',
                 'k8sManifest' => 'pvc-manifest',
+                'ready' => true,
+                'k8sStorageClassName' => 'standard',
             ],
         ]);
 
@@ -94,6 +96,8 @@ class SandboxTest extends TestCase
         self::assertSame('databricks-cluster-id', $sandbox->getDatabricksClusterId());
         self::assertSame('pvc-name', $sandbox->getPersistentStoragePvcName());
         self::assertSame('pvc-manifest', $sandbox->getPersistentStorageK8sManifest());
+        self::assertTrue($sandbox->getPersistentStorageReady());
+        self::assertSame('standard', $sandbox->getPersistentStorageK8sStorageClassName());
     }
 
     public function testPasswordNullable(): void

@@ -14,12 +14,12 @@ class AppRuntime extends AbstractModel
      * RUNTIME_SIZES_CONFIG env variable. Fallback default is taken from
      * RUNTIME_SIZE_DEFAULT env variable if not specified.
      *
-     * @var string
+     * @var string|null
      */
     public $size = null;
 
     /**
-     * @var Backend
+     * @var Backend|null
      */
     public $backend = null;
 }

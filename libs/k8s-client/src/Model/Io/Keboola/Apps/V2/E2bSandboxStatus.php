@@ -22,35 +22,35 @@ class E2bSandboxStatus extends AbstractModel
     /**
      * SandboxID of the E2B sandbox this state corresponds to.
      *
-     * @var string
+     * @var string|null
      */
     public $sandboxID = null;
 
     /**
      * StartupLaunchedAt records when the startup script was launched.
      *
-     * @var Time
+     * @var Time|null
      */
     public $startupLaunchedAt = null;
 
     /**
      * StartupProbeFailures tracks the number of consecutive startup probe failures.
      *
-     * @var integer
+     * @var integer|null
      */
     public $startupProbeFailures = null;
 
     /**
      * SyncedFileHashes records the content hash of each file last uploaded to the sandbox.
      *
-     * @var array<string, string>
+     * @var array<string, string>|null
      */
     public $syncedFileHashes = null;
 
     /**
      * TemplateBuildID is the E2B build ID returned by BuildTemplate.
      *
-     * @var string
+     * @var string|null
      */
     public $templateBuildID = null;
 }

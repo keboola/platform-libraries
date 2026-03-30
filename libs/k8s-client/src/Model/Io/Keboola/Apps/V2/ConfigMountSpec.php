@@ -27,7 +27,7 @@ class ConfigMountSpec extends AbstractModel
     public $configId = null;
 
     /**
-     * @var string
+     * @var string|null
      */
     public $configVersion = null;
 

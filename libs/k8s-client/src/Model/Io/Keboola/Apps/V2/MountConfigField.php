@@ -17,7 +17,7 @@ class MountConfigField extends AbstractModel
     public $target = null;
 
     /**
-     * @var string
+     * @var string|null
      */
     public $source = null;
 
@@ -27,7 +27,7 @@ class MountConfigField extends AbstractModel
     public $value = null;
 
     /**
-     * @var string
+     * @var string|null
      */
     public $strategy = null;
 }

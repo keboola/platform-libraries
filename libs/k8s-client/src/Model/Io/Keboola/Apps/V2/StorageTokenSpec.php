@@ -12,47 +12,47 @@ use KubernetesRuntime\AbstractModel;
 class StorageTokenSpec extends AbstractModel
 {
     /**
-     * @var string
+     * @var string|null
      */
     public $description = null;
 
     /**
-     * @var integer
+     * @var integer|null
      */
     public $expiresIn = null;
 
     /**
-     * @var string[]
+     * @var string[]|null
      */
     public $componentAccess = null;
 
     /**
-     * @var array
+     * @var array<string, string>|null
      */
     public $bucketPermissions = null;
 
     /**
-     * @var boolean
+     * @var boolean|null
      */
     public $canReadAllFileUploads = null;
 
     /**
-     * @var boolean
+     * @var boolean|null
      */
     public $canPurgeTrash = null;
 
     /**
-     * @var boolean
+     * @var boolean|null
      */
     public $canManageBuckets = null;
 
     /**
-     * @var SetEnvSpec[]
+     * @var SetEnvSpec[]|null
      */
     public $setEnvs = null;
 
     /**
-     * @var MountPathSpec[]
+     * @var MountPathSpec[]|null
      */
     public $mountPaths = null;
 }

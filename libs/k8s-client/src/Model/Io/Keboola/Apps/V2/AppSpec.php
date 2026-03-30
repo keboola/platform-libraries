@@ -45,26 +45,27 @@ class AppSpec extends AbstractModel
      * Default is true. When set to false during deployment of new versions, the PodFailure controller
      * will stop the app if it enters CrashLoopBackOff, preventing infinite restart loops.
      *
-     * @var boolean
+     * @var boolean|null
      */
     public $autoRestartEnabled = null;
 
     /**
      * RestartRequestedAt is the timestamp when the restart was requested.
      *
-     * @var Time
+     * @var Time|null
      */
     public $restartRequestedAt = null;
 
     /**
      * RuntimeSize specifies the dynamic backend size for this app
      *
-     * @var string
+     * @deprecated Use runtime.size instead
+     * @var string|null
      */
     public $runtimeSize = null;
 
     /**
-     * @var AppRuntime
+     * @var AppRuntime|null
      */
     public $runtime = null;
 
@@ -80,7 +81,7 @@ class AppSpec extends AbstractModel
     /**
      * Features defines optional features that can be enabled for the app
      *
-     * @var AppFeatures
+     * @var AppFeatures|null
      */
     public $features = null;
 }

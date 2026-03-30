@@ -9,12 +9,10 @@ use KubernetesRuntime\AbstractModel;
 class Backend extends AbstractModel
 {
     /**
+     * Type selects the backend. Defaults to "k8sDeployment".
+     * Possible values: k8sDeployment, e2bSandbox
+     *
      * @var string
      */
     public $type = null;
-
-    /**
-     * @var E2bSandboxRuntime
-     */
-    public $e2bSandbox = null;
 }

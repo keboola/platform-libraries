@@ -12,20 +12,6 @@ use KubernetesRuntime\AbstractModel;
 class WorkspaceSpec extends AbstractModel
 {
     /**
-     * BackendType defines the type of backend to use
-     *
-     * @var string
-     */
-    public $backend = null;
-
-    /**
-     * BackendSize defines the size of the backend
-     *
-     * @var string
-     */
-    public $backendSize = null;
-
-    /**
      * BranchID is the ID of the branch to fetch the config from
      *
      * @var string
@@ -54,11 +40,32 @@ class WorkspaceSpec extends AbstractModel
     public $configVersion = null;
 
     /**
+     * BackendType defines the type of backend to use
+     *
+     * @var string
+     */
+    public $backend = null;
+
+    /**
+     * BackendSize defines the size of the backend
+     *
+     * @var string
+     */
+    public $backendSize = null;
+
+    /**
      * LoginType defines the type of login to use
      *
      * @var string
      */
     public $loginType = null;
+
+    /**
+     * UseCase defines the use case for the workspace
+     *
+     * @var string
+     */
+    public $useCase = null;
 
     /**
      * NetworkPolicy defines the network policy to use
@@ -78,14 +85,7 @@ class WorkspaceSpec extends AbstractModel
      * ReadOnlyStorageAccess when true creates the workspace with read-only storage access.
      * When false (default), the workspace has write access to storage.
      *
-     * @var bool
+     * @var boolean
      */
     public $readOnlyStorageAccess = null;
-
-    /**
-     * UseCase defines the use case for the workspace
-     *
-     * @var string
-     */
-    public $useCase = null;
 }

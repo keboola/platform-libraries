@@ -8,19 +8,20 @@ use Kubernetes\Model\Io\K8s\Api\Core\V1\LocalObjectReference;
 use KubernetesRuntime\AbstractModel;
 
 /**
- * AppsProxyStatus defines the observed state of the apps proxy
+ * AppsProxyStatus holds status for the apps proxy ingress feature
  */
 class AppsProxyStatus extends AbstractModel
 {
     /**
-     * ServiceRef contains a reference to the service used for apps proxy
+     * ServiceRef contains a reference to the k8s Service used for apps proxy ingress.
+     * Not set for e2bSandbox backends (no service is created).
      *
      * @var LocalObjectReference
      */
     public $serviceRef = null;
 
     /**
-     * UpstreamUrl is the URL of the upstream service
+     * UpstreamUrl is the URL of the upstream app service.
      *
      * @var string
      */

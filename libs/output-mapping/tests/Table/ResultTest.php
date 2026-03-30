@@ -75,6 +75,66 @@ class ResultTest extends TestCase
         self::assertSame($expectedImportData, $table1->getLastImportDate());
     }
 
+    public function testAddGenericVariableStoresData(): void
+    {
+        $result = new Result();
+
+        $result->addGenericVariable('my.table', 'importedRowsCount', 42);
+
+        self::assertSame(
+            ['my.table' => ['importedRowsCount' => 42]],
+            $result->getGenericVariables(),
+        );
+    }
+
+    public function testGetGenericVariablesReturnsAllStoredVariables(): void
+    {
+        $result = new Result();
+
+        $result->addGenericVariable('bucket.table1', 'importedRowsCount', 10);
+        $result->addGenericVariable('bucket.table2', 'importedRowsCount', 250);
+
+        self::assertSame(
+            [
+                'bucket.table1' => ['importedRowsCount' => 10],
+                'bucket.table2' => ['importedRowsCount' => 250],
+            ],
+            $result->getGenericVariables(),
+        );
+    }
+
+    public function testAddGenericVariableMultipleVariablesForSameTable(): void
+    {
+        $result = new Result();
+
+        $result->addGenericVariable('my.table', 'importedRowsCount', 5);
+        $result->addGenericVariable('my.table', 'someOtherVar', 'value');
+
+        self::assertSame(
+            ['my.table' => ['importedRowsCount' => 5, 'someOtherVar' => 'value']],
+            $result->getGenericVariables(),
+        );
+    }
+
+    public function testAddGenericVariableWithZeroRows(): void
+    {
+        $result = new Result();
+
+        $result->addGenericVariable('my.empty.table', 'importedRowsCount', 0);
+
+        self::assertSame(
+            ['my.empty.table' => ['importedRowsCount' => 0]],
+            $result->getGenericVariables(),
+        );
+    }
+
+    public function testGetGenericVariablesInitiallyEmpty(): void
+    {
+        $result = new Result();
+
+        self::assertSame([], $result->getGenericVariables());
+    }
+
     public function testSetResults(): void
     {
         $tablesResult = new Result();

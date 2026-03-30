@@ -14,6 +14,9 @@ class Result
 
     private ?Metrics $metrics = null;
 
+    /** @var array<string, array<string, int|string>> */
+    private array $genericVariables = [];
+
     public function addTable(TableInfo $table): void
     {
         $this->tables[] = $table;
@@ -35,5 +38,16 @@ class Result
     public function getMetrics(): ?Metrics
     {
         return $this->metrics;
+    }
+
+    public function addGenericVariable(string $tableName, string $variableName, int|string $variableValue): void
+    {
+        $this->genericVariables[$tableName][$variableName] = $variableValue;
+    }
+
+    /** @return array<string, array<string, int|string>> */
+    public function getGenericVariables(): array
+    {
+        return $this->genericVariables;
     }
 }

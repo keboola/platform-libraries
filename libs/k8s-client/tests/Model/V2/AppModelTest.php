@@ -18,7 +18,6 @@ use Keboola\K8sClient\Model\Io\Keboola\Apps\V2\ContainerSpec;
 use Keboola\K8sClient\Model\Io\Keboola\Apps\V2\DataDirMountSpec;
 use Keboola\K8sClient\Model\Io\Keboola\Apps\V2\DataDirSpec;
 use Keboola\K8sClient\Model\Io\Keboola\Apps\V2\DataLoaderSpec;
-use Keboola\K8sClient\Model\Io\Keboola\Apps\V2\E2bSandboxRuntime;
 use Keboola\K8sClient\Model\Io\Keboola\Apps\V2\E2bSandboxStatus;
 use Keboola\K8sClient\Model\Io\Keboola\Apps\V2\MountConfigField;
 use Keboola\K8sClient\Model\Io\Keboola\Apps\V2\MountPathSpec;
@@ -62,10 +61,6 @@ class AppModelTest extends TestCase
                     'size' => 'small',
                     'backend' => [
                         'type' => 'e2bSandbox',
-                        'e2bSandbox' => [
-                            'templateId' => 'tpl-abc123',
-                            'timeout' => '3600',
-                        ],
                     ],
                 ],
                 'features' => [
@@ -196,9 +191,6 @@ class AppModelTest extends TestCase
                 'updatedReplicas' => 1,
                 'lastStartedTime' => '2024-01-15T10:31:00Z',
                 'runStartRequestedAt' => '2024-01-15T10:30:00Z',
-                'storageTokenRef' => [
-                    'name' => 'app-12345-token',
-                ],
                 'appsProxyServiceRef' => [
                     'name' => 'app-12345-proxy',
                 ],
@@ -214,6 +206,7 @@ class AppModelTest extends TestCase
                     'startupLaunchedAt' => '2024-01-15T10:30:30Z',
                     'startupProbeFailures' => 0,
                     'syncedFileHashes' => ['app.py' => 'abc123'],
+                    'templateBuildID' => 'build-xyz',
                 ],
                 'conditions' => [
                     [
@@ -257,10 +250,6 @@ class AppModelTest extends TestCase
         self::assertNotNull($app->spec->runtime->backend);
         self::assertInstanceOf(Backend::class, $app->spec->runtime->backend);
         self::assertSame('e2bSandbox', $app->spec->runtime->backend->type);
-        self::assertNotNull($app->spec->runtime->backend->e2bSandbox);
-        self::assertInstanceOf(E2bSandboxRuntime::class, $app->spec->runtime->backend->e2bSandbox);
-        self::assertSame('tpl-abc123', $app->spec->runtime->backend->e2bSandbox->templateId);
-        self::assertSame('3600', $app->spec->runtime->backend->e2bSandbox->timeout);
 
         // Features
         self::assertNotNull($app->spec->features);
@@ -286,10 +275,7 @@ class AppModelTest extends TestCase
         self::assertSame('2024-01-15T10:31:00Z', $app->status->lastStartedTime);
         self::assertSame('2024-01-15T10:30:00Z', $app->status->runStartRequestedAt);
 
-        // Status - storageTokenRef and appsProxyServiceRef
-        self::assertNotNull($app->status->storageTokenRef);
-        self::assertInstanceOf(LocalObjectReference::class, $app->status->storageTokenRef);
-        self::assertSame('app-12345-token', $app->status->storageTokenRef->name);
+        // Status - appsProxyServiceRef (deprecated)
         self::assertNotNull($app->status->appsProxyServiceRef);
         self::assertInstanceOf(LocalObjectReference::class, $app->status->appsProxyServiceRef);
         self::assertSame('app-12345-proxy', $app->status->appsProxyServiceRef->name);
@@ -310,6 +296,7 @@ class AppModelTest extends TestCase
         self::assertSame('2024-01-15T10:30:30Z', $app->status->e2bSandbox->startupLaunchedAt);
         self::assertSame(0, $app->status->e2bSandbox->startupProbeFailures);
         self::assertSame(['app.py' => 'abc123'], $app->status->e2bSandbox->syncedFileHashes);
+        self::assertSame('build-xyz', $app->status->e2bSandbox->templateBuildID);
 
         // Status - conditions
         self::assertNotNull($app->status->conditions);
@@ -486,7 +473,6 @@ class AppModelTest extends TestCase
         self::assertArrayHasKey('runtime', $serialized['spec']);
         self::assertSame('small', $serialized['spec']['runtime']['size']);
         self::assertSame('e2bSandbox', $serialized['spec']['runtime']['backend']['type']);
-        self::assertSame('tpl-abc123', $serialized['spec']['runtime']['backend']['e2bSandbox']['templateId']);
         self::assertSame('small', $serialized['spec']['runtimeSize']);
 
         // Verify containerSpec is present and podSpec is not
@@ -501,6 +487,12 @@ class AppModelTest extends TestCase
         self::assertIsArray($serialized['spec']['containerSpec']['command']);
         self::assertArrayNotHasKey('name', $serialized['spec']['containerSpec']);
         self::assertArrayNotHasKey('resources', $serialized['spec']['containerSpec']);
+
+        // Verify status
+        self::assertArrayHasKey('status', $serialized);
+        self::assertSame('Running', $serialized['status']['currentState']);
+        self::assertArrayHasKey('appsProxy', $serialized['status']);
+        self::assertArrayHasKey('e2bSandbox', $serialized['status']);
     }
 
     public function testCreateAppWithNestedObjects(): void
@@ -536,7 +528,6 @@ class AppModelTest extends TestCase
         self::assertInstanceOf(AppStatus::class, $app->status);
         self::assertInstanceOf(AppsProxyStatus::class, $app->status->appsProxy);
         self::assertInstanceOf(E2bSandboxStatus::class, $app->status->e2bSandbox);
-        self::assertInstanceOf(LocalObjectReference::class, $app->status->storageTokenRef);
         self::assertInstanceOf(LocalObjectReference::class, $app->status->appsProxyServiceRef);
     }
 }

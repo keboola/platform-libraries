@@ -8,42 +8,49 @@ use Kubernetes\Model\Io\K8s\Apimachinery\Pkg\Apis\Meta\V1\Time;
 use KubernetesRuntime\AbstractModel;
 
 /**
- * E2bSandboxStatus defines the observed state of the E2B sandbox
+ * E2bSandboxStatus holds status for E2B-backed apps
  */
 class E2bSandboxStatus extends AbstractModel
 {
     /**
-     * Name is the name of the E2B sandbox resource
+     * Name of the child E2bSandbox resource.
      *
      * @var string
      */
     public $name = null;
 
     /**
-     * SandboxID is the ID of the E2B sandbox
+     * SandboxID of the E2B sandbox this state corresponds to.
      *
      * @var string
      */
     public $sandboxID = null;
 
     /**
-     * StartupLaunchedAt is the timestamp when the sandbox startup was launched
+     * StartupLaunchedAt records when the startup script was launched.
      *
      * @var Time
      */
     public $startupLaunchedAt = null;
 
     /**
-     * StartupProbeFailures is the number of startup probe failures
+     * StartupProbeFailures tracks the number of consecutive startup probe failures.
      *
      * @var integer
      */
     public $startupProbeFailures = null;
 
     /**
-     * SyncedFileHashes contains the hashes of synced files
+     * SyncedFileHashes records the content hash of each file last uploaded to the sandbox.
      *
-     * @var array
+     * @var array<string, string>
      */
     public $syncedFileHashes = null;
+
+    /**
+     * TemplateBuildID is the E2B build ID returned by BuildTemplate.
+     *
+     * @var string
+     */
+    public $templateBuildID = null;
 }

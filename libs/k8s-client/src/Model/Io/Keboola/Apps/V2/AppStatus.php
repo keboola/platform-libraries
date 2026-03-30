@@ -51,35 +51,30 @@ class AppStatus extends AbstractModel
     public $lastStartedTime = null;
 
     /**
-     * StorageTokenRef contains a reference to the storage token currently used by the app
-     *
-     * @var LocalObjectReference
-     */
-    public $storageTokenRef = null;
-
-    /**
-     * AppsProxyServiceRef contains a reference to the service used for apps proxy ingress
-     *
-     * @var LocalObjectReference
-     */
-    public $appsProxyServiceRef = null;
-
-    /**
-     * RunStartRequestedAt is the timestamp when a run start was requested
+     * RunStartRequestedAt is set (microsecond precision) when spec.state transitions to Running
+     * and cleared when the app stops.
      *
      * @var Time
      */
     public $runStartRequestedAt = null;
 
     /**
-     * AppsProxy defines the observed state of the apps proxy
+     * AppsProxy holds status for the apps proxy ingress feature.
      *
      * @var AppsProxyStatus
      */
     public $appsProxy = null;
 
     /**
-     * E2bSandbox defines the observed state of the E2B sandbox
+     * AppsProxyServiceRef contains a reference to the service used for apps proxy ingress
+     *
+     * @deprecated Use appsProxy.serviceRef instead.
+     * @var LocalObjectReference
+     */
+    public $appsProxyServiceRef = null;
+
+    /**
+     * E2bSandbox holds status for E2B-backed apps (backend=e2bSandbox only).
      *
      * @var E2bSandboxStatus
      */

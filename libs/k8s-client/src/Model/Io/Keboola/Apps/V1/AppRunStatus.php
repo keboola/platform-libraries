@@ -16,14 +16,14 @@ class AppRunStatus extends AbstractModel
     /**
      * SyncedAt is the timestamp when this AppRun was synced to the backend
      *
-     * @var Time
+     * @var Time|null
      */
     public $syncedAt = null;
 
     /**
      * Conditions represent the latest available observations of the AppRun's current state
      *
-     * @var Condition[]
+     * @var Condition[]|null
      */
     public $conditions = null;
 }

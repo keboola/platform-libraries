@@ -25,35 +25,35 @@ class ContainerSpec extends AbstractModel
     /**
      * Command to run in the container
      *
-     * @var string[]
+     * @var string[]|null
      */
     public $command = null;
 
     /**
      * Environment variables
      *
-     * @var EnvVar[]
+     * @var EnvVar[]|null
      */
     public $env = null;
 
     /**
      * LivenessProbe defines how to check if the container is alive
      *
-     * @var Probe
+     * @var Probe|null
      */
     public $livenessProbe = null;
 
     /**
      * ReadinessProbe defines how to check if the container is ready
      *
-     * @var Probe
+     * @var Probe|null
      */
     public $readinessProbe = null;
 
     /**
      * StartupProbe defines how to check if the container has started
      *
-     * @var Probe
+     * @var Probe|null
      */
     public $startupProbe = null;
 }

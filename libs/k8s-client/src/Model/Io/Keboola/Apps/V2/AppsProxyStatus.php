@@ -16,14 +16,14 @@ class AppsProxyStatus extends AbstractModel
      * ServiceRef contains a reference to the k8s Service used for apps proxy ingress.
      * Not set for e2bSandbox backends (no service is created).
      *
-     * @var LocalObjectReference
+     * @var LocalObjectReference|null
      */
     public $serviceRef = null;
 
     /**
      * UpstreamUrl is the URL of the upstream app service.
      *
-     * @var string
+     * @var string|null
      */
     public $upstreamUrl = null;
 }

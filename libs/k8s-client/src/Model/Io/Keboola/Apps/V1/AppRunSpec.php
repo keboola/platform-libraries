@@ -36,14 +36,14 @@ class AppRunSpec extends AbstractModel
     /**
      * StartedAt is the timestamp when this run started
      *
-     * @var Time
+     * @var Time|null
      */
     public $startedAt = null;
 
     /**
      * StoppedAt is the timestamp when this run stopped
      *
-     * @var Time
+     * @var Time|null
      */
     public $stoppedAt = null;
 
@@ -58,21 +58,21 @@ class AppRunSpec extends AbstractModel
     /**
      * StartupLogs contains the startup logs from the run
      *
-     * @var string
+     * @var string|null
      */
     public $startupLogs = null;
 
     /**
      * RuntimeSize specifies the dynamic backend size for this run
      *
-     * @var string
+     * @var string|null
      */
     public $runtimeSize = null;
 
     /**
      * ConfigVersion specifies the configuration version used for this run
      *
-     * @var string
+     * @var string|null
      */
     public $configVersion = null;
 }

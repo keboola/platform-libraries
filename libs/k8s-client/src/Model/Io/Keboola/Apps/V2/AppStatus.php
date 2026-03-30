@@ -17,7 +17,7 @@ class AppStatus extends AbstractModel
     /**
      * ObservedGeneration is the most recent generation observed for this App
      *
-     * @var integer
+     * @var integer|null
      */
     public $observedGeneration = null;
 
@@ -25,28 +25,28 @@ class AppStatus extends AbstractModel
      * CurrentState represents the current state of the App
      * Possible values: Stopped, Running, Starting, Stopping
      *
-     * @var string
+     * @var string|null
      */
     public $currentState = null;
 
     /**
      * ReadyReplicas indicates the number of ready replicas
      *
-     * @var integer
+     * @var integer|null
      */
     public $readyReplicas = null;
 
     /**
      * UpdatedReplicas indicates the number of updated replicas
      *
-     * @var integer
+     * @var integer|null
      */
     public $updatedReplicas = null;
 
     /**
      * LastStartedTime is the timestamp when the app last transitioned to Running state
      *
-     * @var Time
+     * @var Time|null
      */
     public $lastStartedTime = null;
 
@@ -54,14 +54,14 @@ class AppStatus extends AbstractModel
      * RunStartRequestedAt is set (microsecond precision) when spec.state transitions to Running
      * and cleared when the app stops.
      *
-     * @var Time
+     * @var Time|null
      */
     public $runStartRequestedAt = null;
 
     /**
      * AppsProxy holds status for the apps proxy ingress feature.
      *
-     * @var AppsProxyStatus
+     * @var AppsProxyStatus|null
      */
     public $appsProxy = null;
 
@@ -69,21 +69,21 @@ class AppStatus extends AbstractModel
      * AppsProxyServiceRef contains a reference to the service used for apps proxy ingress
      *
      * @deprecated Use appsProxy.serviceRef instead.
-     * @var LocalObjectReference
+     * @var LocalObjectReference|null
      */
     public $appsProxyServiceRef = null;
 
     /**
      * E2bSandbox holds status for E2B-backed apps (backend=e2bSandbox only).
      *
-     * @var E2bSandboxStatus
+     * @var E2bSandboxStatus|null
      */
     public $e2bSandbox = null;
 
     /**
      * Conditions represents the latest available observations of the app's current state
      *
-     * @var Condition[]
+     * @var Condition[]|null
      */
     public $conditions = null;
 }

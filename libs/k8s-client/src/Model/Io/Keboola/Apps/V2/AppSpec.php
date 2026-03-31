@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Keboola\K8sClient\Model\Io\Keboola\Apps\V2;
 
-use Kubernetes\Model\Io\K8s\Apimachinery\Pkg\Apis\Meta\V1\Time;
 use KubernetesRuntime\AbstractModel;
 
 /**
@@ -52,7 +51,7 @@ class AppSpec extends AbstractModel
     /**
      * RestartRequestedAt is the timestamp when the restart was requested.
      *
-     * @var Time|null
+     * @var string|null
      */
     public $restartRequestedAt = null;
 

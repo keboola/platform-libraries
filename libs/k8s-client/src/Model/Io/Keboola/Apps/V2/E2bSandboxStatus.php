@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Keboola\K8sClient\Model\Io\Keboola\Apps\V2;
 
-use Kubernetes\Model\Io\K8s\Apimachinery\Pkg\Apis\Meta\V1\Time;
 use KubernetesRuntime\AbstractModel;
 
 /**
@@ -29,7 +28,7 @@ class E2bSandboxStatus extends AbstractModel
     /**
      * StartupLaunchedAt records when the startup script was launched.
      *
-     * @var Time|null
+     * @var string|null
      */
     public $startupLaunchedAt = null;
 

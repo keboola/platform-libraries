@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Keboola\K8sClient\Model\Io\Keboola\Apps\V1;
 
 use Kubernetes\Model\Io\K8s\Apimachinery\Pkg\Apis\Meta\V1\Condition;
-use Kubernetes\Model\Io\K8s\Apimachinery\Pkg\Apis\Meta\V1\Time;
 use KubernetesRuntime\AbstractModel;
 
 /**
@@ -16,7 +15,7 @@ class AppRunStatus extends AbstractModel
     /**
      * SyncedAt is the timestamp when this AppRun was synced to the backend
      *
-     * @var Time|null
+     * @var string|null
      */
     public $syncedAt = null;
 

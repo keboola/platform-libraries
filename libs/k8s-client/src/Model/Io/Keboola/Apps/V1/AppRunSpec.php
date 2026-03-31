@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Keboola\K8sClient\Model\Io\Keboola\Apps\V1;
 
-use Kubernetes\Model\Io\K8s\Apimachinery\Pkg\Apis\Meta\V1\Time;
 use KubernetesRuntime\AbstractModel;
 
 /**
@@ -29,21 +28,21 @@ class AppRunSpec extends AbstractModel
     /**
      * CreatedAt is the timestamp when this run was created
      *
-     * @var Time
+     * @var string
      */
     public $createdAt = null;
 
     /**
      * StartedAt is the timestamp when this run started
      *
-     * @var Time|null
+     * @var string|null
      */
     public $startedAt = null;
 
     /**
      * StoppedAt is the timestamp when this run stopped
      *
-     * @var Time|null
+     * @var string|null
      */
     public $stoppedAt = null;
 

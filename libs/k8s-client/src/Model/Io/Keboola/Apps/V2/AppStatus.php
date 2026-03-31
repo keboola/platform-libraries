@@ -6,7 +6,6 @@ namespace Keboola\K8sClient\Model\Io\Keboola\Apps\V2;
 
 use Kubernetes\Model\Io\K8s\Api\Core\V1\LocalObjectReference;
 use Kubernetes\Model\Io\K8s\Apimachinery\Pkg\Apis\Meta\V1\Condition;
-use Kubernetes\Model\Io\K8s\Apimachinery\Pkg\Apis\Meta\V1\Time;
 use KubernetesRuntime\AbstractModel;
 
 /**
@@ -46,7 +45,7 @@ class AppStatus extends AbstractModel
     /**
      * LastStartedTime is the timestamp when the app last transitioned to Running state
      *
-     * @var Time|null
+     * @var string|null
      */
     public $lastStartedTime = null;
 
@@ -54,7 +53,7 @@ class AppStatus extends AbstractModel
      * RunStartRequestedAt is set (microsecond precision) when spec.state transitions to Running
      * and cleared when the app stops.
      *
-     * @var Time|null
+     * @var string|null
      */
     public $runStartRequestedAt = null;
 

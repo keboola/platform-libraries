@@ -40,9 +40,9 @@ class Result
         return $this->metrics;
     }
 
-    public function addGenericVariable(string $tableName, string $variableName, int|string $variableValue): void
+    public function addGenericVariable(string $tableId, string $variableName, int|string $variableValue): void
     {
-        $this->genericVariables[$tableName][$variableName] = $variableValue;
+        $this->genericVariables[$tableId][$variableName] = $variableValue;
     }
 
     /** @return array<string, array<string, int|string>> */

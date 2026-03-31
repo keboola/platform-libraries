@@ -100,7 +100,7 @@ class LoadTableQueue
                         );
                         $this->tableResult->addTable(new TableInfo($tableData));
                         $this->tableResult->addGenericVariable(
-                            $tableData['name'],
+                            $jobResult['tableId'],
                             'importedRowsCount',
                             (int) ($jobResult['results']['importedRowsCount'] ?? 0),
                         );

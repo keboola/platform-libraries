@@ -533,7 +533,7 @@ class LoadTableQueueTest extends TestCase
             ],
             'expectedTableId' => 'in.c-myBucket.tableImported',
             'expectedGenericVariables' => [
-                'tableImported' => ['importedRowsCount' => 42],
+                'in.c-myBucket.tableImported' => ['importedRowsCount' => 42],
             ],
             'getTableColumns' => [],
             'getTableName' => 'tableImported',
@@ -571,7 +571,7 @@ class LoadTableQueueTest extends TestCase
             ],
             'expectedTableId' => 'in.c-myBucket.tableImported',
             'expectedGenericVariables' => [
-                'tableImported' => ['importedRowsCount' => 0],
+                'in.c-myBucket.tableImported' => ['importedRowsCount' => 0],
             ],
             'getTableColumns' => [],
             'getTableName' => 'tableImported',

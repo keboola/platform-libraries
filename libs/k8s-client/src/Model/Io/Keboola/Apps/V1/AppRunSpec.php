@@ -74,4 +74,18 @@ class AppRunSpec extends AbstractModel
      * @var string|null
      */
     public $configVersion = null;
+
+    /**
+     * RuntimeBackendType is the runtime backend type for this run (e.g. "k8sDeployment", "e2bSandbox")
+     *
+     * @var string|null
+     */
+    public $runtimeBackendType = null;
+
+    /**
+     * ImageVersion is the tag/digest extracted from the container image reference
+     *
+     * @var string|null
+     */
+    public $imageVersion = null;
 }

@@ -143,10 +143,14 @@ class LoadTableQueue
 
     public function loadCustomVariables(string $variablesFilePath): void
     {
-        if (!file_exists($variablesFilePath)) {
+        if (!is_file($variablesFilePath) || !is_readable($variablesFilePath)) {
             return;
         }
-        $content = json_decode((string) file_get_contents($variablesFilePath), true);
+        $fileContent = file_get_contents($variablesFilePath);
+        if ($fileContent === false) {
+            return;
+        }
+        $content = json_decode($fileContent, true);
         if (!is_array($content)) {
             return;
         }

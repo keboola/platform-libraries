@@ -150,6 +150,8 @@ class Sandbox
 
     private ?string $persistentStoragePvcName = null;
     private ?string $persistentStorageK8sManifest = null;
+    private ?bool $persistentStorageReady = null;
+    private ?string $persistentStorageK8sStorageClassName = null;
 
     private ?SandboxCredentials $credentials = null;
 
@@ -204,6 +206,10 @@ class Sandbox
 
         $sandbox->persistentStoragePvcName = $in['persistentStorage']['pvcName'] ?? null;
         $sandbox->persistentStorageK8sManifest = $in['persistentStorage']['k8sManifest'] ?? null;
+        $sandbox->persistentStorageReady = isset($in['persistentStorage']['ready'])
+            ? (bool) $in['persistentStorage']['ready']
+            : null;
+        $sandbox->persistentStorageK8sStorageClassName = $in['persistentStorage']['k8sStorageClassName'] ?? null;
 
         self::setPasswordOrCredentials($in, $sandbox);
 
@@ -334,6 +340,8 @@ class Sandbox
 
         $result['persistentStorage']['pvcName'] = $this->persistentStoragePvcName;
         $result['persistentStorage']['k8sManifest'] = $this->persistentStorageK8sManifest;
+        $result['persistentStorage']['ready'] = $this->persistentStorageReady;
+        $result['persistentStorage']['k8sStorageClassName'] = $this->persistentStorageK8sStorageClassName;
 
         if ($this->credentials !== null) {
             $result['credentials'] = $this->credentials->toArray();
@@ -763,6 +771,22 @@ class Sandbox
     public function removePersistentStorageK8sManifest(): Sandbox
     {
         $this->persistentStorageK8sManifest = null;
+        return $this;
+    }
+
+    public function getPersistentStorageReady(): ?bool
+    {
+        return $this->persistentStorageReady;
+    }
+
+    public function getPersistentStorageK8sStorageClassName(): ?string
+    {
+        return $this->persistentStorageK8sStorageClassName;
+    }
+
+    public function setPersistentStorageK8sStorageClassName(?string $persistentStorageK8sStorageClassName): self
+    {
+        $this->persistentStorageK8sStorageClassName = $persistentStorageK8sStorageClassName;
         return $this;
     }
 

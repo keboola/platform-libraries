@@ -56,6 +56,8 @@ class SandboxTest extends TestCase
             'persistentStorage' => [
                 'pvcName' => 'pvc-name',
                 'k8sManifest' => 'pvc-manifest',
+                'ready' => true,
+                'k8sStorageClassName' => 'standard',
             ],
         ]);
 
@@ -94,6 +96,45 @@ class SandboxTest extends TestCase
         self::assertSame('databricks-cluster-id', $sandbox->getDatabricksClusterId());
         self::assertSame('pvc-name', $sandbox->getPersistentStoragePvcName());
         self::assertSame('pvc-manifest', $sandbox->getPersistentStorageK8sManifest());
+        self::assertTrue($sandbox->getPersistentStorageReady());
+        self::assertSame('standard', $sandbox->getPersistentStorageK8sStorageClassName());
+
+        $array = $sandbox->toArray();
+        self::assertSame('branch-id', $array['branchId']);
+        self::assertSame('id', $array['id']);
+        self::assertSame('keboola.data-apps', $array['componentId']);
+        self::assertSame('configuration-id', $array['configurationId']);
+        self::assertSame('4', $array['configurationVersion']);
+        self::assertSame('physical-id', $array['physicalId']);
+        self::assertSame('python', $array['type']);
+        self::assertSame('small', $array['size']);
+        self::assertSame(['storageSize_GB' => 10], $array['sizeParameters']);
+        self::assertSame('user', $array['user']);
+        self::assertSame('password', $array['password']);
+        self::assertSame('host', $array['host']);
+        self::assertSame('url', $array['url']);
+        self::assertSame('image-version', $array['imageVersion']);
+        self::assertSame('staging-workspace-id', $array['stagingWorkspaceId']);
+        self::assertSame('staging-workspace-type', $array['stagingWorkspaceType']);
+        self::assertSame(['foo' => 'bar'], $array['workspaceDetails']);
+        self::assertSame('autosave-token-id', $array['autosaveTokenId']);
+        self::assertSame(['foo', 'bar'], $array['packages']);
+        self::assertSame('2024-02-02 12:00:00', $array['createdTimestamp']);
+        self::assertSame('2024-02-02 14:00:00', $array['updatedTimestamp']);
+        self::assertSame('2024-02-02 18:00:00', $array['expirationTimestamp']);
+        self::assertSame(1, $array['expirationAfterHours']);
+        self::assertSame(2, $array['autoSuspendAfterSeconds']);
+        self::assertSame('2024-02-02 20:00:00', $array['lastAutosaveTimestamp']);
+        self::assertTrue($array['active']);
+        self::assertTrue($array['shared']);
+        self::assertSame('databricks-spark-version', $array['databricks']['sparkVersion']);
+        self::assertSame('databricks-node-type', $array['databricks']['nodeType']);
+        self::assertSame(5, $array['databricks']['numberOfNodes']);
+        self::assertSame('databricks-cluster-id', $array['databricks']['clusterId']);
+        self::assertSame('pvc-name', $array['persistentStorage']['pvcName']);
+        self::assertSame('pvc-manifest', $array['persistentStorage']['k8sManifest']);
+        self::assertTrue($array['persistentStorage']['ready']);
+        self::assertSame('standard', $array['persistentStorage']['k8sStorageClassName']);
     }
 
     public function testPasswordNullable(): void

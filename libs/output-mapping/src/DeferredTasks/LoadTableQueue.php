@@ -150,12 +150,10 @@ class LoadTableQueue
         if (!is_array($content)) {
             return;
         }
-        $variables = [];
         foreach ($content as $key => $value) {
             if (is_scalar($value) || $value === null) {
-                $variables[(string) $key] = $value;
+                $this->tableResult->addCustomVariable((string) $key, $value);
             }
         }
-        $this->tableResult->setCustomVariables($variables);
     }
 }

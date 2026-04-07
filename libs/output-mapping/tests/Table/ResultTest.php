@@ -135,11 +135,12 @@ class ResultTest extends TestCase
         self::assertSame([], $result->getGenericVariables());
     }
 
-    public function testSetCustomVariablesStoresData(): void
+    public function testAddCustomVariableStoresData(): void
     {
         $result = new Result();
 
-        $result->setCustomVariables(['my_var' => 'value', 'count' => 42]);
+        $result->addCustomVariable('my_var', 'value');
+        $result->addCustomVariable('count', 42);
 
         self::assertSame(['my_var' => 'value', 'count' => 42], $result->getCustomVariables());
     }
@@ -151,14 +152,14 @@ class ResultTest extends TestCase
         self::assertSame([], $result->getCustomVariables());
     }
 
-    public function testSetCustomVariablesOverwritesPreviousValues(): void
+    public function testAddCustomVariableOverwritesExistingKey(): void
     {
         $result = new Result();
 
-        $result->setCustomVariables(['old' => 'value']);
-        $result->setCustomVariables(['new' => 'data']);
+        $result->addCustomVariable('key', 'old');
+        $result->addCustomVariable('key', 'new');
 
-        self::assertSame(['new' => 'data'], $result->getCustomVariables());
+        self::assertSame(['key' => 'new'], $result->getCustomVariables());
     }
 
     public function testSetResults(): void

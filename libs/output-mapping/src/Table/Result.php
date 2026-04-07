@@ -54,10 +54,9 @@ class Result
         return $this->genericVariables;
     }
 
-    /** @param array<string, scalar|null> $variables */
-    public function setCustomVariables(array $variables): void
+    public function addCustomVariable(string $key, int|float|string|bool|null $value): void
     {
-        $this->customVariables = $variables;
+        $this->customVariables[$key] = $value;
     }
 
     /** @return array<string, scalar|null> */

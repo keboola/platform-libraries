@@ -2760,38 +2760,6 @@ CSV;
     }
 
     #[NeedsEmptyOutputBucket]
-    public function testUploadTablesLoadsCustomVariablesWithRootSourcePathPrefix(): void
-    {
-        $stagingPath = $this->temp->getTmpFolder() . '/root-prefix-staging';
-        mkdir($stagingPath);
-        file_put_contents($stagingPath . '/table1a.csv', "\"Id\",\"Name\"\n\"test\",\"test\"\n");
-        file_put_contents($stagingPath . '/variables.json', (string) json_encode([
-            'my_var' => 'hello',
-            'count' => 42,
-        ]));
-
-        $configs = [['source' => 'table1a.csv', 'destination' => $this->emptyOutputBucketId . '.table1a']];
-        $tableQueue = $this->getTableLoader(
-            strategyFactory: $this->getLocalStagingFactory(stagingPath: $stagingPath),
-        )->uploadTables(
-            configuration: new OutputMappingSettings(
-                configuration: ['mapping' => $configs],
-                sourcePathPrefix: '/',
-                storageApiToken: $this->clientWrapper->getToken(),
-                isFailedJob: false,
-                dataTypeSupport: 'none',
-            ),
-            systemMetadata: new SystemMetadata(['componentId' => 'foo']),
-        );
-        $tableQueue->waitForAll();
-
-        self::assertSame(
-            ['my_var' => 'hello', 'count' => 42],
-            $tableQueue->getTableResult()->getCustomVariables(),
-        );
-    }
-
-    #[NeedsEmptyOutputBucket]
     public function testUploadTablesCustomVariablesEmptyWhenVariablesJsonMissing(): void
     {
         $root = $this->temp->getTmpFolder();

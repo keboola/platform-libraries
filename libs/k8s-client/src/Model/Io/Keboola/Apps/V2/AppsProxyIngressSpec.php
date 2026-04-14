@@ -22,4 +22,13 @@ class AppsProxyIngressSpec extends AbstractModel
      * @var integer
      */
     public $targetPort = null;
+
+    /**
+     * Slug is an optional URL prefix used when building the public app URL.
+     * When set, the URL is https://{slug}-{appId}.{hostnameSuffix}
+     * When empty, the URL is https://{appId}.{hostnameSuffix}
+     *
+     * @var string|null
+     */
+    public $slug = null;
 }

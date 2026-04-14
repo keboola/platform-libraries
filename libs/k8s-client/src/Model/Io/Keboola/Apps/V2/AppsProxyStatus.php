@@ -26,4 +26,13 @@ class AppsProxyStatus extends AbstractModel
      * @var string|null
      */
     public $upstreamUrl = null;
+
+    /**
+     * PublicUrl is the URL at which the app is exposed publicly via the Apps Proxy.
+     * Computed from spec.features.appsProxyIngress.slug, spec.appId, and the operator's
+     * HostnameSuffix. Empty when AppsProxyIngress is not enabled.
+     *
+     * @var string|null
+     */
+    public $publicUrl = null;
 }

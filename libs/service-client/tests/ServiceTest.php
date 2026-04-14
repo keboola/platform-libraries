@@ -59,7 +59,7 @@ class ServiceTest extends TestCase
         yield 'buffer' => [Service::BUFFER, 'buffer-api.buffer']; // <-- custom namespace
         yield 'connection' => [Service::CONNECTION, 'connection-api.connection']; // <-- custom namespace
         yield 'data-science' => [Service::SANDBOXES_SERVICE, 'sandboxes-service-api.default'];
-        yield 'editor' => [Service::EDITOR, 'editor-api.editor-service'];
+        yield 'editor' => [Service::EDITOR, 'editor-service-api.editor-service'];
         yield 'encryption' => [Service::ENCRYPTION, 'encryption-api.default'];
         yield 'import' => [Service::IMPORT, 'sapi-importer.default'];
         yield 'notification' => [Service::NOTIFICATION, 'notification-api.default'];

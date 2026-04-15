@@ -151,10 +151,10 @@ class LoadTableQueue
             return;
         }
         $content = json_decode($fileContent, true);
-        if (!is_array($content)) {
+        if (!is_array($content) || !isset($content['variables']) || !is_array($content['variables'])) {
             return;
         }
-        foreach ($content as $key => $value) {
+        foreach ($content['variables'] as $key => $value) {
             if (is_scalar($value) || $value === null) {
                 $this->tableResult->addCustomVariable((string) $key, $value);
             }

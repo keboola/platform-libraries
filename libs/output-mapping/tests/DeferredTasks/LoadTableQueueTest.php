@@ -634,7 +634,7 @@ class LoadTableQueueTest extends TestCase
             ->willReturn($this->createMock(Client::class));
 
         $tmpFile = tempnam(sys_get_temp_dir(), 'variables') . '.json';
-        file_put_contents($tmpFile, (string) json_encode(['my_var' => 'hello', 'count' => 42]));
+        file_put_contents($tmpFile, (string) json_encode(['variables' => ['my_var' => 'hello', 'count' => 42]]));
 
         $loadQueue = new LoadTableQueue($clientWrapperMock, new NullLogger(), []);
         $loadQueue->loadCustomVariables($tmpFile);

@@ -2730,11 +2730,9 @@ CSV;
         self::assertCount(1, $jobIds);
     }
 
-    #[NeedsEmptyOutputBucket]
     public function testUploadTablesLoadsCustomVariablesFromResultJson(): void
     {
         $root = $this->temp->getTmpFolder();
-        file_put_contents($root . '/upload/table1a.csv', "\"Id\",\"Name\"\n\"test\",\"test\"\n");
         file_put_contents($root . '/result.json', (string) json_encode([
             'variables' => [
                 'my_var' => 'hello',
@@ -2742,10 +2740,9 @@ CSV;
             ],
         ]));
 
-        $configs = [['source' => 'table1a.csv', 'destination' => $this->emptyOutputBucketId . '.table1a']];
         $tableQueue = $this->getTableLoader()->uploadTables(
             configuration: new OutputMappingSettings(
-                configuration: ['mapping' => $configs],
+                configuration: ['mapping' => []],
                 sourcePathPrefix: 'upload',
                 storageApiToken: $this->clientWrapper->getToken(),
                 isFailedJob: false,
@@ -2761,16 +2758,11 @@ CSV;
         );
     }
 
-    #[NeedsEmptyOutputBucket]
-    public function testUploadTablesCustomVariablesEmptyWhenVariablesJsonMissing(): void
+    public function testUploadTablesCustomVariablesEmptyWhenResultJsonMissing(): void
     {
-        $root = $this->temp->getTmpFolder();
-        file_put_contents($root . '/upload/table1a.csv', "\"Id\",\"Name\"\n\"test\",\"test\"\n");
-
-        $configs = [['source' => 'table1a.csv', 'destination' => $this->emptyOutputBucketId . '.table1a']];
         $tableQueue = $this->getTableLoader()->uploadTables(
             configuration: new OutputMappingSettings(
-                configuration: ['mapping' => $configs],
+                configuration: ['mapping' => []],
                 sourcePathPrefix: 'upload',
                 storageApiToken: $this->clientWrapper->getToken(),
                 isFailedJob: false,
@@ -2783,17 +2775,14 @@ CSV;
         self::assertSame([], $tableQueue->getTableResult()->getCustomVariables());
     }
 
-    #[NeedsEmptyOutputBucket]
     public function testUploadTablesIgnoresInvalidResultJson(): void
     {
         $root = $this->temp->getTmpFolder();
-        file_put_contents($root . '/upload/table1a.csv', "\"Id\",\"Name\"\n\"test\",\"test\"\n");
         file_put_contents($root . '/result.json', 'not valid json {{{');
 
-        $configs = [['source' => 'table1a.csv', 'destination' => $this->emptyOutputBucketId . '.table1a']];
-        $tableQueue = $this->getTableLoader()->uploadTables(
+        $tableQueue = $this->getTableLoader(logger: $this->testLogger)->uploadTables(
             configuration: new OutputMappingSettings(
-                configuration: ['mapping' => $configs],
+                configuration: ['mapping' => []],
                 sourcePathPrefix: 'upload',
                 storageApiToken: $this->clientWrapper->getToken(),
                 isFailedJob: false,
@@ -2804,5 +2793,6 @@ CSV;
         $tableQueue->waitForAll();
 
         self::assertSame([], $tableQueue->getTableResult()->getCustomVariables());
+        self::assertTrue($this->testHandler->hasWarningThatContains('Failed to parse result.json file'));
     }
 }

@@ -662,7 +662,7 @@ class LoadTableQueueTest extends TestCase
         $clientWrapperMock->method('getTableAndFileStorageClient')
             ->willReturn($this->createMock(Client::class));
 
-        $tmpFile = tempnam(sys_get_temp_dir(), 'variables') . '.json';
+        $tmpFile = tempnam(sys_get_temp_dir(), 'result') . '.json';
         file_put_contents($tmpFile, 'not valid json {{{');
 
         $loadQueue = new LoadTableQueue($clientWrapperMock, new NullLogger(), []);

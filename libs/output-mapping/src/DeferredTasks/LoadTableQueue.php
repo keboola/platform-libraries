@@ -152,6 +152,7 @@ class LoadTableQueue
         }
         $content = json_decode($fileContent, true);
         if (!is_array($content) || !isset($content['variables']) || !is_array($content['variables'])) {
+            $this->logger->warning(sprintf('Failed to parse result.json file "%s".', $variablesFilePath));
             return;
         }
         foreach ($content['variables'] as $key => $value) {

@@ -140,4 +140,25 @@ class LoadTableQueue
     {
         return $this->loadTableTasks;
     }
+
+    public function loadCustomVariables(string $variablesFilePath): void
+    {
+        if (!is_file($variablesFilePath) || !is_readable($variablesFilePath)) {
+            return;
+        }
+        $fileContent = file_get_contents($variablesFilePath);
+        if ($fileContent === false) {
+            return;
+        }
+        $content = json_decode($fileContent, true);
+        if (!is_array($content) || !isset($content['variables']) || !is_array($content['variables'])) {
+            $this->logger->warning(sprintf('Failed to parse result.json file "%s".', $variablesFilePath));
+            return;
+        }
+        foreach ($content['variables'] as $key => $value) {
+            if (is_scalar($value) || $value === null) {
+                $this->tableResult->addCustomVariable((string) $key, $value);
+            }
+        }
+    }
 }

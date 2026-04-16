@@ -2729,4 +2729,70 @@ CSV;
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
     }
+
+    public function testUploadTablesLoadsCustomVariablesFromResultJson(): void
+    {
+        $root = $this->temp->getTmpFolder();
+        file_put_contents($root . '/result.json', (string) json_encode([
+            'variables' => [
+                'my_var' => 'hello',
+                'count' => 42,
+            ],
+        ]));
+
+        $tableQueue = $this->getTableLoader()->uploadTables(
+            configuration: new OutputMappingSettings(
+                configuration: ['mapping' => []],
+                sourcePathPrefix: 'upload',
+                storageApiToken: $this->clientWrapper->getToken(),
+                isFailedJob: false,
+                dataTypeSupport: 'none',
+            ),
+            systemMetadata: new SystemMetadata(['componentId' => 'foo']),
+        );
+        $tableQueue->waitForAll();
+
+        self::assertSame(
+            ['my_var' => 'hello', 'count' => 42],
+            $tableQueue->getTableResult()->getCustomVariables(),
+        );
+    }
+
+    public function testUploadTablesCustomVariablesEmptyWhenResultJsonMissing(): void
+    {
+        $tableQueue = $this->getTableLoader()->uploadTables(
+            configuration: new OutputMappingSettings(
+                configuration: ['mapping' => []],
+                sourcePathPrefix: 'upload',
+                storageApiToken: $this->clientWrapper->getToken(),
+                isFailedJob: false,
+                dataTypeSupport: 'none',
+            ),
+            systemMetadata: new SystemMetadata(['componentId' => 'foo']),
+        );
+        $tableQueue->waitForAll();
+
+        self::assertSame([], $tableQueue->getTableResult()->getCustomVariables());
+    }
+
+    public function testUploadTablesIgnoresInvalidResultJson(): void
+    {
+        $root = $this->temp->getTmpFolder();
+        file_put_contents($root . '/result.json', 'not valid json {{{');
+
+        $tableQueue = $this->getTableLoader(logger: $this->testLogger)->uploadTables(
+            configuration: new OutputMappingSettings(
+                configuration: ['mapping' => []],
+                sourcePathPrefix: 'upload',
+                storageApiToken: $this->clientWrapper->getToken(),
+                isFailedJob: false,
+                dataTypeSupport: 'none',
+            ),
+            systemMetadata: new SystemMetadata(['componentId' => 'foo']),
+        );
+        $tableQueue->waitForAll();
+
+        self::assertSame([], $tableQueue->getTableResult()->getCustomVariables());
+        self::assertTrue($this->testHandler->hasWarningThatContains('Failed to parse result.json file'));
+    }
 }

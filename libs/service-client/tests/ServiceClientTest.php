@@ -35,7 +35,7 @@ class ServiceClientTest extends TestCase
     private const INTERNAL_BUFFER_SERVICE = 'http://buffer-api.buffer.svc.cluster.local';
     private const INTERNAL_CONNECTION_SERVICE = 'http://connection-api.connection.svc.cluster.local';
     private const INTERNAL_DATA_SCIENCE_SERVICE = 'http://sandboxes-service-api.default.svc.cluster.local';
-    private const INTERNAL_EDITOR_SERVICE = 'http://editor-api.editor-service.svc.cluster.local';
+    private const INTERNAL_EDITOR_SERVICE = 'http://editor-service-api.editor-service.svc.cluster.local';
     private const INTERNAL_ENCRYPTION_SERVICE = 'http://encryption-api.default.svc.cluster.local';
     private const INTERNAL_IMPORT_SERVICE = 'http://sapi-importer.default.svc.cluster.local';
     private const INTERNAL_NOTIFICATION_SERVICE = 'http://notification-api.default.svc.cluster.local';

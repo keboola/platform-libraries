@@ -60,7 +60,7 @@ enum Service
             self::BILLING => 'billing-api.default',
             self::BUFFER => 'buffer-api.buffer',
             self::CONNECTION => 'connection-api.connection',
-            self::EDITOR => 'editor-api.editor-service',
+            self::EDITOR => 'editor-service-api.editor-service',
             self::ENCRYPTION => 'encryption-api.default',
             self::IMPORT => 'sapi-importer.default',
             self::NOTIFICATION => 'notification-api.default',

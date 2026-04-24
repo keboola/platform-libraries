@@ -326,6 +326,42 @@ class AppsApiClientTest extends TestCase
         );
     }
 
+    public function testListAppsWithListAll(): void
+    {
+        $responseBody = [];
+
+        $requestHandler = self::createRequestHandler($requestsHistory, [
+            new Response(
+                200,
+                ['Content-Type' => 'application/json'],
+                Json::encodeArray($responseBody),
+            ),
+        ]);
+
+        $client = new AppsApiClient(
+            new ApiClientConfiguration(
+                baseUrl: 'https://data-apps.keboola.com',
+                storageToken: 'my-token',
+                userAgent: 'Keboola Sandboxes Service API PHP Client',
+                requestHandler: $requestHandler(...),
+            ),
+        );
+        $result = $client->listApps(listAll: true);
+
+        self::assertEquals([], $result);
+
+        self::assertCount(1, $requestsHistory);
+        self::assertRequestEquals(
+            'GET',
+            'https://data-apps.keboola.com/apps?listAll=1',
+            [
+                'X-StorageApi-Token' => 'my-token',
+            ],
+            '',
+            $requestsHistory[0]['request'],
+        );
+    }
+
     public function testListAppsWithTypes(): void
     {
         $responseBody = [

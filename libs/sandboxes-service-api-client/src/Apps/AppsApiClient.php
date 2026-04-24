@@ -19,11 +19,12 @@ class AppsApiClient
     }
 
     /**
-     * @param int|null $offset
-     * @param int|null $limit
+     * @param int|null      $offset
+     * @param int|null      $limit
+     * @param list<string>  $types Filter by app type (e.g. 'python', 'r', 'streamlit')
      * @return array<App>
      */
-    public function listApps(?int $offset = null, ?int $limit = null): array
+    public function listApps(?int $offset = null, ?int $limit = null, array $types = []): array
     {
         $queryParams = [];
         if ($offset !== null) {
@@ -31,6 +32,9 @@ class AppsApiClient
         }
         if ($limit !== null) {
             $queryParams['limit'] = (string) $limit;
+        }
+        foreach ($types as $type) {
+            $queryParams['type'][] = $type;
         }
 
         $uri = '/apps';

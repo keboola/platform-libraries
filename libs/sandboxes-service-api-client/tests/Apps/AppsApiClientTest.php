@@ -326,6 +326,58 @@ class AppsApiClientTest extends TestCase
         );
     }
 
+    public function testListAppsWithTypes(): void
+    {
+        $responseBody = [
+            [
+                'id' => 'app-id-1',
+                'projectId' => 'project-id',
+                'componentId' => 'keboola.jupyter-sandbox',
+                'type' => 'python',
+                'branchId' => null,
+                'configId' => 'config-id-1',
+                'configVersion' => '1',
+                'state' => 'running',
+                'desiredState' => 'running',
+                'lastRequestTimestamp' => '2024-02-01T08:00:00+01:00',
+                'url' => null,
+                'autoSuspendAfterSeconds' => 3600,
+                'provisioningStrategy' => 'operator',
+            ],
+        ];
+
+        $requestHandler = self::createRequestHandler($requestsHistory, [
+            new Response(
+                200,
+                ['Content-Type' => 'application/json'],
+                Json::encodeArray($responseBody),
+            ),
+        ]);
+
+        $client = new AppsApiClient(
+            new ApiClientConfiguration(
+                baseUrl: 'https://data-apps.keboola.com',
+                storageToken: 'my-token',
+                userAgent: 'Keboola Sandboxes Service API PHP Client',
+                requestHandler: $requestHandler(...),
+            ),
+        );
+        $result = $client->listApps(types: ['python', 'r']);
+
+        self::assertEquals([App::fromArray($responseBody[0])], $result);
+
+        self::assertCount(1, $requestsHistory);
+        self::assertRequestEquals(
+            'GET',
+            'https://data-apps.keboola.com/apps?type%5B0%5D=python&type%5B1%5D=r',
+            [
+                'X-StorageApi-Token' => 'my-token',
+            ],
+            '',
+            $requestsHistory[0]['request'],
+        );
+    }
+
     public function testCreateApp(): void
     {
         $responseBody = [

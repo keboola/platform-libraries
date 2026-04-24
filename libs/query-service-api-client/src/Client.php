@@ -136,7 +136,7 @@ class Client
     }
 
     /**
-     * @param array{statements: string[], transactional?: bool} $requestBody
+     * @param array{statements: string[], transactional?: bool, refreshMetadataOnSuccess?: bool} $requestBody
      */
     public function submitQueryJob(string $branchId, string $workspaceId, array $requestBody): SubmitQueryJobResponse
     {

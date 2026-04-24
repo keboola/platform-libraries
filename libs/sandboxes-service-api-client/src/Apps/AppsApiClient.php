@@ -19,18 +19,30 @@ class AppsApiClient
     }
 
     /**
-     * @param int|null $offset
-     * @param int|null $limit
+     * @param int|null      $offset
+     * @param int|null      $limit
+     * @param list<string>  $types   Filter by app type (e.g. 'python', 'r', 'streamlit')
+     * @param bool          $listAll When true, lists all apps in the project regardless of token ownership
      * @return array<App>
      */
-    public function listApps(?int $offset = null, ?int $limit = null): array
-    {
+    public function listApps(
+        ?int $offset = null,
+        ?int $limit = null,
+        array $types = [],
+        bool $listAll = false,
+    ): array {
         $queryParams = [];
         if ($offset !== null) {
             $queryParams['offset'] = (string) $offset;
         }
         if ($limit !== null) {
             $queryParams['limit'] = (string) $limit;
+        }
+        foreach ($types as $type) {
+            $queryParams['type'][] = $type;
+        }
+        if ($listAll) {
+            $queryParams['listAll'] = '1';
         }
 
         $uri = '/apps';

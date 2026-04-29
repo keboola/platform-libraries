@@ -24,7 +24,6 @@ class ServiceTest extends TestCase
         yield 'notification' => [Service::NOTIFICATION, 'notification'];
         yield 'oauth' => [Service::OAUTH, 'oauth'];
         yield 'queue' => [Service::QUEUE, 'queue'];
-        yield 'sandboxes' => [Service::SANDBOXES_API, 'sandboxes'];
         yield 'scheduler' => [Service::SCHEDULER, 'scheduler'];
         yield 'sync-actions' => [Service::SYNC_ACTIONS, 'sync-actions'];
         yield 'waii' => [Service::WAII, 'waii'];
@@ -66,7 +65,6 @@ class ServiceTest extends TestCase
         yield 'oauth' => [Service::OAUTH, 'oauth-api.default'];
         yield 'queue' => [Service::QUEUE, 'job-queue-api.default'];
         yield 'queue internal api' => [Service::QUEUE_INTERNAL_API, 'job-queue-internal-api.default'];
-        yield 'sandboxes' => [Service::SANDBOXES_API, 'sandboxes-api.sandboxes']; // <-- custom namespace
         yield 'scheduler' => [Service::SCHEDULER, 'scheduler-api.default'];
         yield 'sync-actions' => [Service::SYNC_ACTIONS, 'runner-sync-api.default'];
         yield 'waii' => [Service::WAII, 'waii-svc.waii'];

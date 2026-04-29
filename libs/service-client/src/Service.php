@@ -20,7 +20,6 @@ enum Service
     case QUERY;
     case QUEUE;
     case QUEUE_INTERNAL_API;
-    case SANDBOXES_API;
     case SANDBOXES_SERVICE;
     case SCHEDULER;
     case SYNC_ACTIONS;
@@ -43,7 +42,6 @@ enum Service
             self::QUERY => 'query',
             self::QUEUE => 'queue',
             self::QUEUE_INTERNAL_API => throw new RuntimeException('Job queue internal API does not have public DNS'),
-            self::SANDBOXES_API => 'sandboxes',
             self::SANDBOXES_SERVICE => 'data-science',
             self::SCHEDULER => 'scheduler',
             self::SYNC_ACTIONS => 'sync-actions',
@@ -68,7 +66,6 @@ enum Service
             self::QUERY => 'query-service-api.query-service',
             self::QUEUE => 'job-queue-api.default',
             self::QUEUE_INTERNAL_API => 'job-queue-internal-api.default',
-            self::SANDBOXES_API => 'sandboxes-api.sandboxes',
             self::SANDBOXES_SERVICE => 'sandboxes-service-api.default',
             self::SCHEDULER => 'scheduler-api.default',
             self::SYNC_ACTIONS => 'runner-sync-api.default',

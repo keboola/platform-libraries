@@ -26,7 +26,6 @@ class ServiceClientTest extends TestCase
     private const PUBLIC_SYNC_ACTIONS_SERVICE = 'https://sync-actions.north-europe.azure.keboola.com';
     private const PUBLIC_TEMPLATES = 'https://templates.north-europe.azure.keboola.com';
     private const PUBLIC_VAULT = 'https://vault.north-europe.azure.keboola.com';
-    private const PUBLIC_WAII_SERVICE = 'https://waii.north-europe.azure.keboola.com';
     private const PUBLIC_QUERY_SERVICE = 'https://query.north-europe.azure.keboola.com';
 
     private const INTERNAL_AI_SERVICE = 'http://ai-service-api.default.svc.cluster.local';
@@ -46,7 +45,6 @@ class ServiceClientTest extends TestCase
     private const INTERNAL_SYNC_ACTIONS_SERVICE = 'http://runner-sync-api.default.svc.cluster.local';
     private const INTERNAL_TEMPLATES = 'http://templates-api.templates-api.svc.cluster.local';
     private const INTERNAL_VAULT = 'http://vault-api.default.svc.cluster.local';
-    private const INTERNAL_WAII_SERVICE = 'http://waii-svc.waii.svc.cluster.local';
 
     public function testGetExplicitPublicUrlMethods(): void
     {
@@ -69,7 +67,6 @@ class ServiceClientTest extends TestCase
         self::assertSame(self::PUBLIC_SYNC_ACTIONS_SERVICE, $client->getSyncActionsServiceUrl(ServiceDnsType::PUBLIC));
         self::assertSame(self::PUBLIC_TEMPLATES, $client->getTemplatesUrl(ServiceDnsType::PUBLIC));
         self::assertSame(self::PUBLIC_VAULT, $client->getVaultUrl(ServiceDnsType::PUBLIC));
-        self::assertSame(self::PUBLIC_WAII_SERVICE, $client->getWaiiServiceUrl(ServiceDnsType::PUBLIC));
     }
 
     public function testGetDefaultPublicUrlMethods(): void
@@ -92,7 +89,6 @@ class ServiceClientTest extends TestCase
         self::assertSame(self::PUBLIC_SYNC_ACTIONS_SERVICE, $client->getSyncActionsServiceUrl());
         self::assertSame(self::PUBLIC_TEMPLATES, $client->getTemplatesUrl());
         self::assertSame(self::PUBLIC_VAULT, $client->getVaultUrl());
-        self::assertSame(self::PUBLIC_WAII_SERVICE, $client->getWaiiServiceUrl());
     }
 
     public function testGetExplicitPublicUrlOfServiceWithoutPublicDns(): void
@@ -139,7 +135,6 @@ class ServiceClientTest extends TestCase
         self::assertSame(self::INTERNAL_SYNC_ACTIONS_SERVICE, $client->getSyncActionsServiceUrl(ServiceDnsType::INTERNAL));
         self::assertSame(self::INTERNAL_TEMPLATES, $client->getTemplatesUrl(ServiceDnsType::INTERNAL));
         self::assertSame(self::INTERNAL_VAULT, $client->getVaultUrl(ServiceDnsType::INTERNAL));
-        self::assertSame(self::INTERNAL_WAII_SERVICE, $client->getWaiiServiceUrl(ServiceDnsType::INTERNAL));
         // phpcs:enable Generic.Files.LineLength
     }
 
@@ -164,6 +159,5 @@ class ServiceClientTest extends TestCase
         self::assertSame(self::INTERNAL_SYNC_ACTIONS_SERVICE, $client->getSyncActionsServiceUrl());
         self::assertSame(self::INTERNAL_TEMPLATES, $client->getTemplatesUrl());
         self::assertSame(self::INTERNAL_VAULT, $client->getVaultUrl());
-        self::assertSame(self::INTERNAL_WAII_SERVICE, $client->getWaiiServiceUrl());
     }
 }

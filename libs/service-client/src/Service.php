@@ -25,7 +25,6 @@ enum Service
     case SYNC_ACTIONS;
     case TEMPLATES;
     case VAULT;
-    case WAII;
 
     public function getPublicSubdomain(): string
     {
@@ -47,7 +46,6 @@ enum Service
             self::SYNC_ACTIONS => 'sync-actions',
             self::TEMPLATES => 'templates',
             self::VAULT => 'vault',
-            self::WAII => 'waii',
         };
     }
 
@@ -71,7 +69,6 @@ enum Service
             self::SYNC_ACTIONS => 'runner-sync-api.default',
             self::TEMPLATES => 'templates-api.templates-api',
             self::VAULT => 'vault-api.default',
-            self::WAII => 'waii-svc.waii',
         };
     }
 }

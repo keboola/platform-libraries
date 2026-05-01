@@ -26,7 +26,6 @@ class ServiceTest extends TestCase
         yield 'queue' => [Service::QUEUE, 'queue'];
         yield 'scheduler' => [Service::SCHEDULER, 'scheduler'];
         yield 'sync-actions' => [Service::SYNC_ACTIONS, 'sync-actions'];
-        yield 'waii' => [Service::WAII, 'waii'];
     }
 
     #[DataProvider('providePublicSubdomains')]
@@ -67,7 +66,6 @@ class ServiceTest extends TestCase
         yield 'queue internal api' => [Service::QUEUE_INTERNAL_API, 'job-queue-internal-api.default'];
         yield 'scheduler' => [Service::SCHEDULER, 'scheduler-api.default'];
         yield 'sync-actions' => [Service::SYNC_ACTIONS, 'runner-sync-api.default'];
-        yield 'waii' => [Service::WAII, 'waii-svc.waii'];
     }
 
     #[DataProvider('provideInternalServiceNames')]

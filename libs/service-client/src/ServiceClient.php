@@ -171,5 +171,4 @@ class ServiceClient
     {
         return $this->getServiceUrl(Service::VAULT, $dnsType);
     }
-
 }

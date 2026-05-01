@@ -119,14 +119,6 @@ class ServiceClient
     /**
      * @return non-empty-string
      */
-    public function getSandboxesApiUrl(?ServiceDnsType $dnsType = null): string
-    {
-        return $this->getServiceUrl(Service::SANDBOXES_API, $dnsType);
-    }
-
-    /**
-     * @return non-empty-string
-     */
     public function getSchedulerServiceUrl(?ServiceDnsType $dnsType = null): string
     {
         return $this->getServiceUrl(Service::SCHEDULER, $dnsType);
@@ -178,13 +170,5 @@ class ServiceClient
     public function getVaultUrl(?ServiceDnsType $dnsType = null): string
     {
         return $this->getServiceUrl(Service::VAULT, $dnsType);
-    }
-
-    /**
-     * @return non-empty-string
-     */
-    public function getWaiiServiceUrl(?ServiceDnsType $dnsType = null): string
-    {
-        return $this->getServiceUrl(Service::WAII, $dnsType);
     }
 }

@@ -22,12 +22,10 @@ class ServiceClientTest extends TestCase
     private const PUBLIC_NOTIFICATION_SERVICE = 'https://notification.north-europe.azure.keboola.com';
     private const PUBLIC_OAUTH = 'https://oauth.north-europe.azure.keboola.com';
     private const PUBLIC_QUEUE = 'https://queue.north-europe.azure.keboola.com';
-    private const PUBLIC_SANDBOXES_SERVICE = 'https://sandboxes.north-europe.azure.keboola.com';
     private const PUBLIC_SCHEDULER_SERVICE = 'https://scheduler.north-europe.azure.keboola.com';
     private const PUBLIC_SYNC_ACTIONS_SERVICE = 'https://sync-actions.north-europe.azure.keboola.com';
     private const PUBLIC_TEMPLATES = 'https://templates.north-europe.azure.keboola.com';
     private const PUBLIC_VAULT = 'https://vault.north-europe.azure.keboola.com';
-    private const PUBLIC_WAII_SERVICE = 'https://waii.north-europe.azure.keboola.com';
     private const PUBLIC_QUERY_SERVICE = 'https://query.north-europe.azure.keboola.com';
 
     private const INTERNAL_AI_SERVICE = 'http://ai-service-api.default.svc.cluster.local';
@@ -43,12 +41,10 @@ class ServiceClientTest extends TestCase
     private const INTERNAL_QUERY_SERVICE = 'http://query-service-api.query-service.svc.cluster.local';
     private const INTERNAL_QUEUE = 'http://job-queue-api.default.svc.cluster.local';
     private const INTERNAL_QUEUE_INTERNAL_API = 'http://job-queue-internal-api.default.svc.cluster.local';
-    private const INTERNAL_SANDBOXES_SERVICE = 'http://sandboxes-api.sandboxes.svc.cluster.local';
     private const INTERNAL_SCHEDULER_SERVICE = 'http://scheduler-api.default.svc.cluster.local';
     private const INTERNAL_SYNC_ACTIONS_SERVICE = 'http://runner-sync-api.default.svc.cluster.local';
     private const INTERNAL_TEMPLATES = 'http://templates-api.templates-api.svc.cluster.local';
     private const INTERNAL_VAULT = 'http://vault-api.default.svc.cluster.local';
-    private const INTERNAL_WAII_SERVICE = 'http://waii-svc.waii.svc.cluster.local';
 
     public function testGetExplicitPublicUrlMethods(): void
     {
@@ -67,12 +63,10 @@ class ServiceClientTest extends TestCase
         self::assertSame(self::PUBLIC_OAUTH, $client->getOauthUrl(ServiceDnsType::PUBLIC));
         self::assertSame(self::PUBLIC_QUERY_SERVICE, $client->getQueryServiceUrl(ServiceDnsType::PUBLIC));
         self::assertSame(self::PUBLIC_QUEUE, $client->getQueueUrl(ServiceDnsType::PUBLIC));
-        self::assertSame(self::PUBLIC_SANDBOXES_SERVICE, $client->getSandboxesApiUrl(ServiceDnsType::PUBLIC));
         self::assertSame(self::PUBLIC_SCHEDULER_SERVICE, $client->getSchedulerServiceUrl(ServiceDnsType::PUBLIC));
         self::assertSame(self::PUBLIC_SYNC_ACTIONS_SERVICE, $client->getSyncActionsServiceUrl(ServiceDnsType::PUBLIC));
         self::assertSame(self::PUBLIC_TEMPLATES, $client->getTemplatesUrl(ServiceDnsType::PUBLIC));
         self::assertSame(self::PUBLIC_VAULT, $client->getVaultUrl(ServiceDnsType::PUBLIC));
-        self::assertSame(self::PUBLIC_WAII_SERVICE, $client->getWaiiServiceUrl(ServiceDnsType::PUBLIC));
     }
 
     public function testGetDefaultPublicUrlMethods(): void
@@ -91,12 +85,10 @@ class ServiceClientTest extends TestCase
         self::assertSame(self::PUBLIC_OAUTH, $client->getOauthUrl());
         self::assertSame(self::PUBLIC_QUERY_SERVICE, $client->getQueryServiceUrl());
         self::assertSame(self::PUBLIC_QUEUE, $client->getQueueUrl());
-        self::assertSame(self::PUBLIC_SANDBOXES_SERVICE, $client->getSandboxesApiUrl());
         self::assertSame(self::PUBLIC_SCHEDULER_SERVICE, $client->getSchedulerServiceUrl());
         self::assertSame(self::PUBLIC_SYNC_ACTIONS_SERVICE, $client->getSyncActionsServiceUrl());
         self::assertSame(self::PUBLIC_TEMPLATES, $client->getTemplatesUrl());
         self::assertSame(self::PUBLIC_VAULT, $client->getVaultUrl());
-        self::assertSame(self::PUBLIC_WAII_SERVICE, $client->getWaiiServiceUrl());
     }
 
     public function testGetExplicitPublicUrlOfServiceWithoutPublicDns(): void
@@ -139,12 +131,10 @@ class ServiceClientTest extends TestCase
         self::assertSame(self::INTERNAL_QUERY_SERVICE, $client->getQueryServiceUrl(ServiceDnsType::INTERNAL));
         self::assertSame(self::INTERNAL_QUEUE, $client->getQueueUrl(ServiceDnsType::INTERNAL));
         self::assertSame(self::INTERNAL_QUEUE_INTERNAL_API, $client->getQueueInternalApiUrl(ServiceDnsType::INTERNAL));
-        self::assertSame(self::INTERNAL_SANDBOXES_SERVICE, $client->getSandboxesApiUrl(ServiceDnsType::INTERNAL));
         self::assertSame(self::INTERNAL_SCHEDULER_SERVICE, $client->getSchedulerServiceUrl(ServiceDnsType::INTERNAL));
         self::assertSame(self::INTERNAL_SYNC_ACTIONS_SERVICE, $client->getSyncActionsServiceUrl(ServiceDnsType::INTERNAL));
         self::assertSame(self::INTERNAL_TEMPLATES, $client->getTemplatesUrl(ServiceDnsType::INTERNAL));
         self::assertSame(self::INTERNAL_VAULT, $client->getVaultUrl(ServiceDnsType::INTERNAL));
-        self::assertSame(self::INTERNAL_WAII_SERVICE, $client->getWaiiServiceUrl(ServiceDnsType::INTERNAL));
         // phpcs:enable Generic.Files.LineLength
     }
 
@@ -165,11 +155,9 @@ class ServiceClientTest extends TestCase
         self::assertSame(self::INTERNAL_QUERY_SERVICE, $client->getQueryServiceUrl());
         self::assertSame(self::INTERNAL_QUEUE, $client->getQueueUrl());
         self::assertSame(self::INTERNAL_QUEUE_INTERNAL_API, $client->getQueueInternalApiUrl());
-        self::assertSame(self::INTERNAL_SANDBOXES_SERVICE, $client->getSandboxesApiUrl());
         self::assertSame(self::INTERNAL_SCHEDULER_SERVICE, $client->getSchedulerServiceUrl());
         self::assertSame(self::INTERNAL_SYNC_ACTIONS_SERVICE, $client->getSyncActionsServiceUrl());
         self::assertSame(self::INTERNAL_TEMPLATES, $client->getTemplatesUrl());
         self::assertSame(self::INTERNAL_VAULT, $client->getVaultUrl());
-        self::assertSame(self::INTERNAL_WAII_SERVICE, $client->getWaiiServiceUrl());
     }
 }

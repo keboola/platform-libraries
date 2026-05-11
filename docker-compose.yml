@@ -196,6 +196,11 @@ services:
       - STORAGE_API_TOKEN
       - STORAGE_API_URL
 
+  dev-git-service-api-client:
+    <<: *dev82
+    image: keboola/git-service-api-client
+    working_dir: /code/libs/git-service-api-client
+
   dev-vault-api-client:
     <<: *dev82
     image: keboola/vault-api-client

@@ -201,9 +201,14 @@ $mock->expects(self::exactly(count($expectedCalls)))
 
 ## CI/CD
 
-- Azure Pipelines configuration in `azure-pipelines.yml`
-- Each library has its own pipeline that runs on changes
-- Libraries are independently published to GitHub repositories
+- GitHub Actions configuration in `.github/workflows/`:
+  - `ci.yml` — main dispatcher (push to any branch); detects affected libraries via `ci/affected-libs.sh` + `ci/deps.json`, runs tests, splits affected libraries to standalone repos
+  - `tag-publish.yml` — splits the matching library on tag push (`<lib>/<version>`)
+  - `_lib-common.yml` — reusable workflow for the 19 simple libraries
+  - `_lib-{input-mapping,output-mapping,k8s-client}.yml` — bespoke workflows for libraries with custom test shapes
+  - `_split-library.yml` — reusable workflow that pushes a library subtree to its standalone repo using a GitHub App installation token
+- Each library's CI is selected dynamically based on changed files plus transitive dependents (declared in `ci/deps.json`)
+- Libraries are independently published to GitHub repositories via the split job (auth: `keboola-libs-publisher` GitHub App)
 
 ## PHP Version Support
 

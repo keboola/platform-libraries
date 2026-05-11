@@ -42,7 +42,7 @@ azure-pipelines/                           ├── tag-publish.yml         ←
     ├── push-acr.yml          (unused)     ci/
     ├── push-ecr.yml          (unused)     ├── deps.json               ← static forward-dep graph
     ├── push-production-registry.yml       ├── lib-meta.json           ← php-version, service, vars/secrets per lib
-    ├── push-testing-registry.yml          ├── publish-targets.json    ← lib → standalone-repo mapping
+    ├── push-testing-registry.yml          ├── publish-targets.json    ← sparse map of lib → target-repo overrides
     └── restore-docker-artifacts.yml       └── affected-libs.sh        ← graph + diff → matrix
 libs/<lib>/azure-pipelines.tests.yml       bin/
 bin/                                       ├── split-repo.sh           ← unchanged
@@ -279,8 +279,7 @@ on:
   workflow_call:
     inputs:
       library:     { required: true, type: string }
-      target-repo: { required: true, type: string }
-      tag-prefix:  { required: true, type: string }
+      target-repo: { required: true, type: string }   # e.g., "keboola/api-bundle" or "keboola/php-key-generator"
 
 concurrency:
   group: split-${{ inputs.library }}
@@ -305,14 +304,26 @@ jobs:
       - name: Split + push
         env:
           TARGET_REPO_URL: https://x-access-token:${{ steps.app-token.outputs.token }}@github.com/${{ inputs.target-repo }}.git
-        run: ./bin/split-repo.sh "$PWD" "$TARGET_REPO_URL" "libs/${{ inputs.library }}" "${{ inputs.tag-prefix }}"
+        run: ./bin/split-repo.sh "$PWD" "$TARGET_REPO_URL" "libs/${{ inputs.library }}" "${{ inputs.library }}/"
 ```
 
-`bin/split-repo.sh` reused **unchanged**.
+`bin/split-repo.sh` reused **unchanged**. The tag prefix is derived from `inputs.library` (always `<library>/`) — no separate input needed. The Azure setup ran the split inside a `fedora:34` container only because Fedora ships `git-filter-repo` and `sudo` in its base image; here we just `apt-get install git-filter-repo` directly on `ubuntu-latest`.
 
-### `ci/publish-targets.json` — library → standalone-repo mapping
+### `ci/publish-targets.json` — sparse override map (only name mismatches)
 
-Encodes the few mismatches between library name and target repo name (e.g., `key-generator` → `keboola/php-key-generator`, `git-service-api-client` → `keboola/git-service-php-api-client`). Full mapping in design conversation; mirrors today's per-library `targetRepo:` parameters.
+Tag prefix always equals the library name, so the only thing that varies is the target repo name. For most libraries the target is `keboola/<library>` and no entry is needed; this file lists only the exceptions.
+
+```json
+{
+  "git-service-api-client":       "keboola/git-service-php-api-client",
+  "key-generator":                "keboola/php-key-generator",
+  "query-service-api-client":     "keboola/query-service-api-php-client",
+  "sandboxes-service-api-client": "keboola/sandboxes-service-api-php-client",
+  "vault-api-client":             "keboola/vault-api-php-client"
+}
+```
+
+A small helper inside the dispatcher / tag-resolve step looks up `publish-targets.json[lib] // "keboola/" + lib` as the target.
 
 ### `tag-publish.yml`
 
@@ -327,23 +338,20 @@ jobs:
     outputs:
       library: ${{ steps.parse.outputs.library }}
       target:  ${{ steps.parse.outputs.target }}
-      prefix:  ${{ steps.parse.outputs.prefix }}
     steps:
       - uses: actions/checkout@v4
       - id: parse
         run: |
           TAG="${GITHUB_REF_NAME}"; LIB="${TAG%%/*}"
-          META=$(jq -r --arg lib "$LIB" '.[$lib]' ci/publish-targets.json)
-          echo "library=$LIB" >> "$GITHUB_OUTPUT"
-          echo "target=$(echo "$META" | jq -r '.target')" >> "$GITHUB_OUTPUT"
-          echo "prefix=$(echo "$META" | jq -r '.tag_prefix')" >> "$GITHUB_OUTPUT"
+          TARGET=$(jq -r --arg lib "$LIB" '.[$lib] // "keboola/" + $lib' ci/publish-targets.json)
+          echo "library=$LIB"   >> "$GITHUB_OUTPUT"
+          echo "target=$TARGET" >> "$GITHUB_OUTPUT"
   split:
     needs: resolve
     uses: ./.github/workflows/_split-library.yml
     with:
       library:     ${{ needs.resolve.outputs.library }}
       target-repo: ${{ needs.resolve.outputs.target }}
-      tag-prefix:  ${{ needs.resolve.outputs.prefix }}
     secrets: inherit
 ```
 
@@ -364,12 +372,17 @@ split:
   uses: ./.github/workflows/_split-library.yml
   with:
     library:     ${{ matrix.library }}
-    target-repo: ${{ fromJSON(needs.detect.outputs.publish-targets)[matrix.library].target }}
-    tag-prefix:  ${{ fromJSON(needs.detect.outputs.publish-targets)[matrix.library].tag_prefix }}
+    target-repo: ${{ fromJSON(needs.detect.outputs.publish-targets)[matrix.library] }}
   secrets: inherit
 ```
 
-(The `detect` job reads `ci/publish-targets.json` and emits it as a `publish-targets` output; matrix `with:` then looks up each library's target.)
+The `detect` job reads `ci/publish-targets.json` and emits a JSON object as `publish-targets` output, **including a default `keboola/<lib>` entry for every affected library not overridden** in the file (so the matrix `with:` lookup is total). One-liner in `affected-libs.sh`:
+
+```bash
+jq -nc --slurpfile o ci/publish-targets.json --argjson libs "$ALL_AFFECTED_JSON" '
+  $libs | map({ key: ., value: ($o[0][.] // "keboola/" + .) }) | from_entries
+'
+```
 
 ### GitHub App setup (one-time)
 

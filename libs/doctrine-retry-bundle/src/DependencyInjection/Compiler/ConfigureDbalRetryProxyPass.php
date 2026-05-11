@@ -66,7 +66,9 @@ class ConfigureDbalRetryProxyPass implements CompilerPassInterface
 
     private function getConfiguredMiddlewares(Definition $configurationDefinition): array
     {
-        foreach (array_reverse($configurationDefinition->getMethodCalls()) as [$method, $arguments]) {
+        foreach (array_reverse($configurationDefinition->getMethodCalls()) as $call) {
+            assert(is_array($call));
+            [$method, $arguments] = $call;
             if ($method !== self::SET_MIDDLEWARES_METHOD) {
                 continue;
             }

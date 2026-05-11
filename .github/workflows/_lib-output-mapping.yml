@@ -1,0 +1,210 @@
+name: lib-output-mapping
+
+on:
+  workflow_call: {}
+
+concurrency:
+  group: tests-output-mapping-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  PHP_VERSION: "8.2"
+
+jobs:
+  cs:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          build-args: PHP_VERSION=${{ env.PHP_VERSION }}
+          tags: ci-base:${{ env.PHP_VERSION }}
+          load: true
+          cache-from: type=gha,scope=php-dev${{ env.PHP_VERSION }}
+          cache-to: type=gha,scope=php-dev${{ env.PHP_VERSION }},mode=max
+      - run: |
+          docker tag ci-base:${{ env.PHP_VERSION }} keboola/php-dev82
+          docker compose run --rm dev-output-mapping bash -c "composer install && composer check"
+      - if: failure()
+        run: docker compose logs
+
+  general:
+    needs: cs
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      STORAGE_API_URL:           ${{ vars.STORAGE_API_URL_AWS }}
+      STORAGE_API_TOKEN:         ${{ secrets.OUTPUT_MAPPING__STORAGE_API_TOKEN_AWS }}
+      STORAGE_API_TOKEN_MASTER:  ${{ secrets.OUTPUT_MAPPING__STORAGE_API_TOKEN_MASTER_AWS }}
+      BIGQUERY_STORAGE_API_URL:  ${{ vars.OUTPUT_MAPPING__BIGQUERY_STORAGE_API_URL }}
+      BIGQUERY_STORAGE_API_TOKEN: ${{ secrets.OUTPUT_MAPPING__BIGQUERY_STORAGE_API_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          build-args: PHP_VERSION=${{ env.PHP_VERSION }}
+          tags: ci-base:${{ env.PHP_VERSION }}
+          load: true
+          cache-from: type=gha,scope=php-dev${{ env.PHP_VERSION }}
+      - run: |
+          docker tag ci-base:${{ env.PHP_VERSION }} keboola/php-dev82
+          docker compose run --rm dev-output-mapping bash -c "composer install && composer paratests -- --testsuite general-tests -f -p 4"
+      - if: failure()
+        run: docker compose logs
+
+  main-writer-1:
+    needs: cs
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      STORAGE_API_URL:          ${{ vars.STORAGE_API_URL_AWS }}
+      STORAGE_API_TOKEN:        ${{ secrets.OUTPUT_MAPPING__STORAGE_API_TOKEN_AWS }}
+      STORAGE_API_TOKEN_MASTER: ${{ secrets.OUTPUT_MAPPING__STORAGE_API_TOKEN_MASTER_AWS }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          build-args: PHP_VERSION=${{ env.PHP_VERSION }}
+          tags: ci-base:${{ env.PHP_VERSION }}
+          load: true
+          cache-from: type=gha,scope=php-dev${{ env.PHP_VERSION }}
+      - run: |
+          docker tag ci-base:${{ env.PHP_VERSION }} keboola/php-dev82
+          docker compose run --rm dev-output-mapping bash -c "composer install && composer paratests -- --testsuite main-writer-tests-1 -f"
+      - if: failure()
+        run: docker compose logs
+
+  main-writer-2:
+    needs: cs
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      STORAGE_API_URL:          ${{ vars.STORAGE_API_URL_AWS }}
+      STORAGE_API_TOKEN:        ${{ secrets.OUTPUT_MAPPING__STORAGE_API_TOKEN_AWS }}
+      STORAGE_API_TOKEN_MASTER: ${{ secrets.OUTPUT_MAPPING__STORAGE_API_TOKEN_MASTER_AWS }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          build-args: PHP_VERSION=${{ env.PHP_VERSION }}
+          tags: ci-base:${{ env.PHP_VERSION }}
+          load: true
+          cache-from: type=gha,scope=php-dev${{ env.PHP_VERSION }}
+      - run: |
+          docker tag ci-base:${{ env.PHP_VERSION }} keboola/php-dev82
+          docker compose run --rm dev-output-mapping bash -c "composer install && vendor/bin/phpunit --testsuite main-writer-tests-2"
+      - if: failure()
+        run: docker compose logs
+
+  workspace-writer:
+    needs: cs
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      STORAGE_API_URL:          ${{ vars.STORAGE_API_URL_AWS }}
+      STORAGE_API_TOKEN:        ${{ secrets.OUTPUT_MAPPING__STORAGE_API_TOKEN_AWS }}
+      STORAGE_API_TOKEN_MASTER: ${{ secrets.OUTPUT_MAPPING__STORAGE_API_TOKEN_MASTER_AWS }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          build-args: PHP_VERSION=${{ env.PHP_VERSION }}
+          tags: ci-base:${{ env.PHP_VERSION }}
+          load: true
+          cache-from: type=gha,scope=php-dev${{ env.PHP_VERSION }}
+      - run: |
+          docker tag ci-base:${{ env.PHP_VERSION }} keboola/php-dev82
+          docker compose run --rm dev-output-mapping bash -c "composer install && composer paratests -- --testsuite workspace-writer-tests -f"
+      - if: failure()
+        run: docker compose logs
+
+  native-types:
+    needs: cs
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      STORAGE_API_URL:          ${{ vars.STORAGE_API_URL_AWS }}
+      STORAGE_API_TOKEN:        ${{ secrets.OUTPUT_MAPPING_NATIVE_TYPES__STORAGE_API_TOKEN_AWS }}
+      STORAGE_API_TOKEN_MASTER: ${{ secrets.OUTPUT_MAPPING__STORAGE_API_TOKEN_MASTER_AWS }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          build-args: PHP_VERSION=${{ env.PHP_VERSION }}
+          tags: ci-base:${{ env.PHP_VERSION }}
+          load: true
+          cache-from: type=gha,scope=php-dev${{ env.PHP_VERSION }}
+      - run: |
+          docker tag ci-base:${{ env.PHP_VERSION }} keboola/php-dev82
+          docker compose run --rm dev-output-mapping bash -c "composer install && vendor/bin/phpunit --testsuite native-types"
+      - if: failure()
+        run: docker compose logs
+
+  new-native-types:
+    needs: cs
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      STORAGE_API_URL:          ${{ vars.STORAGE_API_URL_AWS }}
+      STORAGE_API_TOKEN:        ${{ secrets.OUTPUT_MAPPING_NEW_NATIVE_TYPES__STORAGE_API_TOKEN_AWS }}
+      STORAGE_API_TOKEN_MASTER: ${{ secrets.OUTPUT_MAPPING__STORAGE_API_TOKEN_MASTER_AWS }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          build-args: PHP_VERSION=${{ env.PHP_VERSION }}
+          tags: ci-base:${{ env.PHP_VERSION }}
+          load: true
+          cache-from: type=gha,scope=php-dev${{ env.PHP_VERSION }}
+      - run: |
+          docker tag ci-base:${{ env.PHP_VERSION }} keboola/php-dev82
+          docker compose run --rm dev-output-mapping bash -c "composer install && vendor/bin/phpunit --testsuite new-native-types"
+      - if: failure()
+        run: docker compose logs
+
+  slice:
+    needs: cs
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      STORAGE_API_URL:          ${{ vars.STORAGE_API_URL_AWS }}
+      STORAGE_API_TOKEN:        ${{ secrets.OUTPUT_MAPPING_SLICE_FEATURE__STORAGE_API_TOKEN_AWS }}
+      STORAGE_API_TOKEN_MASTER: ${{ secrets.OUTPUT_MAPPING_SLICE_FEATURE__STORAGE_API_TOKEN_MASTER_AWS }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          build-args: PHP_VERSION=${{ env.PHP_VERSION }}
+          tags: ci-base:${{ env.PHP_VERSION }}
+          load: true
+          cache-from: type=gha,scope=php-dev${{ env.PHP_VERSION }}
+      - run: |
+          docker tag ci-base:${{ env.PHP_VERSION }} keboola/php-dev82
+          docker compose run --rm dev-output-mapping bash -c "composer install && composer paratests -- --testsuite slice -f -p 4"
+      - if: failure()
+        run: docker compose logs

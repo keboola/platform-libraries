@@ -69,3 +69,9 @@ jobs:
     if: needs.detect.outputs.has-input-mapping == 'true'
     uses: ./.github/workflows/_lib-input-mapping.yml
     secrets: inherit
+
+  tests-output-mapping:
+    needs: detect
+    if: needs.detect.outputs.has-output-mapping == 'true'
+    uses: ./.github/workflows/_lib-output-mapping.yml
+    secrets: inherit

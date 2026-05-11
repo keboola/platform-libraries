@@ -14,6 +14,7 @@ enum Service
     case CONNECTION;
     case EDITOR;
     case ENCRYPTION;
+    case GIT_SERVICE;
     case IMPORT;
     case NOTIFICATION;
     case OAUTH;
@@ -37,6 +38,7 @@ enum Service
             self::CONNECTION => 'connection',
             self::EDITOR => 'editor',
             self::ENCRYPTION => 'encryption',
+            self::GIT_SERVICE => throw new RuntimeException('Git service does not have public DNS'),
             self::IMPORT => 'import',
             self::NOTIFICATION => 'notification',
             self::OAUTH => 'oauth',
@@ -62,6 +64,7 @@ enum Service
             self::CONNECTION => 'connection-api.connection',
             self::EDITOR => 'editor-service-api.editor-service',
             self::ENCRYPTION => 'encryption-api.default',
+            self::GIT_SERVICE => 'git-service.git-service',
             self::IMPORT => 'sapi-importer.default',
             self::NOTIFICATION => 'notification-api.default',
             self::OAUTH => 'oauth-api.default',

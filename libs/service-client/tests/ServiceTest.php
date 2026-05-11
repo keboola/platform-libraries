@@ -39,6 +39,7 @@ class ServiceTest extends TestCase
     public static function provideServicesWithoutPublicDns(): iterable
     {
         yield 'queue internal api' => [Service::QUEUE_INTERNAL_API, 'Job queue internal API does not have public DNS'];
+        yield 'git service' => [Service::GIT_SERVICE, 'Git service does not have public DNS'];
     }
 
     #[DataProvider('provideServicesWithoutPublicDns')]
@@ -61,6 +62,7 @@ class ServiceTest extends TestCase
         yield 'data-science' => [Service::SANDBOXES_SERVICE, 'sandboxes-service-api.default'];
         yield 'editor' => [Service::EDITOR, 'editor-service-api.editor-service'];
         yield 'encryption' => [Service::ENCRYPTION, 'encryption-api.default'];
+        yield 'git service' => [Service::GIT_SERVICE, 'git-service.git-service']; // <-- custom namespace, internal-only
         yield 'import' => [Service::IMPORT, 'sapi-importer.default'];
         yield 'notification' => [Service::NOTIFICATION, 'notification-api.default'];
         yield 'oauth' => [Service::OAUTH, 'oauth-api.default'];

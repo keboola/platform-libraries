@@ -37,6 +37,7 @@ class ServiceClientTest extends TestCase
     private const INTERNAL_DATA_SCIENCE_SERVICE = 'http://sandboxes-service-api.default.svc.cluster.local';
     private const INTERNAL_EDITOR_SERVICE = 'http://editor-service-api.editor-service.svc.cluster.local';
     private const INTERNAL_ENCRYPTION_SERVICE = 'http://encryption-api.default.svc.cluster.local';
+    private const INTERNAL_GIT_SERVICE = 'http://git-service.git-service.svc.cluster.local';
     private const INTERNAL_IMPORT_SERVICE = 'http://sapi-importer.default.svc.cluster.local';
     private const INTERNAL_NOTIFICATION_SERVICE = 'http://notification-api.default.svc.cluster.local';
     private const INTERNAL_OAUTH = 'http://oauth-api.default.svc.cluster.local';
@@ -120,6 +121,26 @@ class ServiceClientTest extends TestCase
         $client->getQueueInternalApiUrl();
     }
 
+    public function testGetExplicitPublicUrlOfGitServiceThrows(): void
+    {
+        $client = new ServiceClient('north-europe.azure.keboola.com', ServiceDnsType::INTERNAL);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Git service does not have public DNS');
+
+        $client->getGitServiceUrl(ServiceDnsType::PUBLIC);
+    }
+
+    public function testGetDefaultPublicUrlOfGitServiceThrows(): void
+    {
+        $client = new ServiceClient('north-europe.azure.keboola.com', ServiceDnsType::PUBLIC);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Git service does not have public DNS');
+
+        $client->getGitServiceUrl();
+    }
+
     public function testGetExplicitInternalUrlMethods(): void
     {
         // configure for default PUBLIC dns and test that INTERNAL is properly passed from the method
@@ -133,6 +154,7 @@ class ServiceClientTest extends TestCase
         self::assertSame(self::INTERNAL_DATA_SCIENCE_SERVICE, $client->getSandboxesServiceUrl(ServiceDnsType::INTERNAL));
         self::assertSame(self::INTERNAL_EDITOR_SERVICE, $client->getEditorServiceUrl(ServiceDnsType::INTERNAL));
         self::assertSame(self::INTERNAL_ENCRYPTION_SERVICE, $client->getEncryptionServiceUrl(ServiceDnsType::INTERNAL));
+        self::assertSame(self::INTERNAL_GIT_SERVICE, $client->getGitServiceUrl(ServiceDnsType::INTERNAL));
         self::assertSame(self::INTERNAL_IMPORT_SERVICE, $client->getImportServiceUrl(ServiceDnsType::INTERNAL));
         self::assertSame(self::INTERNAL_NOTIFICATION_SERVICE, $client->getNotificationServiceUrl(ServiceDnsType::INTERNAL));
         self::assertSame(self::INTERNAL_OAUTH, $client->getOauthUrl(ServiceDnsType::INTERNAL));
@@ -159,6 +181,7 @@ class ServiceClientTest extends TestCase
         self::assertSame(self::INTERNAL_DATA_SCIENCE_SERVICE, $client->getSandboxesServiceUrl());
         self::assertSame(self::INTERNAL_EDITOR_SERVICE, $client->getEditorServiceUrl());
         self::assertSame(self::INTERNAL_ENCRYPTION_SERVICE, $client->getEncryptionServiceUrl());
+        self::assertSame(self::INTERNAL_GIT_SERVICE, $client->getGitServiceUrl());
         self::assertSame(self::INTERNAL_IMPORT_SERVICE, $client->getImportServiceUrl());
         self::assertSame(self::INTERNAL_NOTIFICATION_SERVICE, $client->getNotificationServiceUrl());
         self::assertSame(self::INTERNAL_OAUTH, $client->getOauthUrl());

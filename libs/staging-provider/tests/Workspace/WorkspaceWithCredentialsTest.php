@@ -85,6 +85,32 @@ class WorkspaceWithCredentialsTest extends TestCase
             ],
         ];
 
+        yield 'redshift' => [
+            'data' => [
+                'id' => '654',
+                'backendSize' => 'small',
+                'connection' => [
+                    'backend' => 'redshift',
+                    'host' => 'some-host',
+                    'database' => 'some-database',
+                    'schema' => 'some-schema',
+                    'user' => 'some-user',
+                    'password' => 'some-secret',
+                ],
+            ],
+            'expectedId' => '654',
+            'expectedBackendType' => 'redshift',
+            'expectedBackendSize' => 'small',
+            'expectedLoginType' => WorkspaceLoginType::DEFAULT,
+            'expectedCredentials' => [
+                'host' => 'some-host',
+                'database' => 'some-database',
+                'schema' => 'some-schema',
+                'user' => 'some-user',
+                'password' => 'some-secret',
+            ],
+        ];
+
         yield 'snowflake-sso' => [
             'data' => [
                 'id' => '987',

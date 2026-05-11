@@ -97,6 +97,13 @@ class WorkspaceWithCredentials implements WorkspaceWithCredentialsInterface
                 'privateKey' => $data['privateKey'] ?? null,
                 'account' => self::parseSnowflakeAccount($data['host']),
             ],
+            'redshift' => [
+                'host' => $data['host'],
+                'database' => $data['database'],
+                'schema' => $data['schema'],
+                'user' => $data['user'],
+                'password' => $data['password'] ?? null,
+            ],
             default => throw new StagingProviderException(sprintf('Unsupported backend "%s"', $backend)),
         };
     }

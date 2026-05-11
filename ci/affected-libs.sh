@@ -82,8 +82,55 @@ affected() {
     ' "$DEPS_FILE"
 }
 
+# Path to publish-targets.json (sparse override map). Defaults to repo-relative.
+PUBLISH_TARGETS_FILE="${PUBLISH_TARGETS_FILE:-ci/publish-targets.json}"
+
+emit() {
+  local affected_libs
+  affected_libs=$(affected)
+
+  # Convert affected list to JSON array
+  local all_json
+  all_json=$(jq -Rsc 'split("\n") | map(select(length > 0))' <<<"$affected_libs")
+
+  # Partition: common-matrix = affected \ complex
+  local common_json
+  common_json=$(jq -c --argjson all "$all_json" '
+    . as $deps
+    | $all - $deps.complex
+  ' "$DEPS_FILE")
+
+  # publish-targets: map every affected lib to its target repo (override or default)
+  local targets_json
+  if [[ -f "$PUBLISH_TARGETS_FILE" ]]; then
+    targets_json=$(jq -c --argjson all "$all_json" --slurpfile o "$PUBLISH_TARGETS_FILE" '
+      $all
+      | map({ key: ., value: ($o[0][.] // ("keboola/" + .)) })
+      | from_entries
+    ' <<<'null')
+  else
+    targets_json=$(jq -c --argjson all "$all_json" '
+      $all | map({ key: ., value: ("keboola/" + .) }) | from_entries
+    ' <<<'null')
+  fi
+
+  # Write GHA outputs
+  : "${GITHUB_OUTPUT:?GITHUB_OUTPUT must be set in --emit mode}"
+  {
+    echo "all-affected=$all_json"
+    echo "common-matrix=$common_json"
+    echo "publish-targets=$targets_json"
+    # Per-complex-lib boolean: has-<libname>=true|false
+    jq -r --argjson all "$all_json" '
+      .complex[] as $c
+      | "has-\($c)=\($all | index($c) != null)"
+    ' "$DEPS_FILE"
+  } >> "$GITHUB_OUTPUT"
+}
+
 case "$MODE" in
   --direct) direct ;;
   --affected) affected ;;
+  --emit) emit ;;
   *) echo "Mode $MODE not implemented yet" >&2; exit 2 ;;
 esac

@@ -104,3 +104,32 @@ teardown() {
   [ "$status" -eq 0 ]
   [ "$output" = "" ]
 }
+
+@test "emit: writes GHA outputs for affected libs" {
+  echo "// alpha" > libs/alpha/file.php
+  git commit -qam "edit alpha"
+  export GITHUB_OUTPUT="$TMP/gh-output"
+  : > "$GITHUB_OUTPUT"
+  run "$SCRIPT" --emit --deps "$FIXTURES/deps-sample.json" --base main
+  [ "$status" -eq 0 ]
+
+  # Verify each output key=value line
+  grep -q '^all-affected=\["alpha","beta","epsilon","gamma"\]$' "$GITHUB_OUTPUT"
+  # common-matrix excludes "gamma" (it's in complex)
+  grep -q '^common-matrix=\["alpha","beta","epsilon"\]$' "$GITHUB_OUTPUT"
+  # No complex libs from sample fixture map to has-input-mapping etc. — only "gamma" is complex here.
+  grep -q '^has-gamma=true$' "$GITHUB_OUTPUT"
+  # publish-targets is emitted as JSON object
+  grep -q '^publish-targets={.*"alpha":"keboola/alpha".*}$' "$GITHUB_OUTPUT"
+}
+
+@test "emit: empty affected set still writes valid outputs" {
+  export GITHUB_OUTPUT="$TMP/gh-output"
+  : > "$GITHUB_OUTPUT"
+  run "$SCRIPT" --emit --deps "$FIXTURES/deps-sample.json" --base main
+  [ "$status" -eq 0 ]
+  grep -q '^all-affected=\[\]$' "$GITHUB_OUTPUT"
+  grep -q '^common-matrix=\[\]$' "$GITHUB_OUTPUT"
+  grep -q '^has-gamma=false$' "$GITHUB_OUTPUT"
+  grep -q '^publish-targets={}$' "$GITHUB_OUTPUT"
+}

@@ -1,0 +1,65 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - '**'
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  detect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      common-matrix:      ${{ steps.emit.outputs.common-matrix }}
+      common-with-meta:   ${{ steps.meta.outputs.common-with-meta }}
+      all-affected:       ${{ steps.emit.outputs.all-affected }}
+      publish-targets:    ${{ steps.emit.outputs.publish-targets }}
+      has-input-mapping:  ${{ steps.emit.outputs.has-input-mapping }}
+      has-output-mapping: ${{ steps.emit.outputs.has-output-mapping }}
+      has-k8s-client:     ${{ steps.emit.outputs.has-k8s-client }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Lint deps.json against composer.json
+        run: ./ci/affected-libs.sh --lint
+
+      - name: Emit affected-libs outputs
+        id: emit
+        run: ./ci/affected-libs.sh --emit --base origin/main
+
+      - name: Build per-library metadata for matrix
+        id: meta
+        run: |
+          MATRIX=$(jq -nc \
+            --argjson libs '${{ steps.emit.outputs.common-matrix }}' \
+            --slurpfile meta ci/lib-meta.json \
+            '$libs | map({ library: ., php: $meta[0][.].php, service: $meta[0][.].service })')
+          echo "common-with-meta=$MATRIX" >> "$GITHUB_OUTPUT"
+
+      - name: Show detection summary
+        run: |
+          echo "Affected libraries:  ${{ steps.emit.outputs.all-affected }}"
+          echo "Common matrix:       ${{ steps.meta.outputs.common-with-meta }}"
+          echo "has-input-mapping:   ${{ steps.emit.outputs.has-input-mapping }}"
+          echo "has-output-mapping:  ${{ steps.emit.outputs.has-output-mapping }}"
+          echo "has-k8s-client:      ${{ steps.emit.outputs.has-k8s-client }}"
+
+  tests-common:
+    needs: detect
+    if: needs.detect.outputs.common-matrix != '[]'
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(needs.detect.outputs.common-with-meta) }}
+    uses: ./.github/workflows/_lib-common.yml
+    with:
+      library:      ${{ matrix.library }}
+      php-version:  ${{ matrix.php }}
+      service-name: ${{ matrix.service }}
+    secrets: inherit

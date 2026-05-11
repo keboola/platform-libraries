@@ -1,0 +1,36 @@
+name: tag-publish
+
+on:
+  push:
+    tags:
+      - '*/*'
+
+jobs:
+  resolve:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    outputs:
+      library: ${{ steps.parse.outputs.library }}
+      target:  ${{ steps.parse.outputs.target }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: parse
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          LIB="${TAG%%/*}"
+          if [[ -z "$LIB" || "$LIB" == "$TAG" ]]; then
+            echo "Tag '$TAG' does not match '<library>/<version>' shape; skipping." >&2
+            exit 1
+          fi
+          TARGET=$(jq -r --arg lib "$LIB" '.[$lib] // ("keboola/" + $lib)' ci/publish-targets.json)
+          echo "library=$LIB"   >> "$GITHUB_OUTPUT"
+          echo "target=$TARGET" >> "$GITHUB_OUTPUT"
+          echo "Resolved: library=$LIB target=$TARGET"
+
+  split:
+    needs: resolve
+    uses: ./.github/workflows/_split-library.yml
+    with:
+      library:     ${{ needs.resolve.outputs.library }}
+      target-repo: ${{ needs.resolve.outputs.target }}
+    secrets: inherit

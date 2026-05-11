@@ -133,3 +133,66 @@ teardown() {
   grep -q '^has-gamma=false$' "$GITHUB_OUTPUT"
   grep -q '^publish-targets={}$' "$GITHUB_OUTPUT"
 }
+
+# Lint mode helper: stages a libs/ tree with composer.json files in a temp repo
+setup_lint_repo() {
+  for lib in alpha beta gamma delta epsilon; do
+    mkdir -p "libs/$lib"
+    cat > "libs/$lib/composer.json" <<EOF
+{
+  "name": "keboola/$lib",
+  "require": {}
+}
+EOF
+  done
+}
+
+@test "lint: clean state with no edges passes" {
+  setup_lint_repo
+  cat > "$TMP/empty-deps.json" <<EOF
+{"libraries":{"alpha":{"depends-on":[]},"beta":{"depends-on":[]},"gamma":{"depends-on":[]},"delta":{"depends-on":[]},"epsilon":{"depends-on":[]}},"complex":[]}
+EOF
+  run "$SCRIPT" --lint --deps "$TMP/empty-deps.json"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"OK"* ]]
+}
+
+@test "lint: missing edge in deps.json is detected" {
+  setup_lint_repo
+  # beta requires alpha in composer.json
+  cat > libs/beta/composer.json <<EOF
+{
+  "name": "keboola/beta",
+  "require": { "keboola/alpha": "*@dev" }
+}
+EOF
+  cat > "$TMP/missing-edge.json" <<EOF
+{"libraries":{"alpha":{"depends-on":[]},"beta":{"depends-on":[]},"gamma":{"depends-on":[]},"delta":{"depends-on":[]},"epsilon":{"depends-on":[]}},"complex":[]}
+EOF
+  run "$SCRIPT" --lint --deps "$TMP/missing-edge.json"
+  [ "$status" -ne 0 ]
+  [[ "$output" == *"beta"* ]]
+  [[ "$output" == *"alpha"* ]]
+}
+
+@test "lint: missing library entry is detected" {
+  setup_lint_repo
+  # composer-fixtures has lib 'alpha' but deps.json doesn't list it
+  cat > "$TMP/missing-lib.json" <<EOF
+{"libraries":{"beta":{"depends-on":[]},"gamma":{"depends-on":[]},"delta":{"depends-on":[]},"epsilon":{"depends-on":[]}},"complex":[]}
+EOF
+  run "$SCRIPT" --lint --deps "$TMP/missing-lib.json"
+  [ "$status" -ne 0 ]
+  [[ "$output" == *"alpha"* ]]
+}
+
+@test "lint: stale edge in deps.json is detected" {
+  setup_lint_repo
+  # deps.json claims beta depends on alpha but composer.json doesn't
+  cat > "$TMP/stale-edge.json" <<EOF
+{"libraries":{"alpha":{"depends-on":[]},"beta":{"depends-on":["alpha"]},"gamma":{"depends-on":[]},"delta":{"depends-on":[]},"epsilon":{"depends-on":[]}},"complex":[]}
+EOF
+  run "$SCRIPT" --lint --deps "$TMP/stale-edge.json"
+  [ "$status" -ne 0 ]
+  [[ "$output" == *"stale"* || "$output" == *"unused"* || "$output" == *"missing"* ]]
+}

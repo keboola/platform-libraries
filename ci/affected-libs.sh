@@ -33,8 +33,10 @@ done
 
 [[ -z "$MODE" ]] && { usage >&2; exit 1; }
 
-# Compute the diff base
-BASE=$(git merge-base "$BASE_REF" HEAD 2>/dev/null || git rev-parse "$BASE_REF")
+# Compute the diff base (not needed for --lint)
+if [[ "$MODE" != "--lint" ]]; then
+  BASE=$(git merge-base "$BASE_REF" HEAD 2>/dev/null || git rev-parse "$BASE_REF")
+fi
 
 # DIRECT = set of libraries with paths in the diff matching libs/<lib>/**
 direct() {
@@ -128,9 +130,83 @@ emit() {
   } >> "$GITHUB_OUTPUT"
 }
 
+lint() {
+  # 1. Collect declared libraries from deps.json
+  local declared
+  declared=$(jq -r '.libraries | keys[]' "$DEPS_FILE" | sort -u)
+
+  # 2. Collect actual libraries from libs/<lib>/composer.json
+  local actual
+  actual=$(find libs -mindepth 2 -maxdepth 2 -name composer.json -printf '%h\n' \
+    | awk -F/ '{print $NF}' | sort -u)
+
+  # 3. Check parity of library lists
+  local missing_in_deps
+  missing_in_deps=$(comm -23 <(echo "$actual") <(echo "$declared"))
+  local missing_in_libs
+  missing_in_libs=$(comm -13 <(echo "$actual") <(echo "$declared"))
+
+  local errors=0
+  if [[ -n "$missing_in_deps" ]]; then
+    echo "ERROR: libraries present on disk but missing from $DEPS_FILE:"
+    echo "$missing_in_deps" | sed 's/^/  - /'
+    errors=$((errors + 1))
+  fi
+  if [[ -n "$missing_in_libs" ]]; then
+    echo "ERROR: libraries declared in $DEPS_FILE but absent from libs/:"
+    echo "$missing_in_libs" | sed 's/^/  - /'
+    errors=$((errors + 1))
+  fi
+
+  # 4. For each library, compare composer.json keboola/* deps with deps.json
+  while IFS= read -r lib; do
+    [[ -z "$lib" ]] && continue
+    local composer_file="libs/$lib/composer.json"
+    [[ ! -f "$composer_file" ]] && continue
+
+    # Extract keboola/<name> deps where <name> matches a declared library
+    local actual_edges
+    actual_edges=$(jq -r --argjson declared "$(echo "$declared" | jq -Rsc 'split("\n") | map(select(length > 0))')" '
+      [(.require // {}), (.["require-dev"] // {})]
+      | map(keys) | flatten
+      | map(select(startswith("keboola/")))
+      | map(sub("^keboola/"; ""))
+      | map(select(. as $x | $declared | index($x) != null))
+      | unique | sort | .[]
+    ' "$composer_file")
+
+    local declared_edges
+    declared_edges=$(jq -r --arg lib "$lib" '.libraries[$lib]["depends-on"] | sort | .[]' "$DEPS_FILE")
+
+    local extra_in_composer
+    extra_in_composer=$(comm -23 <(echo "$actual_edges") <(echo "$declared_edges"))
+    local stale_in_deps
+    stale_in_deps=$(comm -13 <(echo "$actual_edges") <(echo "$declared_edges"))
+
+    if [[ -n "$extra_in_composer" ]]; then
+      echo "ERROR: $lib depends on libraries not declared in $DEPS_FILE:"
+      echo "$extra_in_composer" | sed 's/^/  - missing edge: /'
+      errors=$((errors + 1))
+    fi
+    if [[ -n "$stale_in_deps" ]]; then
+      echo "ERROR: $lib has stale/unused edges in $DEPS_FILE:"
+      echo "$stale_in_deps" | sed 's/^/  - stale edge: /'
+      errors=$((errors + 1))
+    fi
+  done <<<"$declared"
+
+  if [[ $errors -gt 0 ]]; then
+    echo
+    echo "Lint failed: $errors issue(s) found"
+    return 1
+  fi
+  echo "OK: deps.json matches composer.json across $(echo "$declared" | wc -l) libraries"
+}
+
 case "$MODE" in
   --direct) direct ;;
   --affected) affected ;;
   --emit) emit ;;
+  --lint) lint ;;
   *) echo "Mode $MODE not implemented yet" >&2; exit 2 ;;
 esac

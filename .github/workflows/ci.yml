@@ -81,3 +81,23 @@ jobs:
     if: needs.detect.outputs.has-k8s-client == 'true'
     uses: ./.github/workflows/_lib-k8s-client.yml
     secrets: inherit
+
+  split:
+    needs: [detect, tests-common, tests-input-mapping, tests-output-mapping, tests-k8s-client]
+    if: |
+      always()
+      && needs.detect.outputs.all-affected != '[]'
+      && needs.detect.result == 'success'
+      && (needs.tests-common.result == 'success' || needs.tests-common.result == 'skipped')
+      && (needs.tests-input-mapping.result == 'success' || needs.tests-input-mapping.result == 'skipped')
+      && (needs.tests-output-mapping.result == 'success' || needs.tests-output-mapping.result == 'skipped')
+      && (needs.tests-k8s-client.result == 'success' || needs.tests-k8s-client.result == 'skipped')
+    strategy:
+      fail-fast: false
+      matrix:
+        library: ${{ fromJSON(needs.detect.outputs.all-affected) }}
+    uses: ./.github/workflows/_split-library.yml
+    with:
+      library:     ${{ matrix.library }}
+      target-repo: ${{ fromJSON(needs.detect.outputs.publish-targets)[matrix.library] }}
+    secrets: inherit

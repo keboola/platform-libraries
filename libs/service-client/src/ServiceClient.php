@@ -91,6 +91,14 @@ class ServiceClient
         return $this->getServiceUrl(Service::ENCRYPTION, $dnsType);
     }
 
+    /**
+     * @return non-empty-string
+     */
+    public function getGitServiceUrl(?ServiceDnsType $dnsType = null): string
+    {
+        return $this->getServiceUrl(Service::GIT_SERVICE, $dnsType);
+    }
+
 
     /**
      * @return non-empty-string

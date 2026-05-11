@@ -63,3 +63,9 @@ jobs:
       php-version:  ${{ matrix.php }}
       service-name: ${{ matrix.service }}
     secrets: inherit
+
+  tests-input-mapping:
+    needs: detect
+    if: needs.detect.outputs.has-input-mapping == 'true'
+    uses: ./.github/workflows/_lib-input-mapping.yml
+    secrets: inherit

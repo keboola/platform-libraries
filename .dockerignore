@@ -9,4 +9,3 @@
 **/.env*
 !docker/.env.local.php
 **/.gitignore
-**/azure-pipelines*

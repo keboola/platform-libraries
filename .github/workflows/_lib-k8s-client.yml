@@ -3,6 +3,10 @@ name: lib-k8s-client
 on:
   workflow_call: {}
 
+concurrency:
+  group: tests-k8s-client-${{ github.ref }}
+  cancel-in-progress: false
+
 env:
   PHP_VERSION: "8.2"
 

@@ -21,6 +21,12 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
+      - name: Extract target repo name
+        id: repo-name
+        env:
+          REPO: ${{ inputs.target-repo }}
+        run: echo "name=${REPO##*/}" >> "$GITHUB_OUTPUT"
+
       - name: Generate GitHub App installation token
         id: app-token
         uses: actions/create-github-app-token@v1
@@ -28,7 +34,7 @@ jobs:
           app-id:        ${{ vars.LIBS_PUBLISHER_APP_ID }}
           private-key:   ${{ secrets.LIBS_PUBLISHER_APP_PRIVATE_KEY }}
           owner:         keboola
-          repositories:  ${{ inputs.library }}
+          repositories:  ${{ steps.repo-name.outputs.name }}
 
       - name: Checkout monorepo (full history + tags)
         uses: actions/checkout@v4

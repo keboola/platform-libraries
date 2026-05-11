@@ -43,7 +43,47 @@ direct() {
     | sort -u
 }
 
+# AFFECTED = DIRECT ∪ transitive dependents (via inverted depends-on graph)
+affected() {
+  local direct_libs
+  direct_libs=$(direct)
+  [[ -z "$direct_libs" ]] && return 0
+
+  # Build reverse graph as JSON: { Y: [X1, X2, ...] } where each Xi has Y in its depends-on list
+  local direct_json
+  direct_json=$(jq -Rsc 'split("\n") | map(select(length > 0))' <<<"$direct_libs")
+
+  jq -r \
+    --argjson direct "$direct_json" \
+    '
+      # Compute reverse: { Y: [X for X in libraries if Y in X.depends-on] }
+      (
+        .libraries
+        | to_entries
+        | reduce .[] as $e ({};
+            reduce $e.value["depends-on"][] as $d (.;
+              .[$d] = ((.[$d] // []) + [$e.key])
+            )
+          )
+      ) as $reverse
+      # BFS from $direct over $reverse
+      | reduce range(0; 100) as $_ (
+          { frontier: $direct, visited: ($direct | unique) };
+          if (.frontier | length) == 0 then .
+          else
+            . as $acc
+            | ([ $acc.frontier[] | ($reverse[.] // [])[] ] | unique - $acc.visited) as $next
+            | { frontier: $next, visited: ($acc.visited + $next | unique) }
+          end
+        )
+      | .visited
+      | sort
+      | .[]
+    ' "$DEPS_FILE"
+}
+
 case "$MODE" in
   --direct) direct ;;
+  --affected) affected ;;
   *) echo "Mode $MODE not implemented yet" >&2; exit 2 ;;
 esac

@@ -64,3 +64,43 @@ teardown() {
   [ "$status" -eq 0 ]
   [ "$output" = "" ]
 }
+
+@test "affected: change without dependents = only the changed lib" {
+  echo "// gamma v2" > libs/gamma/file.php
+  git commit -qam "edit gamma"
+  run "$SCRIPT" --affected --deps "$FIXTURES/deps-sample.json" --base main
+  [ "$status" -eq 0 ]
+  [ "$output" = "gamma" ]
+}
+
+@test "affected: change to alpha pulls in beta, gamma, epsilon" {
+  echo "// alpha v2" > libs/alpha/file.php
+  git commit -qam "edit alpha"
+  run "$SCRIPT" --affected --deps "$FIXTURES/deps-sample.json" --base main
+  [ "$status" -eq 0 ]
+  # beta depends on alpha; gamma depends on beta; epsilon depends on alpha
+  [ "$output" = "$(printf 'alpha\nbeta\nepsilon\ngamma')" ]
+}
+
+@test "affected: change to delta pulls in epsilon only" {
+  echo "// delta v2" > libs/delta/file.php
+  git commit -qam "edit delta"
+  run "$SCRIPT" --affected --deps "$FIXTURES/deps-sample.json" --base main
+  [ "$status" -eq 0 ]
+  [ "$output" = "$(printf 'delta\nepsilon')" ]
+}
+
+@test "affected: multiple direct changes union correctly" {
+  echo "// alpha" > libs/alpha/file.php
+  echo "// delta" > libs/delta/file.php
+  git commit -qam "edit two"
+  run "$SCRIPT" --affected --deps "$FIXTURES/deps-sample.json" --base main
+  [ "$status" -eq 0 ]
+  [ "$output" = "$(printf 'alpha\nbeta\ndelta\nepsilon\ngamma')" ]
+}
+
+@test "affected: no changes returns empty" {
+  run "$SCRIPT" --affected --deps "$FIXTURES/deps-sample.json" --base main
+  [ "$status" -eq 0 ]
+  [ "$output" = "" ]
+}

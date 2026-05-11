@@ -26,6 +26,10 @@ resources:
       type: github
       endpoint: keboola
       name: keboola/doctrine-retry-bundle
+    - repository: git-service-php-api-client
+      type: github
+      endpoint: keboola
+      name: keboola/git-service-php-api-client
     - repository: input-mapping
       type: github
       endpoint: keboola
@@ -131,6 +135,14 @@ jobs:
       targetRepo: doctrine-retry-bundle
       libraryPath: libs/doctrine-retry-bundle
       tagPrefix: doctrine-retry-bundle/
+
+  - template: azure-pipelines/jobs/split-library.yml
+    parameters:
+      condition: startsWith(variables['Build.SourceBranch'], 'refs/tags/git-service-api-client/')
+      sourceRepo: platform-libraries
+      targetRepo: git-service-php-api-client
+      libraryPath: libs/git-service-api-client
+      tagPrefix: git-service-api-client/
 
   - template: azure-pipelines/jobs/split-library.yml
     parameters:

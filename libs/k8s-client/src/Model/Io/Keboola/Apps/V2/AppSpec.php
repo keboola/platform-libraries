@@ -83,4 +83,12 @@ class AppSpec extends AbstractModel
      * @var AppFeatures|null
      */
     public $features = null;
+
+    /**
+     * DevMode configures dev-mode behaviour (spec.devMode).
+     * When null or `enabled: false`, the app runs in prod mode.
+     *
+     * @var AppDevModeSpec|null
+     */
+    public $devMode = null;
 }

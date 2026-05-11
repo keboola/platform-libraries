@@ -1,0 +1,47 @@
+name: split-library
+
+on:
+  workflow_call:
+    inputs:
+      library:
+        description: Library directory name (e.g., "api-bundle")
+        required: true
+        type: string
+      target-repo:
+        description: Full GitHub repo path (e.g., "keboola/api-bundle")
+        required: true
+        type: string
+
+concurrency:
+  group: split-${{ inputs.library }}
+  cancel-in-progress: false
+
+jobs:
+  split:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Generate GitHub App installation token
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id:        ${{ vars.LIBS_PUBLISHER_APP_ID }}
+          private-key:   ${{ secrets.LIBS_PUBLISHER_APP_PRIVATE_KEY }}
+          owner:         keboola
+          repositories:  ${{ inputs.library }}
+
+      - name: Checkout monorepo (full history + tags)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Install git-filter-repo
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y git-filter-repo
+
+      - name: Split and push to standalone repo
+        env:
+          TARGET_REPO_URL: https://x-access-token:${{ steps.app-token.outputs.token }}@github.com/${{ inputs.target-repo }}.git
+        run: ./bin/split-repo.sh "$PWD" "$TARGET_REPO_URL" "libs/${{ inputs.library }}" "${{ inputs.library }}/"

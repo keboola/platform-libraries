@@ -1,0 +1,21 @@
+{
+  "api-bundle":                       { "php": "8.3", "service": "dev-api-bundle" },
+  "azure-api-client":                 { "php": "8.1", "service": "dev-azure-api-client" },
+  "configuration-variables-resolver": { "php": "8.2", "service": "dev-configuration-variables-resolver" },
+  "doctrine-retry-bundle":            { "php": "8.4", "service": "dev-doctrine-retry-bundle" },
+  "git-service-api-client":           { "php": "8.2", "service": "dev-git-service-api-client" },
+  "key-generator":                    { "php": "8.2", "service": "dev-key-generator" },
+  "logging-bundle":                   { "php": "8.1", "service": "dev-logging-bundle" },
+  "messenger-bundle":                 { "php": "8.2", "service": "dev-messenger-bundle" },
+  "permission-checker":               { "php": "8.1", "service": "dev-permission-checker" },
+  "php-storage-names-sanitizer":      { "php": "8.2", "service": "dev-php-storage-names-sanitizer" },
+  "php-test-utils":                   { "php": "8.4", "service": "dev-php-test-utils" },
+  "query-service-api-client":         { "php": "8.4", "service": "dev-query-service-api-client" },
+  "sandboxes-service-api-client":     { "php": "8.2", "service": "dev-sandboxes-service-api-client" },
+  "service-client":                   { "php": "8.3", "service": "dev-service-client" },
+  "settle":                           { "php": "8.1", "service": "dev-settle" },
+  "slicer":                           { "php": "8.1", "service": "dev-slicer" },
+  "staging-provider":                 { "php": "8.2", "service": "dev-staging-provider" },
+  "sync-actions-api-php-client":      { "php": "8.4", "service": "dev-sync-actions-api-php-client" },
+  "vault-api-client":                 { "php": "8.2", "service": "dev-vault-api-client" }
+}

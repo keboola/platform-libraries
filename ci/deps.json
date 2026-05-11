@@ -1,0 +1,27 @@
+{
+  "libraries": {
+    "api-bundle":                       { "depends-on": ["permission-checker", "service-client"] },
+    "azure-api-client":                 { "depends-on": [] },
+    "configuration-variables-resolver": { "depends-on": ["service-client", "vault-api-client"] },
+    "doctrine-retry-bundle":            { "depends-on": [] },
+    "git-service-api-client":           { "depends-on": [] },
+    "input-mapping":                    { "depends-on": ["key-generator", "settle", "staging-provider"] },
+    "k8s-client":                       { "depends-on": [] },
+    "key-generator":                    { "depends-on": [] },
+    "logging-bundle":                   { "depends-on": [] },
+    "messenger-bundle":                 { "depends-on": [] },
+    "output-mapping":                   { "depends-on": ["input-mapping", "key-generator", "php-storage-names-sanitizer", "slicer", "staging-provider"] },
+    "permission-checker":               { "depends-on": [] },
+    "php-storage-names-sanitizer":      { "depends-on": [] },
+    "php-test-utils":                   { "depends-on": ["service-client"] },
+    "query-service-api-client":         { "depends-on": [] },
+    "sandboxes-service-api-client":     { "depends-on": [] },
+    "service-client":                   { "depends-on": [] },
+    "settle":                           { "depends-on": [] },
+    "slicer":                           { "depends-on": [] },
+    "staging-provider":                 { "depends-on": ["key-generator"] },
+    "sync-actions-api-php-client":      { "depends-on": [] },
+    "vault-api-client":                 { "depends-on": [] }
+  },
+  "complex": ["input-mapping", "output-mapping", "k8s-client"]
+}

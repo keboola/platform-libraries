@@ -1,0 +1,7 @@
+{
+  "git-service-api-client":       "keboola/git-service-php-api-client",
+  "key-generator":                "keboola/php-key-generator",
+  "query-service-api-client":     "keboola/query-service-api-php-client",
+  "sandboxes-service-api-client": "keboola/sandboxes-service-api-php-client",
+  "vault-api-client":             "keboola/vault-api-php-client"
+}

@@ -1,0 +1,10 @@
+{
+  "libraries": {
+    "alpha": { "depends-on": [] },
+    "beta":  { "depends-on": ["alpha"] },
+    "gamma": { "depends-on": ["beta"] },
+    "delta": { "depends-on": [] },
+    "epsilon": { "depends-on": ["alpha", "delta"] }
+  },
+  "complex": ["gamma"]
+}

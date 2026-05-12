@@ -71,6 +71,7 @@ class AppTest extends TestCase
             'id' => 'app-id',
             'projectId' => 'project-id',
             'componentId' => 'keboola.data-apps',
+            'type' => null,
             'branchId' => 'branch-id',
             'configId' => 'config-id',
             'configVersion' => '5',

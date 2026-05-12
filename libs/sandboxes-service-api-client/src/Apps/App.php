@@ -61,6 +61,7 @@ class App
     private string $id;
     private string $projectId;
     private string $componentId;
+    private ?string $type = null;
     private ?string $branchId = null;
     private string $configId;
     private string $configVersion;
@@ -83,6 +84,7 @@ class App
         $app->setId((string) $in['id']);
         $app->setProjectId((string) $in['projectId']);
         $app->setComponentId((string) $in['componentId']);
+        $app->setType(isset($in['type']) ? (string) $in['type'] : null);
         $app->setBranchId(isset($in['branchId']) ? $in['branchId'] : null);
         $app->setConfigId((string) $in['configId']);
         $app->setConfigVersion((string) $in['configVersion']);
@@ -102,6 +104,7 @@ class App
             'id' => $this->id,
             'projectId' => $this->projectId,
             'componentId' => $this->componentId,
+            'type' => $this->type,
             'branchId' => $this->branchId,
             'configId' => $this->configId,
             'configVersion' => $this->configVersion,
@@ -144,6 +147,17 @@ class App
     public function setComponentId(string $componentId): self
     {
         $this->componentId = $componentId;
+        return $this;
+    }
+
+    public function getType(): ?string
+    {
+        return $this->type;
+    }
+
+    public function setType(?string $type): self
+    {
+        $this->type = $type;
         return $this;
     }
 

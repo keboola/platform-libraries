@@ -88,4 +88,12 @@ class AppRunSpec extends AbstractModel
      * @var string|null
      */
     public $imageVersion = null;
+
+    /**
+     * DevMode records whether this run was started in dev mode. Mirrors the
+     * parent App's spec.devMode.enabled at AppRun creation time. Default false.
+     *
+     * @var bool|null
+     */
+    public $devMode = null;
 }

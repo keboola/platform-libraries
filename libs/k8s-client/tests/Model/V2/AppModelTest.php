@@ -20,6 +20,7 @@ use Keboola\K8sClient\Model\Io\Keboola\Apps\V2\DataDirMountSpec;
 use Keboola\K8sClient\Model\Io\Keboola\Apps\V2\DataDirSpec;
 use Keboola\K8sClient\Model\Io\Keboola\Apps\V2\DataLoaderSpec;
 use Keboola\K8sClient\Model\Io\Keboola\Apps\V2\E2bSandboxStatus;
+use Keboola\K8sClient\Model\Io\Keboola\Apps\V2\ManagedGitRepoSpec;
 use Keboola\K8sClient\Model\Io\Keboola\Apps\V2\MountConfigField;
 use Keboola\K8sClient\Model\Io\Keboola\Apps\V2\MountPathSpec;
 use Keboola\K8sClient\Model\Io\Keboola\Apps\V2\SetEnvSpec;
@@ -68,6 +69,9 @@ class AppModelTest extends TestCase
                     'enabled' => true,
                     'gitPollInterval' => '5s',
                     'autoRunSetupOnDepChange' => false,
+                ],
+                'managedGitRepo' => [
+                    'repoId' => 'repo-abc-123',
                 ],
                 'features' => [
                     'storageToken' => [
@@ -263,6 +267,11 @@ class AppModelTest extends TestCase
         self::assertTrue($app->spec->devMode->enabled);
         self::assertSame('5s', $app->spec->devMode->gitPollInterval);
         self::assertFalse($app->spec->devMode->autoRunSetupOnDepChange);
+
+        // ManagedGitRepo
+        self::assertNotNull($app->spec->managedGitRepo);
+        self::assertInstanceOf(ManagedGitRepoSpec::class, $app->spec->managedGitRepo);
+        self::assertSame('repo-abc-123', $app->spec->managedGitRepo->repoId);
 
         // Features
         self::assertNotNull($app->spec->features);
@@ -493,6 +502,10 @@ class AppModelTest extends TestCase
         self::assertTrue($serialized['spec']['devMode']['enabled']);
         self::assertSame('5s', $serialized['spec']['devMode']['gitPollInterval']);
         self::assertFalse($serialized['spec']['devMode']['autoRunSetupOnDepChange']);
+
+        // Verify managedGitRepo survives round-trip
+        self::assertArrayHasKey('managedGitRepo', $serialized['spec']);
+        self::assertSame('repo-abc-123', $serialized['spec']['managedGitRepo']['repoId']);
 
         // Verify containerSpec is present and podSpec is not
         self::assertArrayHasKey('containerSpec', $serialized['spec']);

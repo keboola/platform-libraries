@@ -91,4 +91,13 @@ class AppSpec extends AbstractModel
      * @var AppDevModeSpec|null
      */
     public $devMode = null;
+
+    /**
+     * ManagedGitRepo, when set, signals the operator to mint per-AppRun ephemeral
+     * SSH deploy keys and overlay the private key into the rendered config.json
+     * Secret. Presence alone is the activation switch.
+     *
+     * @var ManagedGitRepoSpec|null
+     */
+    public $managedGitRepo = null;
 }

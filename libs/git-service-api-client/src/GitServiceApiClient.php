@@ -5,8 +5,9 @@ declare(strict_types=1);
 namespace Keboola\GitServiceApiClient;
 
 use GuzzleHttp\Psr7\Request;
-use Keboola\GitServiceApiClient\Model\DeployKey;
-use Keboola\GitServiceApiClient\Model\KeyListWrapper;
+use Keboola\GitServiceApiClient\Model\CreatedCredential;
+use Keboola\GitServiceApiClient\Model\Credential;
+use Keboola\GitServiceApiClient\Model\CredentialListWrapper;
 use Keboola\GitServiceApiClient\Model\Repository;
 use SensitiveParameter;
 
@@ -57,50 +58,47 @@ class GitServiceApiClient
     }
 
     /**
-     * @return list<DeployKey>
+     * @return list<Credential>
      */
-    public function listKeys(string $repo): array
+    public function listCredentials(string $repo): array
     {
         $wrapper = $this->apiClient->sendRequestAndMapResponse(
-            new Request('GET', 'repos/' . rawurlencode($repo) . '/keys'),
-            KeyListWrapper::class,
+            new Request('GET', 'repos/' . rawurlencode($repo) . '/credentials'),
+            CredentialListWrapper::class,
         );
-        return $wrapper->keys;
+        return $wrapper->credentials;
     }
 
-    public function getKey(string $repo, string $keyId): DeployKey
+    public function getCredential(string $repo, string $credentialId): Credential
     {
         return $this->apiClient->sendRequestAndMapResponse(
             new Request(
                 'GET',
-                'repos/' . rawurlencode($repo) . '/keys/' . rawurlencode($keyId),
+                'repos/' . rawurlencode($repo) . '/credentials/' . rawurlencode($credentialId),
             ),
-            DeployKey::class,
+            Credential::class,
         );
     }
 
-    public function addKey(string $repo, string $publicKey, KeyPermission $permissions): DeployKey
+    public function createCredential(string $repo, NewCredential $request): CreatedCredential
     {
         return $this->apiClient->sendRequestAndMapResponse(
             new Request(
                 'POST',
-                'repos/' . rawurlencode($repo) . '/keys',
+                'repos/' . rawurlencode($repo) . '/credentials',
                 self::JSON_HEADERS,
-                Json::encodeArray([
-                    'publicKey' => $publicKey,
-                    'permissions' => $permissions->value,
-                ]),
+                Json::encodeArray($request->toRequestBody()),
             ),
-            DeployKey::class,
+            CreatedCredential::class,
         );
     }
 
-    public function deleteKey(string $repo, string $keyId): void
+    public function deleteCredential(string $repo, string $credentialId): void
     {
         $this->apiClient->sendRequest(
             new Request(
                 'DELETE',
-                'repos/' . rawurlencode($repo) . '/keys/' . rawurlencode($keyId),
+                'repos/' . rawurlencode($repo) . '/credentials/' . rawurlencode($credentialId),
             ),
         );
     }

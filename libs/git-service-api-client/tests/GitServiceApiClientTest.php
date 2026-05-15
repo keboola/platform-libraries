@@ -63,7 +63,7 @@ class GitServiceApiClientTest extends TestCase
         self::assertSame('https://example.test/repos/app-1', (string) $request->getUri());
     }
 
-    public function testGetRepositoryEncodesAppId(): void
+    public function testGetRepositoryEncodesName(): void
     {
         $mock = new MockHandler([new Response(200, [], (string) json_encode([
             'name' => 'app/1', 'createdAt' => 't', 'defaultBranch' => 'main', 'sshUrl' => 's',

@@ -28,63 +28,63 @@ class GitServiceApiClient
         $this->apiClient = new ApiClient($baseUrl, $token, $configuration);
     }
 
-    public function createRepository(string $appId): Repository
+    public function createRepository(string $name): Repository
     {
         return $this->apiClient->sendRequestAndMapResponse(
             new Request(
                 'POST',
                 'repos',
                 self::JSON_HEADERS,
-                Json::encodeArray(['name' => $appId]),
+                Json::encodeArray(['name' => $name]),
             ),
             Repository::class,
         );
     }
 
-    public function getRepository(string $appId): Repository
+    public function getRepository(string $name): Repository
     {
         return $this->apiClient->sendRequestAndMapResponse(
-            new Request('GET', 'repos/' . rawurlencode($appId)),
+            new Request('GET', 'repos/' . rawurlencode($name)),
             Repository::class,
         );
     }
 
-    public function deleteRepository(string $appId): void
+    public function deleteRepository(string $name): void
     {
         $this->apiClient->sendRequest(
-            new Request('DELETE', 'repos/' . rawurlencode($appId)),
+            new Request('DELETE', 'repos/' . rawurlencode($name)),
         );
     }
 
     /**
      * @return list<DeployKey>
      */
-    public function listKeys(string $appId): array
+    public function listKeys(string $repo): array
     {
         $wrapper = $this->apiClient->sendRequestAndMapResponse(
-            new Request('GET', 'repos/' . rawurlencode($appId) . '/keys'),
+            new Request('GET', 'repos/' . rawurlencode($repo) . '/keys'),
             KeyListWrapper::class,
         );
         return $wrapper->keys;
     }
 
-    public function getKey(string $appId, string $keyId): DeployKey
+    public function getKey(string $repo, string $keyId): DeployKey
     {
         return $this->apiClient->sendRequestAndMapResponse(
             new Request(
                 'GET',
-                'repos/' . rawurlencode($appId) . '/keys/' . rawurlencode($keyId),
+                'repos/' . rawurlencode($repo) . '/keys/' . rawurlencode($keyId),
             ),
             DeployKey::class,
         );
     }
 
-    public function addKey(string $appId, string $publicKey, KeyPermission $permissions): DeployKey
+    public function addKey(string $repo, string $publicKey, KeyPermission $permissions): DeployKey
     {
         return $this->apiClient->sendRequestAndMapResponse(
             new Request(
                 'POST',
-                'repos/' . rawurlencode($appId) . '/keys',
+                'repos/' . rawurlencode($repo) . '/keys',
                 self::JSON_HEADERS,
                 Json::encodeArray([
                     'publicKey' => $publicKey,
@@ -95,12 +95,12 @@ class GitServiceApiClient
         );
     }
 
-    public function deleteKey(string $appId, string $keyId): void
+    public function deleteKey(string $repo, string $keyId): void
     {
         $this->apiClient->sendRequest(
             new Request(
                 'DELETE',
-                'repos/' . rawurlencode($appId) . '/keys/' . rawurlencode($keyId),
+                'repos/' . rawurlencode($repo) . '/keys/' . rawurlencode($keyId),
             ),
         );
     }

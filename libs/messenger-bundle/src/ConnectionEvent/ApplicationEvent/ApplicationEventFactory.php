@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\MessengerBundle\ConnectionEvent\ApplicationEvent;
 
+use Keboola\MessengerBundle\ConnectionEvent\ApplicationEvent\Admin\AdminRemovedFromProjectEvent;
 use Keboola\MessengerBundle\ConnectionEvent\ApplicationEvent\Storage\ComponentConfigurationDeletedEvent;
 use Keboola\MessengerBundle\ConnectionEvent\ApplicationEvent\Storage\ComponentConfigurationPurgedEvent;
 use Keboola\MessengerBundle\ConnectionEvent\ApplicationEvent\Storage\DevBranchCreatedEvent;
@@ -17,6 +18,7 @@ class ApplicationEventFactory implements EventFactoryInterface
 {
     /** @var array<string, class-string<EventInterface>> */
     private const EVENTS = [
+        AdminRemovedFromProjectEvent::NAME => AdminRemovedFromProjectEvent::class,
         ComponentConfigurationDeletedEvent::NAME => ComponentConfigurationDeletedEvent::class,
         ComponentConfigurationPurgedEvent::NAME => ComponentConfigurationPurgedEvent::class,
         DevBranchCreatedEvent::NAME => DevBranchCreatedEvent::class,

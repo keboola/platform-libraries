@@ -30,15 +30,15 @@ class StorageTablesFixture implements FixtureInterface
                 ],
                 [
                     'name' => 'name',
-                    'definition' => ['type' => 'NVARCHAR'],
+                    'definition' => ['type' => 'STRING'],
                 ],
                 [
                     'name' => 'email',
-                    'definition' => ['type' => 'NVARCHAR'],
+                    'definition' => ['type' => 'STRING'],
                 ],
                 [
                     'name' => 'address',
-                    'definition' => ['type' => 'NVARCHAR', 'nullable' => true],
+                    'definition' => ['type' => 'STRING', 'nullable' => true],
                 ],
             ],
         ]);

@@ -14,6 +14,7 @@ class StorageApiToken
         private readonly ?array $allowedComponents = null,
         private readonly array $permissions = [],
         private readonly ?string $projectId = null,
+        private readonly bool $isAdminToken = false,
     ) {
     }
 
@@ -25,6 +26,7 @@ class StorageApiToken
             $token->getAllowedComponents(),
             $token->getPermissions(),
             $token->getProjectId(),
+            $token->isAdminToken(),
         );
     }
 
@@ -82,5 +84,10 @@ class StorageApiToken
     public function isForProject(string $projectId): bool
     {
         return $this->projectId === $projectId;
+    }
+
+    public function isAdminToken(): bool
+    {
+        return $this->isAdminToken;
     }
 }

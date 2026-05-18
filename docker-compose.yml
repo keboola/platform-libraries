@@ -132,7 +132,7 @@ services:
       - BIGQUERY_STORAGE_API_URL
 
   dev-permission-checker:
-    <<: *dev81
+    <<: *dev82
     image: keboola/permission-checker
     working_dir: /code/libs/permission-checker
 

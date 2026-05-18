@@ -33,12 +33,14 @@ class GitServiceApiClientTest extends TestCase
             'createdAt' => '2026-04-28T10:00:00Z',
             'defaultBranch' => 'main',
             'sshUrl' => 'ssh://git/app-1',
+            'httpsUrl' => 'https://git/app-1.git',
         ]))]);
         $client = $this->buildClient($mock);
 
         $repo = $client->createRepository('app-1');
 
         self::assertSame('app-1', $repo->name);
+        self::assertSame('https://git/app-1.git', $repo->httpsUrl);
         $request = $mock->getLastRequest();
         self::assertNotNull($request);
         self::assertSame('POST', $request->getMethod());
@@ -53,12 +55,14 @@ class GitServiceApiClientTest extends TestCase
             'createdAt' => 't',
             'defaultBranch' => 'main',
             'sshUrl' => 's',
+            'httpsUrl' => 'https://git/app-1.git',
         ]))]);
         $client = $this->buildClient($mock);
 
         $repo = $client->getRepository('app-1');
 
         self::assertSame('app-1', $repo->name);
+        self::assertSame('https://git/app-1.git', $repo->httpsUrl);
         $request = $mock->getLastRequest();
         self::assertNotNull($request);
         self::assertSame('GET', $request->getMethod());
@@ -68,7 +72,7 @@ class GitServiceApiClientTest extends TestCase
     public function testGetRepositoryEncodesName(): void
     {
         $mock = new MockHandler([new Response(200, [], (string) json_encode([
-            'name' => 'app/1', 'createdAt' => 't', 'defaultBranch' => 'main', 'sshUrl' => 's',
+            'name' => 'app/1', 'createdAt' => 't', 'defaultBranch' => 'main', 'sshUrl' => 's', 'httpsUrl' => 'h',
         ]))]);
         $client = $this->buildClient($mock);
 

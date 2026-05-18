@@ -14,6 +14,7 @@ final readonly class Repository implements ResponseModelInterface
         public string $createdAt,
         public string $defaultBranch,
         public string $sshUrl,
+        public string $httpsUrl,
     ) {
     }
 
@@ -23,16 +24,19 @@ final readonly class Repository implements ResponseModelInterface
         Assert::keyExists($data, 'createdAt');
         Assert::keyExists($data, 'defaultBranch');
         Assert::keyExists($data, 'sshUrl');
+        Assert::keyExists($data, 'httpsUrl');
         Assert::string($data['name']);
         Assert::string($data['createdAt']);
         Assert::string($data['defaultBranch']);
         Assert::string($data['sshUrl']);
+        Assert::string($data['httpsUrl']);
 
         return new self(
             $data['name'],
             $data['createdAt'],
             $data['defaultBranch'],
             $data['sshUrl'],
+            $data['httpsUrl'],
         );
     }
 }

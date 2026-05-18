@@ -106,6 +106,11 @@ class StorageApiTokenTest extends TestCase
             {
                 return '123';
             }
+
+            public function isAdminToken(): bool
+            {
+                return true;
+            }
         });
 
         self::assertTrue($token->hasFeature(Feature::QUEUE_V2));
@@ -118,6 +123,7 @@ class StorageApiTokenTest extends TestCase
         self::assertSame([TokenPermission::CAN_CREATE_JOBS], $token->getPermissions());
         self::assertTrue($token->isForProject('123'));
         self::assertFalse($token->isForProject('456'));
+        self::assertTrue($token->isAdminToken());
     }
 
     public function testIsForProject(): void
@@ -127,5 +133,17 @@ class StorageApiTokenTest extends TestCase
         );
         self::assertTrue($token->isForProject('123'));
         self::assertFalse($token->isForProject('456'));
+    }
+
+    public function testIsAdminToken(): void
+    {
+        $adminToken = new StorageApiToken(isAdminToken: true);
+        self::assertTrue($adminToken->isAdminToken());
+
+        $nonAdminToken = new StorageApiToken(isAdminToken: false);
+        self::assertFalse($nonAdminToken->isAdminToken());
+
+        $defaultToken = new StorageApiToken();
+        self::assertFalse($defaultToken->isAdminToken());
     }
 }

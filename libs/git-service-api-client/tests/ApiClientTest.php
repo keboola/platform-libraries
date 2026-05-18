@@ -95,6 +95,7 @@ class ApiClientTest extends TestCase
             'createdAt' => 'now',
             'defaultBranch' => 'main',
             'sshUrl' => 'ssh://git/app-1',
+            'httpsUrl' => 'https://git/app-1.git',
         ]))]);
         $stack = HandlerStack::create($mock);
 
@@ -115,8 +116,8 @@ class ApiClientTest extends TestCase
     public function testMapsResponseIntoListOfModels(): void
     {
         $mock = new MockHandler([new Response(200, [], (string) json_encode([
-            ['name' => 'a1', 'createdAt' => 't', 'defaultBranch' => 'main', 'sshUrl' => 's1'],
-            ['name' => 'a2', 'createdAt' => 't', 'defaultBranch' => 'main', 'sshUrl' => 's2'],
+            ['name' => 'a1', 'createdAt' => 't', 'defaultBranch' => 'main', 'sshUrl' => 's1', 'httpsUrl' => 'h1'],
+            ['name' => 'a2', 'createdAt' => 't', 'defaultBranch' => 'main', 'sshUrl' => 's2', 'httpsUrl' => 'h2'],
         ]))]);
         $stack = HandlerStack::create($mock);
 

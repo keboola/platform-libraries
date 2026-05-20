@@ -11,7 +11,6 @@ use Keboola\StagingProvider\Staging\StagingType;
 use Keboola\StagingProvider\Workspace\Configuration\NewWorkspaceConfig;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Components;
-use Keboola\StorageApi\WorkspaceLoginType;
 use Keboola\StorageApi\Workspaces;
 use Keboola\StorageApiBranch\StorageApiToken;
 
@@ -145,13 +144,6 @@ class WorkspaceProvider
      */
     private function prepareNewWorkspaceOptions(StagingType $stagingType, NewWorkspaceConfig $config): array
     {
-        $defaultLoginType = match ($stagingType) {
-// TODO enable once key-pair auth is default for Snowflake
-//            AbstractStrategyFactory::WORKSPACE_SNOWFLAKE => WorkspaceLoginType::SNOWFLAKE_SERVICE_KEYPAIR,
-            default => WorkspaceLoginType::DEFAULT,
-        };
-        $loginType = $config->loginType ?? $defaultLoginType;
-
         $options = [
             'backend' => match ($stagingType) {
                 StagingType::WorkspaceBigquery => 'bigquery',
@@ -162,7 +154,6 @@ class WorkspaceProvider
                 )),
             },
             'networkPolicy' => $config->networkPolicy->value,
-            'loginType' => $loginType,
         ];
 
         if ($config->size !== null) {
@@ -173,8 +164,12 @@ class WorkspaceProvider
             $options['readOnlyStorageAccess'] = $config->useReadonlyRole;
         }
 
+        if ($config->loginType !== null) {
+            $options['loginType'] = $config->loginType;
+        }
+
         $privateKey = null;
-        if ($loginType->isKeyPairLogin()) {
+        if ($config->loginType !== null && $config->loginType->isKeyPairLogin()) {
             $keypair = $this->snowflakeKeypairGenerator->generateKeyPair();
             $options['publicKey'] = $keypair->publicKey;
             $privateKey = $keypair->privateKey;

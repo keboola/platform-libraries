@@ -122,7 +122,7 @@ class WorkspaceProviderFunctionalTest extends TestCase
             size: 'small',
             useReadonlyRole: null,
             networkPolicy: NetworkPolicy::USER,
-            loginType: null,
+            loginType: WorkspaceLoginType::DEFAULT,
         );
 
         $workspace = $this->workspaceProvider->createNewWorkspace(
@@ -153,7 +153,7 @@ class WorkspaceProviderFunctionalTest extends TestCase
             'small',
             null,
             NetworkPolicy::USER,
-            null,
+            WorkspaceLoginType::DEFAULT,
         );
 
         $workspace = $this->workspaceProvider->createNewWorkspace(
@@ -286,6 +286,7 @@ class WorkspaceProviderFunctionalTest extends TestCase
         $workspaceData = $this->createWorkspace([
             'backend' => 'snowflake',
             'networkPolicy' => 'system',
+            'loginType' => WorkspaceLoginType::DEFAULT,
         ]);
         $workspaceId = (string) $workspaceData['id'];
         $originalPassword = $workspaceData['connection']['password'];

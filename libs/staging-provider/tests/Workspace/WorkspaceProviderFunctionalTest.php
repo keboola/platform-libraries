@@ -113,35 +113,6 @@ class WorkspaceProviderFunctionalTest extends TestCase
         return $configuration;
     }
 
-    public function testCreateNewWorkspaceWithoutConfigId(): void
-    {
-        $config = new NewWorkspaceConfig(
-            stagingType: StagingType::WorkspaceSnowflake,
-            componentId: 'keboola.staging-provider-functional-test',
-            configId: null,
-            size: 'small',
-            useReadonlyRole: null,
-            networkPolicy: NetworkPolicy::USER,
-            loginType: null,
-        );
-
-        $workspace = $this->workspaceProvider->createNewWorkspace(
-            $this->storageApiToken,
-            $config,
-        );
-        $this->createdWorkspaceIds[] = $workspace->getWorkspaceId();
-
-        self::assertNotEmpty($workspace->getWorkspaceId());
-        self::assertSame('snowflake', $workspace->getBackendType());
-        self::assertSame('small', $workspace->getBackendSize());
-        self::assertNotEmpty($workspace->getCredentials()['host'] ?? null);
-        self::assertNotEmpty($workspace->getCredentials()['user'] ?? null);
-        self::assertNotEmpty($workspace->getCredentials()['password'] ?? null);
-        self::assertNotEmpty($workspace->getCredentials()['database'] ?? null);
-        self::assertNotEmpty($workspace->getCredentials()['schema'] ?? null);
-        self::assertNotEmpty($workspace->getCredentials()['warehouse'] ?? null);
-    }
-
     public function testCreateNewWorkspaceWithConfigId(): void
     {
         $configuration = $this->createConfiguration();
@@ -153,7 +124,7 @@ class WorkspaceProviderFunctionalTest extends TestCase
             'small',
             null,
             NetworkPolicy::USER,
-            null,
+            WorkspaceLoginType::SNOWFLAKE_SERVICE_KEYPAIR,
         );
 
         $workspace = $this->workspaceProvider->createNewWorkspace(
@@ -165,9 +136,11 @@ class WorkspaceProviderFunctionalTest extends TestCase
         self::assertNotEmpty($workspace->getWorkspaceId());
         self::assertSame('snowflake', $workspace->getBackendType());
         self::assertSame('small', $workspace->getBackendSize());
+        self::assertSame(WorkspaceLoginType::SNOWFLAKE_SERVICE_KEYPAIR, $workspace->getLoginType());
         self::assertNotEmpty($workspace->getCredentials()['host'] ?? null);
         self::assertNotEmpty($workspace->getCredentials()['user'] ?? null);
-        self::assertNotEmpty($workspace->getCredentials()['password'] ?? null);
+        self::assertNotEmpty($workspace->getCredentials()['privateKey'] ?? null);
+        self::assertStringStartsWith('-----BEGIN PRIVATE KEY-----', $workspace->getCredentials()['privateKey']);
         self::assertNotEmpty($workspace->getCredentials()['database'] ?? null);
         self::assertNotEmpty($workspace->getCredentials()['schema'] ?? null);
         self::assertNotEmpty($workspace->getCredentials()['warehouse'] ?? null);
@@ -275,27 +248,6 @@ class WorkspaceProviderFunctionalTest extends TestCase
         // validate private key is present
         self::assertArrayHasKey('privateKey', $workspaceCredentials);
         self::assertStringStartsWith('-----BEGIN PRIVATE KEY-----', $workspaceCredentials['privateKey'] ?? '');
-
-        // validate other connection parameters are present
-        self::assertArrayHasKey('host', $workspaceCredentials);
-        self::assertArrayHasKey('account', $workspaceCredentials);
-    }
-
-    public function testResetWorkspaceCredentialsWithPassword(): void
-    {
-        $workspaceData = $this->createWorkspace([
-            'backend' => 'snowflake',
-            'networkPolicy' => 'system',
-        ]);
-        $workspaceId = (string) $workspaceData['id'];
-        $originalPassword = $workspaceData['connection']['password'];
-
-        $workspace = $this->workspaceProvider->resetWorkspaceCredentials($workspaceId);
-        $workspaceCredentials = $workspace->getCredentials();
-
-        // validate password is present
-        self::assertArrayHasKey('password', $workspaceCredentials);
-        self::assertNotSame($originalPassword, $workspaceCredentials['password']);
 
         // validate other connection parameters are present
         self::assertArrayHasKey('host', $workspaceCredentials);

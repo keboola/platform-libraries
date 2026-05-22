@@ -9,7 +9,6 @@ use Keboola\GitServiceApiClient\Model\CreatedCredential;
 use Keboola\GitServiceApiClient\Model\Credential;
 use Keboola\GitServiceApiClient\Model\CredentialListWrapper;
 use Keboola\GitServiceApiClient\Model\Repository;
-use SensitiveParameter;
 
 class GitServiceApiClient
 {
@@ -19,14 +18,15 @@ class GitServiceApiClient
 
     /**
      * @param non-empty-string $baseUrl
-     * @param non-empty-string $token
+     *
+     * Authentication and all other client options come from
+     * {@see ApiClientConfiguration}. See {@see ApiClient::__construct()}.
      */
     public function __construct(
         string $baseUrl,
-        #[SensitiveParameter] string $token,
         ?ApiClientConfiguration $configuration = null,
     ) {
-        $this->apiClient = new ApiClient($baseUrl, $token, $configuration);
+        $this->apiClient = new ApiClient($baseUrl, $configuration);
     }
 
     public function createRepository(string $name): Repository

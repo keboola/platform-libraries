@@ -10,12 +10,37 @@ use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
 use Keboola\GitServiceApiClient\ApiClient;
 use Keboola\GitServiceApiClient\ApiClientConfiguration;
+use Keboola\GitServiceApiClient\Auth\KeboolaServiceAccountAuth;
+use Keboola\GitServiceApiClient\Auth\ManageApiTokenAuth;
 use Keboola\GitServiceApiClient\Exception\ClientException;
 use Keboola\GitServiceApiClient\Model\Repository;
 use PHPUnit\Framework\TestCase;
+use RuntimeException;
 
 class ApiClientTest extends TestCase
 {
+    public function testDefaultAuthThrowsOnFirstRequestWhenNoSaTokenFileExists(): void
+    {
+        // Assumes the test container is NOT running with a projected
+        // connection-token at the Keboola SA path (true in CI).
+        $defaultPath = KeboolaServiceAccountAuth::DEFAULT_TOKEN_PATH;
+        if (is_readable($defaultPath)) {
+            self::markTestSkipped(sprintf(
+                'Keboola SA token at "%s" is mounted in this environment; '
+                    . 'cannot exercise the default-auth failure path.',
+                $defaultPath,
+            ));
+        }
+
+        // Construction succeeds (the default auth is lazy); the first outbound
+        // request triggers the file read and the resulting failure.
+        $client = new ApiClient('https://example.test');
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage($defaultPath);
+        $client->sendRequest(new Request('GET', 'foo'));
+    }
+
     public function testAddsAuthHeader(): void
     {
         $mock = new MockHandler([new Response(200, [], '{}')]);
@@ -23,14 +48,61 @@ class ApiClientTest extends TestCase
 
         $client = new ApiClient(
             'https://example.test',
-            'secret-token',
-            new ApiClientConfiguration(requestHandler: $stack),
+            new ApiClientConfiguration(
+                auth: new ManageApiTokenAuth('secret-token'),
+                requestHandler: $stack,
+            ),
         );
         $client->sendRequest(new Request('GET', 'foo'));
 
         $lastRequest = $mock->getLastRequest();
         self::assertNotNull($lastRequest);
         self::assertSame('secret-token', $lastRequest->getHeader('X-KBC-ManageApiToken')[0]);
+        self::assertSame([], $lastRequest->getHeader('X-Kubernetes-Authorization'));
+    }
+
+    public function testKeboolaSaAuthRereadsTokenEachRequest(): void
+    {
+        $tokenPath = (string) tempnam(sys_get_temp_dir(), 'kbla-sa-token-');
+        self::assertNotSame('', $tokenPath);
+        try {
+            file_put_contents($tokenPath, "first-token\n");
+
+            $mock = new MockHandler([
+                new Response(200, [], '{}'),
+                new Response(200, [], '{}'),
+            ]);
+            $stack = HandlerStack::create($mock);
+
+            $client = new ApiClient(
+                'https://example.test',
+                new ApiClientConfiguration(
+                    requestHandler: $stack,
+                    auth: new KeboolaServiceAccountAuth($tokenPath),
+                ),
+            );
+
+            $client->sendRequest(new Request('GET', 'foo'));
+            $lastRequest = $mock->getLastRequest();
+            self::assertNotNull($lastRequest);
+            self::assertSame(
+                'Bearer first-token',
+                $lastRequest->getHeader('X-Kubernetes-Authorization')[0],
+            );
+
+            // Simulate kubelet rotating the projected token file.
+            file_put_contents($tokenPath, "second-token\n");
+
+            $client->sendRequest(new Request('GET', 'foo'));
+            $lastRequest = $mock->getLastRequest();
+            self::assertNotNull($lastRequest);
+            self::assertSame(
+                'Bearer second-token',
+                $lastRequest->getHeader('X-Kubernetes-Authorization')[0],
+            );
+        } finally {
+            @unlink($tokenPath);
+        }
     }
 
     public function testRetriesOn5xx(): void
@@ -44,8 +116,11 @@ class ApiClientTest extends TestCase
 
         $client = new ApiClient(
             'https://example.test',
-            'token',
-            new ApiClientConfiguration(backoffMaxTries: 3, requestHandler: $stack),
+            new ApiClientConfiguration(
+                auth: new ManageApiTokenAuth('token'),
+                backoffMaxTries: 3,
+                requestHandler: $stack,
+            ),
         );
         $client->sendRequest(new Request('GET', 'foo'));
 
@@ -62,8 +137,10 @@ class ApiClientTest extends TestCase
 
         $client = new ApiClient(
             'https://example.test',
-            'token',
-            new ApiClientConfiguration(requestHandler: $stack),
+            new ApiClientConfiguration(
+                auth: new ManageApiTokenAuth('token'),
+                requestHandler: $stack,
+            ),
         );
 
         $this->expectException(ClientException::class);
@@ -79,8 +156,10 @@ class ApiClientTest extends TestCase
 
         $client = new ApiClient(
             'https://example.test',
-            'token',
-            new ApiClientConfiguration(requestHandler: $stack),
+            new ApiClientConfiguration(
+                auth: new ManageApiTokenAuth('token'),
+                requestHandler: $stack,
+            ),
         );
 
         $this->expectException(ClientException::class);
@@ -101,8 +180,10 @@ class ApiClientTest extends TestCase
 
         $client = new ApiClient(
             'https://example.test',
-            'token',
-            new ApiClientConfiguration(requestHandler: $stack),
+            new ApiClientConfiguration(
+                auth: new ManageApiTokenAuth('token'),
+                requestHandler: $stack,
+            ),
         );
 
         $repo = $client->sendRequestAndMapResponse(
@@ -123,8 +204,10 @@ class ApiClientTest extends TestCase
 
         $client = new ApiClient(
             'https://example.test',
-            'token',
-            new ApiClientConfiguration(requestHandler: $stack),
+            new ApiClientConfiguration(
+                auth: new ManageApiTokenAuth('token'),
+                requestHandler: $stack,
+            ),
         );
 
         $repos = $client->sendRequestAndMapResponse(
@@ -144,8 +227,10 @@ class ApiClientTest extends TestCase
 
         $client = new ApiClient(
             'https://example.test',
-            'token',
-            new ApiClientConfiguration(requestHandler: $stack),
+            new ApiClientConfiguration(
+                auth: new ManageApiTokenAuth('token'),
+                requestHandler: $stack,
+            ),
         );
 
         $this->expectException(ClientException::class);

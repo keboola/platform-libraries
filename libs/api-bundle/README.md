@@ -114,6 +114,31 @@ To use individual authentication attributes, you need to install appropriate cli
 > If you forget to install appropriate client, you will get exception like
 > `Service "Keboola\ApiBundle\Attribute\KubernetesServiceAccountAuth" not found: the container inside "Symfony\Component\DependencyInjection\Argument\ServiceLocator" is a smaller service locator`
 
+## Testing controllers
+
+`Keboola\ApiBundle\Test\AuthenticatorTestTrait` stubs the authenticators in functional
+(`KernelTestCase`) tests so guarded controllers can be exercised without reaching real
+Storage/Manage APIs:
+
+```php
+use Keboola\ApiBundle\Test\AuthenticatorTestTrait;
+
+class MyActionTest extends KernelTestCase
+{
+    use AuthenticatorTestTrait;
+
+    public function testIt(): void
+    {
+        // for #[StorageApiTokenAuth]
+        $token = $this->setupFakeStorageApiToken(projectId: '123', features: ['my-feature']);
+
+        // for #[KubernetesServiceAccountAuth] — works for both the X-KBC-ManageApiToken
+        // header and the Kubernetes ServiceAccount JWT
+        $this->setupFakeManageApiToken('my-token', scopes: ['something:manage']);
+    }
+}
+```
+
 ## License
 
 MIT licensed, see [LICENSE](./LICENSE) file.

@@ -28,20 +28,10 @@ class KubernetesServiceAccountAuthenticator implements TokenAuthenticatorInterfa
 
     public function extractToken(Request $request): ?string
     {
-        $manageToken = $request->headers->get(self::MANAGE_TOKEN_HEADER);
-        if ($manageToken !== null) {
-            return $manageToken;
-        }
-
-        $serviceAccountHeader = $request->headers->get(self::SERVICE_ACCOUNT_HEADER);
-        if ($serviceAccountHeader !== null) {
-            if (preg_match('/^Bearer\s+(.+)$/i', $serviceAccountHeader, $matches)) {
-                return $matches[1];
-            }
-            return $serviceAccountHeader;
-        }
-
-        return null;
+        // Returned verbatim (the ServiceAccount header keeps its "Bearer " scheme); the scheme is
+        // validated and stripped in authenticateToken, right before the Manage API client call.
+        return $request->headers->get(self::MANAGE_TOKEN_HEADER)
+            ?? $request->headers->get(self::SERVICE_ACCOUNT_HEADER);
     }
 
     public function authenticateToken(
@@ -51,9 +41,9 @@ class KubernetesServiceAccountAuthenticator implements TokenAuthenticatorInterfa
     ): KubernetesServiceAccountToken {
         assert($authAttribute instanceof KubernetesServiceAccountAuth);
 
-        $manageApiClient = $request->headers->has(self::SERVICE_ACCOUNT_HEADER)
-            ? $this->manageApiClientFactory->getClientForServiceAccountToken($token)
-            : $this->manageApiClientFactory->getClientForManageToken($token);
+        $manageApiClient = $request->headers->has(self::MANAGE_TOKEN_HEADER)
+            ? $this->manageApiClientFactory->getClientForManageToken($token)
+            : $this->manageApiClientFactory->getClientForServiceAccountToken($this->stripBearerScheme($token));
 
         try {
             $tokenData = $manageApiClient->verifyToken();
@@ -62,6 +52,21 @@ class KubernetesServiceAccountAuthenticator implements TokenAuthenticatorInterfa
         }
 
         return KubernetesServiceAccountToken::fromVerifyResponse($tokenData);
+    }
+
+    /**
+     * The ServiceAccount JWT travels with the "Bearer " scheme; the Manage API client re-adds the
+     * scheme, so it needs the bare token. A missing scheme means the header is malformed.
+     */
+    private function stripBearerScheme(string $headerValue): string
+    {
+        if (preg_match('/^Bearer\s+(.+)$/i', $headerValue, $matches) !== 1) {
+            throw new CustomUserMessageAuthenticationException(
+                sprintf('Invalid %s header: expected "Bearer <token>"', self::SERVICE_ACCOUNT_HEADER),
+            );
+        }
+
+        return $matches[1];
     }
 
     public function authorizeToken(AuthAttributeInterface $authAttribute, TokenInterface $token): void

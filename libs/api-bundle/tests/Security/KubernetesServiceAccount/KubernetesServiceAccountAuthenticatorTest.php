@@ -14,6 +14,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Security\Core\Exception\AccessDeniedException;
+use Symfony\Component\Security\Core\Exception\CustomUserMessageAuthenticationException;
 
 class KubernetesServiceAccountAuthenticatorTest extends TestCase
 {
@@ -343,7 +344,7 @@ class KubernetesServiceAccountAuthenticatorTest extends TestCase
         self::assertNull($authenticator->extractToken($request));
     }
 
-    public function testExtractTokenStripsBearerFromServiceAccountHeader(): void
+    public function testExtractTokenReturnsServiceAccountHeaderVerbatim(): void
     {
         $authenticator = new KubernetesServiceAccountAuthenticator(
             $this->createMock(ManageApiClientFactory::class),
@@ -352,7 +353,8 @@ class KubernetesServiceAccountAuthenticatorTest extends TestCase
         $request = Request::create('https://keboola.com');
         $request->headers->set('X-Kubernetes-Authorization', 'Bearer my-jwt-token');
 
-        self::assertSame('my-jwt-token', $authenticator->extractToken($request));
+        // The Bearer scheme is kept here; it is stripped in authenticateToken.
+        self::assertSame('Bearer my-jwt-token', $authenticator->extractToken($request));
     }
 
     public function testExtractTokenPrefersManageHeaderOverServiceAccountHeader(): void
@@ -423,11 +425,32 @@ class KubernetesServiceAccountAuthenticatorTest extends TestCase
 
         $token = $authenticator->authenticateToken(
             new KubernetesServiceAccountAuth(scopes: ['some:scope']),
-            'my-jwt-token',
+            'Bearer my-jwt-token',
             $request,
         );
 
         self::assertSame(['some:scope'], $token->getScopes());
+    }
+
+    public function testAuthenticateTokenRejectsServiceAccountHeaderWithoutBearerScheme(): void
+    {
+        $clientFactory = $this->createMock(ManageApiClientFactory::class);
+        $clientFactory->expects(self::never())->method('getClientForServiceAccountToken');
+        $clientFactory->expects(self::never())->method('getClientForManageToken');
+
+        $authenticator = new KubernetesServiceAccountAuthenticator($clientFactory);
+
+        $request = Request::create('https://keboola.com');
+        $request->headers->set('X-Kubernetes-Authorization', 'my-jwt-token');
+
+        $this->expectException(CustomUserMessageAuthenticationException::class);
+        $this->expectExceptionMessage('Invalid X-Kubernetes-Authorization header: expected "Bearer <token>"');
+
+        $authenticator->authenticateToken(
+            new KubernetesServiceAccountAuth(scopes: ['some:scope']),
+            'my-jwt-token',
+            $request,
+        );
     }
 
     /**

@@ -110,7 +110,7 @@ class KubernetesServiceAccountTokenTest extends TestCase
         self::assertFalse($token->hasFeature('feat-3'));
     }
 
-    public function testDeprecatedManageApiTokenAliasAcceptsProducedToken(): void
+    public function testDeprecatedManageApiTokenSupertypeAcceptsProducedToken(): void
     {
         $token = KubernetesServiceAccountToken::fromVerifyResponse([
             'id' => 123,

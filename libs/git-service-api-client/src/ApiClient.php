@@ -14,7 +14,6 @@ use JsonException;
 use Keboola\GitServiceApiClient\Exception\ClientException;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
-use SensitiveParameter;
 use Throwable;
 
 class ApiClient
@@ -25,21 +24,30 @@ class ApiClient
 
     /**
      * @param non-empty-string $baseUrl
-     * @param non-empty-string $token
+     *
+     * Authentication is taken from {@see ApiClientConfiguration::$auth}, which
+     * defaults to a {@see Auth\KeboolaServiceAccountAuth} reading the
+     * projected SA token mounted by the kbc-stacks chart.
      */
     public function __construct(
         string $baseUrl,
-        #[SensitiveParameter] string $token,
         ?ApiClientConfiguration $configuration = null,
     ) {
         $configuration ??= new ApiClientConfiguration();
+        $auth = $configuration->auth;
 
         $stack = $configuration->requestHandler instanceof HandlerStack
             ? $configuration->requestHandler
             : HandlerStack::create($configuration->requestHandler);
+        // Resolve headers per request so file-backed auth (e.g. the projected
+        // Kubernetes SA token) can pick up rotated tokens on every call.
         $stack->push(Middleware::mapRequest(
-            fn (RequestInterface $request): RequestInterface
-                => $request->withHeader('X-KBC-ManageApiToken', $token),
+            function (RequestInterface $request) use ($auth): RequestInterface {
+                foreach ($auth->getAuthenticationHeaders() as $name => $value) {
+                    $request = $request->withHeader($name, $value);
+                }
+                return $request;
+            },
         ));
 
         if ($configuration->backoffMaxTries > 0) {

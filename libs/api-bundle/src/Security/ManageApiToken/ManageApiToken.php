@@ -19,7 +19,7 @@ class ManageApiToken implements TokenInterface
      * @param list<string> $features
      * @final
      */
-    protected function __construct(
+    public function __construct(
         private readonly int $id,
         private readonly string $description,
         private readonly array $scopes,

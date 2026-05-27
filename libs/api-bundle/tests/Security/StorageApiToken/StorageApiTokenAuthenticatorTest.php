@@ -16,7 +16,6 @@ use Keboola\StorageApiBranch\Factory\StorageClientRequestFactory;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\Security\Core\Exception\CustomUserMessageAuthenticationException;
 
 class StorageApiTokenAuthenticatorTest extends TestCase
@@ -42,13 +41,11 @@ class StorageApiTokenAuthenticatorTest extends TestCase
             ->method('createClientWrapper')
             ->willReturn($clientWrapperMock);
 
-        $requestStack = new RequestStack();
         $request = Request::create('https://keboola.com');
         $request->headers->add([StorageClientRequestFactory::TOKEN_HEADER => 'token']);
-        $requestStack->push($request);
 
-        $storageApiTokenAuthenticator = new StorageApiTokenAuthenticator($clientRequestFactoryMock, $requestStack);
-        $storageApiTokenAuthenticator->authenticateToken(new StorageApiTokenAuth(), 'token');
+        $storageApiTokenAuthenticator = new StorageApiTokenAuthenticator($clientRequestFactoryMock);
+        $storageApiTokenAuthenticator->authenticateToken(new StorageApiTokenAuth(), 'token', $request);
     }
 
     /**
@@ -76,17 +73,15 @@ class StorageApiTokenAuthenticatorTest extends TestCase
             ->method('createClientWrapper')
             ->willReturn($clientWrapperMock);
 
-        $requestStack = new RequestStack();
         $request = Request::create('https://keboola.com');
         $request->headers->add([StorageClientRequestFactory::TOKEN_HEADER => 'token']);
-        $requestStack->push($request);
 
-        $storageApiTokenAuthenticator = new StorageApiTokenAuthenticator($clientRequestFactoryMock, $requestStack);
+        $storageApiTokenAuthenticator = new StorageApiTokenAuthenticator($clientRequestFactoryMock);
 
         self::expectException($expectedExceptionClass);
         self::expectExceptionMessage($expectedExceptionMessage);
         self::expectExceptionCode($expectedExceptionCode);
-        $storageApiTokenAuthenticator->authenticateToken(new StorageApiTokenAuth(), 'token');
+        $storageApiTokenAuthenticator->authenticateToken(new StorageApiTokenAuth(), 'token', $request);
     }
 
     public static function provideExceptionData(): Generator
@@ -115,7 +110,6 @@ class StorageApiTokenAuthenticatorTest extends TestCase
     {
         $authenticator = new StorageApiTokenAuthenticator(
             $this->createMock(StorageClientRequestFactory::class),
-            new RequestStack(),
         );
 
         $request = Request::create('https://keboola.com');
@@ -128,7 +122,6 @@ class StorageApiTokenAuthenticatorTest extends TestCase
     {
         $authenticator = new StorageApiTokenAuthenticator(
             $this->createMock(StorageClientRequestFactory::class),
-            new RequestStack(),
         );
 
         $request = Request::create('https://keboola.com');
@@ -141,7 +134,6 @@ class StorageApiTokenAuthenticatorTest extends TestCase
     {
         $authenticator = new StorageApiTokenAuthenticator(
             $this->createMock(StorageClientRequestFactory::class),
-            new RequestStack(),
         );
 
         $request = Request::create('https://keboola.com');
@@ -154,7 +146,6 @@ class StorageApiTokenAuthenticatorTest extends TestCase
     {
         $authenticator = new StorageApiTokenAuthenticator(
             $this->createMock(StorageClientRequestFactory::class),
-            new RequestStack(),
         );
 
         $request = Request::create('https://keboola.com');
@@ -168,7 +159,6 @@ class StorageApiTokenAuthenticatorTest extends TestCase
     {
         $authenticator = new StorageApiTokenAuthenticator(
             $this->createMock(StorageClientRequestFactory::class),
-            new RequestStack(),
         );
 
         $request = Request::create('https://keboola.com');

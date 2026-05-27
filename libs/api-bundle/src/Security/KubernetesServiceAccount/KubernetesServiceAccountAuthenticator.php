@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Keboola\ApiBundle\Security\ManageApiToken;
+namespace Keboola\ApiBundle\Security\KubernetesServiceAccount;
 
 use Keboola\ApiBundle\Attribute\AuthAttributeInterface;
-use Keboola\ApiBundle\Attribute\ManageApiTokenAuth;
+use Keboola\ApiBundle\Attribute\KubernetesServiceAccountAuth;
 use Keboola\ApiBundle\Security\TokenAuthenticatorInterface;
 use Keboola\ApiBundle\Security\TokenInterface;
 use Keboola\ManageApi\ClientException as ManageApiClientException;
@@ -14,10 +14,13 @@ use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 use Symfony\Component\Security\Core\Exception\CustomUserMessageAuthenticationException;
 
 /**
- * @implements TokenAuthenticatorInterface<ManageApiToken>
+ * @implements TokenAuthenticatorInterface<KubernetesServiceAccountToken>
  */
-class ManageApiTokenAuthenticator implements TokenAuthenticatorInterface
+class KubernetesServiceAccountAuthenticator implements TokenAuthenticatorInterface
 {
+    public const MANAGE_TOKEN_HEADER = 'X-KBC-ManageApiToken';
+    public const SERVICE_ACCOUNT_HEADER = 'X-Kubernetes-Authorization';
+
     public function __construct(
         private readonly ManageApiClientFactory $manageApiClientFactory,
     ) {
@@ -25,14 +28,32 @@ class ManageApiTokenAuthenticator implements TokenAuthenticatorInterface
 
     public function extractToken(Request $request): ?string
     {
-        return $request->headers->get('X-KBC-ManageApiToken');
+        $manageToken = $request->headers->get(self::MANAGE_TOKEN_HEADER);
+        if ($manageToken !== null) {
+            return $manageToken;
+        }
+
+        $serviceAccountHeader = $request->headers->get(self::SERVICE_ACCOUNT_HEADER);
+        if ($serviceAccountHeader !== null) {
+            if (preg_match('/^Bearer\s+(.+)$/i', $serviceAccountHeader, $matches)) {
+                return $matches[1];
+            }
+            return $serviceAccountHeader;
+        }
+
+        return null;
     }
 
-    public function authenticateToken(AuthAttributeInterface $authAttribute, string $token): ManageApiToken
-    {
-        assert($authAttribute instanceof ManageApiTokenAuth);
+    public function authenticateToken(
+        AuthAttributeInterface $authAttribute,
+        string $token,
+        Request $request,
+    ): KubernetesServiceAccountToken {
+        assert($authAttribute instanceof KubernetesServiceAccountAuth);
 
-        $manageApiClient = $this->manageApiClientFactory->getClient($token);
+        $manageApiClient = $request->headers->has(self::SERVICE_ACCOUNT_HEADER)
+            ? $this->manageApiClientFactory->getClientForJwt($token)
+            : $this->manageApiClientFactory->getClient($token);
 
         try {
             $tokenData = $manageApiClient->verifyToken();
@@ -40,13 +61,13 @@ class ManageApiTokenAuthenticator implements TokenAuthenticatorInterface
             throw new CustomUserMessageAuthenticationException($e->getMessage(), [], 0, $e);
         }
 
-        return ManageApiToken::fromVerifyResponse($tokenData);
+        return KubernetesServiceAccountToken::fromVerifyResponse($tokenData);
     }
 
     public function authorizeToken(AuthAttributeInterface $authAttribute, TokenInterface $token): void
     {
-        assert($authAttribute instanceof ManageApiTokenAuth);
-        assert($token instanceof ManageApiToken);
+        assert($authAttribute instanceof KubernetesServiceAccountAuth);
+        assert($token instanceof KubernetesServiceAccountToken);
 
         if ($authAttribute->isSuperAdmin === false && $token->isSuperAdmin() === true) {
             throw new AccessDeniedException('Authentication token must not be super admin');

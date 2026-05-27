@@ -4,10 +4,11 @@ declare(strict_types=1);
 
 namespace Keboola\ApiBundle\DependencyInjection;
 
+use Keboola\ApiBundle\Attribute\KubernetesServiceAccountAuth;
 use Keboola\ApiBundle\Attribute\ManageApiTokenAuth;
 use Keboola\ApiBundle\Attribute\StorageApiTokenAuth;
-use Keboola\ApiBundle\Security\ManageApiToken\ManageApiClientFactory;
-use Keboola\ApiBundle\Security\ManageApiToken\ManageApiTokenAuthenticator;
+use Keboola\ApiBundle\Security\KubernetesServiceAccount\KubernetesServiceAccountAuthenticator;
+use Keboola\ApiBundle\Security\KubernetesServiceAccount\ManageApiClientFactory;
 use Keboola\ApiBundle\Security\StorageApiToken\StorageApiTokenAuthenticator;
 use Keboola\ManageApi\Client as ManageApiClient;
 use Keboola\ServiceClient\ServiceClient;
@@ -37,7 +38,7 @@ class KeboolaApiExtension extends Extension
 
         $authenticators = [];
         $this->setupStorageApiAuthenticator($container, $authenticators);
-        $this->setupManageApiAuthenticator($container, $config, $authenticators);
+        $this->setupKubernetesServiceAccountAuthenticator($container, $config, $authenticators);
 
         $container->getDefinition('keboola.api_bundle.security.authenticators_locator')
             ->setArguments([
@@ -54,13 +55,12 @@ class KeboolaApiExtension extends Extension
 
         $container->register(StorageApiTokenAuthenticator::class)
             ->setArgument('$clientRequestFactory', new Reference(StorageClientRequestFactory::class))
-            ->setArgument('$requestStack', new Reference('request_stack'))
         ;
 
         $authenticators[StorageApiTokenAuth::class] = new Reference(StorageApiTokenAuthenticator::class);
     }
 
-    private function setupManageApiAuthenticator(
+    private function setupKubernetesServiceAccountAuthenticator(
         ContainerBuilder $container,
         array $config,
         array &$authenticators,
@@ -74,10 +74,13 @@ class KeboolaApiExtension extends Extension
             ->setArgument('$serviceClient', new Reference(ServiceClient::class))
         ;
 
-        $container->register(ManageApiTokenAuthenticator::class)
+        $container->register(KubernetesServiceAccountAuthenticator::class)
             ->setArgument('$manageApiClientFactory', new Reference(ManageApiClientFactory::class))
         ;
 
-        $authenticators[ManageApiTokenAuth::class] = new Reference(ManageApiTokenAuthenticator::class);
+        $authenticatorReference = new Reference(KubernetesServiceAccountAuthenticator::class);
+        $authenticators[KubernetesServiceAccountAuth::class] = $authenticatorReference;
+        // BC alias for the deprecated ManageApiTokenAuth attribute
+        $authenticators[ManageApiTokenAuth::class] = $authenticatorReference;
     }
 }

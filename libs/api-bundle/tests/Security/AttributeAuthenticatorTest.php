@@ -322,6 +322,7 @@ class AttributeAuthenticatorTest extends TestCase
             ->with(
                 $this->isInstanceOf(StorageApiTokenAuth::class),
                 'token',
+                $this->isInstanceOf(Request::class),
             )
             ->willReturn($token)
         ;

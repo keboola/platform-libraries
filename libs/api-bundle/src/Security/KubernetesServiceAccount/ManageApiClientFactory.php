@@ -15,7 +15,7 @@ class ManageApiClientFactory
     ) {
     }
 
-    public function getClient(string $token): ManageApiClient
+    public function getClientForManageToken(string $token): ManageApiClient
     {
         return new ManageApiClient([
             'url' => $this->serviceClient->getConnectionServiceUrl(),
@@ -24,7 +24,7 @@ class ManageApiClientFactory
         ]);
     }
 
-    public function getClientForJwt(string $jwt): ManageApiClient
+    public function getClientForServiceAccountToken(string $jwt): ManageApiClient
     {
         return new ManageApiClient([
             'url' => $this->serviceClient->getConnectionServiceUrl(),

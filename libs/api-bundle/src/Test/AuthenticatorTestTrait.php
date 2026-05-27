@@ -90,8 +90,10 @@ trait AuthenticatorTestTrait
         ;
 
         $manageApiClientFactory = $this->createMock(ManageApiClientFactory::class);
-        $manageApiClientFactory->method('getClient')->with($tokenString)->willReturn($manageApiClient);
-        $manageApiClientFactory->method('getClientForJwt')->with($tokenString)->willReturn($manageApiClient);
+        $manageApiClientFactory->method('getClientForManageToken')->with($tokenString)->willReturn($manageApiClient);
+        $manageApiClientFactory->method('getClientForServiceAccountToken')
+            ->with($tokenString)
+            ->willReturn($manageApiClient);
 
         self::getContainer()->set(ManageApiClientFactory::class, $manageApiClientFactory);
     }

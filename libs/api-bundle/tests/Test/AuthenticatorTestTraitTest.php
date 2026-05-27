@@ -54,13 +54,13 @@ class AuthenticatorTestTraitTest extends TestCase
         $factory = self::$testContainer->get(ManageApiClientFactory::class);
         self::assertInstanceOf(ManageApiClientFactory::class, $factory);
 
-        $data = $factory->getClient('manage-token')->verifyToken();
+        $data = $factory->getClientForManageToken('manage-token')->verifyToken();
         self::assertSame(['some:scope'], $data['scopes']);
         self::assertArrayHasKey('user', $data);
         self::assertSame(['feat-b'], $data['user']['features']);
 
         // The Kubernetes ServiceAccount JWT path is stubbed identically.
-        $jwtData = $factory->getClientForJwt('manage-token')->verifyToken();
+        $jwtData = $factory->getClientForServiceAccountToken('manage-token')->verifyToken();
         self::assertSame(['some:scope'], $jwtData['scopes']);
     }
 }

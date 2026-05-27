@@ -52,8 +52,8 @@ class KubernetesServiceAccountAuthenticator implements TokenAuthenticatorInterfa
         assert($authAttribute instanceof KubernetesServiceAccountAuth);
 
         $manageApiClient = $request->headers->has(self::SERVICE_ACCOUNT_HEADER)
-            ? $this->manageApiClientFactory->getClientForJwt($token)
-            : $this->manageApiClientFactory->getClient($token);
+            ? $this->manageApiClientFactory->getClientForServiceAccountToken($token)
+            : $this->manageApiClientFactory->getClientForManageToken($token);
 
         try {
             $tokenData = $manageApiClient->verifyToken();

@@ -379,11 +379,11 @@ class KubernetesServiceAccountAuthenticatorTest extends TestCase
 
         $clientFactory = $this->createMock(ManageApiClientFactory::class);
         $clientFactory->expects(self::once())
-            ->method('getClient')
+            ->method('getClientForManageToken')
             ->with('my-manage-token')
             ->willReturn($manageApiClient);
         $clientFactory->expects(self::never())
-            ->method('getClientForJwt');
+            ->method('getClientForServiceAccountToken');
 
         $authenticator = new KubernetesServiceAccountAuthenticator($clientFactory);
 
@@ -410,11 +410,11 @@ class KubernetesServiceAccountAuthenticatorTest extends TestCase
 
         $clientFactory = $this->createMock(ManageApiClientFactory::class);
         $clientFactory->expects(self::once())
-            ->method('getClientForJwt')
+            ->method('getClientForServiceAccountToken')
             ->with('my-jwt-token')
             ->willReturn($manageApiClient);
         $clientFactory->expects(self::never())
-            ->method('getClient');
+            ->method('getClientForManageToken');
 
         $authenticator = new KubernetesServiceAccountAuthenticator($clientFactory);
 

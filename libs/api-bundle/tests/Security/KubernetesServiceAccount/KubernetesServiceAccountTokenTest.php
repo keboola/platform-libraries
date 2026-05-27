@@ -109,38 +109,4 @@ class KubernetesServiceAccountTokenTest extends TestCase
         self::assertTrue($token->hasFeature('feat-1'));
         self::assertFalse($token->hasFeature('feat-3'));
     }
-
-    public function testDeprecatedManageApiTokenSupertypeAcceptsProducedToken(): void
-    {
-        $token = KubernetesServiceAccountToken::fromVerifyResponse([
-            'id' => 123,
-            'description' => 'test',
-            'created' => '2024-03-21T12:26:43+0100',
-            'lastUsed' => '2024-03-21T12:26:54+0100',
-            'expires' => null,
-            'isSessionToken' => false,
-            'isExpired' => false,
-            'isDisabled' => false,
-            'scopes' => [],
-            'type' => 'admin',
-            'creator' => ['id' => 3801, 'name' => 'John Doe'],
-            'user' => [
-                'id' => 3801,
-                'name' => 'John Doe',
-                'email' => 'john.doe@example.com',
-                'mfaEnabled' => true,
-                'features' => [],
-                'isSuperAdmin' => false,
-                'canAccessLogs' => true,
-            ],
-        ]);
-
-        // The deprecated FQN must remain a valid type for instances the
-        // authenticator produces, so old `#[CurrentUser] ManageApiToken` hints keep working.
-        // Concatenated so static analysis treats it as a runtime class name (the alias
-        // is only registered at runtime via class_alias).
-        $deprecatedFqn = 'Keboola\ApiBundle\Security\ManageApiToken\\' . 'ManageApiToken';
-        self::assertTrue(class_exists($deprecatedFqn), 'deprecated ManageApiToken FQN must be loadable');
-        self::assertTrue(is_a($token, $deprecatedFqn), 'deprecated ManageApiToken FQN must accept the token');
-    }
 }

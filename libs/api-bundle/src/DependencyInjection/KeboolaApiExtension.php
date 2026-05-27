@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Keboola\ApiBundle\DependencyInjection;
 
 use Keboola\ApiBundle\Attribute\KubernetesServiceAccountAuth;
-use Keboola\ApiBundle\Attribute\ManageApiTokenAuth;
 use Keboola\ApiBundle\Attribute\StorageApiTokenAuth;
 use Keboola\ApiBundle\Security\KubernetesServiceAccount\KubernetesServiceAccountAuthenticator;
 use Keboola\ApiBundle\Security\KubernetesServiceAccount\ManageApiClientFactory;
@@ -78,9 +77,8 @@ class KeboolaApiExtension extends Extension
             ->setArgument('$manageApiClientFactory', new Reference(ManageApiClientFactory::class))
         ;
 
-        $authenticatorReference = new Reference(KubernetesServiceAccountAuthenticator::class);
-        $authenticators[KubernetesServiceAccountAuth::class] = $authenticatorReference;
-        // BC alias for the deprecated ManageApiTokenAuth attribute
-        $authenticators[ManageApiTokenAuth::class] = $authenticatorReference;
+        $authenticators[KubernetesServiceAccountAuth::class] = new Reference(
+            KubernetesServiceAccountAuthenticator::class,
+        );
     }
 }

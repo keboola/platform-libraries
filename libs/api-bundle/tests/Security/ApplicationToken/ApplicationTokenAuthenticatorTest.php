@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace Keboola\ApiBundle\Tests\Security\KubernetesServiceAccount;
+namespace Keboola\ApiBundle\Tests\Security\ApplicationToken;
 
 use Generator;
-use Keboola\ApiBundle\Attribute\KubernetesServiceAccountAuth;
-use Keboola\ApiBundle\Security\KubernetesServiceAccount\KubernetesServiceAccountAuthenticator;
-use Keboola\ApiBundle\Security\KubernetesServiceAccount\KubernetesServiceAccountToken;
-use Keboola\ApiBundle\Security\KubernetesServiceAccount\ManageApiClientFactory;
+use Keboola\ApiBundle\Attribute\ApplicationTokenAuth;
+use Keboola\ApiBundle\Security\ApplicationToken\ApplicationToken;
+use Keboola\ApiBundle\Security\ApplicationToken\ApplicationTokenAuthenticator;
+use Keboola\ApiBundle\Security\ApplicationToken\ManageApiClientFactory;
 use Keboola\ManageApi\Client as ManageApiClient;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
@@ -16,15 +16,15 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 use Symfony\Component\Security\Core\Exception\CustomUserMessageAuthenticationException;
 
-class KubernetesServiceAccountAuthenticatorTest extends TestCase
+class ApplicationTokenAuthenticatorTest extends TestCase
 {
     #[DataProvider('provideAuthorizeTokenSuccessData')]
     public function testAuthorizeTokenSuccess(
-        KubernetesServiceAccountAuth $authAttribute,
-        KubernetesServiceAccountToken $token,
+        ApplicationTokenAuth $authAttribute,
+        ApplicationToken $token,
     ): void {
 
-        $authenticator = new KubernetesServiceAccountAuthenticator(
+        $authenticator = new ApplicationTokenAuthenticator(
             $this->createMock(ManageApiClientFactory::class),
         );
 
@@ -35,11 +35,11 @@ class KubernetesServiceAccountAuthenticatorTest extends TestCase
 
     #[DataProvider('provideAuthorizeTokenExceptionsData')]
     public function testAuthorizeTokenExceptions(
-        KubernetesServiceAccountAuth $authAttribute,
-        KubernetesServiceAccountToken $token,
+        ApplicationTokenAuth $authAttribute,
+        ApplicationToken $token,
         string $expectedMessage,
     ): void {
-        $authenticator = new KubernetesServiceAccountAuthenticator(
+        $authenticator = new ApplicationTokenAuthenticator(
             $this->createMock(ManageApiClientFactory::class),
         );
 
@@ -52,8 +52,8 @@ class KubernetesServiceAccountAuthenticatorTest extends TestCase
     public static function provideAuthorizeTokenSuccessData(): Generator
     {
         yield 'scope needed and provided' => [
-            new KubernetesServiceAccountAuth(scopes: ['some:scope']),
-            KubernetesServiceAccountToken::fromVerifyResponse([
+            new ApplicationTokenAuth(scopes: ['some:scope']),
+            ApplicationToken::fromVerifyResponse([
                 'id' => 123,
                 'description' => 'some-description',
                 'created' => '2024-03-21T12:26:43+0100',
@@ -81,8 +81,8 @@ class KubernetesServiceAccountAuthenticatorTest extends TestCase
         ];
 
         yield 'super admin token needed and provided' => [
-            new KubernetesServiceAccountAuth(scopes: [], isSuperAdmin: true),
-            KubernetesServiceAccountToken::fromVerifyResponse([
+            new ApplicationTokenAuth(scopes: [], isSuperAdmin: true),
+            ApplicationToken::fromVerifyResponse([
                 'id' => 123,
                 'description' => 'some-description',
                 'created' => '2024-03-21T12:26:43+0100',
@@ -110,8 +110,8 @@ class KubernetesServiceAccountAuthenticatorTest extends TestCase
         ];
 
         yield 'no scope or token needed' => [
-            new KubernetesServiceAccountAuth(),
-            KubernetesServiceAccountToken::fromVerifyResponse([
+            new ApplicationTokenAuth(),
+            ApplicationToken::fromVerifyResponse([
                 'id' => 123,
                 'description' => 'some-description',
                 'created' => '2024-03-21T12:26:43+0100',
@@ -139,8 +139,8 @@ class KubernetesServiceAccountAuthenticatorTest extends TestCase
         ];
 
         yield 'two scopes needed and both provided' => [
-            new KubernetesServiceAccountAuth(scopes: ['some:scope', 'some:other-scope']),
-            KubernetesServiceAccountToken::fromVerifyResponse([
+            new ApplicationTokenAuth(scopes: ['some:scope', 'some:other-scope']),
+            ApplicationToken::fromVerifyResponse([
                 'id' => 123,
                 'description' => 'some-description',
                 'created' => '2024-03-21T12:26:43+0100',
@@ -171,8 +171,8 @@ class KubernetesServiceAccountAuthenticatorTest extends TestCase
     public static function provideAuthorizeTokenExceptionsData(): Generator
     {
         yield 'scope needed and not provided' => [
-            new KubernetesServiceAccountAuth(scopes: ['some:scope']),
-            KubernetesServiceAccountToken::fromVerifyResponse([
+            new ApplicationTokenAuth(scopes: ['some:scope']),
+            ApplicationToken::fromVerifyResponse([
                 'id' => 123,
                 'description' => 'some-description',
                 'created' => '2024-03-21T12:26:43+0100',
@@ -201,8 +201,8 @@ class KubernetesServiceAccountAuthenticatorTest extends TestCase
         ];
 
         yield 'scope needed and different one provided' => [
-            new KubernetesServiceAccountAuth(scopes: ['some:scope']),
-            KubernetesServiceAccountToken::fromVerifyResponse([
+            new ApplicationTokenAuth(scopes: ['some:scope']),
+            ApplicationToken::fromVerifyResponse([
                 'id' => 123,
                 'description' => 'some-description',
                 'created' => '2024-03-21T12:26:43+0100',
@@ -231,8 +231,8 @@ class KubernetesServiceAccountAuthenticatorTest extends TestCase
         ];
 
         yield 'two scopes needed and only one provided' => [
-            new KubernetesServiceAccountAuth(scopes: ['some:scope', 'some:other-scope']),
-            KubernetesServiceAccountToken::fromVerifyResponse([
+            new ApplicationTokenAuth(scopes: ['some:scope', 'some:other-scope']),
+            ApplicationToken::fromVerifyResponse([
                 'id' => 123,
                 'description' => 'some-description',
                 'created' => '2024-03-21T12:26:43+0100',
@@ -261,8 +261,8 @@ class KubernetesServiceAccountAuthenticatorTest extends TestCase
         ];
 
         yield 'super admin token needed and not provided' => [
-            new KubernetesServiceAccountAuth(scopes: [], isSuperAdmin: true),
-            KubernetesServiceAccountToken::fromVerifyResponse([
+            new ApplicationTokenAuth(scopes: [], isSuperAdmin: true),
+            ApplicationToken::fromVerifyResponse([
                 'id' => 123,
                 'description' => 'some-description',
                 'created' => '2024-03-21T12:26:43+0100',
@@ -291,8 +291,8 @@ class KubernetesServiceAccountAuthenticatorTest extends TestCase
         ];
 
         yield 'super admin token forbidden and provided' => [
-            new KubernetesServiceAccountAuth(scopes: [], isSuperAdmin: false),
-            KubernetesServiceAccountToken::fromVerifyResponse([
+            new ApplicationTokenAuth(scopes: [], isSuperAdmin: false),
+            ApplicationToken::fromVerifyResponse([
                 'id' => 123,
                 'description' => 'some-description',
                 'created' => '2024-03-21T12:26:43+0100',
@@ -323,7 +323,7 @@ class KubernetesServiceAccountAuthenticatorTest extends TestCase
 
     public function testExtractTokenFromHeader(): void
     {
-        $authenticator = new KubernetesServiceAccountAuthenticator(
+        $authenticator = new ApplicationTokenAuthenticator(
             $this->createMock(ManageApiClientFactory::class),
         );
 
@@ -335,7 +335,7 @@ class KubernetesServiceAccountAuthenticatorTest extends TestCase
 
     public function testExtractTokenReturnsNullWhenNoHeader(): void
     {
-        $authenticator = new KubernetesServiceAccountAuthenticator(
+        $authenticator = new ApplicationTokenAuthenticator(
             $this->createMock(ManageApiClientFactory::class),
         );
 
@@ -346,7 +346,7 @@ class KubernetesServiceAccountAuthenticatorTest extends TestCase
 
     public function testExtractTokenReturnsServiceAccountHeaderVerbatim(): void
     {
-        $authenticator = new KubernetesServiceAccountAuthenticator(
+        $authenticator = new ApplicationTokenAuthenticator(
             $this->createMock(ManageApiClientFactory::class),
         );
 
@@ -359,7 +359,7 @@ class KubernetesServiceAccountAuthenticatorTest extends TestCase
 
     public function testExtractTokenPrefersManageHeaderOverServiceAccountHeader(): void
     {
-        $authenticator = new KubernetesServiceAccountAuthenticator(
+        $authenticator = new ApplicationTokenAuthenticator(
             $this->createMock(ManageApiClientFactory::class),
         );
 
@@ -387,13 +387,13 @@ class KubernetesServiceAccountAuthenticatorTest extends TestCase
         $clientFactory->expects(self::never())
             ->method('getClientForServiceAccountToken');
 
-        $authenticator = new KubernetesServiceAccountAuthenticator($clientFactory);
+        $authenticator = new ApplicationTokenAuthenticator($clientFactory);
 
         $request = Request::create('https://keboola.com');
         $request->headers->set('X-KBC-ManageApiToken', 'my-manage-token');
 
         $token = $authenticator->authenticateToken(
-            new KubernetesServiceAccountAuth(scopes: ['some:scope']),
+            new ApplicationTokenAuth(scopes: ['some:scope']),
             'my-manage-token',
             $request,
         );
@@ -418,13 +418,13 @@ class KubernetesServiceAccountAuthenticatorTest extends TestCase
         $clientFactory->expects(self::never())
             ->method('getClientForManageToken');
 
-        $authenticator = new KubernetesServiceAccountAuthenticator($clientFactory);
+        $authenticator = new ApplicationTokenAuthenticator($clientFactory);
 
         $request = Request::create('https://keboola.com');
         $request->headers->set('X-Kubernetes-Authorization', 'Bearer my-jwt-token');
 
         $token = $authenticator->authenticateToken(
-            new KubernetesServiceAccountAuth(scopes: ['some:scope']),
+            new ApplicationTokenAuth(scopes: ['some:scope']),
             'Bearer my-jwt-token',
             $request,
         );
@@ -438,7 +438,7 @@ class KubernetesServiceAccountAuthenticatorTest extends TestCase
         $clientFactory->expects(self::never())->method('getClientForServiceAccountToken');
         $clientFactory->expects(self::never())->method('getClientForManageToken');
 
-        $authenticator = new KubernetesServiceAccountAuthenticator($clientFactory);
+        $authenticator = new ApplicationTokenAuthenticator($clientFactory);
 
         $request = Request::create('https://keboola.com');
         $request->headers->set('X-Kubernetes-Authorization', 'my-jwt-token');
@@ -447,7 +447,7 @@ class KubernetesServiceAccountAuthenticatorTest extends TestCase
         $this->expectExceptionMessage('Invalid X-Kubernetes-Authorization header: expected "Bearer <token>"');
 
         $authenticator->authenticateToken(
-            new KubernetesServiceAccountAuth(scopes: ['some:scope']),
+            new ApplicationTokenAuth(scopes: ['some:scope']),
             'my-jwt-token',
             $request,
         );

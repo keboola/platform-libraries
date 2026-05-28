@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\ApiBundle\Tests\Test;
 
-use Keboola\ApiBundle\Security\KubernetesServiceAccount\ManageApiClientFactory;
+use Keboola\ApiBundle\Security\ApplicationToken\ManageApiClientFactory;
 use Keboola\ApiBundle\Security\StorageApiToken\StorageApiToken;
 use Keboola\ApiBundle\Test\AuthenticatorTestTrait;
 use Keboola\StorageApiBranch\Factory\StorageClientRequestFactory;

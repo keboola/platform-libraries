@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Keboola\ApiBundle\Security\KubernetesServiceAccount;
+namespace Keboola\ApiBundle\Security\ApplicationToken;
 
+use Keboola\ApiBundle\Attribute\ApplicationTokenAuth;
 use Keboola\ApiBundle\Attribute\AuthAttributeInterface;
-use Keboola\ApiBundle\Attribute\KubernetesServiceAccountAuth;
 use Keboola\ApiBundle\Security\TokenAuthenticatorInterface;
 use Keboola\ApiBundle\Security\TokenInterface;
 use Keboola\ManageApi\ClientException as ManageApiClientException;
@@ -14,9 +14,9 @@ use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 use Symfony\Component\Security\Core\Exception\CustomUserMessageAuthenticationException;
 
 /**
- * @implements TokenAuthenticatorInterface<KubernetesServiceAccountToken>
+ * @implements TokenAuthenticatorInterface<ApplicationToken>
  */
-class KubernetesServiceAccountAuthenticator implements TokenAuthenticatorInterface
+class ApplicationTokenAuthenticator implements TokenAuthenticatorInterface
 {
     public const MANAGE_TOKEN_HEADER = 'X-KBC-ManageApiToken';
     public const SERVICE_ACCOUNT_HEADER = 'X-Kubernetes-Authorization';
@@ -38,8 +38,8 @@ class KubernetesServiceAccountAuthenticator implements TokenAuthenticatorInterfa
         AuthAttributeInterface $authAttribute,
         string $token,
         Request $request,
-    ): KubernetesServiceAccountToken {
-        assert($authAttribute instanceof KubernetesServiceAccountAuth);
+    ): ApplicationToken {
+        assert($authAttribute instanceof ApplicationTokenAuth);
 
         $manageApiClient = $request->headers->has(self::MANAGE_TOKEN_HEADER)
             ? $this->manageApiClientFactory->getClientForManageToken($token)
@@ -51,7 +51,7 @@ class KubernetesServiceAccountAuthenticator implements TokenAuthenticatorInterfa
             throw new CustomUserMessageAuthenticationException($e->getMessage(), [], 0, $e);
         }
 
-        return KubernetesServiceAccountToken::fromVerifyResponse($tokenData);
+        return ApplicationToken::fromVerifyResponse($tokenData);
     }
 
     /**
@@ -71,8 +71,8 @@ class KubernetesServiceAccountAuthenticator implements TokenAuthenticatorInterfa
 
     public function authorizeToken(AuthAttributeInterface $authAttribute, TokenInterface $token): void
     {
-        assert($authAttribute instanceof KubernetesServiceAccountAuth);
-        assert($token instanceof KubernetesServiceAccountToken);
+        assert($authAttribute instanceof ApplicationTokenAuth);
+        assert($token instanceof ApplicationToken);
 
         if ($authAttribute->isSuperAdmin === false && $token->isSuperAdmin() === true) {
             throw new AccessDeniedException('Authentication token must not be super admin');

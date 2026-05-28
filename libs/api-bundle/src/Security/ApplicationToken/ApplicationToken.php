@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Keboola\ApiBundle\Security\KubernetesServiceAccount;
+namespace Keboola\ApiBundle\Security\ApplicationToken;
 
 use Keboola\ApiBundle\Security\TokenInterface;
 
-class KubernetesServiceAccountToken implements TokenInterface
+class ApplicationToken implements TokenInterface
 {
     /**
      * @param list<string> $scopes

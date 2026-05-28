@@ -14,7 +14,7 @@ use Attribute;
  * `isSuperAdmin` are checked identically regardless of the header used.
  */
 #[Attribute(Attribute::TARGET_CLASS | Attribute::TARGET_METHOD | Attribute::IS_REPEATABLE)]
-class KubernetesServiceAccountAuth implements AuthAttributeInterface
+class ApplicationTokenAuth implements AuthAttributeInterface
 {
     public function __construct(
         /** @var list<string> */ public readonly array $scopes = [],

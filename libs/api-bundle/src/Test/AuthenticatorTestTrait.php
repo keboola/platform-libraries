@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\ApiBundle\Test;
 
-use Keboola\ApiBundle\Security\KubernetesServiceAccount\ManageApiClientFactory;
+use Keboola\ApiBundle\Security\ApplicationToken\ManageApiClientFactory;
 use Keboola\ApiBundle\Security\StorageApiToken\StorageApiToken;
 use Keboola\ManageApi\Client as ManageApiClient;
 use Keboola\StorageApi\Client as StorageApiClient;
@@ -15,7 +15,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Helpers for functional (KernelTestCase) tests that stub api-bundle's authenticators, so
- * controllers guarded by #[StorageApiTokenAuth] / #[KubernetesServiceAccountAuth] can be
+ * controllers guarded by #[StorageApiTokenAuth] / #[ApplicationTokenAuth] can be
  * exercised without reaching real Storage/Manage APIs. The consuming test case provides
  * createMock() and getContainer() (e.g. via KernelTestCase + MockObject).
  */
@@ -67,7 +67,7 @@ trait AuthenticatorTestTrait
     }
 
     /**
-     * Stubs the Manage API token verification used by #[KubernetesServiceAccountAuth]. Works
+     * Stubs the Manage API token verification used by #[ApplicationTokenAuth]. Works
      * whether the request carries the X-KBC-ManageApiToken header or the Kubernetes
      * ServiceAccount JWT (X-Kubernetes-Authorization) — both verify paths return the same token.
      *

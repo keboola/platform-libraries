@@ -83,7 +83,7 @@ class Controller {
   }
 }
 
-#[KubernetesServiceAccountAuth(scopes: ['something:manage'])]
+#[ApplicationTokenAuth(scopes: ['something:manage'])]
 #[StorageApiTokenAuth]
 class Controller {
   public function __invoke(
@@ -101,18 +101,18 @@ class Controller {
 }
 ```
 
-`KubernetesServiceAccountAuth` accepts both the Manage API token header (`X-KBC-ManageApiToken`)
+`ApplicationTokenAuth` accepts both the Manage API token header (`X-KBC-ManageApiToken`)
 and the Kubernetes ServiceAccount JWT header (`X-Kubernetes-Authorization`); Connection resolves
 both to a Manage token, so `scopes`/`isSuperAdmin` checks are identical regardless of which header
 the request carries.
 
 To use individual authentication attributes, you need to install appropriate client package:
 * to use `StorageApiTokenAuth`, install `keboola/storage-api-client`
-* to use `KubernetesServiceAccountAuth`, install `keboola/kbc-manage-api-php-client`
+* to use `ApplicationTokenAuth`, install `keboola/kbc-manage-api-php-client`
 
 > [!NOTE]
 > If you forget to install appropriate client, you will get exception like
-> `Service "Keboola\ApiBundle\Attribute\KubernetesServiceAccountAuth" not found: the container inside "Symfony\Component\DependencyInjection\Argument\ServiceLocator" is a smaller service locator`
+> `Service "Keboola\ApiBundle\Attribute\ApplicationTokenAuth" not found: the container inside "Symfony\Component\DependencyInjection\Argument\ServiceLocator" is a smaller service locator`
 
 ## Testing controllers
 
@@ -132,7 +132,7 @@ class MyActionTest extends KernelTestCase
         // for #[StorageApiTokenAuth]
         $token = $this->setupFakeStorageApiToken(projectId: '123', features: ['my-feature']);
 
-        // for #[KubernetesServiceAccountAuth] — works for both the X-KBC-ManageApiToken
+        // for #[ApplicationTokenAuth] — works for both the X-KBC-ManageApiToken
         // header and the Kubernetes ServiceAccount JWT
         $this->setupFakeManageApiToken('my-token', scopes: ['something:manage']);
     }

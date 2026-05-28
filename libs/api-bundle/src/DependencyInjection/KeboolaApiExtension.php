@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Keboola\ApiBundle\DependencyInjection;
 
-use Keboola\ApiBundle\Attribute\KubernetesServiceAccountAuth;
+use Keboola\ApiBundle\Attribute\ApplicationTokenAuth;
 use Keboola\ApiBundle\Attribute\StorageApiTokenAuth;
-use Keboola\ApiBundle\Security\KubernetesServiceAccount\KubernetesServiceAccountAuthenticator;
-use Keboola\ApiBundle\Security\KubernetesServiceAccount\ManageApiClientFactory;
+use Keboola\ApiBundle\Security\ApplicationToken\ApplicationTokenAuthenticator;
+use Keboola\ApiBundle\Security\ApplicationToken\ManageApiClientFactory;
 use Keboola\ApiBundle\Security\StorageApiToken\StorageApiTokenAuthenticator;
 use Keboola\ManageApi\Client as ManageApiClient;
 use Keboola\ServiceClient\ServiceClient;
@@ -37,7 +37,7 @@ class KeboolaApiExtension extends Extension
 
         $authenticators = [];
         $this->setupStorageApiAuthenticator($container, $authenticators);
-        $this->setupKubernetesServiceAccountAuthenticator($container, $config, $authenticators);
+        $this->setupApplicationTokenAuthenticator($container, $config, $authenticators);
 
         $container->getDefinition('keboola.api_bundle.security.authenticators_locator')
             ->setArguments([
@@ -59,7 +59,7 @@ class KeboolaApiExtension extends Extension
         $authenticators[StorageApiTokenAuth::class] = new Reference(StorageApiTokenAuthenticator::class);
     }
 
-    private function setupKubernetesServiceAccountAuthenticator(
+    private function setupApplicationTokenAuthenticator(
         ContainerBuilder $container,
         array $config,
         array &$authenticators,
@@ -73,12 +73,12 @@ class KeboolaApiExtension extends Extension
             ->setArgument('$serviceClient', new Reference(ServiceClient::class))
         ;
 
-        $container->register(KubernetesServiceAccountAuthenticator::class)
+        $container->register(ApplicationTokenAuthenticator::class)
             ->setArgument('$manageApiClientFactory', new Reference(ManageApiClientFactory::class))
         ;
 
-        $authenticators[KubernetesServiceAccountAuth::class] = new Reference(
-            KubernetesServiceAccountAuthenticator::class,
+        $authenticators[ApplicationTokenAuth::class] = new Reference(
+            ApplicationTokenAuthenticator::class,
         );
     }
 }

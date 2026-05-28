@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\ApiBundle\Tests\Security;
 
-use Keboola\ApiBundle\Attribute\KubernetesServiceAccountAuth;
+use Keboola\ApiBundle\Attribute\ApplicationTokenAuth;
 use Keboola\ApiBundle\Attribute\StorageApiTokenAuth;
 use Keboola\ApiBundle\Security\AttributeAuthenticator;
 use Keboola\ApiBundle\Security\TokenAuthenticatorInterface;
@@ -46,7 +46,7 @@ class AttributeAuthenticatorTest extends TestCase
         yield 'multiple auth attributes' => [
             'controller' => new
                 #[StorageApiTokenAuth(['foo-feature'])]
-                #[KubernetesServiceAccountAuth(['bar-feature'])]
+                #[ApplicationTokenAuth(['bar-feature'])]
                 class {
                     public function __invoke(): void {}
                 },
@@ -178,7 +178,7 @@ class AttributeAuthenticatorTest extends TestCase
     public function testAuthenticateRequestWithMultipleDifferentAuthenticatorsWithDifferentTokenHeader(): void
     {
         $controller = new
-            #[KubernetesServiceAccountAuth]
+            #[ApplicationTokenAuth]
             #[StorageApiTokenAuth]
             class {
                 public function __invoke(): void {}
@@ -200,7 +200,7 @@ class AttributeAuthenticatorTest extends TestCase
         $authenticator = $this->createAuthenticator(
             $controller,
             [
-                KubernetesServiceAccountAuth::class => $failingAuthenticator,
+                ApplicationTokenAuth::class => $failingAuthenticator,
                 StorageApiTokenAuth::class => $this->createSuccessAuthenticator($token, $request),
             ],
         );
@@ -212,7 +212,7 @@ class AttributeAuthenticatorTest extends TestCase
     public function testAuthenticateRequestWithMultipleDifferentAuthenticatorsWithFailingAuthentication(): void
     {
         $controller = new
-            #[KubernetesServiceAccountAuth]
+            #[ApplicationTokenAuth]
             #[StorageApiTokenAuth]
             class {
                 public function __invoke(): void {}
@@ -228,7 +228,7 @@ class AttributeAuthenticatorTest extends TestCase
         $authenticator = $this->createAuthenticator(
             $controller,
             [
-                KubernetesServiceAccountAuth::class => $this->createAuthenticatorWithFailingAuthentication($request),
+                ApplicationTokenAuth::class => $this->createAuthenticatorWithFailingAuthentication($request),
                 StorageApiTokenAuth::class => $this->createSuccessAuthenticator($token, $request),
             ],
         );
@@ -240,7 +240,7 @@ class AttributeAuthenticatorTest extends TestCase
     public function testAuthenticateRequestWithMultipleDifferentAuthenticatorsWithFailingAuthorization(): void
     {
         $controller = new
-            #[KubernetesServiceAccountAuth]
+            #[ApplicationTokenAuth]
             #[StorageApiTokenAuth]
             class {
                 public function __invoke(): void {}
@@ -257,7 +257,7 @@ class AttributeAuthenticatorTest extends TestCase
         $authenticator = $this->createAuthenticator(
             $controller,
             [
-                KubernetesServiceAccountAuth::class => $this->createAuthenticatorWithFailingAuthorization(
+                ApplicationTokenAuth::class => $this->createAuthenticatorWithFailingAuthorization(
                     $request,
                     $otherToken,
                 ),

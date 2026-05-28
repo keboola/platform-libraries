@@ -2,16 +2,16 @@
 
 declare(strict_types=1);
 
-namespace Keboola\ApiBundle\Tests\Security\KubernetesServiceAccount;
+namespace Keboola\ApiBundle\Tests\Security\ApplicationToken;
 
-use Keboola\ApiBundle\Security\KubernetesServiceAccount\KubernetesServiceAccountToken;
+use Keboola\ApiBundle\Security\ApplicationToken\ApplicationToken;
 use PHPUnit\Framework\TestCase;
 
-class KubernetesServiceAccountTokenTest extends TestCase
+class ApplicationTokenTest extends TestCase
 {
     public function testAccessors(): void
     {
-        $token = KubernetesServiceAccountToken::fromVerifyResponse([
+        $token = ApplicationToken::fromVerifyResponse([
             'id' => 100001,
             'description' => 'test',
             'created' => '2024-03-21T12:28:49+0100',
@@ -46,7 +46,7 @@ class KubernetesServiceAccountTokenTest extends TestCase
 
     public function testHasScope(): void
     {
-        $token = KubernetesServiceAccountToken::fromVerifyResponse([
+        $token = ApplicationToken::fromVerifyResponse([
             'id' => 99994,
             'description' => 'John Doe test',
             'created' => '2024-03-21T12:26:43+0100',
@@ -79,7 +79,7 @@ class KubernetesServiceAccountTokenTest extends TestCase
 
     public function testHasFeature(): void
     {
-        $token = KubernetesServiceAccountToken::fromVerifyResponse([
+        $token = ApplicationToken::fromVerifyResponse([
             'id' => 99994,
             'description' => 'John Doe test',
             'created' => '2024-03-21T12:26:43+0100',

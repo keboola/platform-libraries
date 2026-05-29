@@ -611,7 +611,8 @@ class TableConfigurationTest extends TestCase
                     'load_type' => 'INVALID',
                 ],
                 InvalidConfigurationException::class,
-                'The value "INVALID" is not allowed for path "table.load_type". Permitted values: ',
+                'The value "INVALID" is not allowed for path "table.load_type". '
+                    . 'Permissible values: null, "COPY", "CLONE", "VIEW", "AUTO".',
             ],
         ];
     }

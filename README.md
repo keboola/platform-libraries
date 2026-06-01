@@ -79,6 +79,22 @@ docker compose run --rm dev-input-mapping bash -c "vendor/bin/phpunit tests/Func
 docker compose run --rm dev-input-mapping bash -c "vendor/bin/phpunit --filter testTableManifest tests/Functional/DownloadTablesTest.php"
 ```
 
+## Continuous Integration
+
+CI runs on **GitHub Actions** (`.github/workflows/`).
+
+- `ci.yml` (PRs and pushes to `main`) detects affected libraries via `bin/ci/affected-libraries.php` — the changed libraries plus their transitive `*@dev` dependents — and runs only the matching per-library workflows (`lib-<lib>.yml`). Infra-wide changes test all libraries. The `tests-result` job is the single required status check.
+- On push to `main`, affected libraries are split/published to their standalone repos.
+- `release.yml` publishes a single library on a `refs/tags/<lib>/*` tag push.
+
+Publishing uses the `.github/actions/split-library` composite action (wraps `bin/split-repo.sh`) and the `LIBS_SPLIT_TOKEN` secret (a GitHub App installation token with push rights to all target repos). Test jobs read storage/Terraform credentials from repository secrets provisioned by a repo admin.
+
+To run the CI detection tool's own checks locally:
+
+```bash
+docker compose run --rm dev82 bash -c 'cd bin/ci && composer ci'
+```
+
 ## Contributing
 
 ### Commit Message Format

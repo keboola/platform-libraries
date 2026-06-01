@@ -1,0 +1,163 @@
+name: lib-input-mapping
+on:
+  workflow_call: {}
+
+concurrency:
+  group: input-mapping-lock
+  cancel-in-progress: false
+
+jobs:
+  cs:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - run: docker compose build dev-input-mapping
+      - run: docker compose run --rm dev-input-mapping bash -c 'composer install && composer check'
+      - if: failure()
+        run: docker compose logs
+
+  aws-common-part1:
+    needs: [cs]
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      STORAGE_API_URL: ${{ secrets.STORAGE_API_URL_AWS }}
+      STORAGE_API_TOKEN: ${{ secrets.INPUT_MAPPING__STORAGE_API_TOKEN_AWS }}
+      STORAGE_API_TOKEN_MASTER: ${{ secrets.INPUT_MAPPING__STORAGE_API_TOKEN_MASTER_AWS }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - run: docker compose build dev-input-mapping
+      - run: docker compose run --rm dev-input-mapping bash -c 'composer install && composer paratest -- --testsuite=CommonPart1 -f -p 3'
+      - if: failure()
+        run: docker compose logs
+
+  aws-testsuite:
+    needs: [cs, aws-common-part1]
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      STORAGE_API_URL: ${{ secrets.STORAGE_API_URL_AWS }}
+      STORAGE_API_TOKEN: ${{ secrets.INPUT_MAPPING__STORAGE_API_TOKEN_AWS }}
+      STORAGE_API_TOKEN_MASTER: ${{ secrets.INPUT_MAPPING__STORAGE_API_TOKEN_MASTER_AWS }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - run: docker compose build dev-input-mapping
+      - run: docker compose run --rm dev-input-mapping bash -c 'composer install && vendor/bin/phpunit --testsuite Aws'
+      - if: failure()
+        run: docker compose logs
+
+  aws-common-part2:
+    needs: [cs]
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      STORAGE_API_URL: ${{ secrets.STORAGE_API_URL_AWS }}
+      STORAGE_API_TOKEN: ${{ secrets.INPUT_MAPPING__STORAGE_API_TOKEN_AWS }}
+      STORAGE_API_TOKEN_MASTER: ${{ secrets.INPUT_MAPPING__STORAGE_API_TOKEN_MASTER_AWS }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - run: docker compose build dev-input-mapping
+      - run: docker compose run --rm dev-input-mapping bash -c 'composer install && vendor/bin/phpunit --testsuite CommonPart2'
+      - if: failure()
+        run: docker compose logs
+
+  aws-common-files:
+    needs: [cs]
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      STORAGE_API_URL: ${{ secrets.STORAGE_API_URL_AWS }}
+      STORAGE_API_TOKEN: ${{ secrets.INPUT_MAPPING__STORAGE_API_TOKEN_AWS }}
+      STORAGE_API_TOKEN_MASTER: ${{ secrets.INPUT_MAPPING__STORAGE_API_TOKEN_MASTER_AWS }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - run: docker compose build dev-input-mapping
+      - run: docker compose run --rm dev-input-mapping bash -c 'composer install && composer paratest -- --testsuite=CommonFiles -f -p 3'
+      - if: failure()
+        run: docker compose logs
+
+  azure-common-part1:
+    needs: [cs]
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      STORAGE_API_URL: ${{ secrets.STORAGE_API_URL_AZURE }}
+      STORAGE_API_TOKEN: ${{ secrets.INPUT_MAPPING__STORAGE_API_TOKEN_AZURE }}
+      STORAGE_API_TOKEN_MASTER: ${{ secrets.INPUT_MAPPING__STORAGE_API_TOKEN_MASTER_AZURE }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - run: docker compose build dev-input-mapping
+      - run: docker compose run --rm dev-input-mapping bash -c 'composer install && composer paratest -- --testsuite=CommonPart1 -f -p 3'
+      - if: failure()
+        run: docker compose logs
+
+  azure-testsuite:
+    needs: [cs, azure-common-part1]
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      STORAGE_API_URL: ${{ secrets.STORAGE_API_URL_AZURE }}
+      STORAGE_API_TOKEN: ${{ secrets.INPUT_MAPPING__STORAGE_API_TOKEN_AZURE }}
+      STORAGE_API_TOKEN_MASTER: ${{ secrets.INPUT_MAPPING__STORAGE_API_TOKEN_MASTER_AZURE }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - run: docker compose build dev-input-mapping
+      - run: docker compose run --rm dev-input-mapping bash -c 'composer install && vendor/bin/phpunit --testsuite Azure'
+      - if: failure()
+        run: docker compose logs
+
+  azure-common-part2:
+    needs: [cs]
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      STORAGE_API_URL: ${{ secrets.STORAGE_API_URL_AZURE }}
+      STORAGE_API_TOKEN: ${{ secrets.INPUT_MAPPING__STORAGE_API_TOKEN_AZURE }}
+      STORAGE_API_TOKEN_MASTER: ${{ secrets.INPUT_MAPPING__STORAGE_API_TOKEN_MASTER_AZURE }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - run: docker compose build dev-input-mapping
+      - run: docker compose run --rm dev-input-mapping bash -c 'composer install && vendor/bin/phpunit --testsuite CommonPart2'
+      - if: failure()
+        run: docker compose logs
+
+  azure-common-files:
+    needs: [cs]
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      STORAGE_API_URL: ${{ secrets.STORAGE_API_URL_AZURE }}
+      STORAGE_API_TOKEN: ${{ secrets.INPUT_MAPPING__STORAGE_API_TOKEN_AZURE }}
+      STORAGE_API_TOKEN_MASTER: ${{ secrets.INPUT_MAPPING__STORAGE_API_TOKEN_MASTER_AZURE }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - run: docker compose build dev-input-mapping
+      - run: docker compose run --rm dev-input-mapping bash -c 'composer install && composer paratest -- --testsuite=CommonFiles -f -p 3'
+      - if: failure()
+        run: docker compose logs
+
+  bigquery:
+    needs: [cs]
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      STORAGE_API_URL: ${{ secrets.STORAGE_API_URL_AWS }}
+      STORAGE_API_TOKEN: ${{ secrets.INPUT_MAPPING__STORAGE_API_TOKEN_AWS_BQ }}
+      STORAGE_API_TOKEN_MASTER: ${{ secrets.INPUT_MAPPING__STORAGE_API_TOKEN_AWS_BQ }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - run: docker compose build dev-input-mapping
+      - run: docker compose run --rm dev-input-mapping bash -c 'composer install && vendor/bin/phpunit --testsuite BigQuery'
+      - if: failure()
+        run: docker compose logs

@@ -1,0 +1,30 @@
+name: lib-logging-bundle
+on:
+  workflow_call: {}
+
+jobs:
+  symfony-64:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      SYMFONY_REQUIRE: "6.4.*"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - run: docker compose build dev81
+      - run: docker compose run --rm -e SYMFONY_REQUIRE dev81 bash -c 'cd libs/logging-bundle && composer install && composer ci'
+      - if: failure()
+        run: docker compose logs
+
+  symfony-72:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      SYMFONY_REQUIRE: "7.2.*"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - run: docker compose build dev83
+      - run: docker compose run --rm -e SYMFONY_REQUIRE dev83 bash -c 'cd libs/logging-bundle && composer install && composer ci'
+      - if: failure()
+        run: docker compose logs

@@ -1,0 +1,40 @@
+name: Split library
+description: Split a library subdirectory from the monorepo and push to its standalone repo
+
+inputs:
+  source-path:
+    description: Absolute path to the checked-out monorepo
+    required: true
+  library-path:
+    description: Library path inside the monorepo (e.g. libs/key-generator)
+    required: true
+  target-repo:
+    description: Target repo name under keboola/ (e.g. php-key-generator)
+    required: true
+  tag-prefix:
+    description: Tag prefix to mirror and strip (e.g. key-generator/)
+    required: true
+  token:
+    description: GitHub App installation token with push rights to the target repo
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Install git-filter-repo
+      shell: bash
+      run: |
+        sudo apt-get update -q
+        sudo apt-get install -y git-filter-repo
+
+    - name: Split and push
+      shell: bash
+      env:
+        SPLIT_TOKEN: ${{ inputs.token }}
+      run: |
+        TARGET_URL="https://x-access-token:${SPLIT_TOKEN}@github.com/keboola/${{ inputs.target-repo }}.git"
+        "${{ inputs.source-path }}/bin/split-repo.sh" \
+          "${{ inputs.source-path }}" \
+          "${TARGET_URL}" \
+          "${{ inputs.library-path }}" \
+          "${{ inputs.tag-prefix }}"

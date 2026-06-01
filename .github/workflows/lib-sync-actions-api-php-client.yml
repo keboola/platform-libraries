@@ -1,0 +1,21 @@
+name: lib-sync-actions-api-php-client
+on:
+  workflow_call: {}
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Build image
+        run: docker compose build dev-sync-actions-api-php-client
+      - name: Run tests
+        env:
+          HOSTNAME_SUFFIX: ${{ secrets.HOSTNAME_SUFFIX_GCP }}
+          STORAGE_API_TOKEN: ${{ secrets.SYNC_ACTIONS_CLIENT__STORAGE_API_TOKEN_GCP }}
+        run: docker compose run --rm dev-sync-actions-api-php-client bash -c 'composer install && composer ci'
+      - name: Show logs on failure
+        if: failure()
+        run: docker compose logs

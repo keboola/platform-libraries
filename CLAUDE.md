@@ -201,9 +201,23 @@ $mock->expects(self::exactly(count($expectedCalls)))
 
 ## CI/CD
 
-- Azure Pipelines configuration in `azure-pipelines.yml`
-- Each library has its own pipeline that runs on changes
-- Libraries are independently published to GitHub repositories
+CI runs on **GitHub Actions** (migrated from Azure Pipelines).
+
+- **Orchestrator:** `.github/workflows/ci.yml` runs on pull requests to `main` and pushes to `main`.
+  - A `detect-changes` job runs `bin/ci/affected-libraries.php` natively (via `shivammathur/setup-php`, no Docker) to compute the set of affected libraries — the changed libraries plus their transitive `*@dev` dependents. Infra changes (`Dockerfile`, `docker-compose*`, `.github/**`, `bin/**`, root `composer.json`) fall back to testing all libraries.
+  - 22 conditional jobs each call a reusable per-library workflow (`uses: ./.github/workflows/lib-<lib>.yml`) only when that library is affected.
+  - A `tests-result` barrier job aggregates all test jobs; it is the single required status check for branch protection.
+  - On push to `main`, 22 conditional `publish-<lib>` jobs split/publish affected libraries to their standalone repos.
+- **Per-library workflows:** `.github/workflows/lib-<lib>.yml` (`workflow_call`). Most run a single `composer ci` job; `input-mapping`/`output-mapping` use a `concurrency` lock plus multi-suite test jobs; `k8s-client`/`messenger-bundle` provision Terraform; `logging-bundle` runs a Symfony 6.4/7.2 matrix.
+- **Tag releases:** `.github/workflows/release.yml` runs on `refs/tags/<lib>/*` and publishes the matching library (replaces `azure-pipelines.tags.yml`).
+- **Split/publish:** the `.github/actions/split-library` composite action wraps `bin/split-repo.sh`, authenticating to the target repo with the `LIBS_SPLIT_TOKEN` secret (a GitHub App installation token) over HTTPS.
+- **CI tooling:** `bin/ci/` is a small standalone composer project (`AffectedLibrariesResolver` + `affected-libraries.php` CLI) with its own PHPUnit/PHPStan/phpcs config. Run its checks with `docker compose run --rm dev82 bash -c 'cd bin/ci && composer ci'`.
+
+### Required secrets (provisioned by repo admin)
+
+Storage tokens/URLs: `STORAGE_API_URL_AWS`, `STORAGE_API_URL_AZURE`, `STORAGE_API_URL_GCP`, `HOSTNAME_SUFFIX_GCP`, `INPUT_MAPPING__*`, `OUTPUT_MAPPING__*` / `OUTPUT_MAPPING_*__*`, `VARIABLES_RESOLVER__*`, `STAGING_PROVIDER__*`, `QUERY_SERVICE__STORAGE_API_TOKEN_GCP` (also used by `php-storage-names-sanitizer`), `SYNC_ACTIONS_CLIENT__STORAGE_API_TOKEN_GCP`, `PHP_TEST_UTILS__TEST_STORAGE_API_TOKEN_SNOWFLAKE`.
+Terraform creds: `K8S_CLIENT_TERRAFORM_AWS_ACCESS_KEY_ID/_SECRET_ACCESS_KEY`, `MESSENGER_BUNDLE_TERRAFORM_AWS_ACCESS_KEY_ID/_SECRET_ACCESS_KEY`.
+Publishing: `LIBS_SPLIT_TOKEN` (GitHub App installation token with push rights to all 22 target repos).
 
 ## PHP Version Support
 

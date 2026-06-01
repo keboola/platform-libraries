@@ -1,0 +1,558 @@
+name: CI
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      libs: ${{ steps.detect.outputs.libs }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          tools: composer
+      - name: Install CI tool dependencies
+        working-directory: bin/ci
+        run: composer install --no-interaction --no-progress
+      - name: Compute base SHA
+        id: base
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "sha=${{ github.event.pull_request.base.sha }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "sha=${{ github.event.before }}" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Resolve affected libraries
+        id: detect
+        run: |
+          LIBS=$(php bin/ci/affected-libraries.php '${{ steps.base.outputs.sha }}')
+          echo "libs=${LIBS}" >> "$GITHUB_OUTPUT"
+          echo "Affected: ${LIBS}"
+
+  api-bundle:
+    needs: [detect-changes]
+    if: contains(needs.detect-changes.outputs.libs, '"api-bundle"')
+    uses: ./.github/workflows/lib-api-bundle.yml
+    secrets: inherit
+
+  azure-api-client:
+    needs: [detect-changes]
+    if: contains(needs.detect-changes.outputs.libs, '"azure-api-client"')
+    uses: ./.github/workflows/lib-azure-api-client.yml
+    secrets: inherit
+
+  configuration-variables-resolver:
+    needs: [detect-changes]
+    if: contains(needs.detect-changes.outputs.libs, '"configuration-variables-resolver"')
+    uses: ./.github/workflows/lib-configuration-variables-resolver.yml
+    secrets: inherit
+
+  doctrine-retry-bundle:
+    needs: [detect-changes]
+    if: contains(needs.detect-changes.outputs.libs, '"doctrine-retry-bundle"')
+    uses: ./.github/workflows/lib-doctrine-retry-bundle.yml
+    secrets: inherit
+
+  git-service-api-client:
+    needs: [detect-changes]
+    if: contains(needs.detect-changes.outputs.libs, '"git-service-api-client"')
+    uses: ./.github/workflows/lib-git-service-api-client.yml
+    secrets: inherit
+
+  input-mapping:
+    needs: [detect-changes]
+    if: contains(needs.detect-changes.outputs.libs, '"input-mapping"')
+    uses: ./.github/workflows/lib-input-mapping.yml
+    secrets: inherit
+
+  k8s-client:
+    needs: [detect-changes]
+    if: contains(needs.detect-changes.outputs.libs, '"k8s-client"')
+    uses: ./.github/workflows/lib-k8s-client.yml
+    secrets: inherit
+
+  key-generator:
+    needs: [detect-changes]
+    if: contains(needs.detect-changes.outputs.libs, '"key-generator"')
+    uses: ./.github/workflows/lib-key-generator.yml
+    secrets: inherit
+
+  logging-bundle:
+    needs: [detect-changes]
+    if: contains(needs.detect-changes.outputs.libs, '"logging-bundle"')
+    uses: ./.github/workflows/lib-logging-bundle.yml
+    secrets: inherit
+
+  messenger-bundle:
+    needs: [detect-changes]
+    if: contains(needs.detect-changes.outputs.libs, '"messenger-bundle"')
+    uses: ./.github/workflows/lib-messenger-bundle.yml
+    secrets: inherit
+
+  output-mapping:
+    needs: [detect-changes]
+    if: contains(needs.detect-changes.outputs.libs, '"output-mapping"')
+    uses: ./.github/workflows/lib-output-mapping.yml
+    secrets: inherit
+
+  permission-checker:
+    needs: [detect-changes]
+    if: contains(needs.detect-changes.outputs.libs, '"permission-checker"')
+    uses: ./.github/workflows/lib-permission-checker.yml
+    secrets: inherit
+
+  php-storage-names-sanitizer:
+    needs: [detect-changes]
+    if: contains(needs.detect-changes.outputs.libs, '"php-storage-names-sanitizer"')
+    uses: ./.github/workflows/lib-php-storage-names-sanitizer.yml
+    secrets: inherit
+
+  php-test-utils:
+    needs: [detect-changes]
+    if: contains(needs.detect-changes.outputs.libs, '"php-test-utils"')
+    uses: ./.github/workflows/lib-php-test-utils.yml
+    secrets: inherit
+
+  query-service-api-client:
+    needs: [detect-changes]
+    if: contains(needs.detect-changes.outputs.libs, '"query-service-api-client"')
+    uses: ./.github/workflows/lib-query-service-api-client.yml
+    secrets: inherit
+
+  sandboxes-service-api-client:
+    needs: [detect-changes]
+    if: contains(needs.detect-changes.outputs.libs, '"sandboxes-service-api-client"')
+    uses: ./.github/workflows/lib-sandboxes-service-api-client.yml
+    secrets: inherit
+
+  service-client:
+    needs: [detect-changes]
+    if: contains(needs.detect-changes.outputs.libs, '"service-client"')
+    uses: ./.github/workflows/lib-service-client.yml
+    secrets: inherit
+
+  settle:
+    needs: [detect-changes]
+    if: contains(needs.detect-changes.outputs.libs, '"settle"')
+    uses: ./.github/workflows/lib-settle.yml
+    secrets: inherit
+
+  slicer:
+    needs: [detect-changes]
+    if: contains(needs.detect-changes.outputs.libs, '"slicer"')
+    uses: ./.github/workflows/lib-slicer.yml
+    secrets: inherit
+
+  staging-provider:
+    needs: [detect-changes]
+    if: contains(needs.detect-changes.outputs.libs, '"staging-provider"')
+    uses: ./.github/workflows/lib-staging-provider.yml
+    secrets: inherit
+
+  sync-actions-api-php-client:
+    needs: [detect-changes]
+    if: contains(needs.detect-changes.outputs.libs, '"sync-actions-api-php-client"')
+    uses: ./.github/workflows/lib-sync-actions-api-php-client.yml
+    secrets: inherit
+
+  vault-api-client:
+    needs: [detect-changes]
+    if: contains(needs.detect-changes.outputs.libs, '"vault-api-client"')
+    uses: ./.github/workflows/lib-vault-api-client.yml
+    secrets: inherit
+
+  tests-result:
+    needs:
+      - api-bundle
+      - azure-api-client
+      - configuration-variables-resolver
+      - doctrine-retry-bundle
+      - git-service-api-client
+      - input-mapping
+      - k8s-client
+      - key-generator
+      - logging-bundle
+      - messenger-bundle
+      - output-mapping
+      - permission-checker
+      - php-storage-names-sanitizer
+      - php-test-utils
+      - query-service-api-client
+      - sandboxes-service-api-client
+      - service-client
+      - settle
+      - slicer
+      - staging-provider
+      - sync-actions-api-php-client
+      - vault-api-client
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify no test job failed
+        run: |
+          RESULTS='${{ toJSON(needs) }}'
+          echo "$RESULTS"
+          echo "$RESULTS" | python3 -c "import sys, json; r=json.load(sys.stdin); bad=[k for k,v in r.items() if v['result'] not in ('success','skipped')]; sys.exit(1) if bad else print('All test jobs passed or were skipped')"
+
+  publish-api-bundle:
+    needs: [detect-changes, tests-result]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.tests-result.result == 'success' && contains(needs.detect-changes.outputs.libs, '"api-bundle"')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/split-library
+        with:
+          source-path: ${{ github.workspace }}
+          library-path: libs/api-bundle
+          target-repo: api-bundle
+          tag-prefix: api-bundle/
+          token: ${{ secrets.LIBS_SPLIT_TOKEN }}
+
+  publish-azure-api-client:
+    needs: [detect-changes, tests-result]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.tests-result.result == 'success' && contains(needs.detect-changes.outputs.libs, '"azure-api-client"')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/split-library
+        with:
+          source-path: ${{ github.workspace }}
+          library-path: libs/azure-api-client
+          target-repo: azure-api-client
+          tag-prefix: azure-api-client/
+          token: ${{ secrets.LIBS_SPLIT_TOKEN }}
+
+  publish-configuration-variables-resolver:
+    needs: [detect-changes, tests-result]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.tests-result.result == 'success' && contains(needs.detect-changes.outputs.libs, '"configuration-variables-resolver"')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/split-library
+        with:
+          source-path: ${{ github.workspace }}
+          library-path: libs/configuration-variables-resolver
+          target-repo: configuration-variables-resolver
+          tag-prefix: configuration-variables-resolver/
+          token: ${{ secrets.LIBS_SPLIT_TOKEN }}
+
+  publish-doctrine-retry-bundle:
+    needs: [detect-changes, tests-result]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.tests-result.result == 'success' && contains(needs.detect-changes.outputs.libs, '"doctrine-retry-bundle"')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/split-library
+        with:
+          source-path: ${{ github.workspace }}
+          library-path: libs/doctrine-retry-bundle
+          target-repo: doctrine-retry-bundle
+          tag-prefix: doctrine-retry-bundle/
+          token: ${{ secrets.LIBS_SPLIT_TOKEN }}
+
+  publish-git-service-api-client:
+    needs: [detect-changes, tests-result]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.tests-result.result == 'success' && contains(needs.detect-changes.outputs.libs, '"git-service-api-client"')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/split-library
+        with:
+          source-path: ${{ github.workspace }}
+          library-path: libs/git-service-api-client
+          target-repo: git-service-php-api-client
+          tag-prefix: git-service-api-client/
+          token: ${{ secrets.LIBS_SPLIT_TOKEN }}
+
+  publish-input-mapping:
+    needs: [detect-changes, tests-result]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.tests-result.result == 'success' && contains(needs.detect-changes.outputs.libs, '"input-mapping"')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/split-library
+        with:
+          source-path: ${{ github.workspace }}
+          library-path: libs/input-mapping
+          target-repo: input-mapping
+          tag-prefix: input-mapping/
+          token: ${{ secrets.LIBS_SPLIT_TOKEN }}
+
+  publish-k8s-client:
+    needs: [detect-changes, tests-result]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.tests-result.result == 'success' && contains(needs.detect-changes.outputs.libs, '"k8s-client"')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/split-library
+        with:
+          source-path: ${{ github.workspace }}
+          library-path: libs/k8s-client
+          target-repo: k8s-client
+          tag-prefix: k8s-client/
+          token: ${{ secrets.LIBS_SPLIT_TOKEN }}
+
+  publish-key-generator:
+    needs: [detect-changes, tests-result]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.tests-result.result == 'success' && contains(needs.detect-changes.outputs.libs, '"key-generator"')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/split-library
+        with:
+          source-path: ${{ github.workspace }}
+          library-path: libs/key-generator
+          target-repo: php-key-generator
+          tag-prefix: key-generator/
+          token: ${{ secrets.LIBS_SPLIT_TOKEN }}
+
+  publish-logging-bundle:
+    needs: [detect-changes, tests-result]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.tests-result.result == 'success' && contains(needs.detect-changes.outputs.libs, '"logging-bundle"')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/split-library
+        with:
+          source-path: ${{ github.workspace }}
+          library-path: libs/logging-bundle
+          target-repo: logging-bundle
+          tag-prefix: logging-bundle/
+          token: ${{ secrets.LIBS_SPLIT_TOKEN }}
+
+  publish-messenger-bundle:
+    needs: [detect-changes, tests-result]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.tests-result.result == 'success' && contains(needs.detect-changes.outputs.libs, '"messenger-bundle"')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/split-library
+        with:
+          source-path: ${{ github.workspace }}
+          library-path: libs/messenger-bundle
+          target-repo: messenger-bundle
+          tag-prefix: messenger-bundle/
+          token: ${{ secrets.LIBS_SPLIT_TOKEN }}
+
+  publish-output-mapping:
+    needs: [detect-changes, tests-result]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.tests-result.result == 'success' && contains(needs.detect-changes.outputs.libs, '"output-mapping"')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/split-library
+        with:
+          source-path: ${{ github.workspace }}
+          library-path: libs/output-mapping
+          target-repo: output-mapping
+          tag-prefix: output-mapping/
+          token: ${{ secrets.LIBS_SPLIT_TOKEN }}
+
+  publish-permission-checker:
+    needs: [detect-changes, tests-result]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.tests-result.result == 'success' && contains(needs.detect-changes.outputs.libs, '"permission-checker"')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/split-library
+        with:
+          source-path: ${{ github.workspace }}
+          library-path: libs/permission-checker
+          target-repo: permission-checker
+          tag-prefix: permission-checker/
+          token: ${{ secrets.LIBS_SPLIT_TOKEN }}
+
+  publish-php-storage-names-sanitizer:
+    needs: [detect-changes, tests-result]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.tests-result.result == 'success' && contains(needs.detect-changes.outputs.libs, '"php-storage-names-sanitizer"')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/split-library
+        with:
+          source-path: ${{ github.workspace }}
+          library-path: libs/php-storage-names-sanitizer
+          target-repo: php-storage-names-sanitizer
+          tag-prefix: php-storage-names-sanitizer/
+          token: ${{ secrets.LIBS_SPLIT_TOKEN }}
+
+  publish-php-test-utils:
+    needs: [detect-changes, tests-result]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.tests-result.result == 'success' && contains(needs.detect-changes.outputs.libs, '"php-test-utils"')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/split-library
+        with:
+          source-path: ${{ github.workspace }}
+          library-path: libs/php-test-utils
+          target-repo: php-test-utils
+          tag-prefix: php-test-utils/
+          token: ${{ secrets.LIBS_SPLIT_TOKEN }}
+
+  publish-query-service-api-client:
+    needs: [detect-changes, tests-result]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.tests-result.result == 'success' && contains(needs.detect-changes.outputs.libs, '"query-service-api-client"')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/split-library
+        with:
+          source-path: ${{ github.workspace }}
+          library-path: libs/query-service-api-client
+          target-repo: query-service-api-php-client
+          tag-prefix: query-service-api-client/
+          token: ${{ secrets.LIBS_SPLIT_TOKEN }}
+
+  publish-sandboxes-service-api-client:
+    needs: [detect-changes, tests-result]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.tests-result.result == 'success' && contains(needs.detect-changes.outputs.libs, '"sandboxes-service-api-client"')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/split-library
+        with:
+          source-path: ${{ github.workspace }}
+          library-path: libs/sandboxes-service-api-client
+          target-repo: sandboxes-service-api-php-client
+          tag-prefix: sandboxes-service-api-client/
+          token: ${{ secrets.LIBS_SPLIT_TOKEN }}
+
+  publish-service-client:
+    needs: [detect-changes, tests-result]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.tests-result.result == 'success' && contains(needs.detect-changes.outputs.libs, '"service-client"')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/split-library
+        with:
+          source-path: ${{ github.workspace }}
+          library-path: libs/service-client
+          target-repo: service-client
+          tag-prefix: service-client/
+          token: ${{ secrets.LIBS_SPLIT_TOKEN }}
+
+  publish-settle:
+    needs: [detect-changes, tests-result]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.tests-result.result == 'success' && contains(needs.detect-changes.outputs.libs, '"settle"')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/split-library
+        with:
+          source-path: ${{ github.workspace }}
+          library-path: libs/settle
+          target-repo: settle
+          tag-prefix: settle/
+          token: ${{ secrets.LIBS_SPLIT_TOKEN }}
+
+  publish-slicer:
+    needs: [detect-changes, tests-result]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.tests-result.result == 'success' && contains(needs.detect-changes.outputs.libs, '"slicer"')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/split-library
+        with:
+          source-path: ${{ github.workspace }}
+          library-path: libs/slicer
+          target-repo: slicer
+          tag-prefix: slicer/
+          token: ${{ secrets.LIBS_SPLIT_TOKEN }}
+
+  publish-staging-provider:
+    needs: [detect-changes, tests-result]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.tests-result.result == 'success' && contains(needs.detect-changes.outputs.libs, '"staging-provider"')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/split-library
+        with:
+          source-path: ${{ github.workspace }}
+          library-path: libs/staging-provider
+          target-repo: staging-provider
+          tag-prefix: staging-provider/
+          token: ${{ secrets.LIBS_SPLIT_TOKEN }}
+
+  publish-sync-actions-api-php-client:
+    needs: [detect-changes, tests-result]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.tests-result.result == 'success' && contains(needs.detect-changes.outputs.libs, '"sync-actions-api-php-client"')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/split-library
+        with:
+          source-path: ${{ github.workspace }}
+          library-path: libs/sync-actions-api-php-client
+          target-repo: sync-actions-api-php-client
+          tag-prefix: sync-actions-api-php-client/
+          token: ${{ secrets.LIBS_SPLIT_TOKEN }}
+
+  publish-vault-api-client:
+    needs: [detect-changes, tests-result]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.tests-result.result == 'success' && contains(needs.detect-changes.outputs.libs, '"vault-api-client"')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/split-library
+        with:
+          source-path: ${{ github.workspace }}
+          library-path: libs/vault-api-client
+          target-repo: vault-api-php-client
+          tag-prefix: vault-api-client/
+          token: ${{ secrets.LIBS_SPLIT_TOKEN }}
+

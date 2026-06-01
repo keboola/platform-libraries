@@ -1,0 +1,338 @@
+name: Release
+on:
+  push:
+    tags: ['*']
+
+permissions:
+  contents: read
+
+jobs:
+  release-api-bundle:
+    if: startsWith(github.ref, 'refs/tags/api-bundle/')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/split-library
+        with:
+          source-path: ${{ github.workspace }}
+          library-path: libs/api-bundle
+          target-repo: api-bundle
+          tag-prefix: api-bundle/
+          token: ${{ secrets.LIBS_SPLIT_TOKEN }}
+
+  release-azure-api-client:
+    if: startsWith(github.ref, 'refs/tags/azure-api-client/')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/split-library
+        with:
+          source-path: ${{ github.workspace }}
+          library-path: libs/azure-api-client
+          target-repo: azure-api-client
+          tag-prefix: azure-api-client/
+          token: ${{ secrets.LIBS_SPLIT_TOKEN }}
+
+  release-configuration-variables-resolver:
+    if: startsWith(github.ref, 'refs/tags/configuration-variables-resolver/')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/split-library
+        with:
+          source-path: ${{ github.workspace }}
+          library-path: libs/configuration-variables-resolver
+          target-repo: configuration-variables-resolver
+          tag-prefix: configuration-variables-resolver/
+          token: ${{ secrets.LIBS_SPLIT_TOKEN }}
+
+  release-doctrine-retry-bundle:
+    if: startsWith(github.ref, 'refs/tags/doctrine-retry-bundle/')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/split-library
+        with:
+          source-path: ${{ github.workspace }}
+          library-path: libs/doctrine-retry-bundle
+          target-repo: doctrine-retry-bundle
+          tag-prefix: doctrine-retry-bundle/
+          token: ${{ secrets.LIBS_SPLIT_TOKEN }}
+
+  release-git-service-api-client:
+    if: startsWith(github.ref, 'refs/tags/git-service-api-client/')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/split-library
+        with:
+          source-path: ${{ github.workspace }}
+          library-path: libs/git-service-api-client
+          target-repo: git-service-php-api-client
+          tag-prefix: git-service-api-client/
+          token: ${{ secrets.LIBS_SPLIT_TOKEN }}
+
+  release-input-mapping:
+    if: startsWith(github.ref, 'refs/tags/input-mapping/')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/split-library
+        with:
+          source-path: ${{ github.workspace }}
+          library-path: libs/input-mapping
+          target-repo: input-mapping
+          tag-prefix: input-mapping/
+          token: ${{ secrets.LIBS_SPLIT_TOKEN }}
+
+  release-k8s-client:
+    if: startsWith(github.ref, 'refs/tags/k8s-client/')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/split-library
+        with:
+          source-path: ${{ github.workspace }}
+          library-path: libs/k8s-client
+          target-repo: k8s-client
+          tag-prefix: k8s-client/
+          token: ${{ secrets.LIBS_SPLIT_TOKEN }}
+
+  release-key-generator:
+    if: startsWith(github.ref, 'refs/tags/key-generator/')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/split-library
+        with:
+          source-path: ${{ github.workspace }}
+          library-path: libs/key-generator
+          target-repo: php-key-generator
+          tag-prefix: key-generator/
+          token: ${{ secrets.LIBS_SPLIT_TOKEN }}
+
+  release-logging-bundle:
+    if: startsWith(github.ref, 'refs/tags/logging-bundle/')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/split-library
+        with:
+          source-path: ${{ github.workspace }}
+          library-path: libs/logging-bundle
+          target-repo: logging-bundle
+          tag-prefix: logging-bundle/
+          token: ${{ secrets.LIBS_SPLIT_TOKEN }}
+
+  release-messenger-bundle:
+    if: startsWith(github.ref, 'refs/tags/messenger-bundle/')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/split-library
+        with:
+          source-path: ${{ github.workspace }}
+          library-path: libs/messenger-bundle
+          target-repo: messenger-bundle
+          tag-prefix: messenger-bundle/
+          token: ${{ secrets.LIBS_SPLIT_TOKEN }}
+
+  release-output-mapping:
+    if: startsWith(github.ref, 'refs/tags/output-mapping/')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/split-library
+        with:
+          source-path: ${{ github.workspace }}
+          library-path: libs/output-mapping
+          target-repo: output-mapping
+          tag-prefix: output-mapping/
+          token: ${{ secrets.LIBS_SPLIT_TOKEN }}
+
+  release-permission-checker:
+    if: startsWith(github.ref, 'refs/tags/permission-checker/')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/split-library
+        with:
+          source-path: ${{ github.workspace }}
+          library-path: libs/permission-checker
+          target-repo: permission-checker
+          tag-prefix: permission-checker/
+          token: ${{ secrets.LIBS_SPLIT_TOKEN }}
+
+  release-php-storage-names-sanitizer:
+    if: startsWith(github.ref, 'refs/tags/php-storage-names-sanitizer/')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/split-library
+        with:
+          source-path: ${{ github.workspace }}
+          library-path: libs/php-storage-names-sanitizer
+          target-repo: php-storage-names-sanitizer
+          tag-prefix: php-storage-names-sanitizer/
+          token: ${{ secrets.LIBS_SPLIT_TOKEN }}
+
+  release-php-test-utils:
+    if: startsWith(github.ref, 'refs/tags/php-test-utils/')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/split-library
+        with:
+          source-path: ${{ github.workspace }}
+          library-path: libs/php-test-utils
+          target-repo: php-test-utils
+          tag-prefix: php-test-utils/
+          token: ${{ secrets.LIBS_SPLIT_TOKEN }}
+
+  release-query-service-api-client:
+    if: startsWith(github.ref, 'refs/tags/query-service-api-client/')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/split-library
+        with:
+          source-path: ${{ github.workspace }}
+          library-path: libs/query-service-api-client
+          target-repo: query-service-api-php-client
+          tag-prefix: query-service-api-client/
+          token: ${{ secrets.LIBS_SPLIT_TOKEN }}
+
+  release-sandboxes-service-api-client:
+    if: startsWith(github.ref, 'refs/tags/sandboxes-service-api-client/')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/split-library
+        with:
+          source-path: ${{ github.workspace }}
+          library-path: libs/sandboxes-service-api-client
+          target-repo: sandboxes-service-api-php-client
+          tag-prefix: sandboxes-service-api-client/
+          token: ${{ secrets.LIBS_SPLIT_TOKEN }}
+
+  release-service-client:
+    if: startsWith(github.ref, 'refs/tags/service-client/')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/split-library
+        with:
+          source-path: ${{ github.workspace }}
+          library-path: libs/service-client
+          target-repo: service-client
+          tag-prefix: service-client/
+          token: ${{ secrets.LIBS_SPLIT_TOKEN }}
+
+  release-settle:
+    if: startsWith(github.ref, 'refs/tags/settle/')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/split-library
+        with:
+          source-path: ${{ github.workspace }}
+          library-path: libs/settle
+          target-repo: settle
+          tag-prefix: settle/
+          token: ${{ secrets.LIBS_SPLIT_TOKEN }}
+
+  release-slicer:
+    if: startsWith(github.ref, 'refs/tags/slicer/')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/split-library
+        with:
+          source-path: ${{ github.workspace }}
+          library-path: libs/slicer
+          target-repo: slicer
+          tag-prefix: slicer/
+          token: ${{ secrets.LIBS_SPLIT_TOKEN }}
+
+  release-staging-provider:
+    if: startsWith(github.ref, 'refs/tags/staging-provider/')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/split-library
+        with:
+          source-path: ${{ github.workspace }}
+          library-path: libs/staging-provider
+          target-repo: staging-provider
+          tag-prefix: staging-provider/
+          token: ${{ secrets.LIBS_SPLIT_TOKEN }}
+
+  release-sync-actions-api-php-client:
+    if: startsWith(github.ref, 'refs/tags/sync-actions-api-php-client/')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/split-library
+        with:
+          source-path: ${{ github.workspace }}
+          library-path: libs/sync-actions-api-php-client
+          target-repo: sync-actions-api-php-client
+          tag-prefix: sync-actions-api-php-client/
+          token: ${{ secrets.LIBS_SPLIT_TOKEN }}
+
+  release-vault-api-client:
+    if: startsWith(github.ref, 'refs/tags/vault-api-client/')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/split-library
+        with:
+          source-path: ${{ github.workspace }}
+          library-path: libs/vault-api-client
+          target-repo: vault-api-php-client
+          tag-prefix: vault-api-client/
+          token: ${{ secrets.LIBS_SPLIT_TOKEN }}

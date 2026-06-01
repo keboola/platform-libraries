@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\ApiBundle\Security\ApplicationToken;
 
+use InvalidArgumentException;
 use Keboola\ApiBundle\Attribute\ApplicationTokenAuth;
 use Keboola\ApiBundle\Attribute\AuthAttributeInterface;
 use Keboola\ApiBundle\Security\TokenAuthenticatorInterface;
@@ -41,22 +42,16 @@ class ApplicationTokenAuthenticator implements TokenAuthenticatorInterface
     ): ApplicationToken {
         assert($authAttribute instanceof ApplicationTokenAuth);
 
-        if ($request->headers->has(self::MANAGE_TOKEN_HEADER)) {
-            if ($token === '') {
-                throw new CustomUserMessageAuthenticationException(
-                    sprintf('Invalid %s header: token must not be empty', self::MANAGE_TOKEN_HEADER),
-                );
-            }
-            $manageApiClient = $this->manageApiClientFactory->getClientForManageToken($token);
-        } else {
-            $manageApiClient = $this->manageApiClientFactory->getClientForServiceAccountToken(
-                $this->stripBearerScheme($token),
-            );
-        }
-
         try {
+            $manageApiClient = $request->headers->has(self::MANAGE_TOKEN_HEADER)
+                ? $this->manageApiClientFactory->getClientForManageToken($token)
+                : $this->manageApiClientFactory->getClientForServiceAccountToken(
+                    $this->stripBearerScheme($token),
+                );
             $tokenData = $manageApiClient->verifyToken();
-        } catch (ManageApiClientException $e) {
+        } catch (ManageApiClientException | InvalidArgumentException $e) {
+            // The Manage API client rejects e.g. empty tokens with InvalidArgumentException;
+            // surface those as auth errors instead of letting them escape as 500s.
             throw new CustomUserMessageAuthenticationException($e->getMessage(), [], 0, $e);
         }
 

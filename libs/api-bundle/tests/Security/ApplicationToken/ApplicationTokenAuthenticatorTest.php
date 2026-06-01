@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Keboola\ApiBundle\Tests\Security\ApplicationToken;
 
 use Generator;
+use InvalidArgumentException;
 use Keboola\ApiBundle\Attribute\ApplicationTokenAuth;
 use Keboola\ApiBundle\Security\ApplicationToken\ApplicationToken;
 use Keboola\ApiBundle\Security\ApplicationToken\ApplicationTokenAuthenticator;
@@ -482,11 +483,16 @@ class ApplicationTokenAuthenticatorTest extends TestCase
         self::assertSame('', $authenticator->extractToken($request));
     }
 
-    public function testAuthenticateTokenRejectsEmptyManageHeader(): void
+    public function testAuthenticateTokenWrapsClientInvalidArgumentExceptionAsAuthError(): void
     {
+        // The Manage API client rejects empty tokens with InvalidArgumentException; api-bundle
+        // does not pre-validate the token value, but surfaces such errors as auth failures
+        // rather than letting them escape uncaught.
         $clientFactory = $this->createMock(ManageApiClientFactory::class);
-        $clientFactory->expects(self::never())->method('getClientForManageToken');
-        $clientFactory->expects(self::never())->method('getClientForServiceAccountToken');
+        $clientFactory->expects(self::once())
+            ->method('getClientForManageToken')
+            ->with('')
+            ->willThrowException(new InvalidArgumentException('Manage API token must not be empty'));
 
         $authenticator = new ApplicationTokenAuthenticator($clientFactory);
 
@@ -494,7 +500,7 @@ class ApplicationTokenAuthenticatorTest extends TestCase
         $request->headers->set('X-KBC-ManageApiToken', '');
 
         $this->expectException(CustomUserMessageAuthenticationException::class);
-        $this->expectExceptionMessage('Invalid X-KBC-ManageApiToken header: token must not be empty');
+        $this->expectExceptionMessage('Manage API token must not be empty');
 
         $authenticator->authenticateToken(
             new ApplicationTokenAuth(scopes: ['some:scope']),

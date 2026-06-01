@@ -490,10 +490,9 @@ class TableConfigurationTest extends TestCase
                     'keep_internal_timestamp_column' => true,
                 ],
             ],
-            'LoadTypeNull' => [
+            'LoadTypeOmitted' => [
                 [
                     'source' => 'in.c-main.test',
-                    'load_type' => null,
                 ],
                 [
                     'source' => 'in.c-main.test',
@@ -503,7 +502,6 @@ class TableConfigurationTest extends TestCase
                     'column_types' => [],
                     'overwrite' => false,
                     'use_view' => false,
-                    'load_type' => null,
                     'keep_internal_timestamp_column' => true,
                 ],
             ],
@@ -612,7 +610,7 @@ class TableConfigurationTest extends TestCase
                 ],
                 InvalidConfigurationException::class,
                 'The value "INVALID" is not allowed for path "table.load_type". '
-                    . 'Permissible values: null, "COPY", "CLONE", "VIEW", "AUTO".',
+                    . 'Permissible values: "COPY", "CLONE", "VIEW", "AUTO".',
             ],
         ];
     }

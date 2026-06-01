@@ -75,7 +75,7 @@ class Table extends Configuration
                 ->booleanNode('overwrite')->defaultValue(false)->end()
                 ->booleanNode('use_view')->defaultValue(false)->end()
                 ->enumNode('load_type')
-                    ->values([null, 'COPY', 'CLONE', 'VIEW', 'AUTO'])
+                    ->values(['COPY', 'CLONE', 'VIEW', 'AUTO'])
                 ->end()
                 ->booleanNode('keep_internal_timestamp_column')->defaultValue(true)->end()
                 ->scalarNode('file_type')->end()

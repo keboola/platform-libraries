@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Keboola\ApiBundle\Tests\Security\ApplicationToken;
 
 use Generator;
-use InvalidArgumentException;
 use Keboola\ApiBundle\Attribute\ApplicationTokenAuth;
 use Keboola\ApiBundle\Security\ApplicationToken\ApplicationToken;
 use Keboola\ApiBundle\Security\ApplicationToken\ApplicationTokenAuthenticator;
@@ -483,16 +482,11 @@ class ApplicationTokenAuthenticatorTest extends TestCase
         self::assertSame('', $authenticator->extractToken($request));
     }
 
-    public function testAuthenticateTokenWrapsClientInvalidArgumentExceptionAsAuthError(): void
+    public function testAuthenticateTokenRejectsEmptyManageHeader(): void
     {
-        // The Manage API client rejects empty tokens with InvalidArgumentException; api-bundle
-        // does not pre-validate the token value, but surfaces such errors as auth failures
-        // rather than letting them escape uncaught.
         $clientFactory = $this->createMock(ManageApiClientFactory::class);
-        $clientFactory->expects(self::once())
-            ->method('getClientForManageToken')
-            ->with('')
-            ->willThrowException(new InvalidArgumentException('Manage API token must not be empty'));
+        $clientFactory->expects(self::never())->method('getClientForManageToken');
+        $clientFactory->expects(self::never())->method('getClientForServiceAccountToken');
 
         $authenticator = new ApplicationTokenAuthenticator($clientFactory);
 
@@ -500,7 +494,7 @@ class ApplicationTokenAuthenticatorTest extends TestCase
         $request->headers->set('X-KBC-ManageApiToken', '');
 
         $this->expectException(CustomUserMessageAuthenticationException::class);
-        $this->expectExceptionMessage('Manage API token must not be empty');
+        $this->expectExceptionMessage('Invalid X-KBC-ManageApiToken header: token must not be empty');
 
         $authenticator->authenticateToken(
             new ApplicationTokenAuth(scopes: ['some:scope']),
@@ -530,7 +524,7 @@ class ApplicationTokenAuthenticatorTest extends TestCase
         );
     }
 
-    public function testAuthenticateTokenRejectsServiceAccountHeaderWithOnlyBearerScheme(): void
+    public function testAuthenticateTokenRejectsServiceAccountHeaderWithEmptyTokenAfterBearer(): void
     {
         $clientFactory = $this->createMock(ManageApiClientFactory::class);
         $clientFactory->expects(self::never())->method('getClientForServiceAccountToken');
@@ -542,7 +536,7 @@ class ApplicationTokenAuthenticatorTest extends TestCase
         $request->headers->set('X-Kubernetes-Authorization', 'Bearer ');
 
         $this->expectException(CustomUserMessageAuthenticationException::class);
-        $this->expectExceptionMessage('Invalid X-Kubernetes-Authorization header: expected "Bearer <token>"');
+        $this->expectExceptionMessage('Invalid X-Kubernetes-Authorization header: token must not be empty');
 
         $authenticator->authenticateToken(
             new ApplicationTokenAuth(scopes: ['some:scope']),

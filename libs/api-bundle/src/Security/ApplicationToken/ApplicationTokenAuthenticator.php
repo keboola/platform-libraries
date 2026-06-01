@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Keboola\ApiBundle\Security\ApplicationToken;
 
-use InvalidArgumentException;
 use Keboola\ApiBundle\Attribute\ApplicationTokenAuth;
 use Keboola\ApiBundle\Attribute\AuthAttributeInterface;
 use Keboola\ApiBundle\Security\TokenAuthenticatorInterface;
@@ -42,16 +41,22 @@ class ApplicationTokenAuthenticator implements TokenAuthenticatorInterface
     ): ApplicationToken {
         assert($authAttribute instanceof ApplicationTokenAuth);
 
-        try {
-            $manageApiClient = $request->headers->has(self::MANAGE_TOKEN_HEADER)
-                ? $this->manageApiClientFactory->getClientForManageToken($token)
-                : $this->manageApiClientFactory->getClientForServiceAccountToken(
-                    $this->stripBearerScheme($token),
+        if ($request->headers->has(self::MANAGE_TOKEN_HEADER)) {
+            if ($token === '') {
+                throw new CustomUserMessageAuthenticationException(
+                    sprintf('Invalid %s header: token must not be empty', self::MANAGE_TOKEN_HEADER),
                 );
+            }
+            $manageApiClient = $this->manageApiClientFactory->getClientForManageToken($token);
+        } else {
+            $manageApiClient = $this->manageApiClientFactory->getClientForServiceAccountToken(
+                $this->stripBearerScheme($token),
+            );
+        }
+
+        try {
             $tokenData = $manageApiClient->verifyToken();
-        } catch (ManageApiClientException | InvalidArgumentException $e) {
-            // The Manage API client rejects e.g. empty tokens with InvalidArgumentException;
-            // surface those as auth errors instead of letting them escape as 500s.
+        } catch (ManageApiClientException $e) {
             throw new CustomUserMessageAuthenticationException($e->getMessage(), [], 0, $e);
         }
 
@@ -60,13 +65,20 @@ class ApplicationTokenAuthenticator implements TokenAuthenticatorInterface
 
     /**
      * The ServiceAccount JWT travels with the "Bearer " scheme; the Manage API client re-adds the
-     * scheme, so it needs the bare token. A missing scheme means the header is malformed.
+     * scheme, so it needs the bare token. A missing scheme means the header is malformed; an empty
+     * post-scheme value is a caller error reported symmetrically with the Manage path.
      */
     private function stripBearerScheme(string $headerValue): string
     {
-        if (preg_match('/^Bearer\s+(.+)$/i', $headerValue, $matches) !== 1) {
+        if (preg_match('/^Bearer\s+(.*)$/i', $headerValue, $matches) !== 1) {
             throw new CustomUserMessageAuthenticationException(
                 sprintf('Invalid %s header: expected "Bearer <token>"', self::SERVICE_ACCOUNT_HEADER),
+            );
+        }
+
+        if ($matches[1] === '') {
+            throw new CustomUserMessageAuthenticationException(
+                sprintf('Invalid %s header: token must not be empty', self::SERVICE_ACCOUNT_HEADER),
             );
         }
 

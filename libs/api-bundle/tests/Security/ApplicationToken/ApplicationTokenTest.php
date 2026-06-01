@@ -2,16 +2,16 @@
 
 declare(strict_types=1);
 
-namespace Keboola\ApiBundle\Tests\Security\ManageApiToken;
+namespace Keboola\ApiBundle\Tests\Security\ApplicationToken;
 
-use Keboola\ApiBundle\Security\ManageApiToken\ManageApiToken;
+use Keboola\ApiBundle\Security\ApplicationToken\ApplicationToken;
 use PHPUnit\Framework\TestCase;
 
-class ManageApiTokenTest extends TestCase
+class ApplicationTokenTest extends TestCase
 {
     public function testAccessors(): void
     {
-        $token = ManageApiToken::fromVerifyResponse([
+        $token = ApplicationToken::fromVerifyResponse([
             'id' => 100001,
             'description' => 'test',
             'created' => '2024-03-21T12:28:49+0100',
@@ -46,7 +46,7 @@ class ManageApiTokenTest extends TestCase
 
     public function testHasScope(): void
     {
-        $token = ManageApiToken::fromVerifyResponse([
+        $token = ApplicationToken::fromVerifyResponse([
             'id' => 99994,
             'description' => 'John Doe test',
             'created' => '2024-03-21T12:26:43+0100',
@@ -79,7 +79,7 @@ class ManageApiTokenTest extends TestCase
 
     public function testHasFeature(): void
     {
-        $token = ManageApiToken::fromVerifyResponse([
+        $token = ApplicationToken::fromVerifyResponse([
             'id' => 99994,
             'description' => 'John Doe test',
             'created' => '2024-03-21T12:26:43+0100',

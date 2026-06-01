@@ -51,7 +51,7 @@ class AttributeAuthenticator extends AbstractAuthenticator
             $authAttributeInstance = $authAttribute->newInstance();
 
             try {
-                $authorizedToken = $authenticator->authenticateToken($authAttributeInstance, $token);
+                $authorizedToken = $authenticator->authenticateToken($authAttributeInstance, $token, $request);
             } catch (AuthenticationException $error) {
                 continue;
             }

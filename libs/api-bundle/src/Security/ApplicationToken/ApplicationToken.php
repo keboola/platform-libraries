@@ -2,17 +2,21 @@
 
 declare(strict_types=1);
 
-namespace Keboola\ApiBundle\Security\ManageApiToken;
+namespace Keboola\ApiBundle\Security\ApplicationToken;
 
 use Keboola\ApiBundle\Security\TokenInterface;
 
-class ManageApiToken implements TokenInterface
+class ApplicationToken implements TokenInterface
 {
+    /**
+     * @param list<string> $scopes
+     * @param list<string> $features
+     */
     public function __construct(
         private readonly int $id,
         private readonly string $description,
-        /** @var list<string> */ private readonly array $scopes,
-        /** @var list<string> */ private readonly array $features,
+        private readonly array $scopes,
+        private readonly array $features,
         private readonly bool $isSuperAdmin,
     ) {
     }
@@ -45,7 +49,6 @@ class ManageApiToken implements TokenInterface
      *         isSuperAdmin: bool
      *     }
      * } $data
-     * @return self
      */
     public static function fromVerifyResponse(array $data): self
     {

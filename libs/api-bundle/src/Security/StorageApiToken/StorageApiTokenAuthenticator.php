@@ -11,7 +11,6 @@ use Keboola\ApiBundle\Security\TokenInterface;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApiBranch\Factory\StorageClientRequestFactory;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 use Symfony\Component\Security\Core\Exception\CustomUserMessageAuthenticationException;
 
@@ -22,7 +21,6 @@ class StorageApiTokenAuthenticator implements TokenAuthenticatorInterface
 {
     public function __construct(
         private readonly StorageClientRequestFactory $clientRequestFactory,
-        private readonly RequestStack $requestStack,
     ) {
     }
 
@@ -42,15 +40,15 @@ class StorageApiTokenAuthenticator implements TokenAuthenticatorInterface
         return $request->headers->get('X-StorageApi-Token');
     }
 
-    public function authenticateToken(AuthAttributeInterface $authAttribute, string $token): StorageApiToken
-    {
+    public function authenticateToken(
+        AuthAttributeInterface $authAttribute,
+        string $token,
+        Request $request,
+    ): StorageApiToken {
         assert($authAttribute instanceof StorageApiTokenAuth);
 
         try {
-            if (!$this->requestStack->getMainRequest()) {
-                throw new AccessDeniedException('No main request');
-            }
-            $wrapper = $this->clientRequestFactory->createClientWrapper($this->requestStack->getMainRequest());
+            $wrapper = $this->clientRequestFactory->createClientWrapper($request);
             $storageApiClient = $wrapper->getBasicClient();
             $tokenInfo = $storageApiClient->verifyToken();
         } catch (ClientException $e) {

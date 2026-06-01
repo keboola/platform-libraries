@@ -22,7 +22,11 @@ interface TokenAuthenticatorInterface
      * @return TokenType
      * @throws AuthenticationException
      */
-    public function authenticateToken(AuthAttributeInterface $authAttribute, string $token): TokenInterface;
+    public function authenticateToken(
+        AuthAttributeInterface $authAttribute,
+        string $token,
+        Request $request,
+    ): TokenInterface;
 
     /**
      * @param TokenType $token

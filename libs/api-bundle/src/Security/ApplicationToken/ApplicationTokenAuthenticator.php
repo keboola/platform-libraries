@@ -41,9 +41,18 @@ class ApplicationTokenAuthenticator implements TokenAuthenticatorInterface
     ): ApplicationToken {
         assert($authAttribute instanceof ApplicationTokenAuth);
 
-        $manageApiClient = $request->headers->has(self::MANAGE_TOKEN_HEADER)
-            ? $this->manageApiClientFactory->getClientForManageToken($token)
-            : $this->manageApiClientFactory->getClientForServiceAccountToken($this->stripBearerScheme($token));
+        if ($request->headers->has(self::MANAGE_TOKEN_HEADER)) {
+            if ($token === '') {
+                throw new CustomUserMessageAuthenticationException(
+                    sprintf('Invalid %s header: token must not be empty', self::MANAGE_TOKEN_HEADER),
+                );
+            }
+            $manageApiClient = $this->manageApiClientFactory->getClientForManageToken($token);
+        } else {
+            $manageApiClient = $this->manageApiClientFactory->getClientForServiceAccountToken(
+                $this->stripBearerScheme($token),
+            );
+        }
 
         try {
             $tokenData = $manageApiClient->verifyToken();

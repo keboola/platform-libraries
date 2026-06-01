@@ -453,6 +453,98 @@ class ApplicationTokenAuthenticatorTest extends TestCase
         );
     }
 
+    public function testExtractTokenReturnsEmptyManageHeaderVerbatim(): void
+    {
+        $authenticator = new ApplicationTokenAuthenticator(
+            $this->createMock(ManageApiClientFactory::class),
+        );
+
+        $request = Request::create('https://keboola.com');
+        $request->headers->set('X-KBC-ManageApiToken', '');
+
+        // An empty Manage header is still a present-but-invalid value; extractToken returns it
+        // verbatim and the emptiness is rejected later in authenticateToken.
+        self::assertSame('', $authenticator->extractToken($request));
+    }
+
+    public function testEmptyManageHeaderTakesPrecedenceOverServiceAccountHeader(): void
+    {
+        $authenticator = new ApplicationTokenAuthenticator(
+            $this->createMock(ManageApiClientFactory::class),
+        );
+
+        $request = Request::create('https://keboola.com');
+        $request->headers->set('X-KBC-ManageApiToken', '');
+        $request->headers->set('X-Kubernetes-Authorization', 'Bearer my-jwt-token');
+
+        // Whichever header the caller chose to send wins, even when empty — sending both is a
+        // caller error, but we don't try to "fix it up" by silently falling back.
+        self::assertSame('', $authenticator->extractToken($request));
+    }
+
+    public function testAuthenticateTokenRejectsEmptyManageHeader(): void
+    {
+        $clientFactory = $this->createMock(ManageApiClientFactory::class);
+        $clientFactory->expects(self::never())->method('getClientForManageToken');
+        $clientFactory->expects(self::never())->method('getClientForServiceAccountToken');
+
+        $authenticator = new ApplicationTokenAuthenticator($clientFactory);
+
+        $request = Request::create('https://keboola.com');
+        $request->headers->set('X-KBC-ManageApiToken', '');
+
+        $this->expectException(CustomUserMessageAuthenticationException::class);
+        $this->expectExceptionMessage('Invalid X-KBC-ManageApiToken header: token must not be empty');
+
+        $authenticator->authenticateToken(
+            new ApplicationTokenAuth(scopes: ['some:scope']),
+            '',
+            $request,
+        );
+    }
+
+    public function testAuthenticateTokenRejectsEmptyServiceAccountHeader(): void
+    {
+        $clientFactory = $this->createMock(ManageApiClientFactory::class);
+        $clientFactory->expects(self::never())->method('getClientForServiceAccountToken');
+        $clientFactory->expects(self::never())->method('getClientForManageToken');
+
+        $authenticator = new ApplicationTokenAuthenticator($clientFactory);
+
+        $request = Request::create('https://keboola.com');
+        $request->headers->set('X-Kubernetes-Authorization', '');
+
+        $this->expectException(CustomUserMessageAuthenticationException::class);
+        $this->expectExceptionMessage('Invalid X-Kubernetes-Authorization header: expected "Bearer <token>"');
+
+        $authenticator->authenticateToken(
+            new ApplicationTokenAuth(scopes: ['some:scope']),
+            '',
+            $request,
+        );
+    }
+
+    public function testAuthenticateTokenRejectsServiceAccountHeaderWithOnlyBearerScheme(): void
+    {
+        $clientFactory = $this->createMock(ManageApiClientFactory::class);
+        $clientFactory->expects(self::never())->method('getClientForServiceAccountToken');
+        $clientFactory->expects(self::never())->method('getClientForManageToken');
+
+        $authenticator = new ApplicationTokenAuthenticator($clientFactory);
+
+        $request = Request::create('https://keboola.com');
+        $request->headers->set('X-Kubernetes-Authorization', 'Bearer ');
+
+        $this->expectException(CustomUserMessageAuthenticationException::class);
+        $this->expectExceptionMessage('Invalid X-Kubernetes-Authorization header: expected "Bearer <token>"');
+
+        $authenticator->authenticateToken(
+            new ApplicationTokenAuth(scopes: ['some:scope']),
+            'Bearer ',
+            $request,
+        );
+    }
+
     /**
      * @param list<string> $scopes
      * @return array<string, mixed>

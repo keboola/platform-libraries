@@ -8,6 +8,7 @@ concurrency:
 
 jobs:
   symfony-64:
+    name: Symfony 6.4
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
@@ -26,6 +27,7 @@ jobs:
         run: docker compose logs
 
   symfony-72:
+    name: Symfony 7.2
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:

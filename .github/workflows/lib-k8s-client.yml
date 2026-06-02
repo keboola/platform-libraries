@@ -7,7 +7,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     env:
-      AWS_ACCESS_KEY_ID: ${{ secrets.K8S_CLIENT_TERRAFORM_AWS_ACCESS_KEY_ID }}
+      AWS_ACCESS_KEY_ID: ${{ vars.K8S_CLIENT_TERRAFORM_AWS_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.K8S_CLIENT_TERRAFORM_AWS_SECRET_ACCESS_KEY }}
     steps:
       - uses: actions/checkout@v4
@@ -24,7 +24,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     env:
-      AWS_ACCESS_KEY_ID: ${{ secrets.K8S_CLIENT_TERRAFORM_AWS_ACCESS_KEY_ID }}
+      AWS_ACCESS_KEY_ID: ${{ vars.K8S_CLIENT_TERRAFORM_AWS_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.K8S_CLIENT_TERRAFORM_AWS_SECRET_ACCESS_KEY }}
     steps:
       - uses: actions/checkout@v4

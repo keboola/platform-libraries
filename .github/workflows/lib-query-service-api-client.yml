@@ -13,9 +13,9 @@ jobs:
         run: docker compose build dev-query-service-api-client
       - name: Run tests
         env:
-          STORAGE_API_URL: ${{ secrets.STORAGE_API_URL_GCP }}
+          STORAGE_API_URL: ${{ vars.STORAGE_API_URL_GCP }}
           STORAGE_API_TOKEN: ${{ secrets.QUERY_SERVICE__STORAGE_API_TOKEN_GCP }}
-          HOSTNAME_SUFFIX: ${{ secrets.HOSTNAME_SUFFIX_GCP }}
+          HOSTNAME_SUFFIX: ${{ vars.HOSTNAME_SUFFIX_GCP }}
         run: docker compose run --rm dev-query-service-api-client bash -c 'composer install && composer ci'
       - name: Show logs on failure
         if: failure()

@@ -13,7 +13,7 @@ jobs:
         run: docker compose build dev-configuration-variables-resolver
       - name: Run tests
         env:
-          STORAGE_API_URL: ${{ secrets.STORAGE_API_URL_AWS }}
+          STORAGE_API_URL: ${{ vars.STORAGE_API_URL_AWS }}
           STORAGE_API_TOKEN: ${{ secrets.VARIABLES_RESOLVER__STORAGE_API_TOKEN }}
           STORAGE_API_TOKEN_MASTER: ${{ secrets.VARIABLES_RESOLVER__STORAGE_API_TOKEN_MASTER }}
         run: docker compose run --rm dev-configuration-variables-resolver bash -c 'composer install && composer ci'

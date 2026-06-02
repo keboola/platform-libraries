@@ -13,7 +13,7 @@ jobs:
         run: docker compose build dev-php-test-utils
       - name: Run tests
         env:
-          HOSTNAME_SUFFIX: ${{ secrets.HOSTNAME_SUFFIX_GCP }}
+          HOSTNAME_SUFFIX: ${{ vars.HOSTNAME_SUFFIX_GCP }}
           TEST_STORAGE_API_TOKEN_SNOWFLAKE: ${{ secrets.PHP_TEST_UTILS__TEST_STORAGE_API_TOKEN_SNOWFLAKE }}
         run: docker compose run --rm dev-php-test-utils bash -c 'composer install && composer ci'
       - name: Show logs on failure

@@ -213,11 +213,21 @@ CI runs on **GitHub Actions** (migrated from Azure Pipelines).
 - **Split/publish:** the `.github/actions/split-library` composite action wraps `bin/split-repo.sh`, authenticating to the target repo with the `LIBS_SPLIT_TOKEN` secret (a GitHub App installation token) over HTTPS.
 - **CI tooling:** `bin/ci/` is a small standalone composer project (`AffectedLibrariesResolver` + `affected-libraries.php` CLI) with its own PHPUnit/PHPStan/phpcs config. Run its checks with `docker compose run --rm dev82 bash -c 'cd bin/ci && composer ci'`.
 
-### Required secrets (provisioned by repo admin)
+### Required CI configuration (provisioned by repo admin)
 
-Storage tokens/URLs: `STORAGE_API_URL_AWS`, `STORAGE_API_URL_AZURE`, `STORAGE_API_URL_GCP`, `HOSTNAME_SUFFIX_GCP`, `INPUT_MAPPING__*`, `OUTPUT_MAPPING__*` / `OUTPUT_MAPPING_*__*`, `VARIABLES_RESOLVER__*`, `STAGING_PROVIDER__*`, `QUERY_SERVICE__STORAGE_API_TOKEN_GCP` (also used by `php-storage-names-sanitizer`), `SYNC_ACTIONS_CLIENT__STORAGE_API_TOKEN_GCP`, `PHP_TEST_UTILS__TEST_STORAGE_API_TOKEN_SNOWFLAKE`.
-Terraform creds: `K8S_CLIENT_TERRAFORM_AWS_ACCESS_KEY_ID/_SECRET_ACCESS_KEY`, `MESSENGER_BUNDLE_TERRAFORM_AWS_ACCESS_KEY_ID/_SECRET_ACCESS_KEY`.
-Publishing: `LIBS_SPLIT_TOKEN` (GitHub App installation token with push rights to all 22 target repos).
+Non-sensitive values are stored as **repository variables** (read via `vars.*`); sensitive tokens and secret keys are stored as **repository secrets** (read via `secrets.*`, passed to reusable workflows with `secrets: inherit`).
+
+**Repository variables** (`vars.*`) — non-sensitive URLs, host suffix and AWS access key IDs:
+- `STORAGE_API_URL_AWS`, `STORAGE_API_URL_AZURE`, `STORAGE_API_URL_GCP`
+- `HOSTNAME_SUFFIX_GCP`
+- `OUTPUT_MAPPING__BIGQUERY_STORAGE_API_URL`
+- `K8S_CLIENT_TERRAFORM_AWS_ACCESS_KEY_ID`
+- `MESSENGER_BUNDLE_TERRAFORM_AWS_ACCESS_KEY_ID`
+
+**Repository secrets** (`secrets.*`) — Storage API tokens, Terraform secret keys and the publish token:
+- Storage tokens: `INPUT_MAPPING__*`, `OUTPUT_MAPPING__STORAGE_API_TOKEN_*` / `OUTPUT_MAPPING_*__STORAGE_API_TOKEN_*`, `OUTPUT_MAPPING__BIGQUERY_STORAGE_API_TOKEN`, `VARIABLES_RESOLVER__*`, `STAGING_PROVIDER__STORAGE_API_TOKEN_AWS`, `QUERY_SERVICE__STORAGE_API_TOKEN_GCP` (also used by `php-storage-names-sanitizer`), `SYNC_ACTIONS_CLIENT__STORAGE_API_TOKEN_GCP`, `PHP_TEST_UTILS__TEST_STORAGE_API_TOKEN_SNOWFLAKE`.
+- Terraform secret keys: `K8S_CLIENT_TERRAFORM_AWS_SECRET_ACCESS_KEY`, `MESSENGER_BUNDLE_TERRAFORM_AWS_SECRET_ACCESS_KEY`.
+- Publishing: `LIBS_SPLIT_TOKEN` (GitHub App installation token with push rights to all 22 target repos).
 
 ## PHP Version Support
 

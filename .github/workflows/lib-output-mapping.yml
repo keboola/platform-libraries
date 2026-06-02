@@ -11,11 +11,16 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
-      - uses: docker/setup-buildx-action@v3
-      - run: docker compose build dev-output-mapping
-      - run: docker compose run --rm dev-output-mapping bash -c 'composer install && composer check'
-      - if: failure()
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Build image
+        run: docker compose build dev-output-mapping
+      - name: Run checks
+        run: docker compose run --rm dev-output-mapping bash -c 'composer install && composer check'
+      - name: Show logs on failure
+        if: failure()
         run: docker compose logs
 
   general:
@@ -29,11 +34,16 @@ jobs:
       BIGQUERY_STORAGE_API_URL: ${{ vars.OUTPUT_MAPPING__BIGQUERY_STORAGE_API_URL }}
       BIGQUERY_STORAGE_API_TOKEN: ${{ secrets.OUTPUT_MAPPING__BIGQUERY_STORAGE_API_TOKEN }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: docker/setup-buildx-action@v3
-      - run: docker compose build dev-output-mapping
-      - run: docker compose run --rm dev-output-mapping bash -c 'composer install && composer paratests -- --testsuite general-tests -f -p 4'
-      - if: failure()
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Build image
+        run: docker compose build dev-output-mapping
+      - name: Run tests
+        run: docker compose run --rm dev-output-mapping bash -c 'composer install && composer paratests -- --testsuite general-tests -f -p 4'
+      - name: Show logs on failure
+        if: failure()
         run: docker compose logs
 
   main-writer-1:
@@ -45,11 +55,16 @@ jobs:
       STORAGE_API_TOKEN: ${{ secrets.OUTPUT_MAPPING__STORAGE_API_TOKEN_AWS }}
       STORAGE_API_TOKEN_MASTER: ${{ secrets.OUTPUT_MAPPING__STORAGE_API_TOKEN_MASTER_AWS }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: docker/setup-buildx-action@v3
-      - run: docker compose build dev-output-mapping
-      - run: docker compose run --rm dev-output-mapping bash -c 'composer install && composer paratests -- --testsuite main-writer-tests-1 -f'
-      - if: failure()
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Build image
+        run: docker compose build dev-output-mapping
+      - name: Run tests
+        run: docker compose run --rm dev-output-mapping bash -c 'composer install && composer paratests -- --testsuite main-writer-tests-1 -f'
+      - name: Show logs on failure
+        if: failure()
         run: docker compose logs
 
   main-writer-2:
@@ -61,11 +76,16 @@ jobs:
       STORAGE_API_TOKEN: ${{ secrets.OUTPUT_MAPPING__STORAGE_API_TOKEN_AWS }}
       STORAGE_API_TOKEN_MASTER: ${{ secrets.OUTPUT_MAPPING__STORAGE_API_TOKEN_MASTER_AWS }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: docker/setup-buildx-action@v3
-      - run: docker compose build dev-output-mapping
-      - run: docker compose run --rm dev-output-mapping bash -c 'composer install && vendor/bin/phpunit --testsuite main-writer-tests-2'
-      - if: failure()
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Build image
+        run: docker compose build dev-output-mapping
+      - name: Run tests
+        run: docker compose run --rm dev-output-mapping bash -c 'composer install && vendor/bin/phpunit --testsuite main-writer-tests-2'
+      - name: Show logs on failure
+        if: failure()
         run: docker compose logs
 
   workspace-writer:
@@ -77,11 +97,16 @@ jobs:
       STORAGE_API_TOKEN: ${{ secrets.OUTPUT_MAPPING__STORAGE_API_TOKEN_AWS }}
       STORAGE_API_TOKEN_MASTER: ${{ secrets.OUTPUT_MAPPING__STORAGE_API_TOKEN_MASTER_AWS }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: docker/setup-buildx-action@v3
-      - run: docker compose build dev-output-mapping
-      - run: docker compose run --rm dev-output-mapping bash -c 'composer install && composer paratests -- --testsuite workspace-writer-tests -f'
-      - if: failure()
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Build image
+        run: docker compose build dev-output-mapping
+      - name: Run tests
+        run: docker compose run --rm dev-output-mapping bash -c 'composer install && composer paratests -- --testsuite workspace-writer-tests -f'
+      - name: Show logs on failure
+        if: failure()
         run: docker compose logs
 
   native-types:
@@ -93,11 +118,16 @@ jobs:
       STORAGE_API_TOKEN: ${{ secrets.OUTPUT_MAPPING_NATIVE_TYPES__STORAGE_API_TOKEN_AWS }}
       STORAGE_API_TOKEN_MASTER: ${{ secrets.OUTPUT_MAPPING__STORAGE_API_TOKEN_MASTER_AWS }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: docker/setup-buildx-action@v3
-      - run: docker compose build dev-output-mapping
-      - run: docker compose run --rm dev-output-mapping bash -c 'composer install && vendor/bin/phpunit --testsuite native-types'
-      - if: failure()
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Build image
+        run: docker compose build dev-output-mapping
+      - name: Run tests
+        run: docker compose run --rm dev-output-mapping bash -c 'composer install && vendor/bin/phpunit --testsuite native-types'
+      - name: Show logs on failure
+        if: failure()
         run: docker compose logs
 
   new-native-types:
@@ -109,11 +139,16 @@ jobs:
       STORAGE_API_TOKEN: ${{ secrets.OUTPUT_MAPPING_NEW_NATIVE_TYPES__STORAGE_API_TOKEN_AWS }}
       STORAGE_API_TOKEN_MASTER: ${{ secrets.OUTPUT_MAPPING__STORAGE_API_TOKEN_MASTER_AWS }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: docker/setup-buildx-action@v3
-      - run: docker compose build dev-output-mapping
-      - run: docker compose run --rm dev-output-mapping bash -c 'composer install && vendor/bin/phpunit --testsuite new-native-types'
-      - if: failure()
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Build image
+        run: docker compose build dev-output-mapping
+      - name: Run tests
+        run: docker compose run --rm dev-output-mapping bash -c 'composer install && vendor/bin/phpunit --testsuite new-native-types'
+      - name: Show logs on failure
+        if: failure()
         run: docker compose logs
 
   slice:
@@ -125,9 +160,14 @@ jobs:
       STORAGE_API_TOKEN: ${{ secrets.OUTPUT_MAPPING_SLICE_FEATURE__STORAGE_API_TOKEN_AWS }}
       STORAGE_API_TOKEN_MASTER: ${{ secrets.OUTPUT_MAPPING_SLICE_FEATURE__STORAGE_API_TOKEN_MASTER_AWS }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: docker/setup-buildx-action@v3
-      - run: docker compose build dev-output-mapping
-      - run: docker compose run --rm dev-output-mapping bash -c 'composer install && composer paratests -- --testsuite slice -f -p 4'
-      - if: failure()
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Build image
+        run: docker compose build dev-output-mapping
+      - name: Run tests
+        run: docker compose run --rm dev-output-mapping bash -c 'composer install && composer paratests -- --testsuite slice -f -p 4'
+      - name: Show logs on failure
+        if: failure()
         run: docker compose logs

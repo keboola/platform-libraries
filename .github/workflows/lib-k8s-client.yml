@@ -2,6 +2,10 @@ name: lib-k8s-client
 on:
   workflow_call: {}
 
+concurrency:
+  group: k8s-client-lock
+  cancel-in-progress: false
+
 jobs:
   aws:
     runs-on: ubuntu-latest
@@ -10,14 +14,22 @@ jobs:
       AWS_ACCESS_KEY_ID: ${{ vars.K8S_CLIENT_TERRAFORM_AWS_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.K8S_CLIENT_TERRAFORM_AWS_SECRET_ACCESS_KEY }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: docker/setup-buildx-action@v3
-      - run: docker compose build dev-k8s-client
-      - run: ./libs/k8s-client/provisioning/ci/pipelines-scripts/terraform-install.sh
-      - run: ./libs/k8s-client/provisioning/ci/pipelines-scripts/terraform-init.sh
-      - run: ./libs/k8s-client/provisioning/ci/update-env.sh -v -e .env.local aws
-      - run: docker compose run --rm dev-k8s-client bash -c 'composer install && composer ci'
-      - if: failure()
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Build image
+        run: docker compose build dev-k8s-client
+      - name: Install Terraform
+        run: ./libs/k8s-client/provisioning/ci/pipelines-scripts/terraform-install.sh
+      - name: Initialize Terraform
+        run: ./libs/k8s-client/provisioning/ci/pipelines-scripts/terraform-init.sh
+      - name: Provision test environment
+        run: ./libs/k8s-client/provisioning/ci/update-env.sh -v -e .env.local aws
+      - name: Run tests
+        run: docker compose run --rm dev-k8s-client bash -c 'composer install && composer ci'
+      - name: Show logs on failure
+        if: failure()
         run: docker compose logs
 
   azure:
@@ -27,12 +39,20 @@ jobs:
       AWS_ACCESS_KEY_ID: ${{ vars.K8S_CLIENT_TERRAFORM_AWS_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.K8S_CLIENT_TERRAFORM_AWS_SECRET_ACCESS_KEY }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: docker/setup-buildx-action@v3
-      - run: docker compose build dev-k8s-client
-      - run: ./libs/k8s-client/provisioning/ci/pipelines-scripts/terraform-install.sh
-      - run: ./libs/k8s-client/provisioning/ci/pipelines-scripts/terraform-init.sh
-      - run: ./libs/k8s-client/provisioning/ci/update-env.sh -v -e .env.local azure
-      - run: docker compose run --rm dev-k8s-client bash -c 'composer install && composer ci'
-      - if: failure()
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Build image
+        run: docker compose build dev-k8s-client
+      - name: Install Terraform
+        run: ./libs/k8s-client/provisioning/ci/pipelines-scripts/terraform-install.sh
+      - name: Initialize Terraform
+        run: ./libs/k8s-client/provisioning/ci/pipelines-scripts/terraform-init.sh
+      - name: Provision test environment
+        run: ./libs/k8s-client/provisioning/ci/update-env.sh -v -e .env.local azure
+      - name: Run tests
+        run: docker compose run --rm dev-k8s-client bash -c 'composer install && composer ci'
+      - name: Show logs on failure
+        if: failure()
         run: docker compose logs

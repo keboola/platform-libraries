@@ -5,10 +5,17 @@ declare(strict_types=1);
 namespace Keboola\ApiBundle\DependencyInjection;
 
 use Keboola\ApiBundle\Attribute\ApplicationTokenAuth;
+use Keboola\ApiBundle\Attribute\ConnectionTokenAuth;
 use Keboola\ApiBundle\Attribute\StorageApiTokenAuth;
+use Keboola\ApiBundle\AuthBridge\AuthBridgeStorageTokenResolver;
+use Keboola\ApiBundle\AuthBridge\KubernetesServiceAccountTokenProvider;
+use Keboola\ApiBundle\AuthBridge\StorageTokenResolverInterface;
 use Keboola\ApiBundle\Security\ApplicationToken\ApplicationTokenAuthenticator;
 use Keboola\ApiBundle\Security\ApplicationToken\ManageApiClientFactory;
+use Keboola\ApiBundle\Security\ConnectionToken\ConnectionTokenAuthenticator;
 use Keboola\ApiBundle\Security\StorageApiToken\StorageApiTokenAuthenticator;
+use Keboola\ApiBundle\Security\StorageApiToken\StorageApiTokenExchange;
+use Keboola\ApiBundle\Security\StorageApiToken\StorageApiTokenFactory;
 use Keboola\ManageApi\Client as ManageApiClient;
 use Keboola\ServiceClient\ServiceClient;
 use Keboola\ServiceClient\ServiceDnsType;
@@ -36,7 +43,7 @@ class KeboolaApiExtension extends Extension
         $container->setParameter('keboola_api_bundle.default_service_dns_type', $defaultServiceDnsType);
 
         $authenticators = [];
-        $this->setupStorageApiAuthenticator($container, $authenticators);
+        $this->setupStorageApiAuthenticator($container, $config, $authenticators);
         $this->setupApplicationTokenAuthenticator($container, $config, $authenticators);
 
         $container->getDefinition('keboola.api_bundle.security.authenticators_locator')
@@ -46,17 +53,54 @@ class KeboolaApiExtension extends Extension
         ;
     }
 
-    private function setupStorageApiAuthenticator(ContainerBuilder $container, array &$authenticators): void
-    {
+    private function setupStorageApiAuthenticator(
+        ContainerBuilder $container,
+        array $config,
+        array &$authenticators,
+    ): void {
         if (!class_exists(StorageClientRequestFactory::class)) {
             return;
         }
 
-        $container->register(StorageApiTokenAuthenticator::class)
+        $exchangeConfig = $config['storage_token_exchange'];
+        assert(is_array($exchangeConfig));
+
+        $connectionDnsType = $exchangeConfig['connection_dns_type'];
+        assert(is_string($connectionDnsType));
+
+        $container->register(StorageApiTokenFactory::class)
             ->setArgument('$clientRequestFactory', new Reference(StorageClientRequestFactory::class))
         ;
 
+        $container->register(KubernetesServiceAccountTokenProvider::class)
+            ->setArgument('$tokenPath', $exchangeConfig['service_account_token_path'])
+        ;
+
+        $container->register(StorageTokenResolverInterface::class, AuthBridgeStorageTokenResolver::class)
+            ->setArgument('$serviceClient', new Reference(ServiceClient::class))
+            ->setArgument('$serviceAccountTokenProvider', new Reference(KubernetesServiceAccountTokenProvider::class))
+            ->setArgument('$connectionDnsType', ServiceDnsType::from($connectionDnsType))
+            ->setArgument('$userAgent', $config['app_name'])
+        ;
+
+        $container->register(StorageApiTokenExchange::class)
+            ->setArgument('$resolver', new Reference(StorageTokenResolverInterface::class))
+            ->setArgument('$tokenFactory', new Reference(StorageApiTokenFactory::class))
+        ;
+
+        $container->register(StorageApiTokenAuthenticator::class)
+            ->setArgument('$tokenFactory', new Reference(StorageApiTokenFactory::class))
+            ->setArgument('$tokenExchange', new Reference(StorageApiTokenExchange::class))
+            ->setArgument('$exchangeEnabled', $exchangeConfig['enabled'])
+            ->setArgument('$projectIdHeader', $exchangeConfig['project_id_header'])
+        ;
         $authenticators[StorageApiTokenAuth::class] = new Reference(StorageApiTokenAuthenticator::class);
+
+        $container->register(ConnectionTokenAuthenticator::class)
+            ->setArgument('$tokenExchange', new Reference(StorageApiTokenExchange::class))
+            ->setArgument('$projectIdHeader', $exchangeConfig['project_id_header'])
+        ;
+        $authenticators[ConnectionTokenAuth::class] = new Reference(ConnectionTokenAuthenticator::class);
     }
 
     private function setupApplicationTokenAuthenticator(

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\ApiBundle\Tests\Test;
 
+use Keboola\ApiBundle\AuthBridge\StorageTokenResolverInterface;
 use Keboola\ApiBundle\Security\ApplicationToken\ManageApiClientFactory;
 use Keboola\ApiBundle\Security\StorageApiToken\StorageApiToken;
 use Keboola\ApiBundle\Test\AuthenticatorTestTrait;
@@ -62,5 +63,34 @@ class AuthenticatorTestTraitTest extends TestCase
         // The Kubernetes ServiceAccount JWT path is stubbed identically.
         $jwtData = $factory->getClientForServiceAccountToken('manage-token')->verifyToken();
         self::assertSame(['some:scope'], $jwtData['scopes']);
+    }
+
+    public function testSetupFakeConnectionToken(): void
+    {
+        $token = $this->setupFakeConnectionToken(
+            projectId: '789',
+            features: ['feat-x'],
+            tokenString: 'tok-x',
+            adminId: '7',
+        );
+
+        // The returned StorageApiToken carries the values passed in.
+        self::assertSame('tok-x', $token->getTokenValue());
+        self::assertSame('789', $token->getProjectId());
+        self::assertSame(['feat-x'], $token->getFeatures());
+
+        // The StorageClientRequestFactory stub is wired into the container.
+        self::assertInstanceOf(
+            StorageClientRequestFactory::class,
+            self::$testContainer->get(StorageClientRequestFactory::class),
+        );
+
+        // A StorageTokenResolverInterface mock is registered in the container.
+        $resolver = self::$testContainer->get(StorageTokenResolverInterface::class);
+        self::assertInstanceOf(StorageTokenResolverInterface::class, $resolver);
+
+        // The mock resolver returns a ResolvedStorageToken whose projectId matches.
+        $resolved = $resolver->resolve(789, 'kbc_at_x');
+        self::assertSame(789, $resolved->projectId);
     }
 }

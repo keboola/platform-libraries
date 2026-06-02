@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Keboola\ApiBundle\Test;
 
+use Keboola\ApiBundle\AuthBridge\ResolvedStorageToken;
+use Keboola\ApiBundle\AuthBridge\StorageTokenResolverInterface;
 use Keboola\ApiBundle\Security\ApplicationToken\ManageApiClientFactory;
 use Keboola\ApiBundle\Security\StorageApiToken\StorageApiToken;
 use Keboola\ManageApi\Client as ManageApiClient;
@@ -64,6 +66,43 @@ trait AuthenticatorTestTrait
         self::getContainer()->set(StorageClientRequestFactory::class, $clientRequestFactory);
 
         return new StorageApiToken($tokenData, $tokenString);
+    }
+
+    /**
+     * Stubs the programmatic-token exchange used by transparent #[StorageApiTokenAuth] and by
+     * #[ConnectionTokenAuth], so guarded controllers can be exercised without reaching Connection
+     * or Storage API. The fake resolver returns a fixed result and the Storage verification is
+     * stubbed via {@see setupFakeStorageApiToken()}.
+     *
+     * @param list<string> $features
+     */
+    private function setupFakeConnectionToken(
+        string $projectId = '123',
+        array $features = [],
+        ?string $tokenString = null,
+        ?string $adminId = null,
+    ): StorageApiToken {
+        $token = $this->setupFakeStorageApiToken(
+            tokenString: $tokenString,
+            projectId: $projectId,
+            features: $features,
+            adminId: $adminId,
+        );
+
+        $resolver = $this->createMock(StorageTokenResolverInterface::class);
+        $resolver
+            ->method('resolve')
+            ->willReturn(new ResolvedStorageToken(
+                storageToken: 'fake-resolved-storage-token',
+                projectId: (int) $projectId,
+                tokenId: '123',
+                userId: $adminId ?? '456',
+                expiresAt: null,
+            ));
+
+        self::getContainer()->set(StorageTokenResolverInterface::class, $resolver);
+
+        return $token;
     }
 
     /**

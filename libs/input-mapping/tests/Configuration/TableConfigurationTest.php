@@ -422,6 +422,89 @@ class TableConfigurationTest extends TestCase
                     'keep_internal_timestamp_column' => true,
                 ],
             ],
+            'LoadTypeCopy' => [
+                [
+                    'source' => 'in.c-main.test',
+                    'load_type' => 'COPY',
+                ],
+                [
+                    'source' => 'in.c-main.test',
+                    'columns' => [],
+                    'where_values' => [],
+                    'where_operator' => 'eq',
+                    'column_types' => [],
+                    'overwrite' => false,
+                    'use_view' => false,
+                    'load_type' => 'COPY',
+                    'keep_internal_timestamp_column' => true,
+                ],
+            ],
+            'LoadTypeClone' => [
+                [
+                    'source' => 'in.c-main.test',
+                    'load_type' => 'CLONE',
+                ],
+                [
+                    'source' => 'in.c-main.test',
+                    'columns' => [],
+                    'where_values' => [],
+                    'where_operator' => 'eq',
+                    'column_types' => [],
+                    'overwrite' => false,
+                    'use_view' => false,
+                    'load_type' => 'CLONE',
+                    'keep_internal_timestamp_column' => true,
+                ],
+            ],
+            'LoadTypeView' => [
+                [
+                    'source' => 'in.c-main.test',
+                    'load_type' => 'VIEW',
+                ],
+                [
+                    'source' => 'in.c-main.test',
+                    'columns' => [],
+                    'where_values' => [],
+                    'where_operator' => 'eq',
+                    'column_types' => [],
+                    'overwrite' => false,
+                    'use_view' => false,
+                    'load_type' => 'VIEW',
+                    'keep_internal_timestamp_column' => true,
+                ],
+            ],
+            'LoadTypeAuto' => [
+                [
+                    'source' => 'in.c-main.test',
+                    'load_type' => 'AUTO',
+                ],
+                [
+                    'source' => 'in.c-main.test',
+                    'columns' => [],
+                    'where_values' => [],
+                    'where_operator' => 'eq',
+                    'column_types' => [],
+                    'overwrite' => false,
+                    'use_view' => false,
+                    'load_type' => 'AUTO',
+                    'keep_internal_timestamp_column' => true,
+                ],
+            ],
+            'LoadTypeOmitted' => [
+                [
+                    'source' => 'in.c-main.test',
+                ],
+                [
+                    'source' => 'in.c-main.test',
+                    'columns' => [],
+                    'where_values' => [],
+                    'where_operator' => 'eq',
+                    'column_types' => [],
+                    'overwrite' => false,
+                    'use_view' => false,
+                    'keep_internal_timestamp_column' => true,
+                ],
+            ],
         ];
     }
 
@@ -519,6 +602,15 @@ class TableConfigurationTest extends TestCase
                 ],
                 InvalidConfigurationException::class,
                 'When "where_column" is set, "where_values" must be provided.',
+            ],
+            'InvalidLoadType' => [
+                [
+                    'source' => 'in.c-main.test',
+                    'load_type' => 'INVALID',
+                ],
+                InvalidConfigurationException::class,
+                'The value "INVALID" is not allowed for path "table.load_type". '
+                    . 'Permissible values: "COPY", "CLONE", "VIEW", "AUTO".',
             ],
         ];
     }

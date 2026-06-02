@@ -38,7 +38,12 @@
             "dealerdirect/phpcodesniffer-composer-installer": true
         },
         "sort-packages": true,
-        "lock": false
+        "lock": false,
+        "policy": {
+            "advisories": {
+                "block": false
+            }
+        }
     },
     "scripts": {
         "tests": "phpunit",

@@ -37,18 +37,6 @@ echo ">> Cloning source repo '${SOURCE_REPO_PATH}'"
 git clone --no-local --mirror "${SOURCE_REPO_PATH}" $TMP_DIR
 cd $TMP_DIR
 
-# CI typically checks out a single branch, so the source has only that branch as a
-# local head while the rest are remote-tracking refs (requires fetch-depth: 0 in the
-# job). Promote every remote-tracking branch to a local head so the mirror push below
-# reflects all branches - and prunes ones deleted upstream - instead of wiping every
-# branch except the checked-out one from the target repo.
-git for-each-ref --format='%(objectname) %(refname)' refs/remotes/origin \
-  | grep -v ' refs/remotes/origin/HEAD$' \
-  | while read -r sha ref; do
-      git update-ref "refs/heads/${ref#refs/remotes/origin/}" "$sha"
-    done
-git for-each-ref --format='delete %(refname)' refs/remotes/origin | git update-ref --stdin
-
 echo ">> Rebuild repo"
 LIB_PATH="${LIB_PATH%/}/" # ensure trailing slash
 git filter-repo --quiet --subdirectory-filter "${LIB_PATH}" --refname-callback "

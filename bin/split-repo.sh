@@ -2,14 +2,15 @@
 set -e
 
 if [[ -z ${1+x} || -z ${2+x} || -z ${3+x} || -z ${4+x} ]]; then
-  echo "Usage: split-repo.sh <source-repo-path> <target-repo-url> <library-path> <tag-prefix>"
+  echo "Usage: split-repo.sh <source-repo-path> <target-repo-url> <library-path> <tag-prefix> [push-branch]"
   echo ""
   echo " <source-repo-path> Source Git repository path (the monorepo, may be also local path)"
   echo " <target-repo-url>  Target Git repository URL (the read-only library repo)"
   echo " <library-path>     Relative path to the library inside the source repo"
   echo " <tag-prefix>       Common prefix of tags to mirror. The prefix will be stripped from tags"
+  echo " [push-branch]      Optional single branch to push (e.g. main, my-feature). Omit to push tags only."
   echo ""
-  echo "Example: split-repo.sh /build/monorepo git@github.com:keboola/library-repo.git libs/my-lib my-lib/"
+  echo "Example: split-repo.sh /build/monorepo git@github.com:keboola/library-repo.git libs/my-lib my-lib/ main"
   exit 1
 fi
 
@@ -17,6 +18,7 @@ SOURCE_REPO_PATH="${1}"
 TARGET_REPO_URL="${2}"
 LIB_PATH="${3}"
 TAG_PREFIX="${4}"
+PUSH_BRANCH="${5:-}"
 
 # We require the source to be a local path because we use --mirror flag. The --mirror flag is needed on the other hand
 # to copy all refs when doing a local clone.
@@ -55,6 +57,14 @@ git update-ref -d refs/tags/SKIP
 
 echo ">> Push to target repo '${TARGET_REPO_URL}'"
 git remote add origin "${TARGET_REPO_URL}"
-git push -v origin --mirror
+# Push the prefix-stripped tags and, if given, only the single branch being built.
+# We deliberately do NOT use --mirror / push all branches: the monorepo has many
+# unrelated dev branches and the target repos have branch protection the publish App
+# cannot bypass, so a full mirror push is rejected (GH006). Scoping to the build branch
+# keeps per-branch publishing (composer require ...:dev-<branch>) without touching others.
+git push -v origin "refs/tags/*:refs/tags/*"
+if [[ -n "${PUSH_BRANCH}" ]]; then
+  git push -v --force origin "refs/heads/${PUSH_BRANCH}:refs/heads/${PUSH_BRANCH}"
+fi
 
 echo ">> Done"

@@ -59,7 +59,7 @@ Publish/release run automatically via the `publish` matrix and `release.yml` onc
 ### 6. Create the standalone repo + grant the publish App access
 1. Create the standalone repo `keboola/<repo>` (or run `bin/adopt-repo.sh`).
 2. **Add `<repo>` to the publish GitHub App's installation.** In the `keboola` org → Settings → GitHub Apps → the publish App (the one behind `SPLIT_APP_ID`) → *Configure* → **Repository access**: either keep "All repositories", or under "Only select repositories" **add `<repo>`**. If the App is not installed on `<repo>`, the publish step fails — `actions/create-github-app-token` mints the token with `repositories: <repo>` (scoped to that one repo) and cannot issue a token for a repo outside its installation.
-3. **Ensure the App has `Contents: Read and write`** permission (set once at the App level → *Permissions*; it applies to every installed repo). Without write, the `git push --mirror` is rejected.
+3. **Ensure the App has `Contents: Read and write`** permission (set once at the App level → *Permissions*; it applies to every installed repo). Without write, the publish `git push` is rejected. (Note: the App must also be allowed to push to any protected branch it needs to update in the target repo.)
 
 This is **not in code** — it is a one-time admin action in GitHub org settings. Without it the first publish/release for the new library fails at authentication.
 

@@ -2,17 +2,8 @@ name: Split library
 description: Split a library subdirectory from the monorepo and push to its standalone repo
 
 inputs:
-  source-path:
-    description: Absolute path to the checked-out monorepo
-    required: true
-  library-path:
-    description: Library path inside the monorepo (e.g. libs/key-generator)
-    required: true
-  target-repo:
-    description: Target repo name under keboola/ (e.g. php-key-generator)
-    required: true
-  tag-prefix:
-    description: Tag prefix to mirror and strip (e.g. key-generator/)
+  library:
+    description: Library directory name under libs/ (e.g. key-generator)
     required: true
   app-id:
     description: GitHub App ID used to mint a scoped installation token
@@ -24,11 +15,21 @@ inputs:
 runs:
   using: composite
   steps:
-    - name: Install git-filter-repo
+    # Most libraries publish to a standalone repo of the same name; these are the
+    # exceptions where the target repo name differs from the library directory.
+    - name: Resolve target repository
+      id: target
       shell: bash
       run: |
-        sudo apt-get update -q
-        sudo apt-get install -y git-filter-repo
+        case "${{ inputs.library }}" in
+          git-service-api-client)      REPO=git-service-php-api-client ;;
+          key-generator)               REPO=php-key-generator ;;
+          query-service-api-client)    REPO=query-service-api-php-client ;;
+          sandboxes-service-api-client) REPO=sandboxes-service-api-php-client ;;
+          vault-api-client)            REPO=vault-api-php-client ;;
+          *)                           REPO="${{ inputs.library }}" ;;
+        esac
+        echo "repo=${REPO}" >> "$GITHUB_OUTPUT"
 
     - name: Generate GitHub App token
       id: app-token
@@ -37,16 +38,22 @@ runs:
         app-id: ${{ inputs.app-id }}
         private-key: ${{ inputs.private-key }}
         owner: keboola
-        repositories: ${{ inputs.target-repo }}
+        repositories: ${{ steps.target.outputs.repo }}
+
+    - name: Install git-filter-repo
+      shell: bash
+      run: |
+        sudo apt-get update -q
+        sudo apt-get install -y git-filter-repo
 
     - name: Split and push
       shell: bash
       env:
         SPLIT_TOKEN: ${{ steps.app-token.outputs.token }}
       run: |
-        TARGET_URL="https://x-access-token:${SPLIT_TOKEN}@github.com/keboola/${{ inputs.target-repo }}.git"
-        "${{ inputs.source-path }}/bin/split-repo.sh" \
-          "${{ inputs.source-path }}" \
+        TARGET_URL="https://x-access-token:${SPLIT_TOKEN}@github.com/keboola/${{ steps.target.outputs.repo }}.git"
+        "${{ github.workspace }}/bin/split-repo.sh" \
+          "${{ github.workspace }}" \
           "${TARGET_URL}" \
-          "${{ inputs.library-path }}" \
-          "${{ inputs.tag-prefix }}"
+          "libs/${{ inputs.library }}" \
+          "${{ inputs.library }}/"

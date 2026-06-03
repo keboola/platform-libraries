@@ -56,6 +56,8 @@ Create `.github/workflows/lib-<name>.yml` (copy `lib-settle.yml` for the simple 
 ### 5. Publish wiring (only if repo name ≠ dir name)
 Publish/release run automatically via the `publish` matrix and `release.yml` once the library is detected — no per-lib job needed. **Only** if the standalone repo name differs from `<name>`, add a `case` entry in `.github/actions/split-library/action.yml` (like `key-generator → php-key-generator`).
 
+Also add the **standalone repo name** to the `matrix.repo` list in `.github/workflows/cleanup-branch.yml` (the `on: delete` workflow that prunes deleted branches from standalone repos), otherwise deleted branches won't be cleaned up there.
+
 ### 6. Create the standalone repo + grant the publish App access
 1. Create the standalone repo `keboola/<repo>` (or run `bin/adopt-repo.sh`).
 2. **Add `<repo>` to the publish GitHub App's installation.** In the `keboola` org → Settings → GitHub Apps → the publish App (the one behind `SPLIT_APP_ID`) → *Configure* → **Repository access**: either keep "All repositories", or under "Only select repositories" **add `<repo>`**. If the App is not installed on `<repo>`, the publish step fails — `actions/create-github-app-token` mints the token with `repositories: <repo>` (scoped to that one repo) and cannot issue a token for a repo outside its installation.
@@ -84,6 +86,7 @@ Sanity-check detection picks it up: edit a file under `libs/<name>/`, then
 | `.github/workflows/lib-<name>.yml` | yes |
 | `ci.yml` — test job **and** `tests-result` `needs:` | yes (both) |
 | `.github/actions/split-library/action.yml` `case` | only if repo name ≠ dir |
+| `.github/workflows/cleanup-branch.yml` `matrix.repo` (standalone repo name) | yes |
 | repo `CLAUDE.md`/`README.md`, repo secrets/vars | if new env vars |
 | standalone repo + App install | yes (for publishing) |
 

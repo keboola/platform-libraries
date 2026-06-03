@@ -1,0 +1,60 @@
+name: Cleanup branch
+# When a branch is deleted in the monorepo, delete the same-named branch from every
+# standalone library repo. Publishing only ever pushes the build branch (never a full
+# mirror), so deletions are not propagated by publish and are handled here instead.
+on:
+  delete:
+
+permissions:
+  contents: read
+
+jobs:
+  delete-branch:
+    if: github.event.ref_type == 'branch'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        repo:
+          - api-bundle
+          - azure-api-client
+          - configuration-variables-resolver
+          - doctrine-retry-bundle
+          - git-service-php-api-client
+          - input-mapping
+          - k8s-client
+          - php-key-generator
+          - logging-bundle
+          - messenger-bundle
+          - output-mapping
+          - permission-checker
+          - php-storage-names-sanitizer
+          - php-test-utils
+          - query-service-api-php-client
+          - sandboxes-service-api-php-client
+          - service-client
+          - settle
+          - slicer
+          - staging-provider
+          - sync-actions-api-php-client
+          - vault-api-php-client
+    steps:
+      - name: Generate GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v3
+        with:
+          app-id: ${{ vars.SPLIT_APP_ID }}
+          private-key: ${{ secrets.SPLIT_APP_PRIVATE_KEY }}
+          owner: keboola
+          repositories: ${{ matrix.repo }}
+      - name: Delete branch from standalone repo
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          REPO: ${{ matrix.repo }}
+          BRANCH: ${{ github.event.ref }}
+        run: |
+          if gh api -X DELETE "repos/keboola/${REPO}/git/refs/heads/${BRANCH}" >/dev/null 2>&1; then
+            echo "Deleted ${BRANCH} from keboola/${REPO}"
+          else
+            echo "::notice::Branch ${BRANCH} not present in keboola/${REPO} (or protected) — skipped"
+          fi

@@ -52,14 +52,18 @@ runs:
         SPLIT_TOKEN: ${{ steps.app-token.outputs.token }}
       run: |
         TARGET_URL="https://x-access-token:${SPLIT_TOKEN}@github.com/keboola/${{ steps.target.outputs.repo }}.git"
-        # On a branch build push only that branch; on a tag build (GITHUB_REF_TYPE=tag) push tags only.
+        # Branch build -> push that branch; tag build -> push only that one (stripped) tag.
         PUSH_BRANCH=""
+        PUSH_TAG=""
         if [ "${GITHUB_REF_TYPE}" = "branch" ]; then
           PUSH_BRANCH="${GITHUB_REF_NAME}"
+        else
+          PUSH_TAG="${GITHUB_REF_NAME#${{ inputs.library }}/}"
         fi
         "${{ github.workspace }}/bin/split-repo.sh" \
           "${{ github.workspace }}" \
           "${TARGET_URL}" \
           "libs/${{ inputs.library }}" \
           "${{ inputs.library }}/" \
-          "${PUSH_BRANCH}"
+          "${PUSH_BRANCH}" \
+          "${PUSH_TAG}"

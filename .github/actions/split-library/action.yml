@@ -14,8 +14,11 @@ inputs:
   tag-prefix:
     description: Tag prefix to mirror and strip (e.g. key-generator/)
     required: true
-  token:
-    description: GitHub App installation token with push rights to the target repo
+  app-id:
+    description: GitHub App ID used to mint a scoped installation token
+    required: true
+  private-key:
+    description: GitHub App private key (PEM) used to mint a scoped installation token
     required: true
 
 runs:
@@ -27,10 +30,19 @@ runs:
         sudo apt-get update -q
         sudo apt-get install -y git-filter-repo
 
+    - name: Generate GitHub App token
+      id: app-token
+      uses: actions/create-github-app-token@v1
+      with:
+        app-id: ${{ inputs.app-id }}
+        private-key: ${{ inputs.private-key }}
+        owner: keboola
+        repositories: ${{ inputs.target-repo }}
+
     - name: Split and push
       shell: bash
       env:
-        SPLIT_TOKEN: ${{ inputs.token }}
+        SPLIT_TOKEN: ${{ steps.app-token.outputs.token }}
       run: |
         TARGET_URL="https://x-access-token:${SPLIT_TOKEN}@github.com/keboola/${{ inputs.target-repo }}.git"
         "${{ inputs.source-path }}/bin/split-repo.sh" \

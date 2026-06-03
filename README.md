@@ -87,7 +87,7 @@ CI runs on **GitHub Actions** (`.github/workflows/`).
 - On push to `main`, affected libraries are split/published to their standalone repos.
 - `release.yml` publishes a single library on a `refs/tags/<lib>/*` tag push.
 
-Publishing uses the `.github/actions/split-library` composite action (wraps `bin/split-repo.sh`) and the `LIBS_SPLIT_TOKEN` secret (a GitHub App installation token with push rights to all target repos). CI configuration is provisioned by a repo admin: non-sensitive values (Storage API URLs, `HOSTNAME_SUFFIX_GCP`, `OUTPUT_MAPPING__BIGQUERY_STORAGE_API_URL`, AWS access key IDs) are **repository variables** (`vars.*`); Storage API tokens, Terraform secret keys and `LIBS_SPLIT_TOKEN` are **repository secrets** (`secrets.*`). The full list is in `CLAUDE.md`.
+Publishing uses the `.github/actions/split-library` composite action (wraps `bin/split-repo.sh`), which mints a short-lived GitHub App installation token at runtime from `SPLIT_APP_ID` (variable) + `SPLIT_APP_PRIVATE_KEY` (secret), scoped to the single target repo. CI configuration is provisioned by a repo admin: non-sensitive values (Storage API URLs, `HOSTNAME_SUFFIX_GCP`, `OUTPUT_MAPPING__BIGQUERY_STORAGE_API_URL`, AWS access key IDs, `SPLIT_APP_ID`) are **repository variables** (`vars.*`); Storage API tokens, Terraform secret keys and `SPLIT_APP_PRIVATE_KEY` are **repository secrets** (`secrets.*`). The full list is in `CLAUDE.md`.
 
 To run the CI detection tool's own checks locally:
 

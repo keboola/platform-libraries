@@ -218,7 +218,8 @@ jobs:
           library-path: libs/api-bundle
           target-repo: api-bundle
           tag-prefix: api-bundle/
-          token: ${{ secrets.LIBS_SPLIT_TOKEN }}
+          app-id: ${{ vars.SPLIT_APP_ID }}
+          private-key: ${{ secrets.SPLIT_APP_PRIVATE_KEY }}
 
   publish-azure-api-client:
     needs: [detect-changes, tests-result]
@@ -234,7 +235,8 @@ jobs:
           library-path: libs/azure-api-client
           target-repo: azure-api-client
           tag-prefix: azure-api-client/
-          token: ${{ secrets.LIBS_SPLIT_TOKEN }}
+          app-id: ${{ vars.SPLIT_APP_ID }}
+          private-key: ${{ secrets.SPLIT_APP_PRIVATE_KEY }}
 
   publish-configuration-variables-resolver:
     needs: [detect-changes, tests-result]
@@ -250,7 +252,8 @@ jobs:
           library-path: libs/configuration-variables-resolver
           target-repo: configuration-variables-resolver
           tag-prefix: configuration-variables-resolver/
-          token: ${{ secrets.LIBS_SPLIT_TOKEN }}
+          app-id: ${{ vars.SPLIT_APP_ID }}
+          private-key: ${{ secrets.SPLIT_APP_PRIVATE_KEY }}
 
   publish-doctrine-retry-bundle:
     needs: [detect-changes, tests-result]
@@ -266,7 +269,8 @@ jobs:
           library-path: libs/doctrine-retry-bundle
           target-repo: doctrine-retry-bundle
           tag-prefix: doctrine-retry-bundle/
-          token: ${{ secrets.LIBS_SPLIT_TOKEN }}
+          app-id: ${{ vars.SPLIT_APP_ID }}
+          private-key: ${{ secrets.SPLIT_APP_PRIVATE_KEY }}
 
   publish-git-service-api-client:
     needs: [detect-changes, tests-result]
@@ -282,7 +286,8 @@ jobs:
           library-path: libs/git-service-api-client
           target-repo: git-service-php-api-client
           tag-prefix: git-service-api-client/
-          token: ${{ secrets.LIBS_SPLIT_TOKEN }}
+          app-id: ${{ vars.SPLIT_APP_ID }}
+          private-key: ${{ secrets.SPLIT_APP_PRIVATE_KEY }}
 
   publish-input-mapping:
     needs: [detect-changes, tests-result]
@@ -298,7 +303,8 @@ jobs:
           library-path: libs/input-mapping
           target-repo: input-mapping
           tag-prefix: input-mapping/
-          token: ${{ secrets.LIBS_SPLIT_TOKEN }}
+          app-id: ${{ vars.SPLIT_APP_ID }}
+          private-key: ${{ secrets.SPLIT_APP_PRIVATE_KEY }}
 
   publish-k8s-client:
     needs: [detect-changes, tests-result]
@@ -314,7 +320,8 @@ jobs:
           library-path: libs/k8s-client
           target-repo: k8s-client
           tag-prefix: k8s-client/
-          token: ${{ secrets.LIBS_SPLIT_TOKEN }}
+          app-id: ${{ vars.SPLIT_APP_ID }}
+          private-key: ${{ secrets.SPLIT_APP_PRIVATE_KEY }}
 
   publish-key-generator:
     needs: [detect-changes, tests-result]
@@ -330,7 +337,8 @@ jobs:
           library-path: libs/key-generator
           target-repo: php-key-generator
           tag-prefix: key-generator/
-          token: ${{ secrets.LIBS_SPLIT_TOKEN }}
+          app-id: ${{ vars.SPLIT_APP_ID }}
+          private-key: ${{ secrets.SPLIT_APP_PRIVATE_KEY }}
 
   publish-logging-bundle:
     needs: [detect-changes, tests-result]
@@ -346,7 +354,8 @@ jobs:
           library-path: libs/logging-bundle
           target-repo: logging-bundle
           tag-prefix: logging-bundle/
-          token: ${{ secrets.LIBS_SPLIT_TOKEN }}
+          app-id: ${{ vars.SPLIT_APP_ID }}
+          private-key: ${{ secrets.SPLIT_APP_PRIVATE_KEY }}
 
   publish-messenger-bundle:
     needs: [detect-changes, tests-result]
@@ -362,7 +371,8 @@ jobs:
           library-path: libs/messenger-bundle
           target-repo: messenger-bundle
           tag-prefix: messenger-bundle/
-          token: ${{ secrets.LIBS_SPLIT_TOKEN }}
+          app-id: ${{ vars.SPLIT_APP_ID }}
+          private-key: ${{ secrets.SPLIT_APP_PRIVATE_KEY }}
 
   publish-output-mapping:
     needs: [detect-changes, tests-result]
@@ -378,7 +388,8 @@ jobs:
           library-path: libs/output-mapping
           target-repo: output-mapping
           tag-prefix: output-mapping/
-          token: ${{ secrets.LIBS_SPLIT_TOKEN }}
+          app-id: ${{ vars.SPLIT_APP_ID }}
+          private-key: ${{ secrets.SPLIT_APP_PRIVATE_KEY }}
 
   publish-permission-checker:
     needs: [detect-changes, tests-result]
@@ -394,7 +405,8 @@ jobs:
           library-path: libs/permission-checker
           target-repo: permission-checker
           tag-prefix: permission-checker/
-          token: ${{ secrets.LIBS_SPLIT_TOKEN }}
+          app-id: ${{ vars.SPLIT_APP_ID }}
+          private-key: ${{ secrets.SPLIT_APP_PRIVATE_KEY }}
 
   publish-php-storage-names-sanitizer:
     needs: [detect-changes, tests-result]
@@ -410,7 +422,8 @@ jobs:
           library-path: libs/php-storage-names-sanitizer
           target-repo: php-storage-names-sanitizer
           tag-prefix: php-storage-names-sanitizer/
-          token: ${{ secrets.LIBS_SPLIT_TOKEN }}
+          app-id: ${{ vars.SPLIT_APP_ID }}
+          private-key: ${{ secrets.SPLIT_APP_PRIVATE_KEY }}
 
   publish-php-test-utils:
     needs: [detect-changes, tests-result]
@@ -426,7 +439,8 @@ jobs:
           library-path: libs/php-test-utils
           target-repo: php-test-utils
           tag-prefix: php-test-utils/
-          token: ${{ secrets.LIBS_SPLIT_TOKEN }}
+          app-id: ${{ vars.SPLIT_APP_ID }}
+          private-key: ${{ secrets.SPLIT_APP_PRIVATE_KEY }}
 
   publish-query-service-api-client:
     needs: [detect-changes, tests-result]
@@ -442,7 +456,8 @@ jobs:
           library-path: libs/query-service-api-client
           target-repo: query-service-api-php-client
           tag-prefix: query-service-api-client/
-          token: ${{ secrets.LIBS_SPLIT_TOKEN }}
+          app-id: ${{ vars.SPLIT_APP_ID }}
+          private-key: ${{ secrets.SPLIT_APP_PRIVATE_KEY }}
 
   publish-sandboxes-service-api-client:
     needs: [detect-changes, tests-result]
@@ -458,7 +473,8 @@ jobs:
           library-path: libs/sandboxes-service-api-client
           target-repo: sandboxes-service-api-php-client
           tag-prefix: sandboxes-service-api-client/
-          token: ${{ secrets.LIBS_SPLIT_TOKEN }}
+          app-id: ${{ vars.SPLIT_APP_ID }}
+          private-key: ${{ secrets.SPLIT_APP_PRIVATE_KEY }}
 
   publish-service-client:
     needs: [detect-changes, tests-result]
@@ -474,7 +490,8 @@ jobs:
           library-path: libs/service-client
           target-repo: service-client
           tag-prefix: service-client/
-          token: ${{ secrets.LIBS_SPLIT_TOKEN }}
+          app-id: ${{ vars.SPLIT_APP_ID }}
+          private-key: ${{ secrets.SPLIT_APP_PRIVATE_KEY }}
 
   publish-settle:
     needs: [detect-changes, tests-result]
@@ -490,7 +507,8 @@ jobs:
           library-path: libs/settle
           target-repo: settle
           tag-prefix: settle/
-          token: ${{ secrets.LIBS_SPLIT_TOKEN }}
+          app-id: ${{ vars.SPLIT_APP_ID }}
+          private-key: ${{ secrets.SPLIT_APP_PRIVATE_KEY }}
 
   publish-slicer:
     needs: [detect-changes, tests-result]
@@ -506,7 +524,8 @@ jobs:
           library-path: libs/slicer
           target-repo: slicer
           tag-prefix: slicer/
-          token: ${{ secrets.LIBS_SPLIT_TOKEN }}
+          app-id: ${{ vars.SPLIT_APP_ID }}
+          private-key: ${{ secrets.SPLIT_APP_PRIVATE_KEY }}
 
   publish-staging-provider:
     needs: [detect-changes, tests-result]
@@ -522,7 +541,8 @@ jobs:
           library-path: libs/staging-provider
           target-repo: staging-provider
           tag-prefix: staging-provider/
-          token: ${{ secrets.LIBS_SPLIT_TOKEN }}
+          app-id: ${{ vars.SPLIT_APP_ID }}
+          private-key: ${{ secrets.SPLIT_APP_PRIVATE_KEY }}
 
   publish-sync-actions-api-php-client:
     needs: [detect-changes, tests-result]
@@ -538,7 +558,8 @@ jobs:
           library-path: libs/sync-actions-api-php-client
           target-repo: sync-actions-api-php-client
           tag-prefix: sync-actions-api-php-client/
-          token: ${{ secrets.LIBS_SPLIT_TOKEN }}
+          app-id: ${{ vars.SPLIT_APP_ID }}
+          private-key: ${{ secrets.SPLIT_APP_PRIVATE_KEY }}
 
   publish-vault-api-client:
     needs: [detect-changes, tests-result]
@@ -554,5 +575,6 @@ jobs:
           library-path: libs/vault-api-client
           target-repo: vault-api-php-client
           tag-prefix: vault-api-client/
-          token: ${{ secrets.LIBS_SPLIT_TOKEN }}
+          app-id: ${{ vars.SPLIT_APP_ID }}
+          private-key: ${{ secrets.SPLIT_APP_PRIVATE_KEY }}
 

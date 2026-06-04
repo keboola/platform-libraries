@@ -6,7 +6,7 @@ namespace Keboola\InputMapping\Table\Strategy;
 
 use Keboola\InputMapping\Table\Options\RewrittenInputTableOptions;
 
-final class WorkspaceLoadQueue
+final class WorkspaceLoadQueue implements TableLoadQueueInterface
 {
     /**
      * @param WorkspaceLoadJob[] $jobs
@@ -14,6 +14,14 @@ final class WorkspaceLoadQueue
     public function __construct(
         public readonly array $jobs,
     ) {
+    }
+
+    public function getJobIds(): array
+    {
+        return array_map(
+            fn(WorkspaceLoadJob $job) => $job->jobId,
+            $this->jobs,
+        );
     }
 
     /**

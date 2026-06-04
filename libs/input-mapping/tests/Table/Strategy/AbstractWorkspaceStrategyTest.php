@@ -723,6 +723,8 @@ class AbstractWorkspaceStrategyTest extends TestCase
 
         self::assertInstanceOf(WorkspaceLoadQueue::class, $result);
         self::assertEmpty($result->jobs);
+        self::assertSame(TestWorkspaceStrategy::class, $result->getStrategyClass());
+        self::assertSame('destination', $result->getDestination());
     }
 
     public function testPrepareAndExecuteTableLoadsWithCloneAndCopy(): void
@@ -814,6 +816,10 @@ class AbstractWorkspaceStrategyTest extends TestCase
         // Verify single job with both tables
         $job = $result->jobs[0];
         self::assertSame([$cloneTable, $copyTable], $job->tables);
+
+        // Queue carries the creating strategy's identity end-to-end
+        self::assertSame(TestWorkspaceStrategy::class, $result->getStrategyClass());
+        self::assertSame('destination', $result->getDestination());
     }
 
     public function testPrepareAndExecuteTableLoadsWithCleanWorkspace(): void
@@ -937,7 +943,7 @@ class AbstractWorkspaceStrategyTest extends TestCase
 
             $queue = new WorkspaceLoadQueue([
                 new WorkspaceLoadJob('100', [$table1, $table2]),
-            ]);
+            ], TestWorkspaceStrategy::class, 'destination');
 
             $result = $strategy->waitForTableLoadCompletion($queue);
 

@@ -34,7 +34,7 @@ class AbstractFileStrategyTest extends TestCase
         ) extends AbstractFileStrategy {
             public function prepareAndExecuteTableLoads(array $tables, bool $preserve): TableLoadQueueInterface
             {
-                return new TableExportQueue([]);
+                return new TableExportQueue([], static::class, $this->destination);
             }
 
             protected function materializeTableLoads(TableLoadQueueInterface $queue, array $jobResults): void

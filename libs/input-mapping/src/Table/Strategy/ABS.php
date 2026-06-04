@@ -24,7 +24,7 @@ class ABS extends AbstractFileStrategy
             );
             $tablesByJobId[$jobId] = $table;
         }
-        return new TableExportQueue($tablesByJobId);
+        return new TableExportQueue($tablesByJobId, static::class, $this->destination);
     }
 
     protected function materializeTableLoads(TableLoadQueueInterface $queue, array $jobResults): void

@@ -132,7 +132,7 @@ abstract class AbstractWorkspaceStrategy extends AbstractStrategy
 
         // If no tables to load and preserve mode, return empty queue
         if (empty($allInputs) && $plan->preserve) {
-            return new WorkspaceLoadQueue([]);
+            return new WorkspaceLoadQueue([], static::class, $this->destination);
         }
 
         // Log operation summary
@@ -156,7 +156,7 @@ abstract class AbstractWorkspaceStrategy extends AbstractStrategy
         // Return single job with all tables
         return new WorkspaceLoadQueue([
             new WorkspaceLoadJob((string) $jobId, $allTables),
-        ]);
+        ], static::class, $this->destination);
     }
 
     /**

@@ -6,12 +6,15 @@ namespace Keboola\InputMapping\Tests;
 
 use Generator;
 use Keboola\Csv\CsvFile;
+use Keboola\InputMapping\Exception\InputOperationException;
 use Keboola\InputMapping\Reader;
 use Keboola\InputMapping\Staging\StrategyFactory;
 use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Options\InputTableOptionsList;
 use Keboola\InputMapping\Table\Options\ReaderOptions;
+use Keboola\InputMapping\Table\Result;
 use Keboola\InputMapping\Table\Strategy\AbstractWorkspaceStrategy;
+use Keboola\InputMapping\Table\Strategy\Snowflake;
 use Keboola\InputMapping\Table\Strategy\TableExportQueue;
 use Keboola\InputMapping\Table\Strategy\WorkspaceLoadQueue;
 use Keboola\InputMapping\Tests\Needs\NeedsDevBranch;
@@ -221,7 +224,7 @@ class ReaderTest extends AbstractTestCase
         $clientWrapper->method('getClientOptionsReadOnly')
             ->willReturn($this->createMock(ClientOptions::class));
 
-        $expectedQueue = new WorkspaceLoadQueue([]);
+        $expectedQueue = new WorkspaceLoadQueue([], AbstractWorkspaceStrategy::class, 'destination');
 
         $workspaceStrategy = $this->createMock(AbstractWorkspaceStrategy::class);
         $workspaceStrategy
@@ -258,5 +261,64 @@ class ReaderTest extends AbstractTestCase
     {
         yield 'with preserve enabled' => [true];
         yield 'with preserve disabled' => [false];
+    }
+
+    public function testWaitForTableLoadCompletionDelegatesToMatchingStrategy(): void
+    {
+        $expectedResult = new Result();
+        $queue = new WorkspaceLoadQueue([], AbstractWorkspaceStrategy::class, 'destination');
+
+        $workspaceStrategy = $this->createMock(AbstractWorkspaceStrategy::class);
+        $workspaceStrategy
+            ->expects(self::once())
+            ->method('waitForTableLoadCompletion')
+            ->with($queue)
+            ->willReturn($expectedResult);
+
+        $strategyFactory = $this->createMock(StrategyFactory::class);
+        $strategyFactory
+            ->expects(self::once())
+            ->method('getTableInputStrategy')
+            ->willReturn($workspaceStrategy);
+
+        $reader = new Reader(
+            $this->createMock(ClientWrapper::class),
+            $this->testLogger,
+            $strategyFactory,
+        );
+
+        self::assertSame($expectedResult, $reader->waitForTableLoadCompletion($queue));
+    }
+
+    public function testWaitForTableLoadCompletionThrowsOnStrategyMismatch(): void
+    {
+        // Queue was stamped by Snowflake, but the current staging provides a different strategy
+        $queue = new WorkspaceLoadQueue([], Snowflake::class, 'destination');
+
+        $currentStrategy = $this->createMock(AbstractWorkspaceStrategy::class);
+        $currentStrategy
+            ->expects(self::never())
+            ->method('waitForTableLoadCompletion');
+
+        $strategyFactory = $this->createMock(StrategyFactory::class);
+        $strategyFactory
+            ->expects(self::once())
+            ->method('getTableInputStrategy')
+            ->willReturn($currentStrategy);
+
+        $reader = new Reader(
+            $this->createMock(ClientWrapper::class),
+            $this->testLogger,
+            $strategyFactory,
+        );
+
+        $this->expectException(InputOperationException::class);
+        $this->expectExceptionMessage(sprintf(
+            'Cannot complete table loads: the queue was created by "%s" but the current staging provides "%s".',
+            Snowflake::class,
+            $currentStrategy::class,
+        ));
+
+        $reader->waitForTableLoadCompletion($queue);
     }
 }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\InputMapping;
 
+use Keboola\InputMapping\Exception\InputOperationException;
 use Keboola\InputMapping\File\Options\InputFileOptions;
 use Keboola\InputMapping\File\Options\RewrittenInputFileOptions;
 use Keboola\InputMapping\Helper\InputBucketValidator;
@@ -105,17 +106,15 @@ class Reader
         string $destination,
         ReaderOptions $readerOptions,
     ): Result {
-        $tablesState = $this->rewriteTableStatesDestinations($tablesState);
-
-        $tablesDefinition = $this->createTableResolver()->resolve($tablesDefinition);
-        $strategy = $this->strategyFactory->getTableInputStrategy($destination, $tablesState);
-        $tablesDefinition = $this->validateAndRewriteDevBuckets($tablesDefinition, $readerOptions);
-
-        $queue = $strategy->prepareAndExecuteTableLoads(
-            $tablesDefinition->getTables(),
-            $readerOptions->preserveWorkspace(),
+        // Behave exactly like an outside caller would: start the loads, then complete them
+        // through the queue's stamped strategy identity.
+        $queue = $this->prepareAndExecuteTableLoads(
+            $tablesDefinition,
+            $tablesState,
+            $destination,
+            $readerOptions,
         );
-        return $strategy->waitForTableLoadCompletion($queue);
+        return $this->waitForTableLoadCompletion($queue);
     }
 
     /**
@@ -143,6 +142,26 @@ class Reader
             $tablesDefinition->getTables(),
             $readerOptions->preserveWorkspace(),
         );
+    }
+
+    /**
+     * Finish phase for a queue returned by prepareAndExecuteTableLoads():
+     * awaits the jobs, materializes data/manifests and builds the Result.
+     */
+    public function waitForTableLoadCompletion(TableLoadQueueInterface $queue): Result
+    {
+        $strategy = $this->strategyFactory->getTableInputStrategy(
+            $queue->getDestination(),
+            new InputTableStateList([]),
+        );
+        if (!is_a($strategy, $queue->getStrategyClass())) {
+            throw new InputOperationException(sprintf(
+                'Cannot complete table loads: the queue was created by "%s" but the current staging provides "%s".',
+                $queue->getStrategyClass(),
+                get_class($strategy),
+            ));
+        }
+        return $strategy->waitForTableLoadCompletion($queue);
     }
 
     /**

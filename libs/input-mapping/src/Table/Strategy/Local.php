@@ -53,7 +53,7 @@ class Local extends AbstractFileStrategy
             $exportJobs[$jobId] = $queuedJobs[$jobId];
         }
 
-        return new TableExportQueue($tablesByJobId, $exportJobs);
+        return new TableExportQueue($tablesByJobId, static::class, $this->destination, $exportJobs);
     }
 
     protected function materializeTableLoads(TableLoadQueueInterface $queue, array $jobResults): void

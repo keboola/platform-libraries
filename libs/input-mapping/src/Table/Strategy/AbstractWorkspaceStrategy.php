@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Keboola\InputMapping\Table\Strategy;
 
 use InvalidArgumentException;
+use Keboola\InputMapping\Exception\InputOperationException;
 use Keboola\InputMapping\Helper\LoadTypeDecider;
 use Keboola\InputMapping\Helper\ManifestCreator;
 use Keboola\InputMapping\Helper\PathHelper;
@@ -42,89 +43,15 @@ abstract class AbstractWorkspaceStrategy extends AbstractStrategy
 
     abstract public function getWorkspaceType(): string;
 
-    public function downloadTable(RewrittenInputTableOptions $table): array
+    protected function materializeTableLoads(TableLoadQueueInterface $queue, array $jobResults): void
     {
-        $loadOptions = $table->getStorageApiLoadOptions($this->tablesState);
-        $loadType = $this->decideTableLoadMethod($table, $loadOptions);
-
-        if ($loadType === WorkspaceLoadType::CLONE) {
-            return [
-                'table' => $table,
-                'type' => $loadType->value,
-            ];
+        if (!$queue instanceof WorkspaceLoadQueue) {
+            throw new InputOperationException('Workspace strategy requires WorkspaceLoadQueue.');
         }
 
-        return [
-            'table' => [$table, $loadOptions],
-            'type' => $loadType->value,
-        ];
-    }
-
-    public function handleExports(array $exports, bool $preserve): array
-    {
-        $cloneInputs = [];
-        $copyInputs = [];
-        $workspaceTables = [];
-
-        foreach ($exports as $export) {
-            if ($export['type'] === WorkspaceLoadType::CLONE->value) {
-                /** @var RewrittenInputTableOptions $table */
-                $table = $export['table'];
-                $cloneInputs[] = $this->buildCloneInputLegacy($table);
-                $workspaceTables[] = $table;
-            }
-            if (in_array($export['type'], [WorkspaceLoadType::COPY->value, WorkspaceLoadType::VIEW->value], true)) {
-                [$table, $exportOptions] = $export['table'];
-                $loadType = WorkspaceLoadType::from($export['type']);
-                $copyInputs[] = $this->buildCopyInputLegacy($table, $exportOptions, $loadType);
-                $workspaceTables[] = $table;
-            }
-        }
-
-        $cloneJobResult = [];
-        $copyJobResult = [];
-        $hasBeenCleaned = false;
-
-        $workspaces = $this->createWorkspaces();
-
-        if ($cloneInputs) {
-            $this->logger->info(
-                sprintf('Cloning %s tables to workspace.', count($cloneInputs)),
-            );
-            // here we are waiting for the jobs to finish. handleAsyncTask = true
-            // We need to process clone and copy jobs separately because there is no lock on the table and there
-            // is a race between the clone and copy jobs which can end in an error that the table already exists.
-            // Full description of the issue here: https://keboola.atlassian.net/wiki/spaces/KB/pages/2383511594/Input+mapping+to+workspace+Consolidation#Context
-            $jobId = $workspaces->queueWorkspaceCloneInto(
-                (int) $this->dataStorage->getWorkspaceId(),
-                [
-                    'input' => $cloneInputs,
-                    'preserve' => $preserve ? 1 : 0,
-                ],
-            );
-            $cloneJobResult = $this->clientWrapper->getBranchClient()->handleAsyncTasks([$jobId]);
-            if (!$preserve) {
-                $hasBeenCleaned = true;
-            }
-        }
-
-        if ($copyInputs) {
-            $this->logger->info(
-                sprintf('Copying %s tables to workspace.', count($copyInputs)),
-            );
-            $jobId = $workspaces->queueWorkspaceLoadData(
-                (int) $this->dataStorage->getWorkspaceId(),
-                [
-                    'input' => $copyInputs,
-                    'preserve' => !$hasBeenCleaned && !$preserve ? 0 : 1,
-                ],
-            );
-            $copyJobResult = $this->clientWrapper->getBranchClient()->handleAsyncTasks([$jobId]);
-        }
-        $jobResults = array_merge($cloneJobResult, $copyJobResult);
         $this->logger->info('Processed ' . count($jobResults) . ' workspace exports.');
 
-        foreach ($workspaceTables as $table) {
+        foreach ($queue->getAllTables() as $table) {
             $manifestPath = PathHelper::getManifestPath(
                 $this->metadataStorage,
                 $this->destination,
@@ -137,7 +64,6 @@ abstract class AbstractWorkspaceStrategy extends AbstractStrategy
                 $this->format,
             );
         }
-        return $jobResults;
     }
 
     /**
@@ -255,34 +181,6 @@ abstract class AbstractWorkspaceStrategy extends AbstractStrategy
     }
 
     /**
-     * @deprecated Used only by handleExports to preserve legacy behavior
-     */
-    private function buildCopyInputLegacy(
-        RewrittenInputTableOptions $table,
-        array $loadOptions,
-        WorkspaceLoadType $loadType,
-    ): array {
-        // Add sourceBranchId to loadOptions first (preserving handleExports behavior)
-        if ($table->getSourceBranchId() !== null) {
-            // practically, sourceBranchId should never be null, but i'm not able to make that statically safe
-            // and passing null causes application error in connection, so here is a useless condition.
-            $loadOptions['sourceBranchId'] = $table->getSourceBranchId();
-        }
-
-        $copyInput = array_merge([
-            'source' => $table->getSource(),
-            'destination' => $table->getDestination(),
-        ], $loadOptions);
-
-        // Views point to Table Storage, copies transfer data to Workspace
-        if ($loadType === WorkspaceLoadType::VIEW || $table->isUseView()) {
-            $copyInput['useView'] = true;
-        }
-
-        return $copyInput;
-    }
-
-    /**
      * Build copy/view input for new API (executeTableLoadsToWorkspace)
      * Uses loadType parameter instead of useView boolean
      */
@@ -307,20 +205,6 @@ abstract class AbstractWorkspaceStrategy extends AbstractStrategy
         $copyInput['loadType'] = $finalLoadType->value;
 
         return $copyInput;
-    }
-
-    /**
-     * @deprecated Used only by handleExports to preserve legacy behavior
-     */
-    private function buildCloneInputLegacy(RewrittenInputTableOptions $table): array
-    {
-        return [
-            'source' => $table->getSource(),
-            'destination' => $table->getDestination(),
-            'sourceBranchId' => $table->getSourceBranchId(),
-            'overwrite' => $table->getOverwrite(),
-            'dropTimestampColumn' => !$table->keepInternalTimestampColumn(),
-        ];
     }
 
     /**

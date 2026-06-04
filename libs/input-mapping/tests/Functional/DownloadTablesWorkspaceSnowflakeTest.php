@@ -61,10 +61,10 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
             new ReaderOptions(true),
         );
 
-        // there were 2 jobs, clone and copy, so should have 2 metrics entries
+        // there is now a single unified workspaceLoad job, so should have 1 metrics entry
         $metrics = $result->getMetrics()?->getTableMetrics();
         self::assertNotNull($metrics);
-        self::assertCount(2, $metrics);
+        self::assertCount(1, $metrics);
 
         $adapter = new Adapter();
 
@@ -116,8 +116,8 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
         );
         self::assertTrue($this->testHandler->hasInfoThatContains('Cloning 2 tables to workspace.'));
         self::assertTrue($this->testHandler->hasInfoThatContains('Copying 1 tables to workspace.'));
-        self::assertTrue($this->testHandler->hasInfoThatContains('Processed 2 workspace exports.'));
-        // test that the clone jobs are merged into a single one
+        self::assertTrue($this->testHandler->hasInfoThatContains('Processed 1 workspace exports.'));
+        // test that clones and copies are merged into a single workspaceLoad job
         sleep(2);
         $jobs = $clientWrapper->getTableAndFileStorageClient()->listJobs(['limit' => 200]);
         $params = null;
@@ -125,15 +125,20 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
             if ($runId !== $job['runId']) {
                 continue;
             }
-            if ($job['operationName'] === 'workspaceLoadClone') {
+            if ($job['operationName'] === 'workspaceLoad') {
                 $params = $job['operationParams'];
                 break;
             }
         }
         self::assertNotEmpty($params);
-        self::assertEquals(2, count($params['input']));
+        // all 3 inputs in a single job: clones first (test1, test3), then the copy (test2)
+        self::assertEquals(3, count($params['input']));
+        self::assertEquals('CLONE', $params['input'][0]['loadType']);
         self::assertEquals('test1', $params['input'][0]['destination']);
+        self::assertEquals('CLONE', $params['input'][1]['loadType']);
         self::assertEquals('test3', $params['input'][1]['destination']);
+        self::assertEquals('COPY', $params['input'][2]['loadType']);
+        self::assertEquals('test2', $params['input'][2]['destination']);
     }
 
     #[NeedsTestTables(2)]
@@ -238,7 +243,7 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
         );
         self::assertTrue($this->testHandler->hasInfoThatContains('Copying 1 tables to workspace.'));
         self::assertTrue($this->testHandler->hasInfoThatContains('Cloning 1 tables to workspace.'));
-        self::assertTrue($this->testHandler->hasInfoThatContains('Processed 2 workspace exports.'));
+        self::assertTrue($this->testHandler->hasInfoThatContains('Processed 1 workspace exports.'));
     }
 
     #[NeedsTestTables, NeedsEmptyOutputBucket]
@@ -660,10 +665,10 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
             new ReaderOptions(true),
         );
 
-        // there were 2 jobs, clone and copy, so should have 2 metrics entries
+        // there is now a single unified workspaceLoad job, so should have 1 metrics entry
         $metrics = $result->getMetrics()?->getTableMetrics();
         self::assertNotNull($metrics);
-        self::assertCount(2, $metrics);
+        self::assertCount(1, $metrics);
 
         $adapter = new Adapter();
 
@@ -727,6 +732,6 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
 
         self::assertTrue($this->testHandler->hasInfoThatContains('Cloning 2 tables to workspace.'));
         self::assertTrue($this->testHandler->hasInfoThatContains('Copying 2 tables to workspace.'));
-        self::assertTrue($this->testHandler->hasInfoThatContains('Processed 2 workspace exports.'));
+        self::assertTrue($this->testHandler->hasInfoThatContains('Processed 1 workspace exports.'));
     }
 }

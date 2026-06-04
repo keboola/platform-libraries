@@ -851,67 +851,94 @@ class AbstractWorkspaceStrategyTest extends TestCase
 
     public function testWaitForTableLoadCompletionWritesManifestsAndBuildsResult(): void
     {
-        $jobResults = [
-            [
-                'id' => 100,
-                'status' => 'success',
-                'tableId' => 'in.c-test-bucket.table1',
-                'metrics' => ['outBytes' => 1024, 'outBytesUncompressed' => 2048],
-            ],
-        ];
+        $tmpDir = sys_get_temp_dir() . '/' . uniqid('im-test-', true);
+        mkdir($tmpDir, 0777, true);
 
-        $branchClient = $this->createMock(BranchAwareClient::class);
-        $branchClient->expects($this->once())
-            ->method('handleAsyncTasks')
-            ->with([100])
-            ->willReturn($jobResults);
+        try {
+            $jobResults = [
+                [
+                    'id' => 100,
+                    'status' => 'success',
+                    'tableId' => 'in.c-test-bucket.table1',
+                    'metrics' => ['outBytes' => 1024, 'outBytesUncompressed' => 2048],
+                ],
+            ];
 
-        $clientWrapper = $this->createMock(ClientWrapper::class);
-        $clientWrapper->expects($this->once())
-            ->method('getBranchClient')
-            ->willReturn($branchClient);
+            $branchClient = $this->createMock(BranchAwareClient::class);
+            $branchClient->expects($this->once())
+                ->method('handleAsyncTasks')
+                // the queue's job id ('100') is what waitForTableLoadCompletion passes to handleAsyncTasks
+                ->with(['100'])
+                ->willReturn($jobResults);
 
-        $metadataStorage = $this->createMock(FileStagingInterface::class);
-        $metadataStorage->expects($this->exactly(2))
-            ->method('getPath')
-            ->willReturn('/tmp/data');
+            $clientWrapper = $this->createMock(ClientWrapper::class);
+            $clientWrapper->expects($this->once())
+                ->method('getBranchClient')
+                ->willReturn($branchClient);
 
-        $strategy = $this->createTestStrategyWithDataStorage(
-            $clientWrapper,
-            'snowflake',
-            $this->createMock(WorkspaceStagingInterface::class),
-            $metadataStorage,
-        );
+            $metadataStorage = $this->createMock(FileStagingInterface::class);
+            $metadataStorage->expects($this->exactly(2))
+                ->method('getPath')
+                ->willReturn($tmpDir);
 
-        $table1 = new RewrittenInputTableOptions(
-            ['source' => 'in.c-test-bucket.table1', 'destination' => 'table1'],
-            'in.c-test-bucket.table1',
-            123,
-            $this->createTableInfo('in.c-test-bucket.table1', 'table1', ['col1']),
-        );
-        $table2 = new RewrittenInputTableOptions(
-            ['source' => 'in.c-test-bucket.table2', 'destination' => 'table2'],
-            'in.c-test-bucket.table2',
-            124,
-            $this->createTableInfo('in.c-test-bucket.table2', 'table2', ['col2']),
-        );
+            $strategy = $this->createTestStrategyWithDataStorage(
+                $clientWrapper,
+                'snowflake',
+                $this->createMock(WorkspaceStagingInterface::class),
+                $metadataStorage,
+            );
 
-        $queue = new WorkspaceLoadQueue([
-            new WorkspaceLoadJob('100', [$table1, $table2]),
-        ]);
+            $table1 = new RewrittenInputTableOptions(
+                ['source' => 'in.c-test-bucket.table1', 'destination' => 'table1'],
+                'in.c-test-bucket.table1',
+                123,
+                $this->createTableInfo('in.c-test-bucket.table1', 'table1', ['col1']),
+            );
+            $table2 = new RewrittenInputTableOptions(
+                ['source' => 'in.c-test-bucket.table2', 'destination' => 'table2'],
+                'in.c-test-bucket.table2',
+                124,
+                $this->createTableInfo('in.c-test-bucket.table2', 'table2', ['col2']),
+            );
 
-        $result = $strategy->waitForTableLoadCompletion($queue);
+            $queue = new WorkspaceLoadQueue([
+                new WorkspaceLoadJob('100', [$table1, $table2]),
+            ]);
 
-        self::assertCount(2, $result->getTables());
+            $result = $strategy->waitForTableLoadCompletion($queue);
 
-        $metrics = $result->getMetrics();
-        self::assertNotNull($metrics);
-        self::assertCount(1, $metrics->getTableMetrics());
-        self::assertSame('in.c-test-bucket.table1', $metrics->getTableMetrics()[0]->getTableId());
+            self::assertCount(2, $result->getTables());
 
-        self::assertTrue($this->testHandler->hasInfoThatContains('Processed 1 workspace exports.'));
-        self::assertTrue($this->testHandler->hasInfoThatContains('Fetched table in.c-test-bucket.table1.'));
-        self::assertTrue($this->testHandler->hasInfoThatContains('Fetched table in.c-test-bucket.table2.'));
-        self::assertTrue($this->testHandler->hasInfoThatContains('All tables were fetched.'));
+            $metrics = $result->getMetrics();
+            self::assertNotNull($metrics);
+            self::assertCount(1, $metrics->getTableMetrics());
+            self::assertSame('in.c-test-bucket.table1', $metrics->getTableMetrics()[0]->getTableId());
+
+            // state list carries lastImportDate from the loaded tables (used for incremental loads)
+            $stateList = $result->getInputTableStateList();
+            self::assertSame(
+                '2022-06-03T03:31:43+0200',
+                $stateList->getTable('in.c-test-bucket.table1')->getLastImportDate(),
+            );
+
+            // manifest is actually written to disk, not just triggered
+            $manifest = json_decode(
+                (string) file_get_contents($tmpDir . '/destination/table1.manifest'),
+                true,
+                flags: JSON_THROW_ON_ERROR,
+            );
+            self::assertIsArray($manifest);
+            self::assertSame('in.c-test-bucket.table1', $manifest['id']);
+            self::assertSame('2022-06-03T03:31:43+0200', $manifest['last_import_date']);
+
+            self::assertTrue($this->testHandler->hasInfoThatContains('Processed 1 workspace exports.'));
+            self::assertTrue($this->testHandler->hasInfoThatContains('Fetched table in.c-test-bucket.table1.'));
+            self::assertTrue($this->testHandler->hasInfoThatContains('Fetched table in.c-test-bucket.table2.'));
+            self::assertTrue($this->testHandler->hasInfoThatContains('All tables were fetched.'));
+        } finally {
+            array_map('unlink', glob($tmpDir . '/destination/*.manifest') ?: []);
+            @rmdir($tmpDir . '/destination');
+            rmdir($tmpDir);
+        }
     }
 }

@@ -59,31 +59,6 @@ class ReaderTest extends AbstractTestCase
         );
     }
 
-    public function testParentId(): void
-    {
-        $clientWrapper = $this->initClient();
-        $clientWrapper->getTableAndFileStorageClient()->setRunId('123456789');
-        self::assertEquals(
-            '123456789',
-            Reader::getParentRunId((string) $clientWrapper->getTableAndFileStorageClient()->getRunId()),
-        );
-        $clientWrapper->getTableAndFileStorageClient()->setRunId('123456789.98765432');
-        self::assertEquals(
-            '123456789',
-            Reader::getParentRunId((string) $clientWrapper->getTableAndFileStorageClient()->getRunId()),
-        );
-        $clientWrapper->getTableAndFileStorageClient()->setRunId('123456789.98765432.4563456');
-        self::assertEquals(
-            '123456789.98765432',
-            Reader::getParentRunId((string) $clientWrapper->getTableAndFileStorageClient()->getRunId()),
-        );
-        $clientWrapper->getTableAndFileStorageClient()->setRunId(null);
-        self::assertEquals(
-            '',
-            Reader::getParentRunId((string) $clientWrapper->getTableAndFileStorageClient()->getRunId()),
-        );
-    }
-
     public function testReadInvalidConfiguration(): void
     {
         // empty configuration, ignored

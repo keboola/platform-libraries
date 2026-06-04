@@ -164,28 +164,6 @@ class Reader
         return $strategy->waitForTableLoadCompletion($queue);
     }
 
-    /**
-     * Get parent runId to the current runId (defined by SAPI client)
-     * @param string $runId
-     * @return string Parent part of hierarchical Id.
-     */
-    public static function getParentRunId(string $runId): string
-    {
-        if (!empty($runId)) {
-            $pos = strrpos($runId, '.');
-            if ($pos === false) {
-                // there is no parent
-                $parentRunId = $runId;
-            } else {
-                $parentRunId = substr($runId, 0, $pos);
-            }
-        } else {
-            // there is no runId
-            $parentRunId = '';
-        }
-        return $parentRunId;
-    }
-
     public static function getFiles(
         array $fileConfiguration,
         ClientWrapper $clientWrapper,

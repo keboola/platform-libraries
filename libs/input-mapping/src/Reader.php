@@ -111,7 +111,11 @@ class Reader
         $strategy = $this->strategyFactory->getTableInputStrategy($destination, $tablesState);
         $tablesDefinition = $this->validateAndRewriteDevBuckets($tablesDefinition, $readerOptions);
 
-        return $strategy->downloadTables($tablesDefinition->getTables(), $readerOptions->preserveWorkspace());
+        $queue = $strategy->prepareAndExecuteTableLoads(
+            $tablesDefinition->getTables(),
+            $readerOptions->preserveWorkspace(),
+        );
+        return $strategy->waitForTableLoadCompletion($queue);
     }
 
     /**

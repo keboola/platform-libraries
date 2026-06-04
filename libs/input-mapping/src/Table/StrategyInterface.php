@@ -26,13 +26,6 @@ interface StrategyInterface
     );
 
     /**
-     * Convenience composition of prepareAndExecuteTableLoads() + waitForTableLoadCompletion()
-     *
-     * @param RewrittenInputTableOptions[] $tables
-     */
-    public function downloadTables(array $tables, bool $preserve): Result;
-
-    /**
      * Phase 1 (start): plan the loads and submit the Storage jobs, return a handle for later completion
      *
      * @param RewrittenInputTableOptions[] $tables

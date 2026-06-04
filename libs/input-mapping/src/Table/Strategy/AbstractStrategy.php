@@ -17,12 +17,6 @@ abstract class AbstractStrategy implements StrategyInterface
     protected readonly ClientWrapper $clientWrapper; // @phpstan-ignore-line initialized in child classes
     protected readonly LoggerInterface $logger; // @phpstan-ignore-line initialized in child classes
 
-    public function downloadTables(array $tables, bool $preserve): Result
-    {
-        $queue = $this->prepareAndExecuteTableLoads($tables, $preserve);
-        return $this->waitForTableLoadCompletion($queue);
-    }
-
     public function waitForTableLoadCompletion(TableLoadQueueInterface $queue): Result
     {
         $jobIds = $queue->getJobIds();

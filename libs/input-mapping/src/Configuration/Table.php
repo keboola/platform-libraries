@@ -73,7 +73,9 @@ class Table extends Configuration
                     ->end()
                 ->end()
                 ->booleanNode('overwrite')->defaultValue(false)->end()
-                ->booleanNode('use_view')->defaultValue(false)->end()
+                // Legacy flag kept for BC; converted to "load_type" in the validate() callback below and never
+                // emitted in the parsed output. No default so it cannot be re-added after being unset.
+                ->booleanNode('use_view')->end()
                 ->enumNode('load_type')
                     ->values(['COPY', 'CLONE', 'VIEW', 'AUTO'])
                 ->end()
@@ -84,6 +86,15 @@ class Table extends Configuration
             ->always(function ($v) {
                 if (empty($v['file_type'])) {
                     unset($v['file_type']);
+                }
+                // Convert the legacy "use_view" flag to the "load_type" attribute. An explicit "load_type"
+                // always wins over the legacy flag, so the flag only takes effect when "load_type" is unset.
+                // The flag is then dropped so it never leaks downstream of the normalizer.
+                if (array_key_exists('use_view', $v)) {
+                    if (($v['use_view'] === true) && !isset($v['load_type'])) {
+                        $v['load_type'] = 'VIEW';
+                    }
+                    unset($v['use_view']);
                 }
                 return $v;
             })

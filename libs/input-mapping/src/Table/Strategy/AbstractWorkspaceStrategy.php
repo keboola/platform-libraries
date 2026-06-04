@@ -200,9 +200,7 @@ abstract class AbstractWorkspaceStrategy extends AbstractStrategy
         ], $loadOptions);
 
         // Use loadType parameter (new unified API)
-        // Honor user's use_view configuration by overriding loadType if needed
-        $finalLoadType = $table->isUseView() ? WorkspaceLoadType::VIEW : $loadType;
-        $copyInput['loadType'] = $finalLoadType->value;
+        $copyInput['loadType'] = $loadType->value;
 
         return $copyInput;
     }
@@ -225,12 +223,21 @@ abstract class AbstractWorkspaceStrategy extends AbstractStrategy
 
     private function decideTableLoadMethod(RewrittenInputTableOptions $table, array $loadOptions): WorkspaceLoadType
     {
+        $explicitlyRequestsView = $table->getLoadType() === WorkspaceLoadType::VIEW->value;
+
         if ($this->getWorkspaceType() === 'bigquery') {
             // Validate that table can be loaded to this workspace type
             LoadTypeDecider::checkViableBigQueryLoadMethod(
                 $table->getTableInfo(),
                 $this->getWorkspaceType(),
             );
+
+            // Honor an explicit load_type=VIEW request, but only after the viability check above has
+            // confirmed the table can be loaded into a BigQuery workspace at all.
+            if ($explicitlyRequestsView) {
+                $this->logger->info(sprintf('Table "%s" will be created as view.', $table->getSource()));
+                return WorkspaceLoadType::VIEW;
+            }
 
             if (LoadTypeDecider::canUseView(
                 $table->getTableInfo(),
@@ -243,6 +250,12 @@ abstract class AbstractWorkspaceStrategy extends AbstractStrategy
             }
             $this->logger->info(sprintf('Table "%s" will be copied.', $table->getSource()));
             return WorkspaceLoadType::COPY;
+        }
+
+        // Honor an explicit load_type=VIEW request before auto-deciding the load method.
+        if ($explicitlyRequestsView) {
+            $this->logger->info(sprintf('Table "%s" will be created as view.', $table->getSource()));
+            return WorkspaceLoadType::VIEW;
         }
 
         if (LoadTypeDecider::canClone($table->getTableInfo(), $this->getWorkspaceType(), $loadOptions)) {

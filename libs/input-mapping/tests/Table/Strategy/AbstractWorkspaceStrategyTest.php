@@ -171,6 +171,40 @@ class AbstractWorkspaceStrategyTest extends TestCase
         );
     }
 
+    public function testPrepareTableLoadsToWorkspaceExplicitViewOnSnowflake(): void
+    {
+        $clientWrapper = $this->createMock(ClientWrapper::class);
+        // explicit load_type=VIEW short-circuits the auto-decider, so canUseView (and getToken) is never reached
+        $clientWrapper->expects($this->never())
+            ->method('getToken');
+
+        $strategy = $this->createTestStrategy($clientWrapper, 'snowflake');
+
+        // A Snowflake table that would normally be CLONEd, but the user explicitly requested load_type=VIEW
+        // (this value is what the normalizer produces from the legacy use_view=true flag)
+        $tableOptions = new RewrittenInputTableOptions(
+            ['source' => 'in.c-test-bucket.table1', 'destination' => 'table1', 'load_type' => 'VIEW'],
+            'in.c-test-bucket.table1',
+            123,
+            [
+                'id' => 'in.c-test-bucket.table1',
+                'bucket' => ['backend' => 'snowflake'],
+                'isAlias' => false,
+            ],
+        );
+
+        $instructions = $strategy->prepareTableLoadsToWorkspace([$tableOptions]);
+
+        self::assertCount(1, $instructions);
+        self::assertSame(WorkspaceLoadType::VIEW, $instructions[0]->loadType);
+        self::assertSame($tableOptions, $instructions[0]->table);
+        self::assertSame(['overwrite' => false], $instructions[0]->loadOptions);
+
+        self::assertTrue(
+            $this->testHandler->hasInfoThatContains('Table "in.c-test-bucket.table1" will be created as view.'),
+        );
+    }
+
     public function testPrepareTableLoadsToWorkspaceCopy(): void
     {
         $clientWrapper = $this->createMock(ClientWrapper::class);

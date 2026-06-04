@@ -6,13 +6,13 @@ namespace Keboola\InputMapping\Tests;
 
 use Generator;
 use Keboola\Csv\CsvFile;
-use Keboola\InputMapping\Exception\InputOperationException;
 use Keboola\InputMapping\Reader;
 use Keboola\InputMapping\Staging\StrategyFactory;
 use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Options\InputTableOptionsList;
 use Keboola\InputMapping\Table\Options\ReaderOptions;
 use Keboola\InputMapping\Table\Strategy\AbstractWorkspaceStrategy;
+use Keboola\InputMapping\Table\Strategy\TableExportQueue;
 use Keboola\InputMapping\Table\Strategy\WorkspaceLoadQueue;
 use Keboola\InputMapping\Tests\Needs\NeedsDevBranch;
 use Keboola\InputMapping\Tests\Needs\TestSatisfyer;
@@ -189,7 +189,7 @@ class ReaderTest extends AbstractTestCase
         self::assertArrayHasKey('lastImportDate', $data[0]);
     }
 
-    public function testPrepareAndExecuteTableLoadsWithNonWorkspaceStrategy(): void
+    public function testPrepareAndExecuteTableLoadsWithLocalStrategyReturnsEmptyQueue(): void
     {
         $clientWrapper = $this->initClient();
         $reader = new Reader(
@@ -198,18 +198,15 @@ class ReaderTest extends AbstractTestCase
             $this->getStagingFactory($clientWrapper, StagingType::Local),
         );
 
-        $configuration = new InputTableOptionsList([]);
-        $state = new InputTableStateList([]);
-
-        $this->expectException(InputOperationException::class);
-        $this->expectExceptionMessage('prepareAndExecuteTableLoads() can only be used with workspace strategies');
-
-        $reader->prepareAndExecuteTableLoads(
-            $configuration,
-            $state,
+        $queue = $reader->prepareAndExecuteTableLoads(
+            new InputTableOptionsList([]),
+            new InputTableStateList([]),
             'destination',
             new ReaderOptions(true),
         );
+
+        self::assertInstanceOf(TableExportQueue::class, $queue);
+        self::assertSame([], $queue->getJobIds());
     }
 
     /**

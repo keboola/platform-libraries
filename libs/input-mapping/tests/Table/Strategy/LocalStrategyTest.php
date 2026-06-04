@@ -7,6 +7,7 @@ namespace Keboola\InputMapping\Tests\Table\Strategy;
 use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Options\RewrittenInputTableOptions;
 use Keboola\InputMapping\Table\Strategy\Local;
+use Keboola\InputMapping\Table\Strategy\TableExportQueue;
 use Keboola\InputMapping\Tests\AbstractTestCase;
 use Keboola\InputMapping\Tests\Needs\NeedsTestTables;
 use Keboola\StagingProvider\Staging\File\FileFormat;
@@ -47,7 +48,10 @@ class LocalStrategyTest extends AbstractTestCase
             (int) $this->clientWrapper->getDefaultBranch()->id,
             $this->clientWrapper->getBasicClient()->getTable($this->firstTableId),
         );
-        $result = $strategy->downloadTable($tableOptions);
+        $queue = $strategy->prepareAndExecuteTableLoads([$tableOptions], true);
+        self::assertInstanceOf(TableExportQueue::class, $queue);
+        $jobIds = $queue->getJobIds();
+        self::assertCount(1, $jobIds);
         self::assertEquals(
             [
                 'tableId' => $this->firstTableId,
@@ -58,7 +62,7 @@ class LocalStrategyTest extends AbstractTestCase
                     'sourceBranchId' => (int) $this->clientWrapper->getDefaultBranch()->id,
                 ],
             ],
-            $result,
+            $queue->exportJobs[$jobIds[0]],
         );
     }
 
@@ -95,7 +99,10 @@ class LocalStrategyTest extends AbstractTestCase
             (int) $this->clientWrapper->getDefaultBranch()->id,
             $this->clientWrapper->getBasicClient()->getTable($this->firstTableId),
         );
-        $result = $strategy->downloadTable($tableOptions);
+        $queue = $strategy->prepareAndExecuteTableLoads([$tableOptions], true);
+        self::assertInstanceOf(TableExportQueue::class, $queue);
+        $jobIds = $queue->getJobIds();
+        self::assertCount(1, $jobIds);
         self::assertEquals(
             [
                 'tableId' => $this->firstTableId,
@@ -106,7 +113,7 @@ class LocalStrategyTest extends AbstractTestCase
                     'sourceBranchId' => (int) $this->clientWrapper->getDefaultBranch()->id,
                 ],
             ],
-            $result,
+            $queue->exportJobs[$jobIds[0]],
         );
     }
 }

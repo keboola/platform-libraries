@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Keboola\MessengerBundle\DependencyInjection;
 
 use Keboola\MessengerBundle\Platform;
+use Keboola\MessengerBundle\Transport\GpsTransportFactoryDecorator;
 use Symfony\Bridge\Doctrine\Messenger\DoctrinePingConnectionMiddleware;
 use Symfony\Component\Config\Definition\Configurator\DefinitionConfigurator;
 use Symfony\Component\Config\FileLocator;
@@ -144,10 +145,7 @@ class KeboolaMessengerExtension extends AbstractExtension
 
             Platform::GCP => [
                 'client_config' => [
-                    'restOptions' => [
-                        'timeout' => 120,
-                        'connect_timeout' => 10,
-                    ],
+                    'restOptions' => GpsTransportFactoryDecorator::DEFAULT_REST_OPTIONS,
                 ],
             ],
         };

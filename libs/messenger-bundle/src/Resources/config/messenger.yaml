@@ -22,3 +22,11 @@ services:
         abstract: true
         arguments:
             $eventFactory: !abstract configured in bundle extension
+
+    # ensures every GPS transport in the app gets a default REST timeout, see GpsTransportFactoryDecorator
+    keboola.messenger_bundle.gps_transport_factory_decorator:
+        class: Keboola\MessengerBundle\Transport\GpsTransportFactoryDecorator
+        decorates: PetitPress\GpsMessengerBundle\Transport\GpsTransportFactory
+        decoration_on_invalid: ignore # app may not register GpsMessengerBundle at all
+        arguments:
+            - '@.inner'

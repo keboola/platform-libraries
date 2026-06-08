@@ -97,37 +97,23 @@ abstract class AbstractWorkspaceStrategy extends AbstractStrategy
      * All operations (CLEAN, CLONE, COPY, VIEW) are batched into a single API call
      *
      * This method is used by SQL editor API that enqueues workspace loads asynchronously.
-     * Caller does not wait for load completion and uses the new unified API format with loadType parameter.
+     * Caller does not wait for load completion. Loading is delegated to the workspace
+     * input-mapping-load endpoint, which resolves the load type per item server-side.
      */
     public function executeTableLoadsToWorkspace(WorkspaceLoadPlan $plan): WorkspaceLoadQueue
     {
         $workspaces = $this->createWorkspaces();
         $workspaceId = (int) $this->dataStorage->getWorkspaceId();
 
-        // Collect all inputs in order: CLONE operations first, then COPY/VIEW operations
+        // The input-mapping-load endpoint accepts the keboola/input-mapping Configuration\Table payload
+        // (snake_case) unchanged and resolves the load type per item server-side (CLONE > VIEW > COPY).
+        // We therefore hand it each table's parsed configuration as-is instead of pre-deciding the load
+        // type and translating to the SAPI camelCase /load shape.
         $allInputs = [];
         $allTables = [];
-        $cloneCount = 0;
-        $copyCount = 0;
-
-        // Step 1: Add CLONE operations (must be first to maintain proper ordering)
-        $cloneInstructions = $plan->getCloneInstructions();
-        foreach ($cloneInstructions as $instruction) {
-            $allInputs[] = $this->buildCloneInputWithLoadType($instruction->table);
+        foreach ([...$plan->getCloneInstructions(), ...$plan->getCopyInstructions()] as $instruction) {
+            $allInputs[] = $instruction->table->getStorageApiWorkspaceLoadConfiguration($this->tablesState);
             $allTables[] = $instruction->table;
-            $cloneCount++;
-        }
-
-        // Step 2: Add COPY/VIEW operations
-        $copyInstructions = $plan->getCopyInstructions();
-        foreach ($copyInstructions as $instruction) {
-            $allInputs[] = $this->buildCopyInputWithLoadType(
-                $instruction->table,
-                $instruction->loadOptions ?? [],
-                $instruction->loadType,
-            );
-            $allTables[] = $instruction->table;
-            $copyCount++;
         }
 
         // If no tables to load and preserve mode, return empty queue
@@ -135,20 +121,13 @@ abstract class AbstractWorkspaceStrategy extends AbstractStrategy
             return new WorkspaceLoadQueue([], static::class, $this->destination);
         }
 
-        // Log operation summary
         if (!$plan->preserve) {
             $this->logger->info('Cleaning workspace and loading tables.');
         }
-        if ($cloneCount > 0) {
-            $this->logger->info(sprintf('Cloning %s tables to workspace.', $cloneCount));
-        }
-        if ($copyCount > 0) {
-            $this->logger->info(sprintf('Copying %s tables to workspace.', $copyCount));
-        }
+        $this->logger->info(sprintf('Loading %s tables to workspace.', count($allInputs)));
 
         // Single API call with all operations (preserve: 0 = clean + load, preserve: 1 = load only)
-        // Uses queueWorkspaceLoadData with new unified format
-        $jobId = $workspaces->queueWorkspaceLoadData($workspaceId, [
+        $jobId = $workspaces->queueInputMappingLoad($workspaceId, [
             'input' => $allInputs,
             'preserve' => $plan->preserve ? 1 : 0,
         ]);
@@ -178,47 +157,6 @@ abstract class AbstractWorkspaceStrategy extends AbstractStrategy
 
         // Phase 2: Execute
         return $this->executeTableLoadsToWorkspace($plan);
-    }
-
-    /**
-     * Build copy/view input for new API (executeTableLoadsToWorkspace)
-     * Uses loadType parameter instead of useView boolean
-     */
-    private function buildCopyInputWithLoadType(
-        RewrittenInputTableOptions $table,
-        array $loadOptions,
-        WorkspaceLoadType $loadType,
-    ): array {
-        // Add sourceBranchId to loadOptions
-        if ($table->getSourceBranchId() !== null) {
-            $loadOptions['sourceBranchId'] = $table->getSourceBranchId();
-        }
-
-        $copyInput = array_merge([
-            'source' => $table->getSource(),
-            'destination' => $table->getDestination(),
-        ], $loadOptions);
-
-        // Use loadType parameter (new unified API)
-        $copyInput['loadType'] = $loadType->value;
-
-        return $copyInput;
-    }
-
-    /**
-     * Build clone input for new API (executeTableLoadsToWorkspace)
-     * Includes loadType parameter for unified workspace loading
-     */
-    private function buildCloneInputWithLoadType(RewrittenInputTableOptions $table): array
-    {
-        return [
-            'source' => $table->getSource(),
-            'destination' => $table->getDestination(),
-            'sourceBranchId' => $table->getSourceBranchId(),
-            'overwrite' => $table->getOverwrite(),
-            'dropTimestampColumn' => !$table->keepInternalTimestampColumn(),
-            'loadType' => WorkspaceLoadType::CLONE->value,
-        ];
     }
 
     private function decideTableLoadMethod(RewrittenInputTableOptions $table, array $loadOptions): WorkspaceLoadType

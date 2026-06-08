@@ -15,11 +15,6 @@ The bundle expects having `%app_name%` parameter defined in your Symfony configu
 keboola_api:
   app_name: '%app_name%'           # application name to use in user agent
   default_service_dns_type: public # default service DNS type to use in ServiceClient, can be 'public' or 'private'
-  storage_token_exchange:
-    enabled: false                 # when true, #[StorageApiTokenAuth] also accepts kbc_at_*/kbc_pat_* tokens
-    service_account_token_path: '/var/run/secrets/connection.keboola.com/serviceaccount/token'
-    project_id_header: 'X-KBC-ProjectId'
-    connection_dns_type: 'internal' # DNS type for internal resolver calls to Connection
 ```
 
 ## Features

@@ -6,6 +6,7 @@ namespace Keboola\K8sClient\Tests\Model\V1;
 
 use Keboola\K8sClient\Model\Io\Keboola\Apps\V1\AppReference;
 use Keboola\K8sClient\Model\Io\Keboola\Apps\V1\AppRun;
+use Keboola\K8sClient\Model\Io\Keboola\Apps\V1\AppRunFailureReason;
 use Keboola\K8sClient\Model\Io\Keboola\Apps\V1\AppRunSpec;
 use Keboola\K8sClient\Model\Io\Keboola\Apps\V1\AppRunStatus;
 use Keboola\K8sClient\Model\Io\Keboola\Apps\V1\PodReference;
@@ -101,6 +102,37 @@ class AppRunModelTest extends TestCase
         self::assertCount(1, $appRun->status->conditions);
         self::assertSame('Ready', $appRun->status->conditions[0]->type);
         self::assertSame('True', $appRun->status->conditions[0]->status);
+    }
+
+    public function testAppRunFailureReasonHydratesAndSerializes(): void
+    {
+        $data = self::getAppRunTestData();
+        $data['spec']['state'] = 'Failed';
+        $data['spec']['failureReason'] = [
+            'reason' => 'OutOfMemory',
+            'message' => 'The app ran out of memory.',
+        ];
+
+        $appRun = new AppRun($data);
+
+        self::assertNotNull($appRun->spec->failureReason);
+        self::assertInstanceOf(AppRunFailureReason::class, $appRun->spec->failureReason);
+        self::assertSame('OutOfMemory', $appRun->spec->failureReason->reason);
+        self::assertSame('The app ran out of memory.', $appRun->spec->failureReason->message);
+
+        $serialized = $appRun->getArrayCopy();
+        self::assertSame('OutOfMemory', $serialized['spec']['failureReason']['reason']);
+        self::assertSame('The app ran out of memory.', $serialized['spec']['failureReason']['message']);
+    }
+
+    public function testAppRunWithoutFailureReasonHydratesToNull(): void
+    {
+        // Legacy AppRuns predating the failureReason field, and any non-Failed run,
+        // carry no failureReason and must hydrate to null (never serialized back).
+        $appRun = new AppRun(self::getAppRunTestData());
+
+        self::assertNull($appRun->spec->failureReason);
+        self::assertArrayNotHasKey('failureReason', $appRun->getArrayCopy()['spec']);
     }
 
     public function testAppRunModelSerialization(): void

@@ -12,9 +12,11 @@ use KubernetesRuntime\AbstractModel;
 class AppRunSpec extends AbstractModel
 {
     /**
-     * PodRef is a reference to the Pod this AppRun tracks
+     * PodRef references the Pod or E2B sandbox this AppRun tracks. Optional: the AppRun
+     * may be created before compute exists and is populated once compute is observed;
+     * remains unset if the attempt fails before compute is created.
      *
-     * @var PodReference
+     * @var PodReference|null
      */
     public $podRef = null;
 
@@ -53,6 +55,13 @@ class AppRunSpec extends AbstractModel
      * @var string
      */
     public $state = null;
+
+    /**
+     * FailureReason is the user-facing cause of a Failed run. Only set when state=Failed.
+     *
+     * @var AppRunFailureReason|null
+     */
+    public $failureReason = null;
 
     /**
      * StartupLogs contains the startup logs from the run

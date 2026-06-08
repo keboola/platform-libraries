@@ -133,15 +133,60 @@ class StorageApiTokenAuthenticatorTest extends TestCase
             ->method('createFromRequest')
             ->willReturn($expectedToken);
 
+        $request = Request::create('https://keboola.com');
+        $request->headers->set('Authorization', 'Bearer ' . self::SUBJECT_TOKEN);
+
         $authenticator = new StorageApiTokenAuthenticator($tokenFactory);
 
-        $result = $authenticator->authenticateToken(
-            new StorageApiTokenAuth(),
-            self::SUBJECT_TOKEN,
-            Request::create('https://keboola.com'),
-        );
+        $result = $authenticator->authenticateToken(new StorageApiTokenAuth(), self::SUBJECT_TOKEN, $request);
 
         self::assertSame($expectedToken, $result);
+    }
+
+    #[DataProvider('provideNonBearerProgrammaticTokenCarriers')]
+    public function testAuthenticateTokenDoesNotExchangeProgrammaticTokenFromNonBearerCarrier(
+        string $headerName,
+        string $headerValue,
+    ): void {
+        $expectedToken = $this->createMock(StorageApiToken::class);
+
+        $tokenFactory = $this->createMock(StorageApiTokenFactory::class);
+        $tokenFactory
+            ->expects(self::once())
+            ->method('createFromRequest')
+            ->willReturn($expectedToken);
+        $tokenFactory
+            ->expects(self::never())
+            ->method('createFromResolvedToken');
+
+        // Resolver is wired, yet the programmatic token does not arrive as `Authorization: Bearer`,
+        // so the legacy verification path must be used and exchange must not be attempted.
+        $resolverClient = $this->createMock(ManageApiClient::class);
+        $resolverClient
+            ->expects(self::never())
+            ->method('resolveStorageToken');
+
+        $request = Request::create('https://keboola.com');
+        $request->headers->set($headerName, $headerValue);
+        $request->headers->set(self::PROJECT_ID_HEADER, '123');
+
+        $authenticator = new StorageApiTokenAuthenticator($tokenFactory, $resolverClient);
+
+        $result = $authenticator->authenticateToken(new StorageApiTokenAuth(), self::SUBJECT_TOKEN, $request);
+
+        self::assertSame($expectedToken, $result);
+    }
+
+    public static function provideNonBearerProgrammaticTokenCarriers(): Generator
+    {
+        yield 'bare Authorization header' => [
+            'headerName' => 'Authorization',
+            'headerValue' => self::SUBJECT_TOKEN,
+        ];
+        yield 'X-StorageApi-Token header' => [
+            'headerName' => 'X-StorageApi-Token',
+            'headerValue' => self::SUBJECT_TOKEN,
+        ];
     }
 
     // ---------------------------------------------------------------------------
@@ -153,6 +198,7 @@ class StorageApiTokenAuthenticatorTest extends TestCase
         $expectedToken = $this->createMock(StorageApiToken::class);
 
         $request = Request::create('https://keboola.com');
+        $request->headers->set('Authorization', 'Bearer ' . self::SUBJECT_TOKEN);
         $request->headers->set(self::PROJECT_ID_HEADER, '123');
 
         $resolverClient = $this->createMock(ManageApiClient::class);
@@ -198,6 +244,7 @@ class StorageApiTokenAuthenticatorTest extends TestCase
             ->method('resolveStorageToken');
 
         $request = Request::create('https://keboola.com');
+        $request->headers->set('Authorization', 'Bearer ' . self::SUBJECT_TOKEN);
         if ($headerValue !== null) {
             $request->headers->set(self::PROJECT_ID_HEADER, $headerValue);
         }
@@ -221,6 +268,10 @@ class StorageApiTokenAuthenticatorTest extends TestCase
         yield 'non-numeric string' => ['headerValue' => 'abc'];
         yield 'zero' => ['headerValue' => '0'];
         yield 'negative number' => ['headerValue' => '-5'];
+        // Past PHP_INT_MAX: ctype_digit would have accepted this and the cast would have silently
+        // wrapped to a different project id; filter_var rejects it.
+        yield 'overflows int range' => ['headerValue' => '99999999999999999999999999'];
+        yield 'leading zeros' => ['headerValue' => '0123'];
     }
 
     // ---------------------------------------------------------------------------
@@ -237,6 +288,7 @@ class StorageApiTokenAuthenticatorTest extends TestCase
             ->willThrowException(new ManageApiClientException(self::SUBJECT_TOKEN, $statusCode));
 
         $request = Request::create('https://keboola.com');
+        $request->headers->set('Authorization', 'Bearer ' . self::SUBJECT_TOKEN);
         $request->headers->set(self::PROJECT_ID_HEADER, '123');
 
         $authenticator = new StorageApiTokenAuthenticator(
@@ -273,6 +325,7 @@ class StorageApiTokenAuthenticatorTest extends TestCase
             ->willThrowException(new MaintenanceException('Maintenance', 30, []));
 
         $request = Request::create('https://keboola.com');
+        $request->headers->set('Authorization', 'Bearer ' . self::SUBJECT_TOKEN);
         $request->headers->set(self::PROJECT_ID_HEADER, '123');
 
         $authenticator = new StorageApiTokenAuthenticator(
@@ -296,6 +349,7 @@ class StorageApiTokenAuthenticatorTest extends TestCase
             ->willThrowException(new ConnectException('Connection refused', new GuzzleRequest('POST', 'resolve')));
 
         $request = Request::create('https://keboola.com');
+        $request->headers->set('Authorization', 'Bearer ' . self::SUBJECT_TOKEN);
         $request->headers->set(self::PROJECT_ID_HEADER, '123');
 
         $authenticator = new StorageApiTokenAuthenticator(
@@ -321,6 +375,7 @@ class StorageApiTokenAuthenticatorTest extends TestCase
             ->willThrowException(new RuntimeException('token file is empty'));
 
         $request = Request::create('https://keboola.com');
+        $request->headers->set('Authorization', 'Bearer ' . self::SUBJECT_TOKEN);
         $request->headers->set(self::PROJECT_ID_HEADER, '123');
 
         $authenticator = new StorageApiTokenAuthenticator(
@@ -350,6 +405,7 @@ class StorageApiTokenAuthenticatorTest extends TestCase
             ->method('createFromResolvedToken');
 
         $request = Request::create('https://keboola.com');
+        $request->headers->set('Authorization', 'Bearer ' . self::SUBJECT_TOKEN);
         $request->headers->set(self::PROJECT_ID_HEADER, '123');
 
         $authenticator = new StorageApiTokenAuthenticator($tokenFactory, $resolverClient);

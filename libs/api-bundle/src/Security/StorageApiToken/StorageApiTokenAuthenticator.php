@@ -33,6 +33,7 @@ use Symfony\Component\Security\Core\Exception\CustomUserMessageAuthenticationExc
 class StorageApiTokenAuthenticator implements TokenAuthenticatorInterface
 {
     private const PROJECT_ID_HEADER = 'X-KBC-ProjectId';
+    private const BEARER_PATTERN = '/^Bearer\s+(.+)$/i';
 
     public function __construct(
         private readonly StorageApiTokenFactory $tokenFactory,
@@ -46,7 +47,7 @@ class StorageApiTokenAuthenticator implements TokenAuthenticatorInterface
         $authHeader = $request->headers->get('Authorization');
         if ($authHeader !== null) {
             // Validate it's a Bearer token and strip prefix
-            if (preg_match('/^Bearer\s+(.+)$/i', $authHeader, $matches)) {
+            if (preg_match(self::BEARER_PATTERN, $authHeader, $matches)) {
                 return $matches[1];
             }
             return $authHeader;
@@ -63,11 +64,33 @@ class StorageApiTokenAuthenticator implements TokenAuthenticatorInterface
     ): StorageApiToken {
         assert($authAttribute instanceof StorageApiTokenAuth);
 
-        if ($this->resolverClient !== null && ProgrammaticToken::matches($token)) {
-            return $this->exchangeProgrammaticToken($request, $token);
+        // Exchange is restricted to programmatic tokens that explicitly arrive as
+        // `Authorization: Bearer <kbc_at|kbc_pat>`. A bare `Authorization: <kbc_...>` or
+        // `X-StorageApi-Token: kbc_...` is an undocumented shape and stays on the legacy
+        // verification path, preserving pre-exchange behaviour.
+        $programmaticToken = $this->extractProgrammaticBearerToken($request);
+        if ($this->resolverClient !== null && $programmaticToken !== null) {
+            return $this->exchangeProgrammaticToken($request, $programmaticToken);
         }
 
         return $this->tokenFactory->createFromRequest($request);
+    }
+
+    /**
+     * Returns the programmatic token only when it is presented as `Authorization: Bearer <kbc_...>`,
+     * otherwise null. Other carriers (bare Authorization value, X-StorageApi-Token) are not eligible
+     * for exchange.
+     */
+    private function extractProgrammaticBearerToken(Request $request): ?string
+    {
+        $authHeader = $request->headers->get('Authorization');
+        if ($authHeader === null || !preg_match(self::BEARER_PATTERN, $authHeader, $matches)) {
+            return null;
+        }
+
+        $bearerToken = $matches[1];
+
+        return ProgrammaticToken::matches($bearerToken) ? $bearerToken : null;
     }
 
     public function authorizeToken(AuthAttributeInterface $authAttribute, TokenInterface $token): void
@@ -132,7 +155,12 @@ class StorageApiTokenAuthenticator implements TokenAuthenticatorInterface
     private function extractProjectId(Request $request): int
     {
         $rawProjectId = $request->headers->get(self::PROJECT_ID_HEADER);
-        if ($rawProjectId === null || !ctype_digit($rawProjectId) || (int) $rawProjectId <= 0) {
+        // FILTER_VALIDATE_INT rejects non-numeric input, values outside the int range (no silent
+        // wrap-around past PHP_INT_MAX) and - via min_range - zero/negative ids.
+        $projectId = $rawProjectId === null
+            ? false
+            : filter_var($rawProjectId, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+        if ($projectId === false) {
             throw new CustomUserMessageAuthenticationException(
                 sprintf('Missing or invalid "%s" header required for programmatic tokens.', self::PROJECT_ID_HEADER),
                 [],
@@ -140,7 +168,7 @@ class StorageApiTokenAuthenticator implements TokenAuthenticatorInterface
             );
         }
 
-        return (int) $rawProjectId;
+        return $projectId;
     }
 
     private function mapResolverError(ManageApiClientException $e): CustomUserMessageAuthenticationException

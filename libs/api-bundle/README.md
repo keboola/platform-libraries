@@ -113,34 +113,23 @@ the request carries.
 
 ### Connection programmatic tokens (Storage token exchange)
 
-The bundle can accept the new Connection programmatic bearer tokens (`kbc_at_*` access tokens and
-`kbc_pat_*` personal access tokens) on endpoints that require a Storage token. It exchanges them for
-a legacy Storage token via the Manage API client's `Client::resolveStorageToken()` (which calls
-Connection's internal resolver endpoint), authenticating with the service's own projected Kubernetes
-ServiceAccount JWT. The result is a normal `StorageApiToken`, so controllers and
-`#[CurrentUser] StorageApiToken` keep working unchanged.
+`#[StorageApiTokenAuth]` transparently accepts the new Connection programmatic bearer tokens
+(`kbc_at_*` access tokens and `kbc_pat_*` personal access tokens) in addition to the legacy
+`X-StorageApi-Token`. Programmatic tokens are exchanged for a legacy Storage token via the Manage
+API client's `Client::resolveStorageToken()` (which calls Connection's internal resolver endpoint),
+authenticating with the service's own projected Kubernetes ServiceAccount JWT. The result is a
+normal `StorageApiToken`, so controllers and `#[CurrentUser] StorageApiToken` keep working unchanged
+— no controller change and no configuration switch.
 
 Callers send `Authorization: Bearer kbc_at_…`/`kbc_pat_…` together with an `X-KBC-ProjectId` header
 (the new tokens are not project-scoped on their own).
 
-Two ways to enable it:
-
 ```php
-// 1) Transparent mode — enable storage_token_exchange.enabled: true in config, no controller change:
 #[StorageApiTokenAuth]
 class MyController {
   public function __invoke(#[CurrentUser] StorageApiToken $token) {
     // accepts X-StorageApi-Token (legacy) OR Authorization: Bearer kbc_at_/kbc_pat_ (+ X-KBC-ProjectId)
   }
-}
-
-// 2) Explicit opt-in with #[ConnectionTokenAuth] (independent of the config switch):
-use Keboola\ApiBundle\Attribute\ConnectionTokenAuth;
-
-#[StorageApiTokenAuth]   // legacy X-StorageApi-Token
-#[ConnectionTokenAuth]   // kbc_at_/kbc_pat_ exchanged to a Storage token
-class MyController {
-  public function __invoke(#[CurrentUser] StorageApiToken $token) { /* ... */ }
 }
 ```
 
@@ -152,9 +141,8 @@ contract, error mapping, and infrastructure prerequisites.
 To use individual authentication attributes, you need to install appropriate client package:
 * to use `StorageApiTokenAuth`, install `keboola/storage-api-client`
 
-`ApplicationTokenAuth`, `ConnectionTokenAuth` and the transparent Storage token exchange
-(`storage_token_exchange`) rely on `keboola/kbc-manage-api-php-client`, which the bundle requires
-directly, so no extra installation is needed.
+`ApplicationTokenAuth` and the Storage token exchange rely on `keboola/kbc-manage-api-php-client`,
+which the bundle requires directly, so no extra installation is needed.
 
 > [!NOTE]
 > If you forget to install appropriate client, you will get exception like
@@ -182,8 +170,8 @@ class MyActionTest extends KernelTestCase
         // header and the Kubernetes ServiceAccount JWT
         $this->setupFakeManageApiToken('my-token', scopes: ['something:manage']);
 
-        // for #[ConnectionTokenAuth] / transparent kbc_at_/kbc_pat_ exchange — stubs the resolver
-        // and Storage verification, so no Connection/Storage API call is made
+        // for #[StorageApiTokenAuth] with a kbc_at_/kbc_pat_ programmatic token — stubs the
+        // resolver client and Storage verification, so no Connection/Storage API call is made
         $token = $this->setupFakeConnectionToken(projectId: '123', features: ['my-feature']);
     }
 }

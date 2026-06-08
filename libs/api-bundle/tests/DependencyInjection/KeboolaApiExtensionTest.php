@@ -4,22 +4,19 @@ declare(strict_types=1);
 
 namespace Keboola\ApiBundle\Tests\DependencyInjection;
 
-use Keboola\ApiBundle\AuthBridge\ManageApiStorageTokenResolver;
-use Keboola\ApiBundle\AuthBridge\StorageTokenResolverInterface;
 use Keboola\ApiBundle\DependencyInjection\KeboolaApiExtension;
-use Keboola\ApiBundle\Security\ConnectionToken\ConnectionTokenAuthenticator;
+use Keboola\ApiBundle\Security\ApplicationToken\ManageApiClientFactory;
 use Keboola\ApiBundle\Security\StorageApiToken\StorageApiTokenAuthenticator;
-use Keboola\ApiBundle\Security\StorageApiToken\StorageApiTokenExchange;
 use Keboola\ApiBundle\Security\StorageApiToken\StorageApiTokenFactory;
+use Keboola\ManageApi\Client as ManageApiClient;
 use Keboola\ServiceClient\ServiceDnsType;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Symfony\Component\DependencyInjection\Reference;
 
 class KeboolaApiExtensionTest extends TestCase
 {
-    // -------------------------------------------------------------------------
-    // Helpers
-    // -------------------------------------------------------------------------
+    private const SERVICE_ACCOUNT_TOKEN_PATH = '/var/run/secrets/connection.keboola.com/serviceaccount/token';
 
     /**
      * @param array<array<mixed>> $configs
@@ -38,7 +35,7 @@ class KeboolaApiExtensionTest extends TestCase
     // Service registration
     // -------------------------------------------------------------------------
 
-    public function testStorageApiServicesAreRegisteredWithDefaultConfig(): void
+    public function testStorageApiServicesAreRegistered(): void
     {
         $container = $this->buildContainer([[]]);
 
@@ -47,148 +44,48 @@ class KeboolaApiExtensionTest extends TestCase
             'StorageApiTokenFactory must be registered',
         );
         self::assertTrue(
-            $container->hasDefinition(StorageTokenResolverInterface::class),
-            'StorageTokenResolverInterface must be registered',
-        );
-        self::assertTrue(
-            $container->hasDefinition(StorageApiTokenExchange::class),
-            'StorageApiTokenExchange must be registered',
+            $container->hasDefinition(KeboolaApiExtension::STORAGE_TOKEN_RESOLVER_CLIENT_ID),
+            'Storage token resolver client must be registered',
         );
         self::assertTrue(
             $container->hasDefinition(StorageApiTokenAuthenticator::class),
             'StorageApiTokenAuthenticator must be registered',
         );
-        self::assertTrue(
-            $container->hasDefinition(ConnectionTokenAuthenticator::class),
-            'ConnectionTokenAuthenticator must be registered',
-        );
     }
 
     // -------------------------------------------------------------------------
-    // Resolver implementation class
+    // Resolver client wiring
     // -------------------------------------------------------------------------
 
-    public function testStorageTokenResolverDefinitionUsesManageApiImplementation(): void
+    public function testResolverClientIsBuiltFromServiceAccountTokenPathOverInternalDns(): void
     {
         $container = $this->buildContainer([[]]);
 
-        $definition = $container->getDefinition(StorageTokenResolverInterface::class);
+        $definition = $container->getDefinition(KeboolaApiExtension::STORAGE_TOKEN_RESOLVER_CLIENT_ID);
 
-        self::assertSame(ManageApiStorageTokenResolver::class, $definition->getClass());
+        self::assertSame(ManageApiClient::class, $definition->getClass());
+
+        $factory = $definition->getFactory();
+        self::assertIsArray($factory);
+        self::assertInstanceOf(Reference::class, $factory[0]);
+        self::assertSame(ManageApiClientFactory::class, (string) $factory[0]);
+        self::assertSame('getClientForServiceAccountTokenPath', $factory[1]);
+
+        self::assertSame(
+            [self::SERVICE_ACCOUNT_TOKEN_PATH, ServiceDnsType::INTERNAL],
+            $definition->getArguments(),
+            'Resolver client must use the fixed SA token path and internal DNS',
+        );
     }
 
-    // -------------------------------------------------------------------------
-    // Default argument values
-    // -------------------------------------------------------------------------
-
-    public function testStorageApiTokenAuthenticatorDefaultArguments(): void
+    public function testAuthenticatorReceivesResolverClient(): void
     {
         $container = $this->buildContainer([[]]);
 
         $definition = $container->getDefinition(StorageApiTokenAuthenticator::class);
 
-        self::assertFalse(
-            $definition->getArgument('$exchangeEnabled'),
-            '$exchangeEnabled must default to false',
-        );
-        self::assertSame(
-            'X-KBC-ProjectId',
-            $definition->getArgument('$projectIdHeader'),
-            '$projectIdHeader must default to X-KBC-ProjectId',
-        );
-    }
-
-    public function testStorageTokenResolverDefaultServiceAccountTokenPath(): void
-    {
-        $container = $this->buildContainer([[]]);
-
-        $definition = $container->getDefinition(StorageTokenResolverInterface::class);
-
-        self::assertSame(
-            '/var/run/secrets/connection.keboola.com/serviceaccount/token',
-            $definition->getArgument('$serviceAccountTokenPath'),
-            '$serviceAccountTokenPath must match the default SA token mount path',
-        );
-    }
-
-    public function testConnectionTokenAuthenticatorDefaultProjectIdHeader(): void
-    {
-        $container = $this->buildContainer([[]]);
-
-        $definition = $container->getDefinition(ConnectionTokenAuthenticator::class);
-
-        self::assertSame(
-            'X-KBC-ProjectId',
-            $definition->getArgument('$projectIdHeader'),
-            '$projectIdHeader must default to X-KBC-ProjectId',
-        );
-    }
-
-    // -------------------------------------------------------------------------
-    // Overridden configuration values
-    // -------------------------------------------------------------------------
-
-    public function testStorageTokenExchangeConfigOverridesAreApplied(): void
-    {
-        $container = $this->buildContainer([[
-            'storage_token_exchange' => [
-                'enabled' => true,
-                'project_id_header' => 'X-Project',
-                'service_account_token_path' => '/custom/token',
-                'connection_dns_type' => 'public',
-            ],
-        ]]);
-
-        $authenticatorDef = $container->getDefinition(StorageApiTokenAuthenticator::class);
-        self::assertTrue(
-            $authenticatorDef->getArgument('$exchangeEnabled'),
-            '$exchangeEnabled must be true when configured',
-        );
-        self::assertSame(
-            'X-Project',
-            $authenticatorDef->getArgument('$projectIdHeader'),
-            '$projectIdHeader must reflect configured value',
-        );
-
-        $resolverDef = $container->getDefinition(StorageTokenResolverInterface::class);
-        self::assertSame(
-            '/custom/token',
-            $resolverDef->getArgument('$serviceAccountTokenPath'),
-            '$serviceAccountTokenPath must reflect configured path',
-        );
-        self::assertSame(
-            ServiceDnsType::PUBLIC,
-            $resolverDef->getArgument('$connectionDnsType'),
-            '$connectionDnsType must be ServiceDnsType::PUBLIC for "public"',
-        );
-    }
-
-    public function testConnectionTokenAuthenticatorReflectsOverriddenProjectIdHeader(): void
-    {
-        $container = $this->buildContainer([[
-            'storage_token_exchange' => [
-                'project_id_header' => 'X-My-Project',
-            ],
-        ]]);
-
-        $definition = $container->getDefinition(ConnectionTokenAuthenticator::class);
-
-        self::assertSame(
-            'X-My-Project',
-            $definition->getArgument('$projectIdHeader'),
-        );
-    }
-
-    public function testInternalConnectionDnsTypeIsDefaultForResolver(): void
-    {
-        $container = $this->buildContainer([[]]);
-
-        $resolverDef = $container->getDefinition(StorageTokenResolverInterface::class);
-
-        self::assertSame(
-            ServiceDnsType::INTERNAL,
-            $resolverDef->getArgument('$connectionDnsType'),
-            '$connectionDnsType must default to ServiceDnsType::INTERNAL',
-        );
+        $resolverClient = $definition->getArgument('$resolverClient');
+        self::assertInstanceOf(Reference::class, $resolverClient);
+        self::assertSame(KeboolaApiExtension::STORAGE_TOKEN_RESOLVER_CLIENT_ID, (string) $resolverClient);
     }
 }

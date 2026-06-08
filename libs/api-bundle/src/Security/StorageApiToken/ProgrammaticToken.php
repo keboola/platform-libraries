@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Keboola\ApiBundle\AuthBridge;
+namespace Keboola\ApiBundle\Security\StorageApiToken;
 
 /**
  * Detects Connection programmatic bearer tokens by their well-known prefixes:

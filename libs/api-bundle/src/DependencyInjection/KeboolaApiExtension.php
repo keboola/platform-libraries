@@ -5,16 +5,12 @@ declare(strict_types=1);
 namespace Keboola\ApiBundle\DependencyInjection;
 
 use Keboola\ApiBundle\Attribute\ApplicationTokenAuth;
-use Keboola\ApiBundle\Attribute\ConnectionTokenAuth;
 use Keboola\ApiBundle\Attribute\StorageApiTokenAuth;
-use Keboola\ApiBundle\AuthBridge\ManageApiStorageTokenResolver;
-use Keboola\ApiBundle\AuthBridge\StorageTokenResolverInterface;
 use Keboola\ApiBundle\Security\ApplicationToken\ApplicationTokenAuthenticator;
 use Keboola\ApiBundle\Security\ApplicationToken\ManageApiClientFactory;
-use Keboola\ApiBundle\Security\ConnectionToken\ConnectionTokenAuthenticator;
 use Keboola\ApiBundle\Security\StorageApiToken\StorageApiTokenAuthenticator;
-use Keboola\ApiBundle\Security\StorageApiToken\StorageApiTokenExchange;
 use Keboola\ApiBundle\Security\StorageApiToken\StorageApiTokenFactory;
+use Keboola\ManageApi\Client as ManageApiClient;
 use Keboola\ServiceClient\ServiceClient;
 use Keboola\ServiceClient\ServiceDnsType;
 use Keboola\StorageApiBranch\Factory\StorageClientRequestFactory;
@@ -26,6 +22,18 @@ use Symfony\Component\HttpKernel\DependencyInjection\Extension;
 
 class KeboolaApiExtension extends Extension
 {
+    /**
+     * Service id of the Manage API client used to exchange Connection programmatic tokens for
+     * legacy Storage tokens. Exposed so functional tests can swap it for a mock.
+     */
+    public const STORAGE_TOKEN_RESOLVER_CLIENT_ID = 'keboola.api_bundle.storage_token_resolver_client';
+
+    /**
+     * Path to the projected Kubernetes ServiceAccount token (audience keboola-connection) the
+     * resolver client authenticates with. Infra mounts it at this fixed path on every stack.
+     */
+    private const SERVICE_ACCOUNT_TOKEN_PATH = '/var/run/secrets/connection.keboola.com/serviceaccount/token';
+
     public function load(array $configs, ContainerBuilder $container): void
     {
         $loader = new PhpFileLoader($container, new FileLocator(__DIR__ . '/../Resources/config'));
@@ -66,40 +74,23 @@ class KeboolaApiExtension extends Extension
             return;
         }
 
-        $exchangeConfig = $config['storage_token_exchange'];
-        assert(is_array($exchangeConfig));
-
-        $connectionDnsType = $exchangeConfig['connection_dns_type'];
-        assert(is_string($connectionDnsType));
-
         $container->register(StorageApiTokenFactory::class)
             ->setArgument('$clientRequestFactory', new Reference(StorageClientRequestFactory::class))
         ;
 
-        $container->register(StorageTokenResolverInterface::class, ManageApiStorageTokenResolver::class)
-            ->setArgument('$clientFactory', new Reference(ManageApiClientFactory::class))
-            ->setArgument('$serviceAccountTokenPath', $exchangeConfig['service_account_token_path'])
-            ->setArgument('$connectionDnsType', ServiceDnsType::from($connectionDnsType))
-        ;
-
-        $container->register(StorageApiTokenExchange::class)
-            ->setArgument('$resolver', new Reference(StorageTokenResolverInterface::class))
-            ->setArgument('$tokenFactory', new Reference(StorageApiTokenFactory::class))
+        // Manage API client that exchanges programmatic tokens for legacy Storage tokens. It
+        // authenticates with the service's projected Kubernetes ServiceAccount JWT (read per
+        // request) and calls Connection over the internal DNS.
+        $container->register(self::STORAGE_TOKEN_RESOLVER_CLIENT_ID, ManageApiClient::class)
+            ->setFactory([new Reference(ManageApiClientFactory::class), 'getClientForServiceAccountTokenPath'])
+            ->setArguments([self::SERVICE_ACCOUNT_TOKEN_PATH, ServiceDnsType::INTERNAL])
         ;
 
         $container->register(StorageApiTokenAuthenticator::class)
             ->setArgument('$tokenFactory', new Reference(StorageApiTokenFactory::class))
-            ->setArgument('$tokenExchange', new Reference(StorageApiTokenExchange::class))
-            ->setArgument('$exchangeEnabled', $exchangeConfig['enabled'])
-            ->setArgument('$projectIdHeader', $exchangeConfig['project_id_header'])
+            ->setArgument('$resolverClient', new Reference(self::STORAGE_TOKEN_RESOLVER_CLIENT_ID))
         ;
         $authenticators[StorageApiTokenAuth::class] = new Reference(StorageApiTokenAuthenticator::class);
-
-        $container->register(ConnectionTokenAuthenticator::class)
-            ->setArgument('$tokenExchange', new Reference(StorageApiTokenExchange::class))
-            ->setArgument('$projectIdHeader', $exchangeConfig['project_id_header'])
-        ;
-        $authenticators[ConnectionTokenAuth::class] = new Reference(ConnectionTokenAuthenticator::class);
     }
 
     private function setupApplicationTokenAuthenticator(

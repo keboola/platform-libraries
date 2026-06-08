@@ -4,8 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\ApiBundle\Test;
 
-use Keboola\ApiBundle\AuthBridge\ResolvedStorageToken;
-use Keboola\ApiBundle\AuthBridge\StorageTokenResolverInterface;
+use Keboola\ApiBundle\DependencyInjection\KeboolaApiExtension;
 use Keboola\ApiBundle\Security\ApplicationToken\ManageApiClientFactory;
 use Keboola\ApiBundle\Security\StorageApiToken\StorageApiToken;
 use Keboola\ManageApi\Client as ManageApiClient;
@@ -69,10 +68,10 @@ trait AuthenticatorTestTrait
     }
 
     /**
-     * Stubs the programmatic-token exchange used by transparent #[StorageApiTokenAuth] and by
-     * #[ConnectionTokenAuth], so guarded controllers can be exercised without reaching Connection
-     * or Storage API. The fake resolver returns a fixed result and the Storage verification is
-     * stubbed via {@see setupFakeStorageApiToken()}.
+     * Stubs the programmatic-token exchange used by transparent #[StorageApiTokenAuth], so guarded
+     * controllers can be exercised without reaching Connection or Storage API. The fake resolver
+     * client returns a fixed legacy Storage token and the Storage verification is stubbed via
+     * {@see setupFakeStorageApiToken()}.
      *
      * @param list<string> $features
      */
@@ -89,18 +88,18 @@ trait AuthenticatorTestTrait
             adminId: $adminId,
         );
 
-        $resolver = $this->createMock(StorageTokenResolverInterface::class);
-        $resolver
-            ->method('resolve')
-            ->willReturn(new ResolvedStorageToken(
-                storageToken: 'fake-resolved-storage-token',
-                projectId: (int) $projectId,
-                tokenId: '123',
-                userId: $adminId ?? '456',
-                expiresAt: null,
-            ));
+        $resolverClient = $this->createMock(ManageApiClient::class);
+        $resolverClient
+            ->method('resolveStorageToken')
+            ->willReturn([
+                'storageToken' => 'fake-resolved-storage-token',
+                'projectId' => (int) $projectId,
+                'tokenId' => '123',
+                'userId' => $adminId ?? '456',
+                'expiresAt' => null,
+            ]);
 
-        self::getContainer()->set(StorageTokenResolverInterface::class, $resolver);
+        self::getContainer()->set(KeboolaApiExtension::STORAGE_TOKEN_RESOLVER_CLIENT_ID, $resolverClient);
 
         return $token;
     }

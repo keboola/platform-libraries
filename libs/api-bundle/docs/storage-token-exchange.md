@@ -15,13 +15,17 @@ that point on the request is handled exactly as if the caller had sent the legac
 token, so existing controllers (`#[StorageApiTokenAuth]`, `#[CurrentUser] StorageApiToken`)
 keep working unchanged.
 
+The exchange is **transparent and always on**: `#[StorageApiTokenAuth]` accepts both legacy
+`X-StorageApi-Token` and programmatic `Authorization: Bearer kbc_at_/kbc_pat_` tokens. There is no
+opt-in attribute and no configuration switch — a legacy token never triggers an exchange (only the
+`kbc_at_` / `kbc_pat_` prefixes do), so existing legacy traffic is unaffected.
+
 > **Resolver location.** The resolver HTTP call lives in the Manage API client
 > (`keboola/kbc-manage-api-php-client` `^v10.2`) as `Client::resolveStorageToken()`, because the
 > endpoint is a `/manage/...` route authenticated by the service's Kubernetes ServiceAccount JWT.
-> `api-bundle` wraps it in `ManageApiStorageTokenResolver` behind `StorageTokenResolverInterface`,
-> which adds the typed-exception mapping the authenticators rely on. The Manage API client is a
-> direct dependency of the bundle, so the exchange (transparent mode and `#[ConnectionTokenAuth]`)
-> is always available.
+> The Manage API client is a direct dependency of the bundle, so the exchange is always available;
+> `StorageApiTokenAuthenticator` calls it directly and maps its `ClientException` status codes to
+> authentication errors.
 
 ## Connection resolver contract
 
@@ -54,6 +58,9 @@ Response `200`:
 }
 ```
 
+Only `storageToken` is consumed by the bundle (the rest of the metadata is informational); the
+resolved legacy token is re-verified against Storage API to build the full `StorageApiToken`.
+
 Errors:
 
 | Status | Meaning |
@@ -70,7 +77,7 @@ Manage token holding the scope `internal:auth-bridge:resolve-storage-token`.
 ```
 Client ──Authorization: Bearer kbc_at_*, X-KBC-ProjectId: 123──► Service (api-bundle)
                                                                     │
-  ManageApiStorageTokenResolver → Client::resolveStorageToken():    │
+  StorageApiTokenAuthenticator → Client::resolveStorageToken():     │
     Manage API client reads SA JWT from                             │
     /var/run/secrets/.../token (re-read per call)                   │
     POST {connection}/manage/internal/auth-bridge/                  ▼
@@ -87,25 +94,14 @@ Client ──Authorization: Bearer kbc_at_*, X-KBC-ProjectId: 123──► Servi
   => new StorageApiToken(tokenInfo, legacyToken)  →  #[CurrentUser] StorageApiToken
 ```
 
-Why the second `verifyToken()` call: the resolver returns only minimal metadata, not the full
-token info (features, owner, backend, ...) that `StorageApiToken` carries and that downstream
-code relies on. Re-verifying the resolved legacy token yields exactly the object the legacy
-flow produces. There is no result caching in v1 (see [Caching](#caching)).
+Why the second `verifyToken()` call: the resolver returns only the legacy token plus minimal
+metadata, not the full token info (features, owner, backend, ...) that `StorageApiToken` carries
+and that downstream code relies on. Re-verifying the resolved legacy token yields exactly the
+object the legacy flow produces. There is no result caching in v1 (see [Caching](#caching)).
 
 ## Integration
 
-The shared core (resolver + `StorageApiToken` construction) is exposed in **two** ways.
-
-### 1. Transparent mode (extends `#[StorageApiTokenAuth]`)
-
-Enabled per service via bundle config. When on, `#[StorageApiTokenAuth]` controllers also
-accept `kbc_at_*` / `kbc_pat_*` tokens — no controller changes.
-
-```yaml
-keboola_api:
-  storage_token_exchange:
-    enabled: true
-```
+`#[StorageApiTokenAuth]` is all that is needed — the exchange is transparent and always available.
 
 ```php
 #[StorageApiTokenAuth]
@@ -119,48 +115,23 @@ class MyController
 }
 ```
 
-A legacy token never triggers an exchange (only the `kbc_at_` / `kbc_pat_` prefixes do), so
-existing legacy traffic is unaffected even when the switch is on.
-
-### 2. Explicit mode (`#[ConnectionTokenAuth]`)
-
-A dedicated attribute, independent of the `enabled` switch, for opt-in per controller. Often
-declared next to `#[StorageApiTokenAuth]` so the endpoint accepts both token kinds.
-
-```php
-#[StorageApiTokenAuth]   // legacy X-StorageApi-Token
-#[ConnectionTokenAuth]   // kbc_at_/kbc_pat_ -> exchanged to a legacy token
-class MyController
-{
-    public function __invoke(#[CurrentUser] StorageApiToken $token): Response { /* ... */ }
-}
-```
-
-Both attributes accept the same `features` argument with identical semantics.
-
 ## Project id
 
 The new programmatic tokens are not project-scoped on their own, so the request must say which
 project to resolve. It is taken from the `X-KBC-ProjectId` header (matching Connection's
-`BearerTokenAuthenticator::PROJECT_ID_HEADER`). The header name is configurable. A programmatic
-token without a valid project id is rejected with `400`.
+`BearerTokenAuthenticator::PROJECT_ID_HEADER`). A programmatic token without a valid project id is
+rejected with `400`.
 
 ## Configuration
 
-```yaml
-keboola_api:
-  storage_token_exchange:
-    enabled: false                                                   # transparent mode for #[StorageApiTokenAuth]
-    service_account_token_path: '/var/run/secrets/connection.keboola.com/serviceaccount/token'
-    project_id_header: 'X-KBC-ProjectId'
-    connection_dns_type: 'internal'                                  # internal | public
-```
+None. The feature is always on and uses fixed conventions:
 
-- `enabled` only controls transparent mode. `#[ConnectionTokenAuth]` works regardless.
-- The ServiceAccount token is read from the projected file on every resolver call so
-  kubelet-rotated tokens are picked up automatically. A missing / empty / unreadable file
-  fails fast when a programmatic token is presented.
-- Internal resolver calls default to in-cluster (`internal`) DNS.
+- ServiceAccount token path: `/var/run/secrets/connection.keboola.com/serviceaccount/token`. It is
+  read from the projected file on every resolver call so kubelet-rotated tokens are picked up
+  automatically; a missing / empty / unreadable file surfaces as `502` when a programmatic token is
+  presented.
+- Project id header: `X-KBC-ProjectId` (a platform-wide constant, not per-service tunable).
+- Resolver DNS: internal in-cluster (`ServiceDnsType::INTERNAL`).
 
 ## Error mapping (resolver -> client)
 
@@ -169,7 +140,7 @@ keboola_api:
 | `400` invalid / missing project id | `400` |
 | `401` invalid subject token | `401` |
 | `403` subject token cannot access project | `403` |
-| `5xx` / timeout / network error | `502` / `504` |
+| `5xx` / timeout / network / SA token file error / unexpected | `502` |
 
 **Known limitation.** Connection returns `401`/`403` both for subject-token problems (client
 fault) and for our ServiceAccount identity problems (deployment misconfiguration). The bundle
@@ -181,43 +152,34 @@ our-identity failures to `502` instead; tracked as a future improvement.
 ## Security
 
 - Plaintext subject tokens and resolved legacy tokens are never logged and never placed in
-  exception messages (`#[SensitiveParameter]` on token arguments, sanitized error messages).
+  exception messages (`#[SensitiveParameter]` on token arguments, fixed error messages that never
+  echo the Connection/Manage response body).
 - The ServiceAccount JWT is read per request (rotation) and validated as non-empty.
-- Resolver calls use internal DNS by default.
+- Resolver calls use internal DNS.
 - No result caching in v1, so a revoked subject token stops working immediately.
 
 ## Caching
 
-Not implemented in v1. Each authenticated request performs one resolver call plus one
-`verifyToken` call. The resolver is hidden behind an interface so a short-lived
-(`(subjectTokenHash, projectId)`-keyed, 5-30 s TTL, invalidate-on-401/403) cache can be added
-later without touching the authenticators, per the RFC guidance.
+Not implemented in v1. Each authenticated programmatic request performs one resolver call plus one
+`verifyToken` call. A short-lived (`(subjectTokenHash, projectId)`-keyed, 5-30 s TTL,
+invalidate-on-401/403) cache could be added later, per the RFC guidance.
 
 ## Components
 
-`Keboola\ApiBundle\AuthBridge`:
+`Keboola\ApiBundle\Security\StorageApiToken`:
 
 | Class | Responsibility |
 | --- | --- |
-| `StorageTokenResolverInterface` | `resolve(int $projectId, string $subjectToken): ResolvedStorageToken`. Stable seam. |
-| `ManageApiStorageTokenResolver` | Wraps the Manage API client's `Client::resolveStorageToken()` and maps its `ClientException` status codes to the typed resolver exceptions. |
-| `ResolvedStorageToken` | Immutable resolver response DTO. |
 | `ProgrammaticToken` | `kbc_at_` / `kbc_pat_` prefix detection. |
-| `Exception\*` | Typed resolver failures (`Unauthorized`, `ProjectAccessDenied`, `InvalidRequest`, `Unavailable`). |
+| `StorageApiTokenFactory` | Builds `StorageApiToken` from a request or from a resolved legacy token. |
+| `StorageApiTokenAuthenticator` | Verifies legacy tokens; for programmatic tokens, calls `Client::resolveStorageToken()`, maps resolver errors, then verifies the resolved legacy token. |
 
-The projected ServiceAccount JWT is read by the Manage API client's
-`KubernetesServiceAccountTokenAuthenticationStrategy` (configured via the `kubernetesTokenPath`
-option in `ManageApiClientFactory::getClientForServiceAccountTokenPath()`), re-read on every request
-so kubelet-rotated tokens are picked up.
-
-`Keboola\ApiBundle\Security`:
-
-| Class | Responsibility |
-| --- | --- |
-| `StorageApiToken\StorageApiTokenFactory` | Builds `StorageApiToken` from a request or from a resolved legacy token. |
-| `StorageApiToken\StorageApiTokenAuthenticator` | Transparent mode: exchanges programmatic tokens when enabled. |
-| `ConnectionToken\ConnectionTokenAuthenticator` | Explicit mode for `#[ConnectionTokenAuth]`. |
-| `Attribute\ConnectionTokenAuth` | Controller attribute. |
+The resolver client is a `Keboola\ManageApi\Client` registered under
+`KeboolaApiExtension::STORAGE_TOKEN_RESOLVER_CLIENT_ID`, built via
+`ManageApiClientFactory::getClientForServiceAccountTokenPath()` with the fixed SA token path and
+internal DNS. The projected ServiceAccount JWT is read by the Manage API client's
+`KubernetesServiceAccountTokenAuthenticationStrategy`, re-read on every request so kubelet-rotated
+tokens are picked up.
 
 ## Infrastructure prerequisites
 
@@ -227,19 +189,13 @@ These live outside `api-bundle` but are required for the exchange to work:
    mapped to the `internal:auth-bridge:resolve-storage-token` scope, per stack. Without it the
    resolver returns `403`.
 2. **Projected ServiceAccount token** with audience `keboola-connection` mounted at the
-   configured path (already present for services using `#[ApplicationTokenAuth]` via the SA
-   header).
+   fixed path (already present for services using `#[ApplicationTokenAuth]` via the SA header).
 3. **Callers (UI / clients)** send `Authorization: Bearer kbc_at_/kbc_pat_` and
    `X-KBC-ProjectId` instead of a legacy Storage token.
-
-## Follow-up
-
-- Optionally add the short-lived resolver cache described above (`StorageTokenResolverInterface`
-  is the seam where it would be wired).
 
 ## Testing
 
 `Keboola\ApiBundle\Test\AuthenticatorTestTrait::setupFakeConnectionToken()` stubs the resolver
-(and the Storage client verification) so controllers guarded by `#[ConnectionTokenAuth]` or by
-transparent `#[StorageApiTokenAuth]` can be exercised in `KernelTestCase` tests without
-reaching Connection or Storage API.
+client (and the Storage client verification) so controllers guarded by `#[StorageApiTokenAuth]`
+can be exercised with a programmatic token in `KernelTestCase` tests without reaching Connection or
+Storage API.

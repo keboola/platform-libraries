@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Keboola\ApiBundle\Tests\Test;
 
-use Keboola\ApiBundle\AuthBridge\StorageTokenResolverInterface;
+use Keboola\ApiBundle\DependencyInjection\KeboolaApiExtension;
 use Keboola\ApiBundle\Security\ApplicationToken\ManageApiClientFactory;
-use Keboola\ApiBundle\Security\StorageApiToken\StorageApiToken;
 use Keboola\ApiBundle\Test\AuthenticatorTestTrait;
+use Keboola\ManageApi\Client as ManageApiClient;
 use Keboola\StorageApiBranch\Factory\StorageClientRequestFactory;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\DependencyInjection\Container;
@@ -85,12 +85,13 @@ class AuthenticatorTestTraitTest extends TestCase
             self::$testContainer->get(StorageClientRequestFactory::class),
         );
 
-        // A StorageTokenResolverInterface mock is registered in the container.
-        $resolver = self::$testContainer->get(StorageTokenResolverInterface::class);
-        self::assertInstanceOf(StorageTokenResolverInterface::class, $resolver);
+        // A resolver ManageApiClient mock is registered in the container under the resolver id.
+        $resolverClient = self::$testContainer->get(KeboolaApiExtension::STORAGE_TOKEN_RESOLVER_CLIENT_ID);
+        self::assertInstanceOf(ManageApiClient::class, $resolverClient);
 
-        // The mock resolver returns a ResolvedStorageToken whose projectId matches.
-        $resolved = $resolver->resolve(789, 'kbc_at_x');
-        self::assertSame(789, $resolved->projectId);
+        // The mock resolver client returns a fixed legacy Storage token for the project.
+        $resolved = $resolverClient->resolveStorageToken(789, 'kbc_at_x');
+        self::assertSame(789, $resolved['projectId']);
+        self::assertSame('fake-resolved-storage-token', $resolved['storageToken']);
     }
 }

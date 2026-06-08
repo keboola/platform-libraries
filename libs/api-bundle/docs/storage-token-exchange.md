@@ -140,20 +140,32 @@ None. The feature is always on and uses fixed conventions:
 | `400` invalid / missing project id | `400` |
 | `401` invalid subject token | `401` |
 | `403` subject token cannot access project | `403` |
-| `5xx` / timeout / network / SA token file error / unexpected | `502` |
+| `503` Connection in maintenance (`MaintenanceException`) | `503` |
+| other `5xx` / timeout / network / SA token file error / unexpected | `502` |
 
-**Known limitation.** Connection returns `401`/`403` both for subject-token problems (client
-fault) and for our ServiceAccount identity problems (deployment misconfiguration). The bundle
-cannot tell them apart from the bare status code, so it forwards `401`/`403` to the client. A
-ServiceAccount misconfiguration therefore surfaces as a blanket `401`/`403` on every request
-and is caught by a post-deploy smoke test. A richer Connection error contract would let us map
-our-identity failures to `502` instead; tracked as a future improvement.
+The `5xx`/`502` and `503` paths are our-side incidents (deploy, identity, Connection outage), so
+they are logged at `warning` level with the `projectId` and the resolver status / maintenance
+`retryAfter`. The Manage response body and the resolver response payload are never logged - they
+may carry token material. Client faults (`400`/`401`/`403`) are not logged.
+
+**Known limitations.**
+
+- Connection returns `401`/`403` both for subject-token problems (client fault) and for our
+  ServiceAccount identity problems (deployment misconfiguration). The bundle cannot tell them apart
+  from the bare status code, so it forwards `401`/`403` to the client. A ServiceAccount
+  misconfiguration therefore surfaces as a blanket `401`/`403` on every request and is caught by a
+  post-deploy smoke test. A richer Connection error contract would let us map our-identity failures
+  to `502` instead; tracked as a future improvement.
+- The `503` maintenance response does not yet forward Connection's `Retry-After` value to the
+  client (the authentication failure handler builds a generic response). The value is logged for
+  diagnosis; propagating it as a response header is tracked as a future improvement.
 
 ## Security
 
 - Plaintext subject tokens and resolved legacy tokens are never logged and never placed in
-  exception messages (`#[SensitiveParameter]` on token arguments, fixed error messages that never
-  echo the Connection/Manage response body).
+  exception messages or log context (`#[SensitiveParameter]` on token arguments, fixed error
+  messages and structured log context that never echo the Connection/Manage response body or the
+  resolver response payload).
 - The ServiceAccount JWT is read per request (rotation) and validated as non-empty.
 - Resolver calls use internal DNS.
 - No result caching in v1, so a revoked subject token stops working immediately.

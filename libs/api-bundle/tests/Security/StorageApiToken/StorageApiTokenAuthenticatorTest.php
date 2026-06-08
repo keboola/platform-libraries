@@ -16,6 +16,7 @@ use Keboola\ManageApi\ClientException as ManageApiClientException;
 use Keboola\ManageApi\MaintenanceException;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
 use RuntimeException;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Security\Core\Exception\AccessDeniedException;
@@ -316,13 +317,19 @@ class StorageApiTokenAuthenticatorTest extends TestCase
         yield 'unexpected client error -> 502' => ['statusCode' => 418, 'expectedCode' => 502];
     }
 
-    public function testExchangeMapsMaintenanceExceptionTo502(): void
+    public function testExchangeMapsMaintenanceExceptionTo503(): void
     {
         $resolverClient = $this->createMock(ManageApiClient::class);
         $resolverClient
             ->expects(self::once())
             ->method('resolveStorageToken')
             ->willThrowException(new MaintenanceException('Maintenance', 30, []));
+
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger
+            ->expects(self::once())
+            ->method('warning')
+            ->with(self::stringContains('maintenance'), ['projectId' => 123, 'retryAfter' => 30]);
 
         $request = Request::create('https://keboola.com');
         $request->headers->set('Authorization', 'Bearer ' . self::SUBJECT_TOKEN);
@@ -331,13 +338,14 @@ class StorageApiTokenAuthenticatorTest extends TestCase
         $authenticator = new StorageApiTokenAuthenticator(
             $this->createMock(StorageApiTokenFactory::class),
             $resolverClient,
+            $logger,
         );
 
         $exception = $this->captureAuthException(
             fn() => $authenticator->authenticateToken(new StorageApiTokenAuth(), self::SUBJECT_TOKEN, $request),
         );
 
-        self::assertSame(502, $exception->getCode());
+        self::assertSame(503, $exception->getCode());
     }
 
     public function testExchangeMapsConnectExceptionTo502(): void
@@ -422,6 +430,120 @@ class StorageApiTokenAuthenticatorTest extends TestCase
         yield 'missing storageToken' => ['response' => ['projectId' => 123]];
         yield 'empty storageToken' => ['response' => ['storageToken' => '']];
         yield 'non-string storageToken' => ['response' => ['storageToken' => 123]];
+    }
+
+    // ---------------------------------------------------------------------------
+    // authenticateToken – failure logging
+    // ---------------------------------------------------------------------------
+
+    public function testExchangeLogsUnexpectedResolverStatusWithoutTokenMaterial(): void
+    {
+        $resolverClient = $this->createMock(ManageApiClient::class);
+        $resolverClient
+            ->expects(self::once())
+            ->method('resolveStorageToken')
+            // The Manage client embeds the response body (here the subject token) in the message.
+            ->willThrowException(new ManageApiClientException(self::SUBJECT_TOKEN, 500));
+
+        $loggedContext = null;
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger
+            ->expects(self::once())
+            ->method('warning')
+            ->willReturnCallback(function (string $message, array $context) use (&$loggedContext): void {
+                self::assertStringNotContainsString(self::SUBJECT_TOKEN, $message);
+                $loggedContext = $context;
+            });
+
+        $request = Request::create('https://keboola.com');
+        $request->headers->set('Authorization', 'Bearer ' . self::SUBJECT_TOKEN);
+        $request->headers->set(self::PROJECT_ID_HEADER, '123');
+
+        $authenticator = new StorageApiTokenAuthenticator(
+            $this->createMock(StorageApiTokenFactory::class),
+            $resolverClient,
+            $logger,
+        );
+
+        $exception = $this->captureAuthException(
+            fn() => $authenticator->authenticateToken(new StorageApiTokenAuth(), self::SUBJECT_TOKEN, $request),
+        );
+
+        self::assertSame(502, $exception->getCode());
+        self::assertSame(['projectId' => 123, 'resolverStatus' => 500], $loggedContext);
+        // Defense in depth: the subject token must never reach the log context.
+        self::assertStringNotContainsString(self::SUBJECT_TOKEN, json_encode($loggedContext, JSON_THROW_ON_ERROR));
+    }
+
+    public function testExchangeLogsMissingStorageTokenWithoutLoggingResolverResponse(): void
+    {
+        $resolverClient = $this->createMock(ManageApiClient::class);
+        $resolverClient
+            ->expects(self::once())
+            ->method('resolveStorageToken')
+            ->willReturn(['storageToken' => '', 'leaked' => 'super-secret-storage-token']);
+
+        $loggedContext = null;
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger
+            ->expects(self::once())
+            ->method('warning')
+            ->willReturnCallback(function (string $message, array $context) use (&$loggedContext): void {
+                $loggedContext = $context;
+            });
+
+        $request = Request::create('https://keboola.com');
+        $request->headers->set('Authorization', 'Bearer ' . self::SUBJECT_TOKEN);
+        $request->headers->set(self::PROJECT_ID_HEADER, '123');
+
+        $authenticator = new StorageApiTokenAuthenticator(
+            $this->createMock(StorageApiTokenFactory::class),
+            $resolverClient,
+            $logger,
+        );
+
+        $exception = $this->captureAuthException(
+            fn() => $authenticator->authenticateToken(new StorageApiTokenAuth(), self::SUBJECT_TOKEN, $request),
+        );
+
+        self::assertSame(502, $exception->getCode());
+        self::assertSame(['projectId' => 123], $loggedContext);
+        // The raw resolver response (which may carry a storageToken value) must not be logged.
+        self::assertStringNotContainsString(
+            'super-secret-storage-token',
+            json_encode($loggedContext, JSON_THROW_ON_ERROR),
+        );
+    }
+
+    public function testExchangeDoesNotLogWarningForClientFaultStatuses(): void
+    {
+        $resolverClient = $this->createMock(ManageApiClient::class);
+        $resolverClient
+            ->expects(self::once())
+            ->method('resolveStorageToken')
+            ->willThrowException(new ManageApiClientException('unauthorized', 401));
+
+        // 401/403/400 are client faults, not our-side incidents, so they must not raise a warning.
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger
+            ->expects(self::never())
+            ->method('warning');
+
+        $request = Request::create('https://keboola.com');
+        $request->headers->set('Authorization', 'Bearer ' . self::SUBJECT_TOKEN);
+        $request->headers->set(self::PROJECT_ID_HEADER, '123');
+
+        $authenticator = new StorageApiTokenAuthenticator(
+            $this->createMock(StorageApiTokenFactory::class),
+            $resolverClient,
+            $logger,
+        );
+
+        $exception = $this->captureAuthException(
+            fn() => $authenticator->authenticateToken(new StorageApiTokenAuth(), self::SUBJECT_TOKEN, $request),
+        );
+
+        self::assertSame(401, $exception->getCode());
     }
 
     // ---------------------------------------------------------------------------

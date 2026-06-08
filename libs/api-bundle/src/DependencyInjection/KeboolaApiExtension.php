@@ -16,6 +16,7 @@ use Keboola\ServiceClient\ServiceDnsType;
 use Keboola\StorageApiBranch\Factory\StorageClientRequestFactory;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\DependencyInjection\Loader\PhpFileLoader;
 use Symfony\Component\DependencyInjection\Reference;
 use Symfony\Component\HttpKernel\DependencyInjection\Extension;
@@ -89,6 +90,7 @@ class KeboolaApiExtension extends Extension
         $container->register(StorageApiTokenAuthenticator::class)
             ->setArgument('$tokenFactory', new Reference(StorageApiTokenFactory::class))
             ->setArgument('$resolverClient', new Reference(self::STORAGE_TOKEN_RESOLVER_CLIENT_ID))
+            ->setArgument('$logger', new Reference('logger', ContainerInterface::NULL_ON_INVALID_REFERENCE))
         ;
         $authenticators[StorageApiTokenAuth::class] = new Reference(StorageApiTokenAuthenticator::class);
     }

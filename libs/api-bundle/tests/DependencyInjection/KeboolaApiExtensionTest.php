@@ -4,8 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\ApiBundle\Tests\DependencyInjection;
 
-use Keboola\ApiBundle\AuthBridge\AuthBridgeStorageTokenResolver;
-use Keboola\ApiBundle\AuthBridge\KubernetesServiceAccountTokenProvider;
+use Keboola\ApiBundle\AuthBridge\ManageApiStorageTokenResolver;
 use Keboola\ApiBundle\AuthBridge\StorageTokenResolverInterface;
 use Keboola\ApiBundle\DependencyInjection\KeboolaApiExtension;
 use Keboola\ApiBundle\Security\ConnectionToken\ConnectionTokenAuthenticator;
@@ -48,10 +47,6 @@ class KeboolaApiExtensionTest extends TestCase
             'StorageApiTokenFactory must be registered',
         );
         self::assertTrue(
-            $container->hasDefinition(KubernetesServiceAccountTokenProvider::class),
-            'KubernetesServiceAccountTokenProvider must be registered',
-        );
-        self::assertTrue(
             $container->hasDefinition(StorageTokenResolverInterface::class),
             'StorageTokenResolverInterface must be registered',
         );
@@ -73,13 +68,13 @@ class KeboolaApiExtensionTest extends TestCase
     // Resolver implementation class
     // -------------------------------------------------------------------------
 
-    public function testStorageTokenResolverDefinitionUsesAuthBridgeImplementation(): void
+    public function testStorageTokenResolverDefinitionUsesManageApiImplementation(): void
     {
         $container = $this->buildContainer([[]]);
 
         $definition = $container->getDefinition(StorageTokenResolverInterface::class);
 
-        self::assertSame(AuthBridgeStorageTokenResolver::class, $definition->getClass());
+        self::assertSame(ManageApiStorageTokenResolver::class, $definition->getClass());
     }
 
     // -------------------------------------------------------------------------
@@ -103,16 +98,16 @@ class KeboolaApiExtensionTest extends TestCase
         );
     }
 
-    public function testKubernetesServiceAccountTokenProviderDefaultTokenPath(): void
+    public function testStorageTokenResolverDefaultServiceAccountTokenPath(): void
     {
         $container = $this->buildContainer([[]]);
 
-        $definition = $container->getDefinition(KubernetesServiceAccountTokenProvider::class);
+        $definition = $container->getDefinition(StorageTokenResolverInterface::class);
 
         self::assertSame(
             '/var/run/secrets/connection.keboola.com/serviceaccount/token',
-            $definition->getArgument('$tokenPath'),
-            '$tokenPath must match the default SA token mount path',
+            $definition->getArgument('$serviceAccountTokenPath'),
+            '$serviceAccountTokenPath must match the default SA token mount path',
         );
     }
 
@@ -155,14 +150,12 @@ class KeboolaApiExtensionTest extends TestCase
             '$projectIdHeader must reflect configured value',
         );
 
-        $providerDef = $container->getDefinition(KubernetesServiceAccountTokenProvider::class);
+        $resolverDef = $container->getDefinition(StorageTokenResolverInterface::class);
         self::assertSame(
             '/custom/token',
-            $providerDef->getArgument('$tokenPath'),
-            '$tokenPath must reflect configured path',
+            $resolverDef->getArgument('$serviceAccountTokenPath'),
+            '$serviceAccountTokenPath must reflect configured path',
         );
-
-        $resolverDef = $container->getDefinition(StorageTokenResolverInterface::class);
         self::assertSame(
             ServiceDnsType::PUBLIC,
             $resolverDef->getArgument('$connectionDnsType'),

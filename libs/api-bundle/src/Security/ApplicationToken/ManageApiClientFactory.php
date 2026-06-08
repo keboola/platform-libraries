@@ -6,6 +6,7 @@ namespace Keboola\ApiBundle\Security\ApplicationToken;
 
 use Keboola\ManageApi\Client as ManageApiClient;
 use Keboola\ServiceClient\ServiceClient;
+use Keboola\ServiceClient\ServiceDnsType;
 
 class ManageApiClientFactory
 {
@@ -29,6 +30,23 @@ class ManageApiClientFactory
         return new ManageApiClient([
             'url' => $this->serviceClient->getConnectionServiceUrl(),
             'jwtToken' => $jwt,
+            'userAgent' => $this->appName,
+        ]);
+    }
+
+    /**
+     * Builds a client that authenticates with the service's projected Kubernetes ServiceAccount
+     * JWT read from $tokenPath. The token file is re-read by the client on every request, so
+     * kubelet-rotated tokens are picked up automatically. Used for internal service-to-service
+     * calls (e.g. the auth-bridge storage token resolver), hence the internal DNS default.
+     */
+    public function getClientForServiceAccountTokenPath(
+        string $tokenPath,
+        ServiceDnsType $dnsType = ServiceDnsType::INTERNAL,
+    ): ManageApiClient {
+        return new ManageApiClient([
+            'url' => $this->serviceClient->getConnectionServiceUrl($dnsType),
+            'kubernetesTokenPath' => $tokenPath,
             'userAgent' => $this->appName,
         ]);
     }

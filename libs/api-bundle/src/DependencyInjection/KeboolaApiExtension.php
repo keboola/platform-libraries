@@ -7,8 +7,7 @@ namespace Keboola\ApiBundle\DependencyInjection;
 use Keboola\ApiBundle\Attribute\ApplicationTokenAuth;
 use Keboola\ApiBundle\Attribute\ConnectionTokenAuth;
 use Keboola\ApiBundle\Attribute\StorageApiTokenAuth;
-use Keboola\ApiBundle\AuthBridge\AuthBridgeStorageTokenResolver;
-use Keboola\ApiBundle\AuthBridge\KubernetesServiceAccountTokenProvider;
+use Keboola\ApiBundle\AuthBridge\ManageApiStorageTokenResolver;
 use Keboola\ApiBundle\AuthBridge\StorageTokenResolverInterface;
 use Keboola\ApiBundle\Security\ApplicationToken\ApplicationTokenAuthenticator;
 use Keboola\ApiBundle\Security\ApplicationToken\ManageApiClientFactory;
@@ -16,7 +15,6 @@ use Keboola\ApiBundle\Security\ConnectionToken\ConnectionTokenAuthenticator;
 use Keboola\ApiBundle\Security\StorageApiToken\StorageApiTokenAuthenticator;
 use Keboola\ApiBundle\Security\StorageApiToken\StorageApiTokenExchange;
 use Keboola\ApiBundle\Security\StorageApiToken\StorageApiTokenFactory;
-use Keboola\ManageApi\Client as ManageApiClient;
 use Keboola\ServiceClient\ServiceClient;
 use Keboola\ServiceClient\ServiceDnsType;
 use Keboola\StorageApiBranch\Factory\StorageClientRequestFactory;
@@ -42,9 +40,15 @@ class KeboolaApiExtension extends Extension
         assert(is_string($defaultServiceDnsType) || $defaultServiceDnsType instanceof ServiceDnsType);
         $container->setParameter('keboola_api_bundle.default_service_dns_type', $defaultServiceDnsType);
 
+        // Shared by #[ApplicationTokenAuth] and by the Storage token exchange resolver.
+        $container->register(ManageApiClientFactory::class)
+            ->setArgument('$appName', $config['app_name'])
+            ->setArgument('$serviceClient', new Reference(ServiceClient::class))
+        ;
+
         $authenticators = [];
         $this->setupStorageApiAuthenticator($container, $config, $authenticators);
-        $this->setupApplicationTokenAuthenticator($container, $config, $authenticators);
+        $this->setupApplicationTokenAuthenticator($container, $authenticators);
 
         $container->getDefinition('keboola.api_bundle.security.authenticators_locator')
             ->setArguments([
@@ -72,15 +76,10 @@ class KeboolaApiExtension extends Extension
             ->setArgument('$clientRequestFactory', new Reference(StorageClientRequestFactory::class))
         ;
 
-        $container->register(KubernetesServiceAccountTokenProvider::class)
-            ->setArgument('$tokenPath', $exchangeConfig['service_account_token_path'])
-        ;
-
-        $container->register(StorageTokenResolverInterface::class, AuthBridgeStorageTokenResolver::class)
-            ->setArgument('$serviceClient', new Reference(ServiceClient::class))
-            ->setArgument('$serviceAccountTokenProvider', new Reference(KubernetesServiceAccountTokenProvider::class))
+        $container->register(StorageTokenResolverInterface::class, ManageApiStorageTokenResolver::class)
+            ->setArgument('$clientFactory', new Reference(ManageApiClientFactory::class))
+            ->setArgument('$serviceAccountTokenPath', $exchangeConfig['service_account_token_path'])
             ->setArgument('$connectionDnsType', ServiceDnsType::from($connectionDnsType))
-            ->setArgument('$userAgent', $config['app_name'])
         ;
 
         $container->register(StorageApiTokenExchange::class)
@@ -105,18 +104,8 @@ class KeboolaApiExtension extends Extension
 
     private function setupApplicationTokenAuthenticator(
         ContainerBuilder $container,
-        array $config,
         array &$authenticators,
     ): void {
-        if (!class_exists(ManageApiClient::class)) {
-            return;
-        }
-
-        $container->register(ManageApiClientFactory::class)
-            ->setArgument('$appName', $config['app_name'])
-            ->setArgument('$serviceClient', new Reference(ServiceClient::class))
-        ;
-
         $container->register(ApplicationTokenAuthenticator::class)
             ->setArgument('$manageApiClientFactory', new Reference(ManageApiClientFactory::class))
         ;

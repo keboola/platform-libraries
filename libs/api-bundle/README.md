@@ -115,9 +115,10 @@ the request carries.
 
 The bundle can accept the new Connection programmatic bearer tokens (`kbc_at_*` access tokens and
 `kbc_pat_*` personal access tokens) on endpoints that require a Storage token. It exchanges them for
-a legacy Storage token by calling Connection's internal resolver endpoint, authenticating with the
-service's own projected Kubernetes ServiceAccount JWT. The result is a normal `StorageApiToken`, so
-controllers and `#[CurrentUser] StorageApiToken` keep working unchanged.
+a legacy Storage token via the Manage API client's `Client::resolveStorageToken()` (which calls
+Connection's internal resolver endpoint), authenticating with the service's own projected Kubernetes
+ServiceAccount JWT. The result is a normal `StorageApiToken`, so controllers and
+`#[CurrentUser] StorageApiToken` keep working unchanged.
 
 Callers send `Authorization: Bearer kbc_at_…`/`kbc_pat_…` together with an `X-KBC-ProjectId` header
 (the new tokens are not project-scoped on their own).
@@ -150,7 +151,10 @@ contract, error mapping, and infrastructure prerequisites.
 
 To use individual authentication attributes, you need to install appropriate client package:
 * to use `StorageApiTokenAuth`, install `keboola/storage-api-client`
-* to use `ApplicationTokenAuth`, install `keboola/kbc-manage-api-php-client`
+
+`ApplicationTokenAuth`, `ConnectionTokenAuth` and the transparent Storage token exchange
+(`storage_token_exchange`) rely on `keboola/kbc-manage-api-php-client`, which the bundle requires
+directly, so no extra installation is needed.
 
 > [!NOTE]
 > If you forget to install appropriate client, you will get exception like

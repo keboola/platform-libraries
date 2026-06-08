@@ -15,12 +15,13 @@ that point on the request is handled exactly as if the caller had sent the legac
 token, so existing controllers (`#[StorageApiTokenAuth]`, `#[CurrentUser] StorageApiToken`)
 keep working unchanged.
 
-> **Temporary location.** The resolver HTTP client lives inside `api-bundle` for now as a
-> working demonstration. Its natural home is the Manage API client
-> (`keboola/kbc-manage-api-php-client`) as a `ManageApiClient::resolveStorageToken()` method,
-> because the endpoint is a `/manage/...` route authenticated by a synthetic Manage token.
-> The client is hidden behind `StorageTokenResolverInterface` so the move is a one-line swap
-> of the wired implementation. See [Follow-up](#follow-up).
+> **Resolver location.** The resolver HTTP call lives in the Manage API client
+> (`keboola/kbc-manage-api-php-client` `^v10.2`) as `Client::resolveStorageToken()`, because the
+> endpoint is a `/manage/...` route authenticated by the service's Kubernetes ServiceAccount JWT.
+> `api-bundle` wraps it in `ManageApiStorageTokenResolver` behind `StorageTokenResolverInterface`,
+> which adds the typed-exception mapping the authenticators rely on. The Manage API client is a
+> direct dependency of the bundle, so the exchange (transparent mode and `#[ConnectionTokenAuth]`)
+> is always available.
 
 ## Connection resolver contract
 
@@ -69,8 +70,9 @@ Manage token holding the scope `internal:auth-bridge:resolve-storage-token`.
 ```
 Client ──Authorization: Bearer kbc_at_*, X-KBC-ProjectId: 123──► Service (api-bundle)
                                                                     │
-  AuthBridgeStorageTokenResolver:                                   │
-    read SA JWT from /var/run/secrets/.../token (re-read per call)  │
+  ManageApiStorageTokenResolver → Client::resolveStorageToken():    │
+    Manage API client reads SA JWT from                             │
+    /var/run/secrets/.../token (re-read per call)                   │
     POST {connection}/manage/internal/auth-bridge/                  ▼
          resolve-storage-token                              Connection
     X-Kubernetes-Authorization: Bearer <SA JWT>                     │ validate subject token,
@@ -193,16 +195,20 @@ later without touching the authenticators, per the RFC guidance.
 
 ## Components
 
-`Keboola\ApiBundle\AuthBridge` (the part intended to move to the Manage API client):
+`Keboola\ApiBundle\AuthBridge`:
 
 | Class | Responsibility |
 | --- | --- |
 | `StorageTokenResolverInterface` | `resolve(int $projectId, string $subjectToken): ResolvedStorageToken`. Stable seam. |
-| `AuthBridgeStorageTokenResolver` | Guzzle implementation calling the Connection resolver endpoint. |
-| `KubernetesServiceAccountTokenProvider` | Reads the projected SA token file per call. |
+| `ManageApiStorageTokenResolver` | Wraps the Manage API client's `Client::resolveStorageToken()` and maps its `ClientException` status codes to the typed resolver exceptions. |
 | `ResolvedStorageToken` | Immutable resolver response DTO. |
 | `ProgrammaticToken` | `kbc_at_` / `kbc_pat_` prefix detection. |
 | `Exception\*` | Typed resolver failures (`Unauthorized`, `ProjectAccessDenied`, `InvalidRequest`, `Unavailable`). |
+
+The projected ServiceAccount JWT is read by the Manage API client's
+`KubernetesServiceAccountTokenAuthenticationStrategy` (configured via the `kubernetesTokenPath`
+option in `ManageApiClientFactory::getClientForServiceAccountTokenPath()`), re-read on every request
+so kubelet-rotated tokens are picked up.
 
 `Keboola\ApiBundle\Security`:
 
@@ -228,10 +234,8 @@ These live outside `api-bundle` but are required for the exchange to work:
 
 ## Follow-up
 
-- Move the resolver into `keboola/kbc-manage-api-php-client` as
-  `ManageApiClient::resolveStorageToken()` and wire that implementation behind
-  `StorageTokenResolverInterface`; delete `AuthBridgeStorageTokenResolver` from `api-bundle`.
-- Optionally add the short-lived resolver cache described above.
+- Optionally add the short-lived resolver cache described above (`StorageTokenResolverInterface`
+  is the seam where it would be wired).
 
 ## Testing
 

@@ -16,6 +16,7 @@ class KeboolaServiceAccountAuthenticatorTest extends TestCase
         $path = (string) tempnam(sys_get_temp_dir(), 'sa-token-');
         file_put_contents($path, "the-token\n");
         try {
+            /** @phpstan-ignore-next-line argument.type — tempnam returns string, not non-empty-string */
             $authenticator = new KeboolaServiceAccountAuthenticator($path);
             $request = $authenticator(new Request('GET', 'https://example.test'));
             self::assertSame('Bearer the-token', $request->getHeaderLine('X-Kubernetes-Authorization'));
@@ -29,6 +30,7 @@ class KeboolaServiceAccountAuthenticatorTest extends TestCase
         $path = (string) tempnam(sys_get_temp_dir(), 'sa-token-');
         file_put_contents($path, "first\n");
         try {
+            /** @phpstan-ignore-next-line argument.type — tempnam returns string, not non-empty-string */
             $authenticator = new KeboolaServiceAccountAuthenticator($path);
             $first = $authenticator(new Request('GET', 'https://example.test'));
             self::assertSame('Bearer first', $first->getHeaderLine('X-Kubernetes-Authorization'));
@@ -54,6 +56,7 @@ class KeboolaServiceAccountAuthenticatorTest extends TestCase
         $path = (string) tempnam(sys_get_temp_dir(), 'sa-token-');
         file_put_contents($path, "   \n");
         try {
+            /** @phpstan-ignore-next-line argument.type — tempnam returns string, not non-empty-string */
             $authenticator = new KeboolaServiceAccountAuthenticator($path);
             $this->expectException(RuntimeException::class);
             $this->expectExceptionMessage('is empty');

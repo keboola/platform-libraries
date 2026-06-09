@@ -6,11 +6,10 @@ namespace Keboola\ApiClientBase;
 
 use Closure;
 use GuzzleHttp\HandlerStack;
-use Keboola\ApiClientBase\Auth\RequestAuthenticatorInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 
-class ApiClientConfiguration
+class ApiClientOptions
 {
     /**
      * @param int<0, max> $backoffMaxTries
@@ -19,7 +18,6 @@ class ApiClientConfiguration
      *   Maps a (responseBody, statusCode) to an error message, or null to fall back to the default.
      */
     public function __construct(
-        public readonly ?RequestAuthenticatorInterface $authenticator = null,
         public readonly string $userAgent = 'Keboola PHP API Client',
         public readonly int $backoffMaxTries = 5,
         public readonly array $retryableStatusCodes = [],

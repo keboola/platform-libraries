@@ -118,6 +118,7 @@ stages:
                 configurationVariablesResolver:libs/configuration-variables-resolver \
                 doctrineRetryBundle:libs/doctrine-retry-bundle \
                 gitServiceApiClient:libs/git-service-api-client \
+                phpApiClientBase:libs/php-api-client-base \
                 inputMapping:libs/input-mapping \
                 k8sClient:libs/k8s-client \
                 keyGenerator:libs/key-generator \
@@ -190,6 +191,14 @@ stages:
     condition: and(succeeded(), dependencies.build.outputs['checkChanges.findChanges.changedProjects_gitServiceApiClient'])
     jobs:
       - template: libs/git-service-api-client/azure-pipelines.tests.yml
+
+  - stage: tests_phpApiClientBase
+    displayName: Tests - PHP API Client Base
+    lockBehavior: sequential
+    dependsOn: build
+    condition: and(succeeded(), dependencies.build.outputs['checkChanges.findChanges.changedProjects_phpApiClientBase'])
+    jobs:
+      - template: libs/php-api-client-base/azure-pipelines.tests.yml
 
   - stage: tests_inputMapping
     displayName: Tests - Input Mapping
@@ -336,6 +345,7 @@ stages:
       - tests_configurationVariablesResolver
       - tests_doctrineRetryBundle
       - tests_gitServiceApiClient
+      - tests_phpApiClientBase
       - tests_inputMapping
       - tests_k8sClient
       - tests_keyGenerator
@@ -360,6 +370,7 @@ stages:
         in(dependencies.tests_configurationVariablesResolver.result, 'Succeeded', 'Skipped'),
         in(dependencies.tests_doctrineRetryBundle.result, 'Succeeded', 'Skipped'),
         in(dependencies.tests_gitServiceApiClient.result, 'Succeeded', 'Skipped'),
+        in(dependencies.tests_phpApiClientBase.result, 'Succeeded', 'Skipped'),
         in(dependencies.tests_inputMapping.result, 'Succeeded', 'Skipped'),
         in(dependencies.tests_k8sClient.result, 'Succeeded', 'Skipped'),
         in(dependencies.tests_keyGenerator.result, 'Succeeded', 'Skipped'),

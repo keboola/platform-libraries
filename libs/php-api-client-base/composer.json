@@ -1,0 +1,56 @@
+{
+    "name": "keboola/php-api-client-base",
+    "type": "library",
+    "license": "MIT",
+    "description": "Shared base for Keboola service API clients (transport, auth, retry)",
+    "authors": [
+        {
+            "name": "Keboola",
+            "email": "devel@keboola.com"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "Keboola\\ApiClientBase\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Keboola\\ApiClientBase\\Tests\\": "tests/"
+        }
+    },
+    "require": {
+        "php": "^8.2",
+        "guzzlehttp/guzzle": "^7.8",
+        "psr/http-message": "^1.0|^2.0",
+        "psr/log": "^1.0|^2.0|^3.0",
+        "webmozart/assert": "^1.11"
+    },
+    "require-dev": {
+        "keboola/coding-standard": "^15.0",
+        "phpstan/phpstan": "^1.10",
+        "phpstan/phpstan-phpunit": "^1.3",
+        "phpstan/phpstan-webmozart-assert": "^1.2",
+        "phpunit/phpunit": "^9.6",
+        "sempro/phpunit-pretty-print": "^1.4"
+    },
+    "config": {
+        "lock": false,
+        "sort-packages": true,
+        "allow-plugins": {
+            "dealerdirect/phpcodesniffer-composer-installer": true
+        }
+    },
+    "scripts": {
+        "ci": [
+            "@composer validate --no-check-publish --no-check-all",
+            "@phpcs",
+            "@phpstan",
+            "@phpunit"
+        ],
+        "phpcs": "phpcs -n --ignore=vendor,cache --extensions=php .",
+        "phpcbf": "phpcbf --extensions=php src tests",
+        "phpstan": "phpstan analyse --no-progress -c phpstan.neon",
+        "phpunit": "phpunit"
+    }
+}

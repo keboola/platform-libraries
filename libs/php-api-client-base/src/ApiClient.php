@@ -28,8 +28,8 @@ class ApiClient
      * @param non-empty-string|null $baseUrl
      */
     public function __construct(
-        ?string $baseUrl = null,
-        ?RequestAuthenticatorInterface $authenticator = null,
+        ?string $baseUrl,
+        RequestAuthenticatorInterface $authenticator,
         ?ApiClientOptions $options = null,
     ) {
         $options ??= new ApiClientOptions();
@@ -52,9 +52,7 @@ class ApiClient
             )));
         }
 
-        if ($authenticator !== null) {
-            $stack->push(Middleware::mapRequest($authenticator));
-        }
+        $stack->push(Middleware::mapRequest($authenticator));
 
         $stack->push(Middleware::log(
             $options->logger,

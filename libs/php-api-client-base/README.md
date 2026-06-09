@@ -19,14 +19,17 @@ composer require keboola/php-api-client-base
 ## What it provides
 
 - `ApiClient` — Guzzle wrapper with per-request auth, retry, logging, and
-  response-to-model mapping.
+  response-to-model mapping. Constructed as
+  `new ApiClient($baseUrl, $authenticator, $options)` — the authenticator is
+  **required**; pass `new NoAuthAuthenticator()` for unauthenticated clients.
 - `ApiClientOptions` — retries, timeouts, logger, error resolver (no auth — the
   authenticator is a first-class `ApiClient` constructor argument).
 - `Auth\RequestAuthenticatorInterface` + ready authenticators for the Keboola
   auth schemes: `StorageApiTokenAuthenticator` (`X-StorageApi-Token`),
   `ManageApiTokenAuthenticator` (`X-KBC-ManageApiToken`),
   `KeboolaServiceAccountAuthenticator` (projected SA token →
-  `X-Kubernetes-Authorization`).
+  `X-Kubernetes-Authorization`), `NoAuthAuthenticator` (explicit no-op for
+  unauthenticated calls).
 - `RetryDecider`, `Json`, `ResponseModelInterface`, `Exception\ClientException`.
 
 ## Building a Keboola service client

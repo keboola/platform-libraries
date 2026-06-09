@@ -99,14 +99,16 @@ class ApiClientTest extends TestCase
     public function testUsesCustomErrorMessageResolver(): void
     {
         $mock = new MockHandler([new Response(409, [], '{"code":"CONFLICT","error":"already exists"}')]);
-        $client = new ApiClient('https://example.test', new NoAuthAuthenticator(), new ApiClientOptions(
-            requestHandler: HandlerStack::create($mock),
+        $client = new ApiClient(
+            'https://example.test',
+            new NoAuthAuthenticator(),
+            new ApiClientOptions(requestHandler: HandlerStack::create($mock)),
             errorMessageResolver: static function (string $body): string {
                 /** @var array{code?: string, error?: string} $data */
                 $data = json_decode($body, true);
                 return ($data['code'] ?? '') . ': ' . ($data['error'] ?? '');
             },
-        ));
+        );
         $this->expectException(ClientException::class);
         $this->expectExceptionMessage('CONFLICT: already exists');
         $client->sendRequest(new Request('GET', 'foo'));
@@ -153,11 +155,12 @@ class ApiClientTest extends TestCase
     public function testRetriesConfiguredStatusCodeThroughClient(): void
     {
         $mock = new MockHandler([new Response(429), new Response(200, [], '{}')]);
-        $client = new ApiClient('https://example.test', new NoAuthAuthenticator(), new ApiClientOptions(
-            backoffMaxTries: 2,
+        $client = new ApiClient(
+            'https://example.test',
+            new NoAuthAuthenticator(),
+            new ApiClientOptions(backoffMaxTries: 2, requestHandler: HandlerStack::create($mock)),
             retryableStatusCodes: [429],
-            requestHandler: HandlerStack::create($mock),
-        ));
+        );
         $client->sendRequest(new Request('GET', 'foo'));
         self::assertSame(0, $mock->count());
     }

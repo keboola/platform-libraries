@@ -20,10 +20,14 @@ composer require keboola/php-api-client-base
 
 - `ApiClient` — Guzzle wrapper with per-request auth, retry, logging, and
   response-to-model mapping. Constructed as
-  `new ApiClient($baseUrl, $authenticator, $options)` — the authenticator is
-  **required**; pass `new NoAuthAuthenticator()` for unauthenticated clients.
-- `ApiClientOptions` — retries, timeouts, logger, error resolver (no auth — the
-  authenticator is a first-class `ApiClient` constructor argument).
+  `new ApiClient($baseUrl, $authenticator, $options, errorMessageResolver: ..., retryableStatusCodes: [...])`.
+  The authenticator is **required**; pass `new NoAuthAuthenticator()` for
+  unauthenticated clients. `errorMessageResolver` and `retryableStatusCodes` are
+  `ApiClient` constructor arguments supplied by the service facade (they describe
+  the service's API contract, not caller preferences).
+- `ApiClientOptions` — retries, timeouts, logger (no auth, no error resolver — the
+  authenticator is a first-class `ApiClient` constructor argument; the error
+  resolver and retryable codes are also `ApiClient` constructor arguments).
 - `Auth\RequestAuthenticatorInterface` + ready authenticators for the Keboola
   auth schemes: `StorageApiTokenAuthenticator` (`X-StorageApi-Token`),
   `ManageApiTokenAuthenticator` (`X-KBC-ManageApiToken`),
@@ -64,7 +68,17 @@ final class MyServiceClient
         StorageApiTokenAuthenticator $authenticator,
         ?ApiClientOptions $options = null,
     ) {
-        $this->apiClient = new ApiClient($baseUrl, $authenticator, $options);
+        $this->apiClient = new ApiClient(
+            $baseUrl,
+            $authenticator,
+            $options,
+            errorMessageResolver: static function (string $body, int $statusCode): ?string {
+                /** @var array{error?: string} $data */
+                $data = json_decode($body, true) ?? [];
+                return $data['error'] ?? null;
+            },
+            retryableStatusCodes: [429],
+        );
     }
 
     public function createWidget(string $name): WidgetModel

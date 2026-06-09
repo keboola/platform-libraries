@@ -26,14 +26,19 @@ class ApiClient
 
     /**
      * @param non-empty-string|null $baseUrl
+     * @param list<int> $retryableStatusCodes Non-5xx status codes to also retry (e.g. [429]).
+     * @param (Closure(string, int): ?string)|null $errorMessageResolver
+     *   Maps a (responseBody, statusCode) to an error message, or null to fall back to the default.
      */
     public function __construct(
         ?string $baseUrl,
         RequestAuthenticatorInterface $authenticator,
         ?ApiClientOptions $options = null,
+        ?Closure $errorMessageResolver = null,
+        array $retryableStatusCodes = [],
     ) {
         $options ??= new ApiClientOptions();
-        $this->errorMessageResolver = $options->errorMessageResolver;
+        $this->errorMessageResolver = $errorMessageResolver;
 
         $stack = $options->requestHandler instanceof HandlerStack
             ? $options->requestHandler
@@ -48,7 +53,7 @@ class ApiClient
             $stack->push(Middleware::retry(new RetryDecider(
                 $options->backoffMaxTries,
                 $options->logger,
-                $options->retryableStatusCodes,
+                $retryableStatusCodes,
             )));
         }
 

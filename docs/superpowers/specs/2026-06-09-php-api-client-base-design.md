@@ -121,14 +121,19 @@ Builds a single Guzzle client. `baseUrl` is normalized with a trailing slash whe
 it is nullable to accommodate azure (which constructs without a base URI and uses absolute
 request URIs).
 
-Handler stack pushed in git-service's proven order — **auth → retry → log** — so a retried
-request re-runs the auth decorator (rotating SA tokens / per-request token resolution keep
-working):
+Handler-stack push order is **retry → auth → log**. Guzzle resolves the stack so the
+first-pushed middleware is *outermost*; pushing retry first puts auth *inside* the retry loop,
+so the auth decorator re-executes on **every attempt** (rotating SA tokens / per-request token
+resolution keep working on retries — verified by a regression test):
 
-1. `Middleware::mapRequest($configuration->authenticator)` when an authenticator is set.
-2. `Middleware::retry(new RetryDecider($backoffMaxTries, $logger, $retryableStatusCodes))`
-   when `backoffMaxTries > 0`.
-3. `Middleware::log($logger, new MessageFormatter(...))`.
+1. `Middleware::retry(new RetryDecider($backoffMaxTries, $logger, $retryableStatusCodes))`
+   when `backoffMaxTries > 0` — outermost of the three.
+2. `Middleware::mapRequest($configuration->authenticator)` when an authenticator is set —
+   re-runs on every attempt.
+3. `Middleware::log($logger, new MessageFormatter(...))` — innermost.
+
+> This corrects git-service's original order (auth outside retry, so it ran only once). The
+> base deliberately re-authenticates per attempt.
 
 Guzzle client options: `base_uri` (normalized), `handler` (the stack), `headers` =
 `['User-Agent' => $configuration->userAgent]`, `connect_timeout`, `timeout`.

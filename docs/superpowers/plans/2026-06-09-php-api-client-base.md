@@ -12,6 +12,28 @@
 
 ---
 
+## Corrections applied during execution (PR 1 — the base lib is built & green)
+
+PR 1 was implemented; three deltas vs. the tasks below were discovered and applied (code is the source of truth):
+
+1. **`phpcs.xml` was missing from Task 1.** Without it, phpcs falls back to a default standard that demands doc comments and fails. Task 1 must also create `libs/php-api-client-base/phpcs.xml` selecting the Keboola standard (mirrors git-service), with the three `SlevomatCodingStandard.TypeHints.*` sniffs excluded:
+   ```xml
+   <?xml version="1.0"?>
+   <ruleset name="Project">
+       <rule ref="vendor/keboola/coding-standard/src/ruleset.xml">
+           <exclude name="SlevomatCodingStandard.TypeHints.ParameterTypeHint"/>
+           <exclude name="SlevomatCodingStandard.TypeHints.PropertyTypeHint"/>
+           <exclude name="SlevomatCodingStandard.TypeHints.ReturnTypeHint"/>
+       </rule>
+   </ruleset>
+   ```
+2. **Middleware push order in Task 11 is `retry → auth → log`, not `auth → retry → log`.** Guzzle resolves first-pushed as outermost; auth must be pushed *after* retry so it sits *inside* the retry loop and re-executes per attempt (the spec's re-auth-on-retry guarantee). A regression test asserts the authenticator is invoked once per attempt. Two more tests were added (retries-exhausted → `ClientException` code 500; configured 429 retried through the client), and `RetryDecider` no longer treats a transport error's `getCode()` as an HTTP status (code derived from `$response` only).
+3. **Task 14 split-publishing was deferred.** The lib is registered for **testing** (a per-lib `tests_phpApiClientBase` stage in the root `azure-pipelines.yml`, mirroring git-service, plus `libs/php-api-client-base/azure-pipelines.tests.yml`). The **split-publishing** job + `resources.repository` were intentionally NOT added: they reference a `keboola/php-api-client-base` GitHub repo + Azure endpoint that must be created first, and an unresolvable repository resource can break the monorepo pipeline's compile. Follow-up: create the read-only repo + endpoint, then add the `split-library` job under `publishLibraries` and the repository resource (mirror git-service).
+
+Run all tooling in Docker (host has no PHP/Composer): `docker compose run --rm --no-deps dev82 bash -c 'cd libs/php-api-client-base && composer ci'`.
+
+---
+
 ## PR / branch structure
 
 All work is in the `platform-libraries` monorepo. PRs are stacked:

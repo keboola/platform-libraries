@@ -11,9 +11,11 @@ use GuzzleHttp\Psr7\Response;
 use Keboola\ApiClientBase\ApiClient;
 use Keboola\ApiClientBase\ApiClientConfiguration;
 use Keboola\ApiClientBase\Auth\ManageApiTokenAuthenticator;
+use Keboola\ApiClientBase\Auth\RequestAuthenticatorInterface;
 use Keboola\ApiClientBase\Exception\ClientException;
 use Keboola\ApiClientBase\Tests\Fixtures\DummyModel;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Message\RequestInterface;
 
 class ApiClientTest extends TestCase
 {
@@ -106,5 +108,55 @@ class ApiClientTest extends TestCase
         $this->expectException(ClientException::class);
         $this->expectExceptionMessage('CONFLICT: already exists');
         $client->sendRequest(new Request('GET', 'foo'));
+    }
+
+    public function testReExecutesAuthenticatorOnEachRetryAttempt(): void
+    {
+        $authenticator = new class implements RequestAuthenticatorInterface {
+            public int $calls = 0;
+
+            public function __invoke(RequestInterface $request): RequestInterface
+            {
+                $this->calls++;
+                return $request->withHeader('X-Attempt', 'call-' . $this->calls);
+            }
+        };
+
+        $mock = new MockHandler([new Response(500), new Response(200, [], '{}')]);
+        $client = new ApiClient('https://example.test', new ApiClientConfiguration(
+            authenticator: $authenticator,
+            backoffMaxTries: 2,
+            requestHandler: HandlerStack::create($mock),
+        ));
+        $client->sendRequest(new Request('GET', 'foo'));
+
+        self::assertSame(2, $authenticator->calls);
+        $last = $mock->getLastRequest();
+        self::assertNotNull($last);
+        self::assertSame('call-2', $last->getHeaderLine('X-Attempt'));
+    }
+
+    public function testThrowsClientExceptionAfterRetriesExhausted(): void
+    {
+        $mock = new MockHandler([new Response(500), new Response(500)]);
+        $client = new ApiClient('https://example.test', new ApiClientConfiguration(
+            backoffMaxTries: 1,
+            requestHandler: HandlerStack::create($mock),
+        ));
+        $this->expectException(ClientException::class);
+        $this->expectExceptionCode(500);
+        $client->sendRequest(new Request('GET', 'foo'));
+    }
+
+    public function testRetriesConfiguredStatusCodeThroughClient(): void
+    {
+        $mock = new MockHandler([new Response(429), new Response(200, [], '{}')]);
+        $client = new ApiClient('https://example.test', new ApiClientConfiguration(
+            backoffMaxTries: 2,
+            retryableStatusCodes: [429],
+            requestHandler: HandlerStack::create($mock),
+        ));
+        $client->sendRequest(new Request('GET', 'foo'));
+        self::assertSame(0, $mock->count());
     }
 }

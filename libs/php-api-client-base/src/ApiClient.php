@@ -37,16 +37,21 @@ class ApiClient
             ? $configuration->requestHandler
             : HandlerStack::create($configuration->requestHandler);
 
-        if ($configuration->authenticator !== null) {
-            $stack->push(Middleware::mapRequest($configuration->authenticator));
-        }
-
+        // Push order matters: Guzzle resolves the stack so the FIRST-pushed
+        // middleware is OUTERMOST. Push retry before auth so auth sits INSIDE
+        // the retry loop and re-executes on every attempt — this lets
+        // file-/token-backed authenticators (e.g. the projected SA token) be
+        // re-resolved per retry.
         if ($configuration->backoffMaxTries > 0) {
             $stack->push(Middleware::retry(new RetryDecider(
                 $configuration->backoffMaxTries,
                 $configuration->logger,
                 $configuration->retryableStatusCodes,
             )));
+        }
+
+        if ($configuration->authenticator !== null) {
+            $stack->push(Middleware::mapRequest($configuration->authenticator));
         }
 
         $stack->push(Middleware::log(

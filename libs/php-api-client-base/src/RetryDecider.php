@@ -31,13 +31,7 @@ class RetryDecider
             return false;
         }
 
-        $code = null;
-        if ($response !== null) {
-            $code = $response->getStatusCode();
-        } elseif ($error instanceof Throwable) {
-            $errorCode = $error->getCode();
-            $code = is_int($errorCode) ? $errorCode : null;
-        }
+        $code = $response?->getStatusCode();
 
         // Explicitly retryable codes (e.g. 429) win over the generic 4xx no-retry rule.
         if ($code !== null && in_array($code, $this->retryableStatusCodes, true)) {

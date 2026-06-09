@@ -272,3 +272,15 @@ gets a major version bump; consumers update `use` imports for config + auth.
 5. Migrate **azure** (auth factory rewiring) last.
 
 Each client migration is its own PR + major release.
+
+## 12. Documentation
+
+- The base lib ships a `README.md` that frames it as the base for **Keboola service**
+  API clients — explicitly *not* a general-purpose HTTP client. It documents the Keboola
+  auth schemes it encodes (`X-StorageApi-Token`, `X-KBC-ManageApiToken`,
+  `X-Kubernetes-Authorization`) and shows how to compose a service client (facade
+  over `ApiClient`) with response-to-model mapping. The `composer.json` description carries
+  the same framing.
+- Every migrated client updates its own `README.md` with a working usage example reflecting
+  the new base-lib construction (facade + `ApiClientConfiguration` with the right
+  authenticator + one representative call). This is part of each client's migration PR.

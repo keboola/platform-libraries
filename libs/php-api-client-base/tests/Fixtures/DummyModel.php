@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Keboola\ApiClientBase\Tests\Fixtures;
 
 use Keboola\ApiClientBase\ResponseModelInterface;
+use function assert;
 
 final class DummyModel implements ResponseModelInterface
 {
@@ -14,7 +15,7 @@ final class DummyModel implements ResponseModelInterface
 
     public static function fromResponseData(array $data): static
     {
-        \assert(is_string($data['name']));
+        assert(is_string($data['name']));
         return new self($data['name']);
     }
 }

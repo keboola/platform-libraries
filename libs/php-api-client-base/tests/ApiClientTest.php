@@ -9,7 +9,7 @@ use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
 use Keboola\ApiClientBase\ApiClient;
-use Keboola\ApiClientBase\ApiClientConfiguration;
+use Keboola\ApiClientBase\ApiClientOptions;
 use Keboola\ApiClientBase\Auth\ManageApiTokenAuthenticator;
 use Keboola\ApiClientBase\Auth\RequestAuthenticatorInterface;
 use Keboola\ApiClientBase\Exception\ClientException;
@@ -22,7 +22,7 @@ class ApiClientTest extends TestCase
     public function testSendsWithoutAuthHeaderWhenNoAuthenticator(): void
     {
         $mock = new MockHandler([new Response(200, [], '{}')]);
-        $client = new ApiClient('https://example.test', new ApiClientConfiguration(
+        $client = new ApiClient('https://example.test', null, new ApiClientOptions(
             requestHandler: HandlerStack::create($mock),
         ));
         $client->sendRequest(new Request('GET', 'foo'));
@@ -36,10 +36,11 @@ class ApiClientTest extends TestCase
     public function testAddsAuthHeaderPerRequest(): void
     {
         $mock = new MockHandler([new Response(200, [], '{}')]);
-        $client = new ApiClient('https://example.test', new ApiClientConfiguration(
-            authenticator: new ManageApiTokenAuthenticator('secret-token'),
-            requestHandler: HandlerStack::create($mock),
-        ));
+        $client = new ApiClient(
+            'https://example.test',
+            new ManageApiTokenAuthenticator('secret-token'),
+            new ApiClientOptions(requestHandler: HandlerStack::create($mock)),
+        );
         $client->sendRequest(new Request('GET', 'foo'));
 
         $last = $mock->getLastRequest();
@@ -50,7 +51,7 @@ class ApiClientTest extends TestCase
     public function testMapsResponseToModel(): void
     {
         $mock = new MockHandler([new Response(200, [], '{"name":"foo"}')]);
-        $client = new ApiClient('https://example.test', new ApiClientConfiguration(
+        $client = new ApiClient('https://example.test', null, new ApiClientOptions(
             requestHandler: HandlerStack::create($mock),
         ));
         $model = $client->sendRequestAndMapResponse(new Request('GET', 'foo'), DummyModel::class);
@@ -62,7 +63,7 @@ class ApiClientTest extends TestCase
     public function testMapsResponseToList(): void
     {
         $mock = new MockHandler([new Response(200, [], '[{"name":"a"},{"name":"b"}]')]);
-        $client = new ApiClient('https://example.test', new ApiClientConfiguration(
+        $client = new ApiClient('https://example.test', null, new ApiClientOptions(
             requestHandler: HandlerStack::create($mock),
         ));
         $models = $client->sendRequestAndMapResponse(new Request('GET', 'foo'), DummyModel::class, [], true);
@@ -75,7 +76,7 @@ class ApiClientTest extends TestCase
     public function testRetriesOn5xxThenSucceeds(): void
     {
         $mock = new MockHandler([new Response(500), new Response(200, [], '{}')]);
-        $client = new ApiClient('https://example.test', new ApiClientConfiguration(
+        $client = new ApiClient('https://example.test', null, new ApiClientOptions(
             requestHandler: HandlerStack::create($mock),
         ));
         $client->sendRequest(new Request('GET', 'foo'));
@@ -85,7 +86,7 @@ class ApiClientTest extends TestCase
     public function testThrowsClientExceptionWithDefaultMessageExtraction(): void
     {
         $mock = new MockHandler([new Response(400, [], '{"error":"bad input"}')]);
-        $client = new ApiClient('https://example.test', new ApiClientConfiguration(
+        $client = new ApiClient('https://example.test', null, new ApiClientOptions(
             requestHandler: HandlerStack::create($mock),
         ));
         $this->expectException(ClientException::class);
@@ -97,7 +98,7 @@ class ApiClientTest extends TestCase
     public function testUsesCustomErrorMessageResolver(): void
     {
         $mock = new MockHandler([new Response(409, [], '{"code":"CONFLICT","error":"already exists"}')]);
-        $client = new ApiClient('https://example.test', new ApiClientConfiguration(
+        $client = new ApiClient('https://example.test', null, new ApiClientOptions(
             requestHandler: HandlerStack::create($mock),
             errorMessageResolver: static function (string $body): string {
                 /** @var array{code?: string, error?: string} $data */
@@ -123,11 +124,11 @@ class ApiClientTest extends TestCase
         };
 
         $mock = new MockHandler([new Response(500), new Response(200, [], '{}')]);
-        $client = new ApiClient('https://example.test', new ApiClientConfiguration(
-            authenticator: $authenticator,
-            backoffMaxTries: 2,
-            requestHandler: HandlerStack::create($mock),
-        ));
+        $client = new ApiClient(
+            'https://example.test',
+            $authenticator,
+            new ApiClientOptions(backoffMaxTries: 2, requestHandler: HandlerStack::create($mock)),
+        );
         $client->sendRequest(new Request('GET', 'foo'));
 
         self::assertSame(2, $authenticator->calls);
@@ -139,7 +140,7 @@ class ApiClientTest extends TestCase
     public function testThrowsClientExceptionAfterRetriesExhausted(): void
     {
         $mock = new MockHandler([new Response(500), new Response(500)]);
-        $client = new ApiClient('https://example.test', new ApiClientConfiguration(
+        $client = new ApiClient('https://example.test', null, new ApiClientOptions(
             backoffMaxTries: 1,
             requestHandler: HandlerStack::create($mock),
         ));
@@ -151,7 +152,7 @@ class ApiClientTest extends TestCase
     public function testRetriesConfiguredStatusCodeThroughClient(): void
     {
         $mock = new MockHandler([new Response(429), new Response(200, [], '{}')]);
-        $client = new ApiClient('https://example.test', new ApiClientConfiguration(
+        $client = new ApiClient('https://example.test', null, new ApiClientOptions(
             backoffMaxTries: 2,
             retryableStatusCodes: [429],
             requestHandler: HandlerStack::create($mock),

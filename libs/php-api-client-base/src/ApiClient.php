@@ -12,6 +12,7 @@ use GuzzleHttp\HandlerStack;
 use GuzzleHttp\MessageFormatter;
 use GuzzleHttp\Middleware;
 use JsonException;
+use Keboola\ApiClientBase\Auth\RequestAuthenticatorInterface;
 use Keboola\ApiClientBase\Exception\ClientException;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
@@ -28,34 +29,35 @@ class ApiClient
      */
     public function __construct(
         ?string $baseUrl = null,
-        ?ApiClientConfiguration $configuration = null,
+        ?RequestAuthenticatorInterface $authenticator = null,
+        ?ApiClientOptions $options = null,
     ) {
-        $configuration ??= new ApiClientConfiguration();
-        $this->errorMessageResolver = $configuration->errorMessageResolver;
+        $options ??= new ApiClientOptions();
+        $this->errorMessageResolver = $options->errorMessageResolver;
 
-        $stack = $configuration->requestHandler instanceof HandlerStack
-            ? $configuration->requestHandler
-            : HandlerStack::create($configuration->requestHandler);
+        $stack = $options->requestHandler instanceof HandlerStack
+            ? $options->requestHandler
+            : HandlerStack::create($options->requestHandler);
 
         // Push order matters: Guzzle resolves the stack so the FIRST-pushed
         // middleware is OUTERMOST. Push retry before auth so auth sits INSIDE
         // the retry loop and re-executes on every attempt — this lets
         // file-/token-backed authenticators (e.g. the projected SA token) be
         // re-resolved per retry.
-        if ($configuration->backoffMaxTries > 0) {
+        if ($options->backoffMaxTries > 0) {
             $stack->push(Middleware::retry(new RetryDecider(
-                $configuration->backoffMaxTries,
-                $configuration->logger,
-                $configuration->retryableStatusCodes,
+                $options->backoffMaxTries,
+                $options->logger,
+                $options->retryableStatusCodes,
             )));
         }
 
-        if ($configuration->authenticator !== null) {
-            $stack->push(Middleware::mapRequest($configuration->authenticator));
+        if ($authenticator !== null) {
+            $stack->push(Middleware::mapRequest($authenticator));
         }
 
         $stack->push(Middleware::log(
-            $configuration->logger,
+            $options->logger,
             new MessageFormatter('{method} {uri} : {code} {res_header_Content-Length}'),
         ));
 
@@ -63,10 +65,10 @@ class ApiClient
             'base_uri' => $baseUrl === null ? null : rtrim($baseUrl, '/') . '/',
             'handler' => $stack,
             'headers' => [
-                'User-Agent' => $configuration->userAgent,
+                'User-Agent' => $options->userAgent,
             ],
-            'connect_timeout' => $configuration->connectTimeout,
-            'timeout' => $configuration->requestTimeout,
+            'connect_timeout' => $options->connectTimeout,
+            'timeout' => $options->requestTimeout,
         ]);
     }
 

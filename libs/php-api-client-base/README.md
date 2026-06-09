@@ -20,7 +20,8 @@ composer require keboola/php-api-client-base
 
 - `ApiClient` — Guzzle wrapper with per-request auth, retry, logging, and
   response-to-model mapping.
-- `ApiClientConfiguration` — auth, retries, timeouts, logger, error resolver.
+- `ApiClientOptions` — retries, timeouts, logger, error resolver (no auth — the
+  authenticator is a first-class `ApiClient` constructor argument).
 - `Auth\RequestAuthenticatorInterface` + ready authenticators for the Keboola
   auth schemes: `StorageApiTokenAuthenticator` (`X-StorageApi-Token`),
   `ManageApiTokenAuthenticator` (`X-KBC-ManageApiToken`),
@@ -35,7 +36,7 @@ Compose an `ApiClient` inside your service facade and map responses to models:
 ```php
 use GuzzleHttp\Psr7\Request;
 use Keboola\ApiClientBase\ApiClient;
-use Keboola\ApiClientBase\ApiClientConfiguration;
+use Keboola\ApiClientBase\ApiClientOptions;
 use Keboola\ApiClientBase\Auth\StorageApiTokenAuthenticator;
 use Keboola\ApiClientBase\Json;
 use Keboola\ApiClientBase\ResponseModelInterface;
@@ -55,9 +56,12 @@ final class MyServiceClient
 {
     private ApiClient $apiClient;
 
-    public function __construct(string $baseUrl, ?ApiClientConfiguration $configuration = null)
-    {
-        $this->apiClient = new ApiClient($baseUrl, $configuration);
+    public function __construct(
+        string $baseUrl,
+        StorageApiTokenAuthenticator $authenticator,
+        ?ApiClientOptions $options = null,
+    ) {
+        $this->apiClient = new ApiClient($baseUrl, $authenticator, $options);
     }
 
     public function createWidget(string $name): WidgetModel
@@ -71,9 +75,8 @@ final class MyServiceClient
 
 $client = new MyServiceClient(
     'https://my-service.keboola.com',
-    new ApiClientConfiguration(
-        authenticator: new StorageApiTokenAuthenticator($storageApiToken),
-    ),
+    new StorageApiTokenAuthenticator($storageApiToken),
+    new ApiClientOptions(backoffMaxTries: 3),
 );
 ```
 
@@ -82,7 +85,7 @@ $client = new MyServiceClient(
 Pick the authenticator matching the service's scheme, or implement
 `RequestAuthenticatorInterface` for a service-specific scheme (e.g. azure's
 OAuth). `Content-Type` is set per request on calls with a body; the only Guzzle
-default header is `User-Agent` (set via `ApiClientConfiguration::$userAgent`).
+default header is `User-Agent` (set via `ApiClientOptions::$userAgent`).
 
 ## License
 

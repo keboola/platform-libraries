@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Keboola\ApiClientBase\Auth;
 
-use Psr\Http\Message\RequestInterface;
 use RuntimeException;
 use Webmozart\Assert\Assert;
 
@@ -26,9 +25,9 @@ final readonly class KeboolaServiceAccountAuthenticator implements RequestAuthen
         Assert::stringNotEmpty($tokenPath, 'Service account token path must not be empty');
     }
 
-    public function __invoke(RequestInterface $request): RequestInterface
+    public function getAuthenticationHeaders(): array
     {
-        return $request->withHeader(self::HEADER, 'Bearer ' . $this->readToken());
+        return [self::HEADER => 'Bearer ' . $this->readToken()];
     }
 
     /**

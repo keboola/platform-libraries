@@ -16,7 +16,7 @@ class ApiClientOptionsTest extends TestCase
         self::assertSame(5, $options->backoffMaxTries);
         self::assertSame(10, $options->connectTimeout);
         self::assertSame(120, $options->requestTimeout);
-        self::assertNull($options->requestHandler);
+        self::assertNull($options->httpClient);
         self::assertNull($options->logger);
     }
 

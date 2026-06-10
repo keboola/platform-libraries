@@ -18,9 +18,14 @@ composer require keboola/php-api-client-base
 
 ## What it provides
 
-- `ApiClient` — Guzzle wrapper with per-request auth, retry, logging, and
-  response-to-model mapping. Constructed as
+- `ApiClient` — Symfony HttpClient wrapper with per-request auth, retry, logging,
+  and response-to-model mapping. Constructed as
   `new ApiClient($baseUrl, $authenticator, $options, errorMessageResolver: ..., retryableStatusCodes: [...])`.
+  Requests are issued by `(string $method, string $path, array $options = [])` —
+  `sendRequest(...)` for fire-and-forget and `sendRequestAndMapResponse(...)` for
+  decoding JSON into a model. `$options` are
+  [Symfony HttpClient request options](https://symfony.com/doc/current/http_client.html#making-requests)
+  (e.g. `['json' => [...]]` for a JSON body, `['query' => [...]]`, `['headers' => [...]]`).
   The authenticator is **required**; pass `new NoAuthAuthenticator()` for
   unauthenticated clients. `errorMessageResolver` accepts a
   `?ErrorMessageResolverInterface` instance; when `null`, the shipped
@@ -28,29 +33,31 @@ composer require keboola/php-api-client-base
   bodies) is used automatically. `retryableStatusCodes` are `ApiClient`
   constructor arguments supplied by the service facade (they describe the
   service's API contract, not caller preferences).
-- `ApiClientOptions` — retries, timeouts, logger (no auth, no error resolver — the
-  authenticator is a first-class `ApiClient` constructor argument; the error
-  resolver and retryable codes are also `ApiClient` constructor arguments).
-- `Auth\RequestAuthenticatorInterface` + ready authenticators for the Keboola
+- `ApiClientOptions` — retries, timeouts, logger, plus an optional
+  `?HttpClientInterface $httpClient` test/integration seam (inject a
+  `MockHttpClient` in tests). No auth, no error resolver — the authenticator is a
+  first-class `ApiClient` constructor argument; the error resolver and retryable
+  codes are also `ApiClient` constructor arguments.
+- `Auth\RequestAuthenticatorInterface` (returns a `array<string, string>` header
+  map via `getAuthenticationHeaders()`) + ready authenticators for the Keboola
   auth schemes: `StorageApiTokenAuthenticator` (`X-StorageApi-Token`),
   `ManageApiTokenAuthenticator` (`X-KBC-ManageApiToken`),
   `KeboolaServiceAccountAuthenticator` (projected SA token →
   `X-Kubernetes-Authorization`), `NoAuthAuthenticator` (explicit no-op for
-  unauthenticated calls).
-- `ErrorMessageResolverInterface`, `DefaultErrorMessageResolver`, `RetryDecider`,
-  `Json`, `ResponseModelInterface`, `Exception\ClientException`.
+  unauthenticated calls). `Auth\AuthenticatingHttpClient` is the
+  `HttpClientInterface` decorator that merges those headers into each request.
+- `ErrorMessageResolverInterface`, `DefaultErrorMessageResolver`,
+  `RetryStrategyFactory`, `ResponseModelInterface`, `Exception\ClientException`.
 
 ## Building a Keboola service client
 
 Compose an `ApiClient` inside your service facade and map responses to models:
 
 ```php
-use GuzzleHttp\Psr7\Request;
 use Keboola\ApiClientBase\ApiClient;
 use Keboola\ApiClientBase\ApiClientOptions;
 use Keboola\ApiClientBase\Auth\StorageApiTokenAuthenticator;
 use Keboola\ApiClientBase\ErrorMessageResolverInterface;
-use Keboola\ApiClientBase\Json;
 use Keboola\ApiClientBase\ResponseModelInterface;
 
 final class WidgetModel implements ResponseModelInterface
@@ -95,8 +102,10 @@ final class MyServiceClient
     public function createWidget(string $name): WidgetModel
     {
         return $this->apiClient->sendRequestAndMapResponse(
-            new Request('POST', 'widgets', ['Content-Type' => 'application/json'], Json::encodeArray(['name' => $name])),
+            'POST',
+            'widgets',
             WidgetModel::class,
+            ['json' => ['name' => $name]],
         );
     }
 }
@@ -111,9 +120,11 @@ $client = new MyServiceClient(
 ## Authentication
 
 Pick the authenticator matching the service's scheme, or implement
-`RequestAuthenticatorInterface` for a service-specific scheme (e.g. azure's
-OAuth). `Content-Type` is set per request on calls with a body; the only Guzzle
-default header is `User-Agent` (set via `ApiClientOptions::$userAgent`).
+`RequestAuthenticatorInterface` (return a `array<string, string>` header map from
+`getAuthenticationHeaders()`) for a service-specific scheme (e.g. azure's OAuth).
+`Content-Type: application/json` is set automatically when you pass the `json`
+request option; the only default header is `User-Agent` (set via
+`ApiClientOptions::$userAgent`, applied when the client builds its own transport).
 
 ## License
 

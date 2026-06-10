@@ -4,23 +4,22 @@ declare(strict_types=1);
 
 namespace Keboola\ApiClientBase;
 
-use GuzzleHttp\Client as GuzzleClient;
-use GuzzleHttp\Exception\GuzzleException;
-use GuzzleHttp\Exception\RequestException;
-use GuzzleHttp\HandlerStack;
-use GuzzleHttp\MessageFormatter;
-use GuzzleHttp\Middleware;
-use JsonException;
+use Keboola\ApiClientBase\Auth\AuthenticatingHttpClient;
 use Keboola\ApiClientBase\Auth\RequestAuthenticatorInterface;
 use Keboola\ApiClientBase\Exception\ClientException;
-use Psr\Http\Message\RequestInterface;
-use Psr\Http\Message\ResponseInterface;
+use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
+use Symfony\Component\HttpClient\HttpClient;
+use Symfony\Component\HttpClient\RetryableHttpClient;
+use Symfony\Contracts\HttpClient\Exception\ExceptionInterface;
+use Symfony\Contracts\HttpClient\Exception\HttpExceptionInterface;
+use Symfony\Contracts\HttpClient\HttpClientInterface;
+use Symfony\Contracts\HttpClient\ResponseInterface;
 use Throwable;
 
 class ApiClient
 {
-    private readonly GuzzleClient $httpClient;
+    private readonly HttpClientInterface $httpClient;
     private readonly ErrorMessageResolverInterface $errorMessageResolver;
 
     /**
@@ -38,44 +37,40 @@ class ApiClient
         $this->errorMessageResolver = $errorMessageResolver ?? new DefaultErrorMessageResolver();
         $logger = $options->logger ?? new NullLogger();
 
-        $stack = $options->requestHandler instanceof HandlerStack
-            ? $options->requestHandler
-            : HandlerStack::create($options->requestHandler);
-
-        // Push order matters: Guzzle resolves the stack so the FIRST-pushed
-        // middleware is OUTERMOST. Push retry before auth so auth sits INSIDE
-        // the retry loop and re-executes on every attempt — this lets
-        // file-/token-backed authenticators (e.g. the projected SA token) be
-        // re-resolved per retry.
-        if ($options->backoffMaxTries > 0) {
-            $stack->push(Middleware::retry(new RetryDecider(
-                $options->backoffMaxTries,
-                $logger,
-                $retryableStatusCodes,
-            )));
-        }
-
-        $stack->push(Middleware::mapRequest($authenticator));
-
-        $stack->push(Middleware::log(
-            $logger,
-            new MessageFormatter('{method} {uri} : {code} {res_header_Content-Length}'),
-        ));
-
-        $this->httpClient = new GuzzleClient([
+        // Symfony resolves relative request paths against base_uri; a trailing slash on the
+        // base + slash-less relative paths gives predictable joins (matches the Guzzle setup).
+        $innerClient = $options->httpClient ?? HttpClient::create([
             'base_uri' => $baseUrl === null ? null : rtrim($baseUrl, '/') . '/',
-            'handler' => $stack,
             'headers' => [
                 'User-Agent' => $options->userAgent,
             ],
-            'connect_timeout' => $options->connectTimeout,
-            'timeout' => $options->requestTimeout,
+            'timeout' => $options->connectTimeout,
+            'max_duration' => $options->requestTimeout,
         ]);
+
+        // Wrap with auth FIRST, then retry OUTERMOST: RetryableHttpClient re-invokes the
+        // auth decorator on every attempt, so file-/token-backed authenticators (e.g. the
+        // projected SA token) are re-resolved per retry.
+        $client = new AuthenticatingHttpClient($authenticator, $innerClient);
+
+        if ($options->backoffMaxTries > 0) {
+            $client = new RetryableHttpClient(
+                $client,
+                RetryStrategyFactory::create($retryableStatusCodes),
+                $options->backoffMaxTries,
+                $logger,
+            );
+        }
+
+        $this->httpClient = $client;
     }
 
-    public function sendRequest(RequestInterface $request): void
+    /**
+     * @param array<string, mixed> $options
+     */
+    public function sendRequest(string $method, string $path, array $options = []): void
     {
-        $this->doSendRequest($request);
+        $this->doSendRequest($method, $path, $options)->getContent();
     }
 
     /**
@@ -85,17 +80,20 @@ class ApiClient
      * @return ($isList is true ? list<T> : T)
      */
     public function sendRequestAndMapResponse(
-        RequestInterface $request,
+        string $method,
+        string $path,
         string $responseClass,
         array $options = [],
         bool $isList = false,
     ) {
-        $response = $this->doSendRequest($request, $options);
+        $response = $this->doSendRequest($method, $path, $options);
 
         try {
-            $data = Json::decodeArray($response->getBody()->getContents());
-        } catch (JsonException $e) {
-            throw new ClientException('Response is not valid JSON: ' . $e->getMessage(), 0, $e);
+            $data = $response->toArray();
+        } catch (ExceptionInterface $e) {
+            // toArray() also throws on HTTP errors; those are already handled in doSendRequest's
+            // getContent() check below, so reaching here means a transport/decoding failure.
+            throw $this->processException($e);
         }
 
         try {
@@ -113,28 +111,33 @@ class ApiClient
     }
 
     /**
+     * Issues the request and forces evaluation so HTTP-error and transport exceptions surface
+     * here (Symfony responses are lazy: getStatusCode() never throws, content access does).
+     *
      * @param array<string, mixed> $options
      */
-    private function doSendRequest(RequestInterface $request, array $options = []): ResponseInterface
+    private function doSendRequest(string $method, string $path, array $options): ResponseInterface
     {
         try {
-            return $this->httpClient->send($request, $options);
-        } catch (RequestException $e) {
-            throw $this->processRequestException($e);
-        } catch (GuzzleException $e) {
-            throw new ClientException($e->getMessage(), 0, $e);
+            $response = $this->httpClient->request($method, $path, $options);
+            // Buffer the body now so a non-2xx status throws here rather than lazily later.
+            $response->getContent();
+            return $response;
+        } catch (ExceptionInterface $e) {
+            throw $this->processException($e);
         }
     }
 
-    private function processRequestException(RequestException $e): ClientException
+    private function processException(ExceptionInterface $e): ClientException
     {
-        $response = $e->getResponse();
-        if ($response === null) {
+        if (!$e instanceof HttpExceptionInterface) {
+            // Transport or decoding error: no HTTP response to inspect.
             return new ClientException(trim($e->getMessage()), 0, $e);
         }
 
+        $response = $e->getResponse();
         $statusCode = $response->getStatusCode();
-        $body = (string) $response->getBody();
+        $body = $response->getContent(throw: false);
 
         $message = ($this->errorMessageResolver)($body, $statusCode);
         return new ClientException($message ?? trim($e->getMessage()), $statusCode, $e);

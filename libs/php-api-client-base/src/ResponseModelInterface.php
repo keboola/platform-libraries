@@ -7,7 +7,7 @@ namespace Keboola\ApiClientBase;
 interface ResponseModelInterface
 {
     /**
-     * @param array<string, mixed> $data
+     * @param array<mixed> $data
      */
     public static function fromResponseData(array $data): static;
 }

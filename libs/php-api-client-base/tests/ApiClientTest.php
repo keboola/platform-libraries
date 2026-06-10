@@ -13,6 +13,7 @@ use Keboola\ApiClientBase\ApiClientOptions;
 use Keboola\ApiClientBase\Auth\ManageApiTokenAuthenticator;
 use Keboola\ApiClientBase\Auth\NoAuthAuthenticator;
 use Keboola\ApiClientBase\Auth\RequestAuthenticatorInterface;
+use Keboola\ApiClientBase\ErrorMessageResolverInterface;
 use Keboola\ApiClientBase\Exception\ClientException;
 use Keboola\ApiClientBase\Tests\Fixtures\DummyModel;
 use PHPUnit\Framework\TestCase;
@@ -99,15 +100,19 @@ class ApiClientTest extends TestCase
     public function testUsesCustomErrorMessageResolver(): void
     {
         $mock = new MockHandler([new Response(409, [], '{"code":"CONFLICT","error":"already exists"}')]);
+        $resolver = new class implements ErrorMessageResolverInterface {
+            public function __invoke(string $responseBody, int $statusCode): ?string
+            {
+                /** @var array{code?: string, error?: string} $data */
+                $data = json_decode($responseBody, true) ?? [];
+                return ($data['code'] ?? '') . ': ' . ($data['error'] ?? '');
+            }
+        };
         $client = new ApiClient(
             'https://example.test',
             new NoAuthAuthenticator(),
             new ApiClientOptions(requestHandler: HandlerStack::create($mock)),
-            errorMessageResolver: static function (string $body): string {
-                /** @var array{code?: string, error?: string} $data */
-                $data = json_decode($body, true);
-                return ($data['code'] ?? '') . ': ' . ($data['error'] ?? '');
-            },
+            errorMessageResolver: $resolver,
         );
         $this->expectException(ClientException::class);
         $this->expectExceptionMessage('CONFLICT: already exists');

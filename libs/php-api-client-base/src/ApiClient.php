@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Keboola\ApiClientBase;
 
-use Closure;
 use GuzzleHttp\Client as GuzzleClient;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\RequestException;
@@ -21,24 +20,21 @@ use Throwable;
 class ApiClient
 {
     private readonly GuzzleClient $httpClient;
-    /** @var (Closure(string, int): ?string)|null */
-    private readonly ?Closure $errorMessageResolver;
+    private readonly ErrorMessageResolverInterface $errorMessageResolver;
 
     /**
      * @param non-empty-string|null $baseUrl
      * @param list<int> $retryableStatusCodes Non-5xx status codes to also retry (e.g. [429]).
-     * @param (Closure(string, int): ?string)|null $errorMessageResolver
-     *   Maps a (responseBody, statusCode) to an error message, or null to fall back to the default.
      */
     public function __construct(
         ?string $baseUrl,
         RequestAuthenticatorInterface $authenticator,
         ?ApiClientOptions $options = null,
-        ?Closure $errorMessageResolver = null,
+        ?ErrorMessageResolverInterface $errorMessageResolver = null,
         array $retryableStatusCodes = [],
     ) {
         $options ??= new ApiClientOptions();
-        $this->errorMessageResolver = $errorMessageResolver;
+        $this->errorMessageResolver = $errorMessageResolver ?? new DefaultErrorMessageResolver();
 
         $stack = $options->requestHandler instanceof HandlerStack
             ? $options->requestHandler
@@ -138,31 +134,7 @@ class ApiClient
         $statusCode = $response->getStatusCode();
         $body = (string) $response->getBody();
 
-        if ($this->errorMessageResolver !== null) {
-            $message = ($this->errorMessageResolver)($body, $statusCode);
-            if ($message !== null && $message !== '') {
-                return new ClientException($message, $statusCode, $e);
-            }
-            return new ClientException(trim($e->getMessage()), $statusCode, $e);
-        }
-
-        return new ClientException($this->defaultErrorMessage($body) ?? trim($e->getMessage()), $statusCode, $e);
-    }
-
-    private function defaultErrorMessage(string $body): ?string
-    {
-        try {
-            $data = Json::decodeArray($body);
-        } catch (JsonException) {
-            return null;
-        }
-
-        foreach (['error', 'message'] as $key) {
-            if (isset($data[$key]) && is_string($data[$key]) && $data[$key] !== '') {
-                return $data[$key];
-            }
-        }
-
-        return null;
+        $message = ($this->errorMessageResolver)($body, $statusCode);
+        return new ClientException($message ?? trim($e->getMessage()), $statusCode, $e);
     }
 }

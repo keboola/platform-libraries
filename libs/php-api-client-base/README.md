@@ -22,9 +22,12 @@ composer require keboola/php-api-client-base
   response-to-model mapping. Constructed as
   `new ApiClient($baseUrl, $authenticator, $options, errorMessageResolver: ..., retryableStatusCodes: [...])`.
   The authenticator is **required**; pass `new NoAuthAuthenticator()` for
-  unauthenticated clients. `errorMessageResolver` and `retryableStatusCodes` are
-  `ApiClient` constructor arguments supplied by the service facade (they describe
-  the service's API contract, not caller preferences).
+  unauthenticated clients. `errorMessageResolver` accepts a
+  `?ErrorMessageResolverInterface` instance; when `null`, the shipped
+  `DefaultErrorMessageResolver` (which extracts `error` or `message` from JSON
+  bodies) is used automatically. `retryableStatusCodes` are `ApiClient`
+  constructor arguments supplied by the service facade (they describe the
+  service's API contract, not caller preferences).
 - `ApiClientOptions` — retries, timeouts, logger (no auth, no error resolver — the
   authenticator is a first-class `ApiClient` constructor argument; the error
   resolver and retryable codes are also `ApiClient` constructor arguments).
@@ -34,7 +37,8 @@ composer require keboola/php-api-client-base
   `KeboolaServiceAccountAuthenticator` (projected SA token →
   `X-Kubernetes-Authorization`), `NoAuthAuthenticator` (explicit no-op for
   unauthenticated calls).
-- `RetryDecider`, `Json`, `ResponseModelInterface`, `Exception\ClientException`.
+- `ErrorMessageResolverInterface`, `DefaultErrorMessageResolver`, `RetryDecider`,
+  `Json`, `ResponseModelInterface`, `Exception\ClientException`.
 
 ## Building a Keboola service client
 
@@ -45,6 +49,7 @@ use GuzzleHttp\Psr7\Request;
 use Keboola\ApiClientBase\ApiClient;
 use Keboola\ApiClientBase\ApiClientOptions;
 use Keboola\ApiClientBase\Auth\StorageApiTokenAuthenticator;
+use Keboola\ApiClientBase\ErrorMessageResolverInterface;
 use Keboola\ApiClientBase\Json;
 use Keboola\ApiClientBase\ResponseModelInterface;
 
@@ -56,6 +61,16 @@ final class WidgetModel implements ResponseModelInterface
     {
         \assert(is_string($data['id']));
         return new self($data['id']);
+    }
+}
+
+final class MyServiceErrorResolver implements ErrorMessageResolverInterface
+{
+    public function __invoke(string $responseBody, int $statusCode): ?string
+    {
+        /** @var array{error?: string} $data */
+        $data = json_decode($responseBody, true) ?? [];
+        return isset($data['error']) && $data['error'] !== '' ? $data['error'] : null;
     }
 }
 
@@ -72,11 +87,7 @@ final class MyServiceClient
             $baseUrl,
             $authenticator,
             $options,
-            errorMessageResolver: static function (string $body, int $statusCode): ?string {
-                /** @var array{error?: string} $data */
-                $data = json_decode($body, true) ?? [];
-                return $data['error'] ?? null;
-            },
+            errorMessageResolver: new MyServiceErrorResolver(),
             retryableStatusCodes: [429],
         );
     }

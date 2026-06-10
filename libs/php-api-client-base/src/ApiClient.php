@@ -70,7 +70,9 @@ class ApiClient
      */
     public function sendRequest(string $method, string $path, array $options = []): void
     {
-        $this->doSendRequest($method, $path, $options)->getContent();
+        // Lazy: only the status is awaited (which still drives retries); the body is never
+        // buffered for a successful void request, and is read only to build an error message.
+        $this->throwOnError($this->doSendRequest($method, $path, $options));
     }
 
     /**
@@ -89,10 +91,10 @@ class ApiClient
         $response = $this->doSendRequest($method, $path, $options);
 
         try {
+            // toArray() awaits + JSON-decodes the body and throws on HTTP-error or decode
+            // failure (this is also what drives RetryableHttpClient's retries).
             $data = $response->toArray();
         } catch (ExceptionInterface $e) {
-            // toArray() also throws on HTTP errors; those are already handled in doSendRequest's
-            // getContent() check below, so reaching here means a transport/decoding failure.
             throw $this->processException($e);
         }
 
@@ -111,21 +113,37 @@ class ApiClient
     }
 
     /**
-     * Issues the request and forces evaluation so HTTP-error and transport exceptions surface
-     * here (Symfony responses are lazy: getStatusCode() never throws, content access does).
+     * Issues the request lazily — Symfony does not send/await until the response is consumed,
+     * so the caller decides what to await (status only, or the full body).
      *
      * @param array<string, mixed> $options
      */
     private function doSendRequest(string $method, string $path, array $options): ResponseInterface
     {
         try {
-            $response = $this->httpClient->request($method, $path, $options);
-            // Buffer the body now so a non-2xx status throws here rather than lazily later.
-            $response->getContent();
-            return $response;
+            return $this->httpClient->request($method, $path, $options);
         } catch (ExceptionInterface $e) {
             throw $this->processException($e);
         }
+    }
+
+    /**
+     * Awaits the response status (not the body) and throws on HTTP error, reading the body
+     * only then — so a successful void request never buffers its body.
+     */
+    private function throwOnError(ResponseInterface $response): void
+    {
+        try {
+            $statusCode = $response->getStatusCode();
+        } catch (ExceptionInterface $e) {
+            throw $this->processException($e);
+        }
+
+        if ($statusCode < 400) {
+            return;
+        }
+
+        throw $this->errorFromResponse($response, $statusCode);
     }
 
     private function processException(ExceptionInterface $e): ClientException
@@ -135,11 +153,24 @@ class ApiClient
             return new ClientException(trim($e->getMessage()), 0, $e);
         }
 
-        $response = $e->getResponse();
-        $statusCode = $response->getStatusCode();
-        $body = $response->getContent(throw: false);
+        return $this->errorFromResponse($e->getResponse(), $e->getResponse()->getStatusCode(), $e);
+    }
 
+    /**
+     * Builds a ClientException from an error response: the body (read non-throwing) goes to the
+     * error-message resolver, falling back to the transport message or a generic one.
+     */
+    private function errorFromResponse(
+        ResponseInterface $response,
+        int $statusCode,
+        ?Throwable $previous = null,
+    ): ClientException {
+        $body = $response->getContent(throw: false);
         $message = ($this->errorMessageResolver)($body, $statusCode);
-        return new ClientException($message ?? trim($e->getMessage()), $statusCode, $e);
+        $fallback = $previous !== null
+            ? trim($previous->getMessage())
+            : sprintf('Request failed with HTTP %d', $statusCode);
+
+        return new ClientException($message ?? $fallback, $statusCode, $previous);
     }
 }

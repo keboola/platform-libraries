@@ -96,13 +96,16 @@ Symfony and removes a layer (no constructing `new Request(...)`), but it's an AP
 
 ### Response laziness & error semantics
 Symfony responses are lazy: `getStatusCode()` never throws, but `getContent()` / `toArray()`
-throw `HttpExceptionInterface` on 3xx–5xx **unless** you pass `false`. To preserve the old
-"the failed call throws immediately" behavior we **force evaluation** by calling
-`->getContent()` right after issuing the request in `doSendRequest()`. Error handling maps
-`HttpExceptionInterface` → `ClientException` via `$e->getResponse()->getStatusCode()` +
-`->getContent(throw: false)` + the error resolver; transport/decoding errors (no HTTP
-response) map with code `0`. This works cleanly, but you must remember the laziness or
-errors surface in surprising places (e.g. at object destruction).
+throw `HttpExceptionInterface` on 3xx–5xx **unless** you pass `false`. We lean into the
+laziness rather than fight it: `sendRequest()` (void) awaits **only the status**
+(`getStatusCode()`, which still drives `RetryableHttpClient`'s retries) and never buffers the
+body of a successful request; `sendRequestAndMapResponse()` calls `toArray()` (await +
+JSON-decode + throw). The response body is read **only on error**, to build the message via
+the resolver — so a successful `DELETE` etc. never downloads a body. Error mapping:
+`HttpExceptionInterface` → `ClientException` (status + `getContent(throw: false)` + resolver);
+transport/decoding errors (no HTTP response) map with code `0`. The one caveat is the
+laziness itself: nothing is sent/awaited until the response is consumed — correct here, but a
+footgun if a future caller forgets to consume.
 
 ### Default headers (e.g. `User-Agent`) and the injected test seam
 `User-Agent`/`base_uri`/timeouts are baked into `HttpClient::create([...])` when the client

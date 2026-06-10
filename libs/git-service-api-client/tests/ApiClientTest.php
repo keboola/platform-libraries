@@ -8,22 +8,28 @@ use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
-use Keboola\GitServiceApiClient\ApiClient;
-use Keboola\GitServiceApiClient\ApiClientConfiguration;
-use Keboola\GitServiceApiClient\Auth\KeboolaServiceAccountAuth;
-use Keboola\GitServiceApiClient\Auth\ManageApiTokenAuth;
-use Keboola\GitServiceApiClient\Exception\ClientException;
+use Keboola\ApiClientBase\ApiClient;
+use Keboola\ApiClientBase\ApiClientOptions;
+use Keboola\ApiClientBase\Auth\KeboolaServiceAccountAuthenticator;
+use Keboola\ApiClientBase\Exception\ClientException;
+use Keboola\GitServiceApiClient\GitServiceApiClient;
 use Keboola\GitServiceApiClient\Model\Repository;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 
+/**
+ * Tests that exercise transport-level behaviour of GitServiceApiClient
+ * (auth headers, retry, error mapping). The underlying transport is now
+ * provided by keboola/php-api-client-base; these tests confirm the facade
+ * wires it up correctly for git-service's specific auth and error-format.
+ */
 class ApiClientTest extends TestCase
 {
     public function testDefaultAuthThrowsOnFirstRequestWhenNoSaTokenFileExists(): void
     {
         // Assumes the test container is NOT running with a projected
         // connection-token at the Keboola SA path (true in CI).
-        $defaultPath = KeboolaServiceAccountAuth::DEFAULT_TOKEN_PATH;
+        $defaultPath = KeboolaServiceAccountAuthenticator::DEFAULT_TOKEN_PATH;
         if (is_readable($defaultPath)) {
             self::markTestSkipped(sprintf(
                 'Keboola SA token at "%s" is mounted in this environment; '
@@ -34,26 +40,31 @@ class ApiClientTest extends TestCase
 
         // Construction succeeds (the default auth is lazy); the first outbound
         // request triggers the file read and the resulting failure.
-        $client = new ApiClient('https://example.test');
+        $client = new GitServiceApiClient('https://example.test');
 
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage($defaultPath);
-        $client->sendRequest(new Request('GET', 'foo'));
+        // Any domain method that issues a request works; deleteRepository is void and simple.
+        $client->deleteRepository('some-repo');
     }
 
-    public function testAddsAuthHeader(): void
+    public function testAddsManageApiTokenAuthHeader(): void
     {
-        $mock = new MockHandler([new Response(200, [], '{}')]);
+        $mock = new MockHandler([new Response(200, [], (string) json_encode([
+            'name' => 'app-1',
+            'createdAt' => 't',
+            'defaultBranch' => 'main',
+            'sshUrl' => 's',
+            'httpsUrl' => 'h',
+        ]))]);
         $stack = HandlerStack::create($mock);
 
-        $client = new ApiClient(
+        $client = new GitServiceApiClient(
             'https://example.test',
-            new ApiClientConfiguration(
-                auth: new ManageApiTokenAuth('secret-token'),
-                requestHandler: $stack,
-            ),
+            manageToken: 'secret-token',
+            requestHandler: $stack,
         );
-        $client->sendRequest(new Request('GET', 'foo'));
+        $client->getRepository('app-1');
 
         $lastRequest = $mock->getLastRequest();
         self::assertNotNull($lastRequest);
@@ -69,20 +80,22 @@ class ApiClientTest extends TestCase
             file_put_contents($tokenPath, "first-token\n");
 
             $mock = new MockHandler([
-                new Response(200, [], '{}'),
-                new Response(200, [], '{}'),
+                new Response(204),
+                new Response(204),
             ]);
             $stack = HandlerStack::create($mock);
 
-            $client = new ApiClient(
+            // Use the base authenticator directly, which accepts a custom path.
+            // The facade always uses the default path for SA auth, so we test
+            // the re-read behaviour at the authenticator level here.
+            $auth = new KeboolaServiceAccountAuthenticator($tokenPath);
+            $apiClient = new ApiClient(
                 'https://example.test',
-                new ApiClientConfiguration(
-                    requestHandler: $stack,
-                    auth: new KeboolaServiceAccountAuth($tokenPath),
-                ),
+                $auth,
+                new ApiClientOptions(requestHandler: $stack),
             );
 
-            $client->sendRequest(new Request('GET', 'foo'));
+            $apiClient->sendRequest(new Request('DELETE', 'repos/app-1'));
             $lastRequest = $mock->getLastRequest();
             self::assertNotNull($lastRequest);
             self::assertSame(
@@ -93,7 +106,7 @@ class ApiClientTest extends TestCase
             // Simulate kubelet rotating the projected token file.
             file_put_contents($tokenPath, "second-token\n");
 
-            $client->sendRequest(new Request('GET', 'foo'));
+            $apiClient->sendRequest(new Request('DELETE', 'repos/app-2'));
             $lastRequest = $mock->getLastRequest();
             self::assertNotNull($lastRequest);
             self::assertSame(
@@ -110,19 +123,17 @@ class ApiClientTest extends TestCase
         $mock = new MockHandler([
             new Response(500),
             new Response(500),
-            new Response(200, [], '{}'),
+            new Response(204),
         ]);
         $stack = HandlerStack::create($mock);
 
-        $client = new ApiClient(
+        $client = new GitServiceApiClient(
             'https://example.test',
-            new ApiClientConfiguration(
-                auth: new ManageApiTokenAuth('token'),
-                backoffMaxTries: 3,
-                requestHandler: $stack,
-            ),
+            manageToken: 'token',
+            backoffMaxTries: 3,
+            requestHandler: $stack,
         );
-        $client->sendRequest(new Request('GET', 'foo'));
+        $client->deleteRepository('app-1');
 
         // If retries didn't fire, MockHandler would still hold remaining responses.
         self::assertSame(0, $mock->count());
@@ -135,18 +146,16 @@ class ApiClientTest extends TestCase
         ]);
         $stack = HandlerStack::create($mock);
 
-        $client = new ApiClient(
+        $client = new GitServiceApiClient(
             'https://example.test',
-            new ApiClientConfiguration(
-                auth: new ManageApiTokenAuth('token'),
-                requestHandler: $stack,
-            ),
+            manageToken: 'token',
+            requestHandler: $stack,
         );
 
         $this->expectException(ClientException::class);
         $this->expectExceptionMessage('repository.notFound: repo missing');
         $this->expectExceptionCode(404);
-        $client->sendRequest(new Request('GET', 'foo'));
+        $client->deleteRepository('app-1');
     }
 
     public function testThrowsClientExceptionOn4xxWithoutJson(): void
@@ -154,17 +163,15 @@ class ApiClientTest extends TestCase
         $mock = new MockHandler([new Response(400, [], 'plain text error')]);
         $stack = HandlerStack::create($mock);
 
-        $client = new ApiClient(
+        $client = new GitServiceApiClient(
             'https://example.test',
-            new ApiClientConfiguration(
-                auth: new ManageApiTokenAuth('token'),
-                requestHandler: $stack,
-            ),
+            manageToken: 'token',
+            requestHandler: $stack,
         );
 
         $this->expectException(ClientException::class);
         $this->expectExceptionCode(400);
-        $client->sendRequest(new Request('GET', 'foo'));
+        $client->deleteRepository('app-1');
     }
 
     public function testMapsResponseIntoSingleModel(): void
@@ -178,46 +185,15 @@ class ApiClientTest extends TestCase
         ]))]);
         $stack = HandlerStack::create($mock);
 
-        $client = new ApiClient(
+        $client = new GitServiceApiClient(
             'https://example.test',
-            new ApiClientConfiguration(
-                auth: new ManageApiTokenAuth('token'),
-                requestHandler: $stack,
-            ),
+            manageToken: 'token',
+            requestHandler: $stack,
         );
 
-        $repo = $client->sendRequestAndMapResponse(
-            new Request('GET', 'repos/app-1'),
-            Repository::class,
-        );
+        $repo = $client->getRepository('app-1');
 
         self::assertSame('app-1', $repo->name);
-    }
-
-    public function testMapsResponseIntoListOfModels(): void
-    {
-        $mock = new MockHandler([new Response(200, [], (string) json_encode([
-            ['name' => 'a1', 'createdAt' => 't', 'defaultBranch' => 'main', 'sshUrl' => 's1', 'httpsUrl' => 'h1'],
-            ['name' => 'a2', 'createdAt' => 't', 'defaultBranch' => 'main', 'sshUrl' => 's2', 'httpsUrl' => 'h2'],
-        ]))]);
-        $stack = HandlerStack::create($mock);
-
-        $client = new ApiClient(
-            'https://example.test',
-            new ApiClientConfiguration(
-                auth: new ManageApiTokenAuth('token'),
-                requestHandler: $stack,
-            ),
-        );
-
-        $repos = $client->sendRequestAndMapResponse(
-            new Request('GET', 'repos'),
-            Repository::class,
-            isList: true,
-        );
-
-        self::assertCount(2, $repos);
-        self::assertSame('a1', $repos[0]->name);
     }
 
     public function testThrowsClientExceptionOnInvalidJson(): void
@@ -225,18 +201,13 @@ class ApiClientTest extends TestCase
         $mock = new MockHandler([new Response(200, [], 'not json')]);
         $stack = HandlerStack::create($mock);
 
-        $client = new ApiClient(
+        $client = new GitServiceApiClient(
             'https://example.test',
-            new ApiClientConfiguration(
-                auth: new ManageApiTokenAuth('token'),
-                requestHandler: $stack,
-            ),
+            manageToken: 'token',
+            requestHandler: $stack,
         );
 
         $this->expectException(ClientException::class);
-        $client->sendRequestAndMapResponse(
-            new Request('GET', 'foo'),
-            Repository::class,
-        );
+        $client->getRepository('app-1');
     }
 }

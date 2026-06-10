@@ -14,7 +14,7 @@ class SandboxTest extends TestCase
 {
     public function testGetters(): void
     {
-        $sandbox = Sandbox::fromArray([
+        $sandbox = Sandbox::fromResponseData([
             'id' => 'id',
             'componentId' => 'keboola.data-apps',
             'projectId' => 'project-id',
@@ -143,7 +143,7 @@ class SandboxTest extends TestCase
         $nullPassword = $sandbox->getPassword();
         self::assertNull($nullPassword);
 
-        $sandbox = Sandbox::fromArray([
+        $sandbox = Sandbox::fromResponseData([
             'id' => 1,
             'componentId' => 'component-id',
             'projectId' => '123',

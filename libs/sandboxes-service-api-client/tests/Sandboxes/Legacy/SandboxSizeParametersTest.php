@@ -29,16 +29,16 @@ class SandboxSizeParametersTest extends TestCase
     }
 
     /**
-     * @dataProvider provideCreateFromArrayTestData
+     * @dataProvider provideCreateFromResponseDataTestData
      */
-    public function testCreateFromArray(array $data, SandboxSizeParameters $expectedParameters): void
+    public function testCreateFromResponseData(array $data, SandboxSizeParameters $expectedParameters): void
     {
-        $parameters = SandboxSizeParameters::fromArray($data);
+        $parameters = SandboxSizeParameters::fromResponseData($data);
 
         self::assertEquals($expectedParameters, $parameters);
     }
 
-    public function provideCreateFromArrayTestData(): iterable
+    public function provideCreateFromResponseDataTestData(): iterable
     {
         yield 'no parameters' => [
             'data' => [],

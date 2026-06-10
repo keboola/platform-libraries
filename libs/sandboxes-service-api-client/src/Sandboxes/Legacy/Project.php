@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Keboola\SandboxesServiceApiClient\Sandboxes\Legacy;
 
-class Project
+use Keboola\ApiClientBase\ResponseModelInterface;
+
+final class Project implements ResponseModelInterface
 {
     private string $id;
 
@@ -12,14 +14,14 @@ class Project
     private string $createdTimestamp;
     private string $updatedTimestamp;
 
-    public static function fromArray(array $in): self
+    public static function fromResponseData(array $data): static
     {
         $project = new self();
-        $project->id = (string) $in['id'];
-        $project->createdTimestamp = $in['createdTimestamp'];
-        $project->updatedTimestamp = $in['updatedTimestamp'] ?? '';
-        $project->persistentStorage = isset($in['persistentStorage'])
-            ? PersistentStorage::fromArray($in['persistentStorage'])
+        $project->id = (string) $data['id'];
+        $project->createdTimestamp = $data['createdTimestamp'];
+        $project->updatedTimestamp = $data['updatedTimestamp'] ?? '';
+        $project->persistentStorage = isset($data['persistentStorage'])
+            ? PersistentStorage::fromResponseData($data['persistentStorage'])
             : null;
 
         return $project;

@@ -4,37 +4,68 @@ declare(strict_types=1);
 
 namespace Keboola\SandboxesServiceApiClient\Sandboxes;
 
+use Closure;
+use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Psr7\Request;
-use Keboola\SandboxesServiceApiClient\ApiClient;
-use Keboola\SandboxesServiceApiClient\ApiClientConfiguration;
-use Keboola\SandboxesServiceApiClient\Json;
+use Keboola\ApiClientBase\ApiClient;
+use Keboola\ApiClientBase\ApiClientOptions;
+use Keboola\ApiClientBase\Auth\StorageApiTokenAuthenticator;
+use Keboola\ApiClientBase\Json;
 use Keboola\SandboxesServiceApiClient\Sandboxes\Legacy\Project;
 use Keboola\SandboxesServiceApiClient\Sandboxes\Legacy\Sandbox;
+use Keboola\SandboxesServiceApiClient\SandboxesErrorMessageResolver;
+use Psr\Log\LoggerInterface;
 
 class SandboxesApiClient
 {
+    private const FALLBACK_USER_AGENT = 'Keboola Sandboxes Service API PHP Client';
+
     private ApiClient $apiClient;
 
-    public function __construct(ApiClientConfiguration $configuration)
-    {
-        $this->apiClient = new ApiClient($configuration);
+    /**
+     * @param non-empty-string $baseUrl
+     * @param non-empty-string $token
+     * @param int<0, max> $backoffMaxTries
+     */
+    public function __construct(
+        string $baseUrl,
+        string $token,
+        ?LoggerInterface $logger = null,
+        int $backoffMaxTries = ApiClientOptions::DEFAULT_BACKOFF_MAX_TRIES,
+        int $connectTimeout = ApiClientOptions::DEFAULT_CONNECT_TIMEOUT,
+        int $requestTimeout = ApiClientOptions::DEFAULT_REQUEST_TIMEOUT,
+        string $userAgent = self::FALLBACK_USER_AGENT,
+        null|Closure|HandlerStack $requestHandler = null,
+    ) {
+        $this->apiClient = new ApiClient(
+            $baseUrl,
+            new StorageApiTokenAuthenticator($token),
+            new ApiClientOptions(
+                userAgent: $userAgent,
+                backoffMaxTries: $backoffMaxTries,
+                connectTimeout: $connectTimeout,
+                requestTimeout: $requestTimeout,
+                requestHandler: $requestHandler,
+                logger: $logger,
+            ),
+            errorMessageResolver: new SandboxesErrorMessageResolver(),
+        );
     }
 
     public function getSandbox(string $sandboxId): Sandbox
     {
-        $responseData = $this->apiClient->sendRequestAndDecodeResponse(
+        return $this->apiClient->sendRequestAndMapResponse(
             new Request(
                 'GET',
                 sprintf('/sandboxes/%s', $sandboxId),
             ),
+            Sandbox::class,
         );
-
-        return Sandbox::fromArray($responseData);
     }
 
     public function createSandbox(array $payload): Sandbox
     {
-        $responseData = $this->apiClient->sendRequestAndDecodeResponse(
+        return $this->apiClient->sendRequestAndMapResponse(
             new Request(
                 'POST',
                 '/sandboxes',
@@ -43,9 +74,8 @@ class SandboxesApiClient
                 ],
                 Json::encodeArray($payload),
             ),
+            Sandbox::class,
         );
-
-        return Sandbox::fromArray($responseData);
     }
 
     public function deleteSandbox(string $sandboxId): void
@@ -60,7 +90,7 @@ class SandboxesApiClient
 
     public function updateSandbox(string $sandboxId, array $array): Sandbox
     {
-        $responseData = $this->apiClient->sendRequestAndDecodeResponse(
+        return $this->apiClient->sendRequestAndMapResponse(
             new Request(
                 'PATCH',
                 sprintf('/sandboxes/%s', $sandboxId),
@@ -69,20 +99,18 @@ class SandboxesApiClient
                 ],
                 Json::encodeArray($array),
             ),
+            Sandbox::class,
         );
-
-        return Sandbox::fromArray($responseData);
     }
 
     public function getCurrentProject(): Project
     {
-        $responseData = $this->apiClient->sendRequestAndDecodeResponse(
+        return $this->apiClient->sendRequestAndMapResponse(
             new Request(
                 'GET',
                 '/sandboxes/project',
             ),
+            Project::class,
         );
-
-        return Project::fromArray($responseData);
     }
 }

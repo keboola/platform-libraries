@@ -11,13 +11,12 @@ composer require keboola/sandboxes-service-api-client
 
 ```php
 use Keboola\SandboxesServiceApiClient\Sandboxes\SandboxesApiClient;
-use Keboola\SandboxesServiceApiClient\ApiClientConfiguration;
 
-$client = new SandboxesApiClient(new ApiClientConfiguration(
+$client = new SandboxesApiClient(
     baseUrl: 'https://data-science.keboola.com',
-    storageToken: '{storage-api-token}',
+    token: '{storage-api-token}',
     userAgent: 'My App',
-));
+);
 
 $result = $client->createSandbox([
     'componentId' => 'keboola.data-apps',
@@ -31,13 +30,12 @@ $result = $client->createSandbox([
 
 ```php
 use Keboola\SandboxesServiceApiClient\Apps\AppsApiClient;
-use Keboola\SandboxesServiceApiClient\ApiClientConfiguration;
 
-$client = new AppsApiClient(new ApiClientConfiguration(
+$client = new AppsApiClient(
     baseUrl: 'https://data-apps.keboola.com',
-    storageToken: '{storage-api-token}',
+    token: '{storage-api-token}',
     userAgent: 'My App',
-));
+);
 
 // List all apps
 $apps = $client->listApps();

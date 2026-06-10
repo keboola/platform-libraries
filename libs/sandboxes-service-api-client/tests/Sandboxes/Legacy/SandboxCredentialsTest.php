@@ -10,7 +10,7 @@ use PHPUnit\Framework\TestCase;
 
 class SandboxCredentialsTest extends TestCase
 {
-    public function testFromArrayToArray(): void
+    public function testFromResponseDataToArray(): void
     {
         $input = [
             'type' => 'service_account',
@@ -24,19 +24,19 @@ class SandboxCredentialsTest extends TestCase
             'client_x509_cert_url' => 'https://www.googleapis.com/robot/v1/metadata/x509.com',
             'private_key' => '-----BEGIN PRIVATE KEY-----key-----END PRIVATE KEY-----',
         ];
-        $credentials = SandboxCredentials::fromArray($input);
+        $credentials = SandboxCredentials::fromResponseData($input);
 
         self::assertSame($input, $credentials->toArray());
     }
 
-    public function testFromArrayInvalidValues(): void
+    public function testFromResponseDataInvalidValues(): void
     {
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage(
             'Missing credential field(s) "type,project_id,private_key_id,client_email,token_uri,' .
             'auth_provider_x509_cert_url,client_x509_cert_url,private_key"',
         );
-        SandboxCredentials::fromArray([
+        SandboxCredentials::fromResponseData([
             'something' => 'weird',
             'client_id' => '1234',
             'auth_uri' => 'https://accounts.google.com/o/oauth2/auth',

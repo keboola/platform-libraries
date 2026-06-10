@@ -9,6 +9,12 @@
             "email": "devel@keboola.com"
         }
     ],
+    "repositories": {
+        "libs": {
+            "type": "path",
+            "url": "../../libs/*"
+        }
+    },
     "autoload": {
         "psr-4": {
             "Keboola\\SandboxesServiceApiClient\\": "src/"
@@ -22,6 +28,7 @@
     "require": {
         "php": "^8.2",
         "guzzlehttp/guzzle": "^7.8",
+        "keboola/php-api-client-base": "*@dev",
         "monolog/monolog": "^2.0|^3.0",
         "webmozart/assert": "^1.11"
     },

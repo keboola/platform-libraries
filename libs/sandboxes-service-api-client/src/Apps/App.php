@@ -4,9 +4,10 @@ declare(strict_types=1);
 
 namespace Keboola\SandboxesServiceApiClient\Apps;
 
-use Keboola\SandboxesServiceApiClient\Exception\ClientException;
+use Keboola\ApiClientBase\Exception\ClientException;
+use Keboola\ApiClientBase\ResponseModelInterface;
 
-class App
+final class App implements ResponseModelInterface
 {
     protected const REQUIRED_PROPERTIES = [
         'id',
@@ -72,28 +73,28 @@ class App
     private int $autoSuspendAfterSeconds;
     private string $provisioningStrategy;
 
-    public static function fromArray(array $in): self
+    public static function fromResponseData(array $data): static
     {
         foreach (self::REQUIRED_PROPERTIES as $property) {
-            if (!isset($in[$property])) {
+            if (!isset($data[$property])) {
                 throw new ClientException("Property $property is missing from API response");
             }
         }
 
         $app = new self();
-        $app->setId((string) $in['id']);
-        $app->setProjectId((string) $in['projectId']);
-        $app->setComponentId((string) $in['componentId']);
-        $app->setType(isset($in['type']) ? (string) $in['type'] : null);
-        $app->setBranchId(isset($in['branchId']) ? $in['branchId'] : null);
-        $app->setConfigId((string) $in['configId']);
-        $app->setConfigVersion((string) $in['configVersion']);
-        $app->setState((string) $in['state']);
-        $app->setDesiredState((string) $in['desiredState']);
-        $app->setLastRequestTimestamp($in['lastRequestTimestamp'] ?? null);
-        $app->setUrl($in['url'] ?? null);
-        $app->setAutoSuspendAfterSeconds((int) ($in['autoSuspendAfterSeconds'] ?? 0));
-        $app->setProvisioningStrategy((string) $in['provisioningStrategy']);
+        $app->setId((string) $data['id']);
+        $app->setProjectId((string) $data['projectId']);
+        $app->setComponentId((string) $data['componentId']);
+        $app->setType(isset($data['type']) ? (string) $data['type'] : null);
+        $app->setBranchId(isset($data['branchId']) ? $data['branchId'] : null);
+        $app->setConfigId((string) $data['configId']);
+        $app->setConfigVersion((string) $data['configVersion']);
+        $app->setState((string) $data['state']);
+        $app->setDesiredState((string) $data['desiredState']);
+        $app->setLastRequestTimestamp($data['lastRequestTimestamp'] ?? null);
+        $app->setUrl($data['url'] ?? null);
+        $app->setAutoSuspendAfterSeconds((int) ($data['autoSuspendAfterSeconds'] ?? 0));
+        $app->setProvisioningStrategy((string) $data['provisioningStrategy']);
 
         return $app;
     }

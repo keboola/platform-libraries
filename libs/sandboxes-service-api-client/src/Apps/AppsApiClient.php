@@ -4,18 +4,50 @@ declare(strict_types=1);
 
 namespace Keboola\SandboxesServiceApiClient\Apps;
 
+use Closure;
+use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Psr7\Request;
-use Keboola\SandboxesServiceApiClient\ApiClient;
-use Keboola\SandboxesServiceApiClient\ApiClientConfiguration;
-use Keboola\SandboxesServiceApiClient\Json;
+use Keboola\ApiClientBase\ApiClient;
+use Keboola\ApiClientBase\ApiClientOptions;
+use Keboola\ApiClientBase\Auth\StorageApiTokenAuthenticator;
+use Keboola\ApiClientBase\Json;
+use Keboola\SandboxesServiceApiClient\SandboxesErrorMessageResolver;
+use Psr\Log\LoggerInterface;
 
 class AppsApiClient
 {
+    private const FALLBACK_USER_AGENT = 'Keboola Sandboxes Service API PHP Client';
+
     private ApiClient $apiClient;
 
-    public function __construct(ApiClientConfiguration $configuration)
-    {
-        $this->apiClient = new ApiClient($configuration);
+    /**
+     * @param non-empty-string $baseUrl
+     * @param non-empty-string $token
+     * @param int<0, max> $backoffMaxTries
+     */
+    public function __construct(
+        string $baseUrl,
+        string $token,
+        ?LoggerInterface $logger = null,
+        int $backoffMaxTries = ApiClientOptions::DEFAULT_BACKOFF_MAX_TRIES,
+        int $connectTimeout = ApiClientOptions::DEFAULT_CONNECT_TIMEOUT,
+        int $requestTimeout = ApiClientOptions::DEFAULT_REQUEST_TIMEOUT,
+        string $userAgent = self::FALLBACK_USER_AGENT,
+        null|Closure|HandlerStack $requestHandler = null,
+    ) {
+        $this->apiClient = new ApiClient(
+            $baseUrl,
+            new StorageApiTokenAuthenticator($token),
+            new ApiClientOptions(
+                userAgent: $userAgent,
+                backoffMaxTries: $backoffMaxTries,
+                connectTimeout: $connectTimeout,
+                requestTimeout: $requestTimeout,
+                requestHandler: $requestHandler,
+                logger: $logger,
+            ),
+            errorMessageResolver: new SandboxesErrorMessageResolver(),
+        );
     }
 
     /**
@@ -45,23 +77,22 @@ class AppsApiClient
             $uri .= '?' . http_build_query($queryParams);
         }
 
-        $responseData = $this->apiClient->sendRequestAndDecodeResponse(
+        return $this->apiClient->sendRequestAndMapResponse(
             new Request('GET', $uri),
+            App::class,
+            isList: true,
         );
-
-        return array_map(fn(array $appData) => App::fromArray($appData), $responseData);
     }
 
     public function getApp(string $appId): App
     {
-        $responseData = $this->apiClient->sendRequestAndDecodeResponse(
+        return $this->apiClient->sendRequestAndMapResponse(
             new Request(
                 'GET',
                 sprintf('/apps/%s', $appId),
             ),
+            App::class,
         );
-
-        return App::fromArray($responseData);
     }
 
     /**
@@ -87,7 +118,7 @@ class AppsApiClient
      */
     public function createApp(array $payload): App
     {
-        $responseData = $this->apiClient->sendRequestAndDecodeResponse(
+        return $this->apiClient->sendRequestAndMapResponse(
             new Request(
                 'POST',
                 '/apps',
@@ -96,9 +127,8 @@ class AppsApiClient
                 ],
                 Json::encodeArray($payload),
             ),
+            App::class,
         );
-
-        return App::fromArray($responseData);
     }
 
     public function deleteApp(string $appId): void

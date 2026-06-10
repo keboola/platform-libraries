@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Keboola\SandboxesServiceApiClient\Sandboxes\Legacy;
 
-class PersistentStorage
+use Keboola\ApiClientBase\ResponseModelInterface;
+
+final class PersistentStorage implements ResponseModelInterface
 {
     private ?bool $ready = null;
     private ?string $k8sStorageClassName = '';
@@ -14,12 +16,12 @@ class PersistentStorage
         return new self();
     }
 
-    public static function fromArray(array $values): self
+    public static function fromResponseData(array $data): static
     {
         return self::create()
-            ->setReady($values['ready'] ?? null)
+            ->setReady($data['ready'] ?? null)
             ->setK8sStorageClassName(
-                array_key_exists('k8sStorageClassName', $values) ? $values['k8sStorageClassName'] : '',
+                array_key_exists('k8sStorageClassName', $data) ? $data['k8sStorageClassName'] : '',
             )
         ;
     }

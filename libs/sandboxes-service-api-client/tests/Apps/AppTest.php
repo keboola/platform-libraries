@@ -5,15 +5,15 @@ declare(strict_types=1);
 namespace Keboola\SandboxesServiceApiClient\Tests\Apps;
 
 use Generator;
+use Keboola\ApiClientBase\Exception\ClientException;
 use Keboola\SandboxesServiceApiClient\Apps\App;
-use Keboola\SandboxesServiceApiClient\Exception\ClientException;
 use PHPUnit\Framework\TestCase;
 
 class AppTest extends TestCase
 {
     public function testGetters(): void
     {
-        $app = App::fromArray([
+        $app = App::fromResponseData([
             'id' => 'app-id',
             'projectId' => 'project-id',
             'componentId' => 'keboola.data-apps',
@@ -44,7 +44,7 @@ class AppTest extends TestCase
 
     public function testGettersWithNullableValues(): void
     {
-        $app = App::fromArray([
+        $app = App::fromResponseData([
             'id' => 'app-id',
             'projectId' => 'project-id',
             'componentId' => 'keboola.data-apps',
@@ -83,7 +83,7 @@ class AppTest extends TestCase
             'provisioningStrategy' => 'operator',
         ];
 
-        $app = App::fromArray($expectedData);
+        $app = App::fromResponseData($expectedData);
 
         self::assertSame($expectedData, $app->toArray());
     }
@@ -130,7 +130,7 @@ class AppTest extends TestCase
         $this->expectException(ClientException::class);
         $this->expectExceptionMessage("Property $missingProperty is missing from API response");
 
-        App::fromArray($data);
+        App::fromResponseData($data);
     }
 
     /**
@@ -280,10 +280,10 @@ class AppTest extends TestCase
         self::assertSame($app, $app->setAutoSuspendAfterSeconds(123));
     }
 
-    public function testFromArrayWithEmptyAutoSuspendAfterSeconds(): void
+    public function testFromResponseDataWithEmptyAutoSuspendAfterSeconds(): void
     {
         // Test missing autoSuspendAfterSeconds defaults to 0
-        $app = App::fromArray([
+        $app = App::fromResponseData([
             'id' => 'app-id',
             'projectId' => 'project-id',
             'componentId' => 'keboola.data-apps',
@@ -330,5 +330,66 @@ class AppTest extends TestCase
                 self::assertStringContainsString($strategy, $message);
             }
         }
+    }
+
+    public function testFromResponseDataCastsNumericValuesToStrings(): void
+    {
+        // Mutation testing: verify that numeric values from API response are cast to strings
+        $app = App::fromResponseData([
+            'id' => 12345,
+            'projectId' => 67890,
+            'componentId' => 99999,
+            'configId' => 111,
+            'configVersion' => 5,
+            'state' => 'running',
+            'desiredState' => 'running',
+            'provisioningStrategy' => 'operator',
+            'type' => 42,
+            'autoSuspendAfterSeconds' => '3600',
+        ]);
+
+        self::assertSame('12345', $app->getId());
+        self::assertSame('67890', $app->getProjectId());
+        self::assertSame('99999', $app->getComponentId());
+        self::assertSame('111', $app->getConfigId());
+        self::assertSame('5', $app->getConfigVersion());
+        self::assertSame('42', $app->getType());
+        self::assertSame(3600, $app->getAutoSuspendAfterSeconds());
+    }
+
+    public function testSetTypeIsCallablePublicly(): void
+    {
+        // PublicVisibility mutation: setType must be accessible from outside the class
+        $app = new App();
+        $result = $app->setType('streamlit');
+
+        self::assertSame('streamlit', $app->getType());
+        self::assertSame($app, $result);
+    }
+
+    public function testSetTypeAcceptsNull(): void
+    {
+        $app = new App();
+        $app->setType('streamlit');
+        $result = $app->setType(null);
+
+        self::assertNull($app->getType());
+        self::assertSame($app, $result);
+    }
+
+    public function testFromResponseDataSetsProvisioningStrategyFromCast(): void
+    {
+        $app = App::fromResponseData([
+            'id' => 'app-id',
+            'projectId' => 'project-id',
+            'componentId' => 'keboola.data-apps',
+            'configId' => 'config-id',
+            'configVersion' => '1',
+            'state' => 'running',
+            'desiredState' => 'running',
+            'provisioningStrategy' => 'jobQueue',
+        ]);
+
+        self::assertSame('jobQueue', $app->getProvisioningStrategy());
     }
 }

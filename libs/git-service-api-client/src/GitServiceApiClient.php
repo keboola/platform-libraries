@@ -4,24 +4,20 @@ declare(strict_types=1);
 
 namespace Keboola\GitServiceApiClient;
 
-use Closure;
-use GuzzleHttp\HandlerStack;
-use GuzzleHttp\Psr7\Request;
 use Keboola\ApiClientBase\ApiClient;
 use Keboola\ApiClientBase\ApiClientOptions;
 use Keboola\ApiClientBase\Auth\KeboolaServiceAccountAuthenticator;
 use Keboola\ApiClientBase\Auth\ManageApiTokenAuthenticator;
-use Keboola\ApiClientBase\Json;
 use Keboola\GitServiceApiClient\Model\CreatedCredential;
 use Keboola\GitServiceApiClient\Model\Credential;
 use Keboola\GitServiceApiClient\Model\CredentialListWrapper;
 use Keboola\GitServiceApiClient\Model\Repository;
 use Psr\Log\LoggerInterface;
+use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 class GitServiceApiClient
 {
     private const FALLBACK_USER_AGENT = 'Keboola Git Service PHP Client';
-    private const JSON_HEADERS = ['Content-Type' => 'application/json'];
 
     private ApiClient $apiClient;
 
@@ -29,6 +25,8 @@ class GitServiceApiClient
      * @param non-empty-string $baseUrl
      * @param non-empty-string|null $manageToken
      * @param int<0, max> $backoffMaxTries
+     * @param HttpClientInterface|null $httpClient Test/integration seam — inject a
+     *     {@see \Symfony\Component\HttpClient\MockHttpClient} in tests.
      *
      * When $manageToken is provided, authenticates with X-KBC-ManageApiToken.
      * When null (default), authenticates via the projected Kubernetes ServiceAccount
@@ -42,7 +40,7 @@ class GitServiceApiClient
         int $connectTimeout = ApiClientOptions::DEFAULT_CONNECT_TIMEOUT,
         int $requestTimeout = ApiClientOptions::DEFAULT_REQUEST_TIMEOUT,
         string $userAgent = self::FALLBACK_USER_AGENT,
-        null|Closure|HandlerStack $requestHandler = null,
+        ?HttpClientInterface $httpClient = null,
     ) {
         $authenticator = $manageToken !== null
             ? new ManageApiTokenAuthenticator($manageToken)
@@ -56,7 +54,7 @@ class GitServiceApiClient
                 backoffMaxTries: $backoffMaxTries,
                 connectTimeout: $connectTimeout,
                 requestTimeout: $requestTimeout,
-                requestHandler: $requestHandler,
+                httpClient: $httpClient,
                 logger: $logger,
             ),
             errorMessageResolver: new GitServiceErrorMessageResolver(),
@@ -66,29 +64,25 @@ class GitServiceApiClient
     public function createRepository(string $name): Repository
     {
         return $this->apiClient->sendRequestAndMapResponse(
-            new Request(
-                'POST',
-                'repos',
-                self::JSON_HEADERS,
-                Json::encodeArray(['name' => $name]),
-            ),
+            'POST',
+            'repos',
             Repository::class,
+            ['json' => ['name' => $name]],
         );
     }
 
     public function getRepository(string $name): Repository
     {
         return $this->apiClient->sendRequestAndMapResponse(
-            new Request('GET', 'repos/' . rawurlencode($name)),
+            'GET',
+            'repos/' . rawurlencode($name),
             Repository::class,
         );
     }
 
     public function deleteRepository(string $name): void
     {
-        $this->apiClient->sendRequest(
-            new Request('DELETE', 'repos/' . rawurlencode($name)),
-        );
+        $this->apiClient->sendRequest('DELETE', 'repos/' . rawurlencode($name));
     }
 
     /**
@@ -97,7 +91,8 @@ class GitServiceApiClient
     public function listCredentials(string $repo): array
     {
         $wrapper = $this->apiClient->sendRequestAndMapResponse(
-            new Request('GET', 'repos/' . rawurlencode($repo) . '/credentials'),
+            'GET',
+            'repos/' . rawurlencode($repo) . '/credentials',
             CredentialListWrapper::class,
         );
         return $wrapper->credentials;
@@ -106,10 +101,8 @@ class GitServiceApiClient
     public function getCredential(string $repo, string $credentialId): Credential
     {
         return $this->apiClient->sendRequestAndMapResponse(
-            new Request(
-                'GET',
-                'repos/' . rawurlencode($repo) . '/credentials/' . rawurlencode($credentialId),
-            ),
+            'GET',
+            'repos/' . rawurlencode($repo) . '/credentials/' . rawurlencode($credentialId),
             Credential::class,
         );
     }
@@ -117,23 +110,18 @@ class GitServiceApiClient
     public function createCredential(string $repo, NewCredential $request): CreatedCredential
     {
         return $this->apiClient->sendRequestAndMapResponse(
-            new Request(
-                'POST',
-                'repos/' . rawurlencode($repo) . '/credentials',
-                self::JSON_HEADERS,
-                Json::encodeArray($request->toRequestBody()),
-            ),
+            'POST',
+            'repos/' . rawurlencode($repo) . '/credentials',
             CreatedCredential::class,
+            ['json' => $request->toRequestBody()],
         );
     }
 
     public function deleteCredential(string $repo, string $credentialId): void
     {
         $this->apiClient->sendRequest(
-            new Request(
-                'DELETE',
-                'repos/' . rawurlencode($repo) . '/credentials/' . rawurlencode($credentialId),
-            ),
+            'DELETE',
+            'repos/' . rawurlencode($repo) . '/credentials/' . rawurlencode($credentialId),
         );
     }
 }

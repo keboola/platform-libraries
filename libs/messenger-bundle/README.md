@@ -30,6 +30,11 @@ keboola_messenger:
   connection_audit_log_queue_dsn: "%env(CONNECTION_AUDIT_LOG_QUEUE_DSN)%"
 ```
 
+### Default timeouts for Google Pub/Sub transports
+When installed, the bundle gives every `gps://` transport in the application a default REST client timeout
+(`restOptions.timeout: 120`, `connect_timeout: 10`) — without it, a consumer can hang forever on a dead connection.
+Setting `client_config` explicitly (in transport options or the DSN query) disables the defaults.
+
 ## Development
 Prerequisites:
 * `aws` CLI with configured `Keboola-Dev-Platform-Services-AWSAdministratorAccess` profile

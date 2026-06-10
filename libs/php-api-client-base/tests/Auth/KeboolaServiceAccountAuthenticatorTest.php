@@ -4,22 +4,23 @@ declare(strict_types=1);
 
 namespace Keboola\ApiClientBase\Tests\Auth;
 
-use GuzzleHttp\Psr7\Request;
 use Keboola\ApiClientBase\Auth\KeboolaServiceAccountAuthenticator;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 
 class KeboolaServiceAccountAuthenticatorTest extends TestCase
 {
-    public function testReadsTokenFileAndSetsBearerHeader(): void
+    public function testReadsTokenFileAndReturnsBearerHeader(): void
     {
         $path = (string) tempnam(sys_get_temp_dir(), 'sa-token-');
         file_put_contents($path, "the-token\n");
         try {
             /** @phpstan-ignore-next-line argument.type — tempnam returns string, not non-empty-string */
             $authenticator = new KeboolaServiceAccountAuthenticator($path);
-            $request = $authenticator(new Request('GET', 'https://example.test'));
-            self::assertSame('Bearer the-token', $request->getHeaderLine('X-Kubernetes-Authorization'));
+            self::assertSame(
+                ['X-Kubernetes-Authorization' => 'Bearer the-token'],
+                $authenticator->getAuthenticationHeaders(),
+            );
         } finally {
             @unlink($path);
         }
@@ -32,12 +33,16 @@ class KeboolaServiceAccountAuthenticatorTest extends TestCase
         try {
             /** @phpstan-ignore-next-line argument.type — tempnam returns string, not non-empty-string */
             $authenticator = new KeboolaServiceAccountAuthenticator($path);
-            $first = $authenticator(new Request('GET', 'https://example.test'));
-            self::assertSame('Bearer first', $first->getHeaderLine('X-Kubernetes-Authorization'));
+            self::assertSame(
+                ['X-Kubernetes-Authorization' => 'Bearer first'],
+                $authenticator->getAuthenticationHeaders(),
+            );
 
             file_put_contents($path, "second\n");
-            $second = $authenticator(new Request('GET', 'https://example.test'));
-            self::assertSame('Bearer second', $second->getHeaderLine('X-Kubernetes-Authorization'));
+            self::assertSame(
+                ['X-Kubernetes-Authorization' => 'Bearer second'],
+                $authenticator->getAuthenticationHeaders(),
+            );
         } finally {
             @unlink($path);
         }
@@ -48,7 +53,7 @@ class KeboolaServiceAccountAuthenticatorTest extends TestCase
         $authenticator = new KeboolaServiceAccountAuthenticator('/nonexistent/token');
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('/nonexistent/token');
-        $authenticator(new Request('GET', 'https://example.test'));
+        $authenticator->getAuthenticationHeaders();
     }
 
     public function testThrowsWhenFileEmpty(): void
@@ -60,7 +65,7 @@ class KeboolaServiceAccountAuthenticatorTest extends TestCase
             $authenticator = new KeboolaServiceAccountAuthenticator($path);
             $this->expectException(RuntimeException::class);
             $this->expectExceptionMessage('is empty');
-            $authenticator(new Request('GET', 'https://example.test'));
+            $authenticator->getAuthenticationHeaders();
         } finally {
             @unlink($path);
         }

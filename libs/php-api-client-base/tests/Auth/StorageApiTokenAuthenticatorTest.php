@@ -4,19 +4,20 @@ declare(strict_types=1);
 
 namespace Keboola\ApiClientBase\Tests\Auth;
 
-use GuzzleHttp\Psr7\Request;
 use InvalidArgumentException;
 use Keboola\ApiClientBase\Auth\StorageApiTokenAuthenticator;
 use PHPUnit\Framework\TestCase;
 
 class StorageApiTokenAuthenticatorTest extends TestCase
 {
-    public function testAddsStorageApiTokenHeader(): void
+    public function testReturnsStorageApiTokenHeader(): void
     {
         $authenticator = new StorageApiTokenAuthenticator('secret-token');
-        $request = $authenticator(new Request('GET', 'https://example.test'));
 
-        self::assertSame('secret-token', $request->getHeaderLine('X-StorageApi-Token'));
+        self::assertSame(
+            ['X-StorageApi-Token' => 'secret-token'],
+            $authenticator->getAuthenticationHeaders(),
+        );
     }
 
     public function testRejectsEmptyToken(): void

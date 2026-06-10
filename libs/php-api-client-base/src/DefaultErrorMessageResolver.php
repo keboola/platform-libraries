@@ -4,15 +4,12 @@ declare(strict_types=1);
 
 namespace Keboola\ApiClientBase;
 
-use JsonException;
-
 final class DefaultErrorMessageResolver implements ErrorMessageResolverInterface
 {
     public function __invoke(string $responseBody, int $statusCode): ?string
     {
-        try {
-            $data = Json::decodeArray($responseBody);
-        } catch (JsonException) {
+        $data = json_decode($responseBody, true);
+        if (!is_array($data)) {
             return null;
         }
 

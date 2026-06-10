@@ -4,100 +4,93 @@ declare(strict_types=1);
 
 namespace Keboola\GitServiceApiClient\Tests;
 
-use GuzzleHttp\Handler\MockHandler;
-use GuzzleHttp\HandlerStack;
-use GuzzleHttp\Psr7\Response;
 use Keboola\GitServiceApiClient\CredentialType;
 use Keboola\GitServiceApiClient\GitServiceApiClient;
 use Keboola\GitServiceApiClient\KeyPermission;
 use Keboola\GitServiceApiClient\NewCredential;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\HttpClient\MockHttpClient;
+use Symfony\Component\HttpClient\Response\MockResponse;
 
 class GitServiceApiClientTest extends TestCase
 {
-    private function buildClient(MockHandler $mock): GitServiceApiClient
+    /**
+     * @param list<MockResponse> $responses
+     */
+    private function buildClient(array $responses): GitServiceApiClient
     {
-        $stack = HandlerStack::create($mock);
         return new GitServiceApiClient(
             'https://example.test',
             manageToken: 'token',
-            requestHandler: $stack,
+            httpClient: new MockHttpClient($responses, 'https://example.test/'),
         );
     }
 
     public function testCreateRepository(): void
     {
-        $mock = new MockHandler([new Response(201, [], (string) json_encode([
+        $response = new MockResponse((string) json_encode([
             'name' => 'app-1',
             'createdAt' => '2026-04-28T10:00:00Z',
             'defaultBranch' => 'main',
             'sshUrl' => 'ssh://git/app-1',
             'httpsUrl' => 'https://git/app-1.git',
-        ]))]);
-        $client = $this->buildClient($mock);
+        ]), ['http_code' => 201]);
+        $client = $this->buildClient([$response]);
 
         $repo = $client->createRepository('app-1');
 
         self::assertSame('app-1', $repo->name);
         self::assertSame('https://git/app-1.git', $repo->httpsUrl);
-        $request = $mock->getLastRequest();
-        self::assertNotNull($request);
-        self::assertSame('POST', $request->getMethod());
-        self::assertSame('https://example.test/repos', (string) $request->getUri());
-        self::assertSame('{"name":"app-1"}', (string) $request->getBody());
+        self::assertSame('POST', $response->getRequestMethod());
+        self::assertSame('https://example.test/repos', $response->getRequestUrl());
+        self::assertSame('{"name":"app-1"}', $response->getRequestOptions()['body'] ?? null);
     }
 
     public function testGetRepository(): void
     {
-        $mock = new MockHandler([new Response(200, [], (string) json_encode([
+        $response = new MockResponse((string) json_encode([
             'name' => 'app-1',
             'createdAt' => 't',
             'defaultBranch' => 'main',
             'sshUrl' => 's',
             'httpsUrl' => 'https://git/app-1.git',
-        ]))]);
-        $client = $this->buildClient($mock);
+        ]));
+        $client = $this->buildClient([$response]);
 
         $repo = $client->getRepository('app-1');
 
         self::assertSame('app-1', $repo->name);
         self::assertSame('https://git/app-1.git', $repo->httpsUrl);
-        $request = $mock->getLastRequest();
-        self::assertNotNull($request);
-        self::assertSame('GET', $request->getMethod());
-        self::assertSame('https://example.test/repos/app-1', (string) $request->getUri());
+        self::assertSame('GET', $response->getRequestMethod());
+        self::assertSame('https://example.test/repos/app-1', $response->getRequestUrl());
     }
 
     public function testGetRepositoryEncodesName(): void
     {
-        $mock = new MockHandler([new Response(200, [], (string) json_encode([
+        $response = new MockResponse((string) json_encode([
             'name' => 'app/1', 'createdAt' => 't', 'defaultBranch' => 'main', 'sshUrl' => 's', 'httpsUrl' => 'h',
-        ]))]);
-        $client = $this->buildClient($mock);
+        ]));
+        $client = $this->buildClient([$response]);
 
         $client->getRepository('app/1');
 
-        $request = $mock->getLastRequest();
-        self::assertNotNull($request);
-        self::assertSame('https://example.test/repos/app%2F1', (string) $request->getUri());
+        self::assertSame('https://example.test/repos/app%2F1', $response->getRequestUrl());
     }
 
     public function testDeleteRepository(): void
     {
-        $mock = new MockHandler([new Response(204)]);
-        $client = $this->buildClient($mock);
+        $response = new MockResponse('', ['http_code' => 204]);
+        $client = $this->buildClient([$response]);
 
         $client->deleteRepository('app-1');
 
-        $request = $mock->getLastRequest();
-        self::assertNotNull($request);
-        self::assertSame('DELETE', $request->getMethod());
-        self::assertSame('https://example.test/repos/app-1', (string) $request->getUri());
+        self::assertSame('DELETE', $response->getRequestMethod());
+        self::assertSame('https://example.test/repos/app-1', $response->getRequestUrl());
     }
 
     public function testListCredentials(): void
     {
-        $mock = new MockHandler([new Response(200, [], (string) json_encode([
+        $response = new MockResponse((string) json_encode([
             'credentials' => [
                 [
                     'id' => '1',
@@ -115,8 +108,8 @@ class GitServiceApiClientTest extends TestCase
                     'createdAt' => 't',
                 ],
             ],
-        ]))]);
-        $client = $this->buildClient($mock);
+        ]));
+        $client = $this->buildClient([$response]);
 
         $credentials = $client->listCredentials('app-1');
 
@@ -126,68 +119,62 @@ class GitServiceApiClientTest extends TestCase
         self::assertSame('ssh-ed25519 AAA', $credentials[0]->publicKey);
         self::assertSame(CredentialType::HttpToken, $credentials[1]->type);
         self::assertNull($credentials[1]->publicKey);
-        $request = $mock->getLastRequest();
-        self::assertNotNull($request);
-        self::assertSame('GET', $request->getMethod());
-        self::assertSame('https://example.test/repos/app-1/credentials', (string) $request->getUri());
+        self::assertSame('GET', $response->getRequestMethod());
+        self::assertSame('https://example.test/repos/app-1/credentials', $response->getRequestUrl());
     }
 
     public function testGetCredential(): void
     {
-        $mock = new MockHandler([new Response(200, [], (string) json_encode([
+        $response = new MockResponse((string) json_encode([
             'id' => '42',
             'type' => 'ssh_key',
             'username' => 'app-1-svc',
             'publicKey' => 'ssh-ed25519 AAA',
             'permissions' => 'readWrite',
             'createdAt' => 't',
-        ]))]);
-        $client = $this->buildClient($mock);
+        ]));
+        $client = $this->buildClient([$response]);
 
         $credential = $client->getCredential('app-1', '42');
 
         self::assertSame('42', $credential->id);
         self::assertSame(CredentialType::SshKey, $credential->type);
         self::assertSame(KeyPermission::ReadWrite, $credential->permissions);
-        $request = $mock->getLastRequest();
-        self::assertNotNull($request);
-        self::assertSame('GET', $request->getMethod());
-        self::assertSame('https://example.test/repos/app-1/credentials/42', (string) $request->getUri());
+        self::assertSame('GET', $response->getRequestMethod());
+        self::assertSame('https://example.test/repos/app-1/credentials/42', $response->getRequestUrl());
     }
 
     public function testGetCredentialEncodesIds(): void
     {
-        $mock = new MockHandler([new Response(200, [], (string) json_encode([
+        $response = new MockResponse((string) json_encode([
             'id' => 'a/b',
             'type' => 'ssh_key',
             'username' => 'u',
             'publicKey' => 'k',
             'permissions' => 'readOnly',
             'createdAt' => 't',
-        ]))]);
-        $client = $this->buildClient($mock);
+        ]));
+        $client = $this->buildClient([$response]);
 
         $client->getCredential('app/1', 'a/b');
 
-        $request = $mock->getLastRequest();
-        self::assertNotNull($request);
         self::assertSame(
             'https://example.test/repos/app%2F1/credentials/a%2Fb',
-            (string) $request->getUri(),
+            $response->getRequestUrl(),
         );
     }
 
     public function testCreateCredentialWithSshKey(): void
     {
-        $mock = new MockHandler([new Response(201, [], (string) json_encode([
+        $response = new MockResponse((string) json_encode([
             'id' => '42',
             'type' => 'ssh_key',
             'username' => 'app-1-svc',
             'publicKey' => 'ssh-ed25519 AAA',
             'permissions' => 'readWrite',
             'createdAt' => 't',
-        ]))]);
-        $client = $this->buildClient($mock);
+        ]), ['http_code' => 201]);
+        $client = $this->buildClient([$response]);
 
         $credential = $client->createCredential(
             'app-1',
@@ -198,19 +185,17 @@ class GitServiceApiClientTest extends TestCase
         self::assertSame(CredentialType::SshKey, $credential->type);
         self::assertSame('ssh-ed25519 AAA', $credential->publicKey);
         self::assertNull($credential->secret);
-        $request = $mock->getLastRequest();
-        self::assertNotNull($request);
-        self::assertSame('POST', $request->getMethod());
-        self::assertSame('https://example.test/repos/app-1/credentials', (string) $request->getUri());
+        self::assertSame('POST', $response->getRequestMethod());
+        self::assertSame('https://example.test/repos/app-1/credentials', $response->getRequestUrl());
         self::assertSame(
             '{"type":"ssh_key","username":"svc","permissions":"readWrite","publicKey":"ssh-ed25519 AAA"}',
-            (string) $request->getBody(),
+            $response->getRequestOptions()['body'] ?? null,
         );
     }
 
     public function testCreateCredentialWithHttpToken(): void
     {
-        $mock = new MockHandler([new Response(201, [], (string) json_encode([
+        $response = new MockResponse((string) json_encode([
             'id' => '43',
             'type' => 'http_token',
             'username' => 'app-1-bot',
@@ -218,8 +203,8 @@ class GitServiceApiClientTest extends TestCase
             'httpsUrl' => 'https://forgejo.example.com/keboola/app-1.git',
             'permissions' => 'readOnly',
             'createdAt' => 't',
-        ]))]);
-        $client = $this->buildClient($mock);
+        ]), ['http_code' => 201]);
+        $client = $this->buildClient([$response]);
 
         $credential = $client->createCredential(
             'app-1',
@@ -231,26 +216,22 @@ class GitServiceApiClientTest extends TestCase
         self::assertSame('ghs_abc123', $credential->secret);
         self::assertSame('https://forgejo.example.com/keboola/app-1.git', $credential->httpsUrl);
         self::assertNull($credential->publicKey);
-        $request = $mock->getLastRequest();
-        self::assertNotNull($request);
-        self::assertSame('POST', $request->getMethod());
-        self::assertSame('https://example.test/repos/app-1/credentials', (string) $request->getUri());
+        self::assertSame('POST', $response->getRequestMethod());
+        self::assertSame('https://example.test/repos/app-1/credentials', $response->getRequestUrl());
         self::assertSame(
             '{"type":"http_token","username":"bot","permissions":"readOnly"}',
-            (string) $request->getBody(),
+            $response->getRequestOptions()['body'] ?? null,
         );
     }
 
     public function testDeleteCredential(): void
     {
-        $mock = new MockHandler([new Response(204)]);
-        $client = $this->buildClient($mock);
+        $response = new MockResponse('', ['http_code' => 204]);
+        $client = $this->buildClient([$response]);
 
         $client->deleteCredential('app-1', '42');
 
-        $request = $mock->getLastRequest();
-        self::assertNotNull($request);
-        self::assertSame('DELETE', $request->getMethod());
-        self::assertSame('https://example.test/repos/app-1/credentials/42', (string) $request->getUri());
+        self::assertSame('DELETE', $response->getRequestMethod());
+        self::assertSame('https://example.test/repos/app-1/credentials/42', $response->getRequestUrl());
     }
 }

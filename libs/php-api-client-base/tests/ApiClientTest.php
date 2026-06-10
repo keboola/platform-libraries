@@ -4,10 +4,6 @@ declare(strict_types=1);
 
 namespace Keboola\ApiClientBase\Tests;
 
-use GuzzleHttp\Handler\MockHandler;
-use GuzzleHttp\HandlerStack;
-use GuzzleHttp\Psr7\Request;
-use GuzzleHttp\Psr7\Response;
 use Keboola\ApiClientBase\ApiClient;
 use Keboola\ApiClientBase\ApiClientOptions;
 use Keboola\ApiClientBase\Auth\ManageApiTokenAuthenticator;
@@ -17,46 +13,76 @@ use Keboola\ApiClientBase\ErrorMessageResolverInterface;
 use Keboola\ApiClientBase\Exception\ClientException;
 use Keboola\ApiClientBase\Tests\Fixtures\DummyModel;
 use PHPUnit\Framework\TestCase;
-use Psr\Http\Message\RequestInterface;
+use Symfony\Component\HttpClient\MockHttpClient;
+use Symfony\Component\HttpClient\Response\MockResponse;
 
 class ApiClientTest extends TestCase
 {
+    /**
+     * @param list<MockResponse> $responses
+     */
+    private function mockClient(array $responses): MockHttpClient
+    {
+        return new MockHttpClient($responses, 'https://example.test/');
+    }
+
+    private function apiClient(MockHttpClient $mock, ApiClientOptions $options): ApiClient
+    {
+        return new ApiClient('https://example.test', new NoAuthAuthenticator(), $options);
+    }
+
+    /**
+     * Header lines in MockResponse::getRequestOptions() are `Name: value`; normalize them
+     * to a value map keyed by lowercased header name for assertions.
+     *
+     * @return array<string, string>
+     */
+    private function requestHeaders(MockResponse $response): array
+    {
+        $headers = [];
+        /** @var list<string> $lines */
+        $lines = $response->getRequestOptions()['headers'] ?? [];
+        foreach ($lines as $line) {
+            [$name, $value] = explode(': ', $line, 2);
+            $headers[strtolower($name)] = $value;
+        }
+        return $headers;
+    }
+
     public function testSendsWithoutAuthHeaderWhenNoAuthAuthenticator(): void
     {
-        $mock = new MockHandler([new Response(200, [], '{}')]);
-        $client = new ApiClient('https://example.test', new NoAuthAuthenticator(), new ApiClientOptions(
-            requestHandler: HandlerStack::create($mock),
-        ));
-        $client->sendRequest(new Request('GET', 'foo'));
+        $response = new MockResponse('{}');
+        $mock = $this->mockClient([$response]);
+        $client = $this->apiClient($mock, new ApiClientOptions(httpClient: $mock));
+        $client->sendRequest('GET', 'foo');
 
-        $last = $mock->getLastRequest();
-        self::assertNotNull($last);
-        self::assertSame([], $last->getHeader('X-KBC-ManageApiToken'));
-        self::assertStringContainsString('Keboola PHP API Client', $last->getHeaderLine('User-Agent'));
+        // The NoAuthAuthenticator contributes no headers, so none of the Keboola auth headers
+        // are present on the wire.
+        $headers = $this->requestHeaders($response);
+        self::assertArrayNotHasKey('x-kbc-manageapitoken', $headers);
+        self::assertArrayNotHasKey('x-storageapi-token', $headers);
+        self::assertArrayNotHasKey('x-kubernetes-authorization', $headers);
     }
 
     public function testAddsAuthHeaderPerRequest(): void
     {
-        $mock = new MockHandler([new Response(200, [], '{}')]);
+        $response = new MockResponse('{}');
+        $mock = $this->mockClient([$response]);
         $client = new ApiClient(
             'https://example.test',
             new ManageApiTokenAuthenticator('secret-token'),
-            new ApiClientOptions(requestHandler: HandlerStack::create($mock)),
+            new ApiClientOptions(httpClient: $mock),
         );
-        $client->sendRequest(new Request('GET', 'foo'));
+        $client->sendRequest('GET', 'foo');
 
-        $last = $mock->getLastRequest();
-        self::assertNotNull($last);
-        self::assertSame('secret-token', $last->getHeaderLine('X-KBC-ManageApiToken'));
+        self::assertSame('secret-token', $this->requestHeaders($response)['x-kbc-manageapitoken'] ?? null);
     }
 
     public function testMapsResponseToModel(): void
     {
-        $mock = new MockHandler([new Response(200, [], '{"name":"foo"}')]);
-        $client = new ApiClient('https://example.test', new NoAuthAuthenticator(), new ApiClientOptions(
-            requestHandler: HandlerStack::create($mock),
-        ));
-        $model = $client->sendRequestAndMapResponse(new Request('GET', 'foo'), DummyModel::class);
+        $mock = $this->mockClient([new MockResponse('{"name":"foo"}')]);
+        $client = $this->apiClient($mock, new ApiClientOptions(httpClient: $mock));
+        $model = $client->sendRequestAndMapResponse('GET', 'foo', DummyModel::class);
 
         self::assertInstanceOf(DummyModel::class, $model);
         self::assertSame('foo', $model->name);
@@ -64,42 +90,66 @@ class ApiClientTest extends TestCase
 
     public function testMapsResponseToList(): void
     {
-        $mock = new MockHandler([new Response(200, [], '[{"name":"a"},{"name":"b"}]')]);
-        $client = new ApiClient('https://example.test', new NoAuthAuthenticator(), new ApiClientOptions(
-            requestHandler: HandlerStack::create($mock),
-        ));
-        $models = $client->sendRequestAndMapResponse(new Request('GET', 'foo'), DummyModel::class, [], true);
+        $mock = $this->mockClient([new MockResponse('[{"name":"a"},{"name":"b"}]')]);
+        $client = $this->apiClient($mock, new ApiClientOptions(httpClient: $mock));
+        $models = $client->sendRequestAndMapResponse('GET', 'foo', DummyModel::class, [], true);
 
         self::assertCount(2, $models);
         self::assertSame('a', $models[0]->name);
         self::assertSame('b', $models[1]->name);
     }
 
+    public function testSendsJsonBody(): void
+    {
+        $response = new MockResponse('{}');
+        $mock = $this->mockClient([$response]);
+        $client = $this->apiClient($mock, new ApiClientOptions(httpClient: $mock));
+        $client->sendRequest('POST', 'foo', ['json' => ['name' => 'app-1']]);
+
+        self::assertSame('POST', $response->getRequestMethod());
+        self::assertSame('https://example.test/foo', $response->getRequestUrl());
+        self::assertSame('{"name":"app-1"}', $response->getRequestOptions()['body'] ?? null);
+    }
+
     public function testRetriesOn5xxThenSucceeds(): void
     {
-        $mock = new MockHandler([new Response(500), new Response(200, [], '{}')]);
-        $client = new ApiClient('https://example.test', new NoAuthAuthenticator(), new ApiClientOptions(
-            requestHandler: HandlerStack::create($mock),
-        ));
-        $client->sendRequest(new Request('GET', 'foo'));
-        self::assertSame(0, $mock->count());
+        $mock = $this->mockClient([new MockResponse('', ['http_code' => 500]), new MockResponse('{}')]);
+        $client = $this->apiClient($mock, new ApiClientOptions(httpClient: $mock));
+        $client->sendRequest('GET', 'foo');
+
+        self::assertSame(2, $mock->getRequestsCount());
+    }
+
+    public function testRetriesConfiguredStatusCode(): void
+    {
+        $mock = $this->mockClient([new MockResponse('', ['http_code' => 429]), new MockResponse('{}')]);
+        $client = new ApiClient(
+            'https://example.test',
+            new NoAuthAuthenticator(),
+            new ApiClientOptions(backoffMaxTries: 2, httpClient: $mock),
+            retryableStatusCodes: [429],
+        );
+        $client->sendRequest('GET', 'foo');
+
+        self::assertSame(2, $mock->getRequestsCount());
     }
 
     public function testThrowsClientExceptionWithDefaultMessageExtraction(): void
     {
-        $mock = new MockHandler([new Response(400, [], '{"error":"bad input"}')]);
-        $client = new ApiClient('https://example.test', new NoAuthAuthenticator(), new ApiClientOptions(
-            requestHandler: HandlerStack::create($mock),
-        ));
+        $mock = $this->mockClient([new MockResponse('{"error":"bad input"}', ['http_code' => 400])]);
+        $client = $this->apiClient($mock, new ApiClientOptions(httpClient: $mock));
+
         $this->expectException(ClientException::class);
         $this->expectExceptionMessage('bad input');
         $this->expectExceptionCode(400);
-        $client->sendRequest(new Request('GET', 'foo'));
+        $client->sendRequest('GET', 'foo');
     }
 
     public function testUsesCustomErrorMessageResolver(): void
     {
-        $mock = new MockHandler([new Response(409, [], '{"code":"CONFLICT","error":"already exists"}')]);
+        $mock = $this->mockClient([
+            new MockResponse('{"code":"CONFLICT","error":"already exists"}', ['http_code' => 409]),
+        ]);
         $resolver = new class implements ErrorMessageResolverInterface {
             public function __invoke(string $responseBody, int $statusCode): ?string
             {
@@ -111,12 +161,13 @@ class ApiClientTest extends TestCase
         $client = new ApiClient(
             'https://example.test',
             new NoAuthAuthenticator(),
-            new ApiClientOptions(requestHandler: HandlerStack::create($mock)),
+            new ApiClientOptions(httpClient: $mock),
             errorMessageResolver: $resolver,
         );
+
         $this->expectException(ClientException::class);
         $this->expectExceptionMessage('CONFLICT: already exists');
-        $client->sendRequest(new Request('GET', 'foo'));
+        $client->sendRequest('GET', 'foo');
     }
 
     public function testReExecutesAuthenticatorOnEachRetryAttempt(): void
@@ -124,49 +175,36 @@ class ApiClientTest extends TestCase
         $authenticator = new class implements RequestAuthenticatorInterface {
             public int $calls = 0;
 
-            public function __invoke(RequestInterface $request): RequestInterface
+            public function getAuthenticationHeaders(): array
             {
                 $this->calls++;
-                return $request->withHeader('X-Attempt', 'call-' . $this->calls);
+                return ['X-Attempt' => 'call-' . $this->calls];
             }
         };
 
-        $mock = new MockHandler([new Response(500), new Response(200, [], '{}')]);
+        $finalResponse = new MockResponse('{}');
+        $mock = $this->mockClient([new MockResponse('', ['http_code' => 500]), $finalResponse]);
         $client = new ApiClient(
             'https://example.test',
             $authenticator,
-            new ApiClientOptions(backoffMaxTries: 2, requestHandler: HandlerStack::create($mock)),
+            new ApiClientOptions(backoffMaxTries: 2, httpClient: $mock),
         );
-        $client->sendRequest(new Request('GET', 'foo'));
+        $client->sendRequest('GET', 'foo');
 
         self::assertSame(2, $authenticator->calls);
-        $last = $mock->getLastRequest();
-        self::assertNotNull($last);
-        self::assertSame('call-2', $last->getHeaderLine('X-Attempt'));
+        self::assertSame('call-2', $this->requestHeaders($finalResponse)['x-attempt'] ?? null);
     }
 
     public function testThrowsClientExceptionAfterRetriesExhausted(): void
     {
-        $mock = new MockHandler([new Response(500), new Response(500)]);
-        $client = new ApiClient('https://example.test', new NoAuthAuthenticator(), new ApiClientOptions(
-            backoffMaxTries: 1,
-            requestHandler: HandlerStack::create($mock),
-        ));
+        $mock = $this->mockClient([
+            new MockResponse('', ['http_code' => 500]),
+            new MockResponse('', ['http_code' => 500]),
+        ]);
+        $client = $this->apiClient($mock, new ApiClientOptions(backoffMaxTries: 1, httpClient: $mock));
+
         $this->expectException(ClientException::class);
         $this->expectExceptionCode(500);
-        $client->sendRequest(new Request('GET', 'foo'));
-    }
-
-    public function testRetriesConfiguredStatusCodeThroughClient(): void
-    {
-        $mock = new MockHandler([new Response(429), new Response(200, [], '{}')]);
-        $client = new ApiClient(
-            'https://example.test',
-            new NoAuthAuthenticator(),
-            new ApiClientOptions(backoffMaxTries: 2, requestHandler: HandlerStack::create($mock)),
-            retryableStatusCodes: [429],
-        );
-        $client->sendRequest(new Request('GET', 'foo'));
-        self::assertSame(0, $mock->count());
+        $client->sendRequest('GET', 'foo');
     }
 }

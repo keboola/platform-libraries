@@ -4,17 +4,14 @@ declare(strict_types=1);
 
 namespace Keboola\GitServiceApiClient;
 
-use JsonException;
 use Keboola\ApiClientBase\ErrorMessageResolverInterface;
-use Keboola\ApiClientBase\Json;
 
 final class GitServiceErrorMessageResolver implements ErrorMessageResolverInterface
 {
     public function __invoke(string $responseBody, int $statusCode): ?string
     {
-        try {
-            $data = Json::decodeArray($responseBody);
-        } catch (JsonException) {
+        $data = json_decode($responseBody, true);
+        if (!is_array($data)) {
             return null;
         }
 

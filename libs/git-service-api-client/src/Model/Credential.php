@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Keboola\GitServiceApiClient\Model;
 
+use Keboola\ApiClientBase\ResponseModelInterface;
 use Keboola\GitServiceApiClient\CredentialType;
 use Keboola\GitServiceApiClient\KeyPermission;
-use Keboola\GitServiceApiClient\ResponseModelInterface;
 use Webmozart\Assert\Assert;
 
 readonly class Credential implements ResponseModelInterface

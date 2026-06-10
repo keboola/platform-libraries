@@ -57,29 +57,30 @@ class StorageApiTokenAuthenticator implements TokenAuthenticatorInterface
         // `Authorization: Bearer <kbc_at|kbc_pat>`. A bare `Authorization: <kbc_...>` or
         // `X-StorageApi-Token: kbc_...` is an undocumented shape and stays on the legacy
         // verification path, preserving pre-exchange behaviour.
-        $programmaticToken = $this->extractProgrammaticBearerToken($request);
-        if ($programmaticToken !== null) {
-            return $this->tokenFactory->createFromProgrammaticToken($request, $programmaticToken);
+        if ($this->isProgrammaticBearerToken($request, $token)) {
+            return $this->tokenFactory->createFromProgrammaticToken($request, $token);
         }
 
         return $this->tokenFactory->createFromRequest($request);
     }
 
     /**
-     * Returns the programmatic token only when it is presented as `Authorization: Bearer <kbc_...>`,
-     * otherwise null. Other carriers (bare Authorization value, X-StorageApi-Token) are not eligible
-     * for exchange.
+     * True only when $token is a programmatic token and is exactly the value presented as
+     * `Authorization: Bearer <kbc_...>`. Other carriers (bare Authorization value,
+     * X-StorageApi-Token) are not eligible for exchange. Comparing against $token guarantees
+     * the exchanged token is the one {@see self::extractToken()} returned.
      */
-    private function extractProgrammaticBearerToken(Request $request): ?string
+    private function isProgrammaticBearerToken(Request $request, string $token): bool
     {
-        $authHeader = $request->headers->get('Authorization');
-        if ($authHeader === null || !preg_match(self::BEARER_PATTERN, $authHeader, $matches)) {
-            return null;
+        if (!ProgrammaticToken::matches($token)) {
+            return false;
         }
 
-        $bearerToken = $matches[1];
+        $authHeader = $request->headers->get('Authorization');
 
-        return ProgrammaticToken::matches($bearerToken) ? $bearerToken : null;
+        return $authHeader !== null
+            && preg_match(self::BEARER_PATTERN, $authHeader, $matches) === 1
+            && $matches[1] === $token;
     }
 
     public function authorizeToken(AuthAttributeInterface $authAttribute, TokenInterface $token): void

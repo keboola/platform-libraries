@@ -165,6 +165,33 @@ class StorageApiTokenAuthenticatorTest extends TestCase
         self::assertSame($expectedToken, $result);
     }
 
+    public function testAuthenticateTokenDoesNotExchangeWhenBearerHeaderDiffersFromExtractedToken(): void
+    {
+        $expectedToken = $this->createMock(StorageApiToken::class);
+
+        // Defensive consistency check: exchange may only run with the token extractToken()
+        // returned. If the Authorization header somehow carries a different programmatic token
+        // than $token, the request falls back to legacy verification.
+        $tokenFactory = $this->createMock(StorageApiTokenFactory::class);
+        $tokenFactory
+            ->expects(self::once())
+            ->method('createFromRequest')
+            ->willReturn($expectedToken);
+        $tokenFactory
+            ->expects(self::never())
+            ->method('createFromProgrammaticToken');
+
+        $request = Request::create('https://keboola.com');
+        $request->headers->set('Authorization', 'Bearer kbc_at_different');
+        $request->headers->set(self::PROJECT_ID_HEADER, '123');
+
+        $authenticator = new StorageApiTokenAuthenticator($tokenFactory);
+
+        $result = $authenticator->authenticateToken(new StorageApiTokenAuth(), self::SUBJECT_TOKEN, $request);
+
+        self::assertSame($expectedToken, $result);
+    }
+
     public static function provideNonBearerProgrammaticTokenCarriers(): Generator
     {
         yield 'bare Authorization header' => [

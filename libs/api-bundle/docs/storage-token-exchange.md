@@ -144,11 +144,19 @@ None. The feature is always on and uses fixed conventions:
 | `403` subject token cannot access project | `403` |
 | `503` Connection in maintenance (`MaintenanceException`) | `503` |
 | other `5xx` / timeout / network / SA token file error / unexpected | `502` |
+| Storage API in maintenance during the second `verifyToken` | `503` |
+| Storage API rejects or fails verifying the resolved token (any status) | `502` |
 
-The `5xx`/`502` and `503` paths are our-side incidents (deploy, identity, Connection outage), so
-they are logged at `warning` level with the `projectId` and the resolver status / maintenance
-`retryAfter`. The Manage response body and the resolver response payload are never logged - they
-may carry token material. Client faults (`400`/`401`/`403`) are not logged.
+The resolved-token verification failures are mapped separately from the legacy path: the resolved
+legacy token came from Connection, so a Storage rejection there (even a `4xx`) is an
+upstream/our-side incident, never the caller's fault, and the Storage error message (which could
+echo the token) is never forwarded.
+
+The `5xx`/`502` and `503` paths are our-side incidents (deploy, identity, Connection or Storage
+outage), so they are logged at `warning` level with the `projectId` and the resolver/Storage
+status or maintenance `retryAfter`. The Manage response body and the resolver response payload are
+never logged - they may carry token material. Client faults (`400`/`401`/`403` from the resolver)
+are not logged.
 
 **Known limitations.**
 

@@ -8,6 +8,7 @@ use Keboola\ManageApi\Client as ManageApiClient;
 use Keboola\ManageApi\ClientException as ManageApiClientException;
 use Keboola\ManageApi\MaintenanceException;
 use Keboola\StorageApi\ClientException;
+use Keboola\StorageApi\MaintenanceException as StorageApiMaintenanceException;
 use Keboola\StorageApiBranch\Factory\StorageClientRequestFactory;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
@@ -43,17 +44,13 @@ class StorageApiTokenFactory
     public function createFromRequest(Request $request): StorageApiToken
     {
         try {
-            $wrapper = $this->clientRequestFactory->createClientWrapper($request);
-            $storageApiClient = $wrapper->getBasicClient();
-            $tokenInfo = $storageApiClient->verifyToken();
+            return $this->verifyRequestToken($request);
         } catch (ClientException $e) {
             if ($e->getCode() >= 400 && $e->getCode() < 500) {
                 throw new CustomUserMessageAuthenticationException($e->getMessage(), [], $e->getCode(), $e);
             }
             throw $e;
         }
-
-        return new StorageApiToken($tokenInfo, $storageApiClient->getTokenString());
     }
 
     /**
@@ -130,7 +127,37 @@ class StorageApiTokenFactory
             );
         }
 
-        return $this->createFromResolvedToken($request, $storageToken);
+        try {
+            return $this->createFromResolvedToken($request, $storageToken);
+        } catch (StorageApiMaintenanceException $e) {
+            // Storage went into maintenance between the resolver call and the verification.
+            // Surface it as 503 (must be caught before the generic ClientException -
+            // StorageApiMaintenanceException is a subclass) so the client can retry.
+            $this->logger->warning('Storage token exchange unavailable: Storage API is in maintenance.', [
+                'projectId' => $projectId,
+                'retryAfter' => $e->getRetryAfter(),
+            ]);
+            throw new CustomUserMessageAuthenticationException(
+                'Token exchange is temporarily unavailable.',
+                [],
+                Response::HTTP_SERVICE_UNAVAILABLE,
+                $e,
+            );
+        } catch (ClientException $e) {
+            // The resolved legacy token came from Connection, so a Storage rejection here (even a
+            // 4xx) is an upstream/our-side incident, never the caller's fault. Don't echo the
+            // Storage message - it could carry token material - and surface 502.
+            $this->logger->warning('Storage token exchange failed: resolved token verification failed.', [
+                'projectId' => $projectId,
+                'storageStatus' => $e->getCode(),
+            ]);
+            throw new CustomUserMessageAuthenticationException(
+                'Token exchange is temporarily unavailable.',
+                [],
+                Response::HTTP_BAD_GATEWAY,
+                $e,
+            );
+        }
     }
 
     /**
@@ -149,7 +176,21 @@ class StorageApiTokenFactory
         $exchangedRequest->headers->remove('Authorization');
         $exchangedRequest->headers->set(StorageClientRequestFactory::TOKEN_HEADER, $legacyStorageToken);
 
-        return $this->createFromRequest($exchangedRequest);
+        return $this->verifyRequestToken($exchangedRequest);
+    }
+
+    /**
+     * Raw verification against Storage API, shared by both paths; callers map the exceptions
+     * ({@see self::createFromRequest()} echoes 4xx messages for legacy tokens,
+     * {@see self::createFromProgrammaticToken()} uses fixed messages for exchanged tokens).
+     */
+    private function verifyRequestToken(Request $request): StorageApiToken
+    {
+        $wrapper = $this->clientRequestFactory->createClientWrapper($request);
+        $storageApiClient = $wrapper->getBasicClient();
+        $tokenInfo = $storageApiClient->verifyToken();
+
+        return new StorageApiToken($tokenInfo, $storageApiClient->getTokenString());
     }
 
     private function extractProjectId(Request $request): int

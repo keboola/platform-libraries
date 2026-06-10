@@ -7,7 +7,6 @@ namespace Keboola\ApiClientBase;
 use Closure;
 use GuzzleHttp\HandlerStack;
 use Psr\Log\LoggerInterface;
-use Psr\Log\NullLogger;
 
 class ApiClientOptions
 {
@@ -24,7 +23,7 @@ class ApiClientOptions
         public readonly int $connectTimeout = self::DEFAULT_CONNECT_TIMEOUT,
         public readonly int $requestTimeout = self::DEFAULT_REQUEST_TIMEOUT,
         public readonly null|Closure|HandlerStack $requestHandler = null,
-        public readonly LoggerInterface $logger = new NullLogger(),
+        public readonly ?LoggerInterface $logger = null,
     ) {
     }
 }

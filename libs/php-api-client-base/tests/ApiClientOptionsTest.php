@@ -6,7 +6,6 @@ namespace Keboola\ApiClientBase\Tests;
 
 use Keboola\ApiClientBase\ApiClientOptions;
 use PHPUnit\Framework\TestCase;
-use Psr\Log\NullLogger;
 
 class ApiClientOptionsTest extends TestCase
 {
@@ -18,7 +17,7 @@ class ApiClientOptionsTest extends TestCase
         self::assertSame(10, $options->connectTimeout);
         self::assertSame(120, $options->requestTimeout);
         self::assertNull($options->requestHandler);
-        self::assertInstanceOf(NullLogger::class, $options->logger);
+        self::assertNull($options->logger);
     }
 
     public function testOverrides(): void

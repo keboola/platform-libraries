@@ -15,6 +15,7 @@ use Keboola\ApiClientBase\Auth\RequestAuthenticatorInterface;
 use Keboola\ApiClientBase\Exception\ClientException;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
+use Psr\Log\NullLogger;
 use Throwable;
 
 class ApiClient
@@ -35,6 +36,7 @@ class ApiClient
     ) {
         $options ??= new ApiClientOptions();
         $this->errorMessageResolver = $errorMessageResolver ?? new DefaultErrorMessageResolver();
+        $logger = $options->logger ?? new NullLogger();
 
         $stack = $options->requestHandler instanceof HandlerStack
             ? $options->requestHandler
@@ -48,7 +50,7 @@ class ApiClient
         if ($options->backoffMaxTries > 0) {
             $stack->push(Middleware::retry(new RetryDecider(
                 $options->backoffMaxTries,
-                $options->logger,
+                $logger,
                 $retryableStatusCodes,
             )));
         }
@@ -56,7 +58,7 @@ class ApiClient
         $stack->push(Middleware::mapRequest($authenticator));
 
         $stack->push(Middleware::log(
-            $options->logger,
+            $logger,
             new MessageFormatter('{method} {uri} : {code} {res_header_Content-Length}'),
         ));
 

@@ -5,12 +5,15 @@ declare(strict_types=1);
 namespace Keboola\VaultApiClient\Tests\Variables;
 
 use GuzzleHttp\Psr7\Response;
-use Keboola\VaultApiClient\ApiClientConfiguration;
-use Keboola\VaultApiClient\Json;
+use InvalidArgumentException;
+use Keboola\ApiClientBase\Exception\ClientException;
+use Keboola\ApiClientBase\Json;
 use Keboola\VaultApiClient\Tests\ApiClientTestTrait;
 use Keboola\VaultApiClient\Variables\Model\ListOptions;
 use Keboola\VaultApiClient\Variables\Model\Variable;
 use Keboola\VaultApiClient\Variables\VariablesApiClient;
+use Monolog\Handler\TestHandler;
+use Monolog\Logger;
 use PHPUnit\Framework\TestCase;
 
 class VariablesApiClientTest extends TestCase
@@ -43,9 +46,7 @@ class VariablesApiClientTest extends TestCase
         $client = new VariablesApiClient(
             self::BASE_URL,
             self::API_TOKEN,
-            new ApiClientConfiguration(
-                requestHandler: $requestHandler(...),
-            ),
+            requestHandler: $requestHandler(...),
         );
 
         $variable = $client->createVariable(
@@ -97,9 +98,7 @@ class VariablesApiClientTest extends TestCase
         $client = new VariablesApiClient(
             self::BASE_URL,
             self::API_TOKEN,
-            new ApiClientConfiguration(
-                requestHandler: $requestHandler(...),
-            ),
+            requestHandler: $requestHandler(...),
         );
 
         $client->deleteVariable('hash');
@@ -134,9 +133,7 @@ class VariablesApiClientTest extends TestCase
         $client = new VariablesApiClient(
             self::BASE_URL,
             self::API_TOKEN,
-            new ApiClientConfiguration(
-                requestHandler: $requestHandler(...),
-            ),
+            requestHandler: $requestHandler(...),
         );
 
         $variables = $client->listVariables(new ListOptions(offset: 5));
@@ -193,9 +190,7 @@ class VariablesApiClientTest extends TestCase
         $client = new VariablesApiClient(
             self::BASE_URL,
             self::API_TOKEN,
-            new ApiClientConfiguration(
-                requestHandler: $requestHandler(...),
-            ),
+            requestHandler: $requestHandler(...),
         );
 
         $variables = $client->listScopedVariablesForBranch('123');
@@ -232,5 +227,217 @@ class VariablesApiClientTest extends TestCase
             ),
             $variables[1],
         );
+    }
+
+    public function testEmptyBaseUrlThrows(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Base URL must be a non-empty string');
+
+        new VariablesApiClient('', self::API_TOKEN); // @phpstan-ignore-line
+    }
+
+    public function testEmptyTokenThrows(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Storage API token must not be empty');
+
+        new VariablesApiClient(self::BASE_URL, ''); // @phpstan-ignore-line
+    }
+
+    public function testClientErrorWithVaultFormat(): void
+    {
+        $requestHandler = self::createRequestHandler($requestsHistory, [
+            new Response(
+                400,
+                ['Content-Type' => 'application/json'],
+                Json::encodeArray([
+                    'error' => 'Missing data',
+                    'code' => 400,
+                ]),
+            ),
+        ]);
+
+        $client = new VariablesApiClient(
+            self::BASE_URL,
+            self::API_TOKEN,
+            backoffMaxTries: 0,
+            requestHandler: $requestHandler(...),
+        );
+
+        $this->expectException(ClientException::class);
+        $this->expectExceptionMessage('400: Missing data');
+
+        $client->deleteVariable('hash');
+    }
+
+    public function testClientErrorWithNonStandardFormat(): void
+    {
+        $requestHandler = self::createRequestHandler($requestsHistory, [
+            new Response(
+                400,
+                ['Content-Type' => 'application/json'],
+                Json::encodeArray([
+                    'error' => 'Missing data',
+                ]),
+            ),
+        ]);
+
+        $client = new VariablesApiClient(
+            self::BASE_URL,
+            self::API_TOKEN,
+            backoffMaxTries: 0,
+            requestHandler: $requestHandler(...),
+        );
+
+        $this->expectException(ClientException::class);
+        $this->expectExceptionMessage(
+            'Client error: `DELETE https://vault.keboola.com/variables/hash` resulted in a `400 Bad Request` response',
+        );
+
+        $client->deleteVariable('hash');
+    }
+
+    public function testTokenIsSetAsHeader(): void
+    {
+        $requestHandler = self::createRequestHandler($requestsHistory, [
+            new Response(200),
+        ]);
+
+        $customToken = 'custom-token';
+        $client = new VariablesApiClient(
+            self::BASE_URL,
+            $customToken,
+            requestHandler: $requestHandler(...),
+        );
+
+        $client->deleteVariable('hash');
+
+        self::assertCount(1, $requestsHistory);
+        self::assertSame($customToken, $requestsHistory[0]['request']->getHeaderLine('X-StorageApi-Token'));
+    }
+
+    public function testClientErrorMessageTrimsWhitespace(): void
+    {
+        $requestHandler = self::createRequestHandler($requestsHistory, [
+            new Response(
+                400,
+                ['Content-Type' => 'application/json'],
+                Json::encodeArray([
+                    'error' => ' some error ',
+                    'code' => ' 400 ',
+                ]),
+            ),
+        ]);
+
+        $client = new VariablesApiClient(
+            self::BASE_URL,
+            self::API_TOKEN,
+            backoffMaxTries: 0,
+            requestHandler: $requestHandler(...),
+        );
+
+        try {
+            $client->deleteVariable('hash');
+            self::fail('Expected ClientException to be thrown');
+        } catch (ClientException $e) {
+            self::assertSame('400 :  some error', $e->getMessage());
+        }
+    }
+
+    public function testBackoffMaxTriesIsForwardedFromOptions(): void
+    {
+        $requestHandler = self::createRequestHandler($requestsHistory, [
+            new Response(500),
+            new Response(500),
+            new Response(200),
+        ]);
+
+        $client = new VariablesApiClient(
+            self::BASE_URL,
+            self::API_TOKEN,
+            backoffMaxTries: 2,
+            requestHandler: $requestHandler(...),
+        );
+
+        $client->deleteVariable('hash');
+
+        self::assertCount(3, $requestsHistory);
+    }
+
+    public function testLoggerIsForwardedFromOptions(): void
+    {
+        $requestHandler = self::createRequestHandler($requestsHistory, [
+            new Response(200),
+        ]);
+
+        $testHandler = new TestHandler();
+        $logger = new Logger('test', [$testHandler]);
+
+        $client = new VariablesApiClient(
+            self::BASE_URL,
+            self::API_TOKEN,
+            logger: $logger,
+            requestHandler: $requestHandler(...),
+        );
+
+        $client->deleteVariable('hash');
+
+        self::assertNotEmpty($testHandler->getRecords());
+    }
+
+    public function testDefaultBackoffMaxTriesIsUsed(): void
+    {
+        // Default backoffMaxTries is 5, so 5 failures + 1 success = 6 requests.
+        $responses = array_fill(0, 5, new Response(500));
+        $responses[] = new Response(200);
+
+        $requestHandler = self::createRequestHandler($requestsHistory, $responses);
+
+        $client = new VariablesApiClient(
+            self::BASE_URL,
+            self::API_TOKEN,
+            requestHandler: $requestHandler(...),
+        );
+
+        $client->deleteVariable('hash');
+
+        self::assertCount(6, $requestsHistory);
+    }
+
+    public function testDefaultConnectTimeoutIsForwardedToGuzzle(): void
+    {
+        $requestHandler = self::createRequestHandler($requestsHistory, [
+            new Response(200),
+        ]);
+
+        // Use default connectTimeout (10) — mutating it would change this assertion.
+        $client = new VariablesApiClient(
+            self::BASE_URL,
+            self::API_TOKEN,
+            requestHandler: $requestHandler(...),
+        );
+
+        $client->deleteVariable('hash');
+
+        self::assertSame(10, $requestsHistory[0]['options']['connect_timeout']);
+    }
+
+    public function testDefaultRequestTimeoutIsForwardedToGuzzle(): void
+    {
+        $requestHandler = self::createRequestHandler($requestsHistory, [
+            new Response(200),
+        ]);
+
+        // Use default requestTimeout (120) — mutating it would change this assertion.
+        $client = new VariablesApiClient(
+            self::BASE_URL,
+            self::API_TOKEN,
+            requestHandler: $requestHandler(...),
+        );
+
+        $client->deleteVariable('hash');
+
+        self::assertSame(120, $requestsHistory[0]['options']['timeout']);
     }
 }

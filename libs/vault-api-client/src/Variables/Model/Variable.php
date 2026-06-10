@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 namespace Keboola\VaultApiClient\Variables\Model;
 
-use Keboola\VaultApiClient\ResponseModelInterface;
+use Keboola\ApiClientBase\ResponseModelInterface;
+use Webmozart\Assert\Assert;
 
 final readonly class Variable implements ResponseModelInterface
 {
@@ -27,14 +28,30 @@ final readonly class Variable implements ResponseModelInterface
     ) {
     }
 
+    /**
+     * @param array<string, mixed> $data
+     */
     public static function fromResponseData(array $data): static
     {
+        Assert::stringNotEmpty($data['hash']);
+        Assert::stringNotEmpty($data['key']);
+        Assert::string($data['value']);
+
+        $flags = (array) ($data['flags'] ?? []);
+        Assert::allString($flags);
+
+        $attributes = (array) ($data['attributes'] ?? []);
+        Assert::isMap($attributes);
+        Assert::allString($attributes);
+
+        /** @var array<self::FLAG_*> $flags */
+        /** @var array<non-empty-string, string> $attributes */
         return new self(
             $data['hash'],
             $data['key'],
             $data['value'],
-            $data['flags'] ?? [],
-            $data['attributes'] ?? [],
+            $flags,
+            $attributes,
         );
     }
 }

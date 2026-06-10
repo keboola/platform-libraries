@@ -4,27 +4,55 @@ declare(strict_types=1);
 
 namespace Keboola\VaultApiClient\Variables;
 
+use Closure;
+use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Psr7\Request;
-use Keboola\VaultApiClient\ApiClient;
-use Keboola\VaultApiClient\ApiClientConfiguration;
-use Keboola\VaultApiClient\Json;
+use Keboola\ApiClientBase\ApiClient;
+use Keboola\ApiClientBase\ApiClientOptions;
+use Keboola\ApiClientBase\Auth\StorageApiTokenAuthenticator;
+use Keboola\ApiClientBase\Json;
 use Keboola\VaultApiClient\Variables\Model\ListOptions;
 use Keboola\VaultApiClient\Variables\Model\Variable;
+use Keboola\VaultApiClient\VaultErrorMessageResolver;
+use Psr\Log\LoggerInterface;
+use Webmozart\Assert\Assert;
 
 class VariablesApiClient
 {
+    private const FALLBACK_USER_AGENT = 'Keboola Vault PHP Client';
+
     private ApiClient $apiClient;
 
     /**
      * @param non-empty-string $baseUrl
      * @param non-empty-string $token
+     * @param int<0, max> $backoffMaxTries
      */
     public function __construct(
         string $baseUrl,
         string $token,
-        ?ApiClientConfiguration $configuration = null,
+        ?LoggerInterface $logger = null,
+        int $backoffMaxTries = ApiClientOptions::DEFAULT_BACKOFF_MAX_TRIES,
+        int $connectTimeout = ApiClientOptions::DEFAULT_CONNECT_TIMEOUT,
+        int $requestTimeout = ApiClientOptions::DEFAULT_REQUEST_TIMEOUT,
+        string $userAgent = self::FALLBACK_USER_AGENT,
+        null|Closure|HandlerStack $requestHandler = null,
     ) {
-        $this->apiClient = new ApiClient($baseUrl, $token, $configuration);
+        Assert::stringNotEmpty($baseUrl, 'Base URL must be a non-empty string');
+
+        $this->apiClient = new ApiClient(
+            $baseUrl,
+            new StorageApiTokenAuthenticator($token),
+            new ApiClientOptions(
+                userAgent: $userAgent,
+                backoffMaxTries: $backoffMaxTries,
+                connectTimeout: $connectTimeout,
+                requestTimeout: $requestTimeout,
+                requestHandler: $requestHandler,
+                logger: $logger,
+            ),
+            errorMessageResolver: new VaultErrorMessageResolver(),
+        );
     }
 
     /**

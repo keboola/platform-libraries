@@ -28,4 +28,10 @@ class ListOptionsTest extends TestCase
             $options->asQueryString(),
         );
     }
+
+    public function testPartialOptionsExcludeNulls(): void
+    {
+        $options = new ListOptions(offset: 5);
+        self::assertSame('offset=5', $options->asQueryString());
+    }
 }

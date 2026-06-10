@@ -37,12 +37,13 @@ class ManageApiClientFactory
     /**
      * Builds a client that authenticates with the service's projected Kubernetes ServiceAccount
      * JWT read from $tokenPath. The token file is re-read by the client on every request, so
-     * kubelet-rotated tokens are picked up automatically. Used for internal service-to-service
-     * calls (e.g. the auth-bridge storage token resolver), hence the internal DNS default.
+     * kubelet-rotated tokens are picked up automatically. Used for service-to-service calls
+     * (e.g. the auth-bridge storage token resolver). DNS type defaults to the ServiceClient's
+     * configured default, same as the other factory methods.
      */
     public function getClientForServiceAccountTokenPath(
         string $tokenPath,
-        ServiceDnsType $dnsType = ServiceDnsType::INTERNAL,
+        ?ServiceDnsType $dnsType = null,
     ): ManageApiClient {
         return new ManageApiClient([
             'url' => $this->serviceClient->getConnectionServiceUrl($dnsType),

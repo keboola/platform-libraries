@@ -16,7 +16,6 @@ use Keboola\ServiceClient\ServiceDnsType;
 use Keboola\StorageApiBranch\Factory\StorageClientRequestFactory;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
-use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\DependencyInjection\Loader\PhpFileLoader;
 use Symfony\Component\DependencyInjection\Reference;
 use Symfony\Component\HttpKernel\DependencyInjection\Extension;
@@ -75,22 +74,22 @@ class KeboolaApiExtension extends Extension
             return;
         }
 
-        $container->register(StorageApiTokenFactory::class)
-            ->setArgument('$clientRequestFactory', new Reference(StorageClientRequestFactory::class))
-        ;
-
         // Manage API client that exchanges programmatic tokens for legacy Storage tokens. It
         // authenticates with the service's projected Kubernetes ServiceAccount JWT (read per
-        // request) and calls Connection over the internal DNS.
+        // request) and calls Connection over the ServiceClient's default DNS.
         $container->register(self::STORAGE_TOKEN_RESOLVER_CLIENT_ID, ManageApiClient::class)
             ->setFactory([new Reference(ManageApiClientFactory::class), 'getClientForServiceAccountTokenPath'])
-            ->setArguments([self::SERVICE_ACCOUNT_TOKEN_PATH, ServiceDnsType::INTERNAL])
+            ->setArguments([self::SERVICE_ACCOUNT_TOKEN_PATH])
+        ;
+
+        $container->register(StorageApiTokenFactory::class)
+            ->setArgument('$clientRequestFactory', new Reference(StorageClientRequestFactory::class))
+            ->setArgument('$resolverClient', new Reference(self::STORAGE_TOKEN_RESOLVER_CLIENT_ID))
+            ->setArgument('$logger', new Reference('logger'))
         ;
 
         $container->register(StorageApiTokenAuthenticator::class)
             ->setArgument('$tokenFactory', new Reference(StorageApiTokenFactory::class))
-            ->setArgument('$resolverClient', new Reference(self::STORAGE_TOKEN_RESOLVER_CLIENT_ID))
-            ->setArgument('$logger', new Reference('logger', ContainerInterface::NULL_ON_INVALID_REFERENCE))
         ;
         $authenticators[StorageApiTokenAuth::class] = new Reference(StorageApiTokenAuthenticator::class);
     }

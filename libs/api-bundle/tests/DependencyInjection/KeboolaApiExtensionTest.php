@@ -9,7 +9,6 @@ use Keboola\ApiBundle\Security\ApplicationToken\ManageApiClientFactory;
 use Keboola\ApiBundle\Security\StorageApiToken\StorageApiTokenAuthenticator;
 use Keboola\ApiBundle\Security\StorageApiToken\StorageApiTokenFactory;
 use Keboola\ManageApi\Client as ManageApiClient;
-use Keboola\ServiceClient\ServiceDnsType;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Reference;
@@ -57,7 +56,7 @@ class KeboolaApiExtensionTest extends TestCase
     // Resolver client wiring
     // -------------------------------------------------------------------------
 
-    public function testResolverClientIsBuiltFromServiceAccountTokenPathOverInternalDns(): void
+    public function testResolverClientIsBuiltFromServiceAccountTokenPath(): void
     {
         $container = $this->buildContainer([[]]);
 
@@ -71,21 +70,37 @@ class KeboolaApiExtensionTest extends TestCase
         self::assertSame(ManageApiClientFactory::class, (string) $factory[0]);
         self::assertSame('getClientForServiceAccountTokenPath', $factory[1]);
 
+        // No explicit DNS type - the client follows the ServiceClient's configured default.
         self::assertSame(
-            [self::SERVICE_ACCOUNT_TOKEN_PATH, ServiceDnsType::INTERNAL],
+            [self::SERVICE_ACCOUNT_TOKEN_PATH],
             $definition->getArguments(),
-            'Resolver client must use the fixed SA token path and internal DNS',
+            'Resolver client must use the fixed SA token path and the default DNS type',
         );
     }
 
-    public function testAuthenticatorReceivesResolverClient(): void
+    public function testTokenFactoryReceivesResolverClientAndLogger(): void
+    {
+        $container = $this->buildContainer([[]]);
+
+        $definition = $container->getDefinition(StorageApiTokenFactory::class);
+
+        $resolverClient = $definition->getArgument('$resolverClient');
+        self::assertInstanceOf(Reference::class, $resolverClient);
+        self::assertSame(KeboolaApiExtension::STORAGE_TOKEN_RESOLVER_CLIENT_ID, (string) $resolverClient);
+
+        $logger = $definition->getArgument('$logger');
+        self::assertInstanceOf(Reference::class, $logger);
+        self::assertSame('logger', (string) $logger);
+    }
+
+    public function testAuthenticatorReceivesTokenFactory(): void
     {
         $container = $this->buildContainer([[]]);
 
         $definition = $container->getDefinition(StorageApiTokenAuthenticator::class);
 
-        $resolverClient = $definition->getArgument('$resolverClient');
-        self::assertInstanceOf(Reference::class, $resolverClient);
-        self::assertSame(KeboolaApiExtension::STORAGE_TOKEN_RESOLVER_CLIENT_ID, (string) $resolverClient);
+        $tokenFactory = $definition->getArgument('$tokenFactory');
+        self::assertInstanceOf(Reference::class, $tokenFactory);
+        self::assertSame(StorageApiTokenFactory::class, (string) $tokenFactory);
     }
 }

@@ -152,13 +152,19 @@ class StorageApiTokenFactoryTest extends TestCase
     }
 
     // ---------------------------------------------------------------------------
-    // createFromProgrammaticToken – exchange success, request mutation and isolation
+    // createFromProgrammaticToken – exchange success, no Storage API call
     // ---------------------------------------------------------------------------
 
-    public function testCreateFromProgrammaticTokenPassesLegacyTokenAndDropsAuthorization(): void
+    public function testCreateFromProgrammaticTokenBuildsTokenFromResolverDetailWithoutStorageCall(): void
     {
-        /** @var Request|null $capturedRequest */
-        $capturedRequest = null;
+        $tokenDetail = [
+            'id' => '42',
+            'description' => 'resolved',
+            'owner' => [
+                'id' => 123,
+                'features' => ['feat-a'],
+            ],
+        ];
 
         $resolverClient = $this->createMock(ManageApiClient::class);
         $resolverClient
@@ -171,176 +177,31 @@ class StorageApiTokenFactoryTest extends TestCase
                 'tokenId' => '42',
                 'userId' => '7',
                 'expiresAt' => null,
+                'tokenDetail' => $tokenDetail,
             ]);
 
-        $clientMock = $this->createMock(Client::class);
-        $clientMock
-            ->expects(self::once())
-            ->method('verifyToken')
-            ->willReturn(['id' => '7', 'description' => 'resolved']);
-        $clientMock
-            ->expects(self::once())
-            ->method('getTokenString')
-            ->willReturn('legacy-token');
-
-        $wrapperMock = $this->createMock(ClientWrapper::class);
-        $wrapperMock
-            ->expects(self::once())
-            ->method('getBasicClient')
-            ->willReturn($clientMock);
-
+        // The resolver response carries the full token detail, so Storage API must not be hit.
         $factoryMock = $this->createMock(StorageClientRequestFactory::class);
         $factoryMock
-            ->expects(self::once())
-            ->method('createClientWrapper')
-            ->willReturnCallback(function (Request $r) use (&$capturedRequest, $wrapperMock) {
-                $capturedRequest = $r;
-                return $wrapperMock;
-            });
+            ->expects(self::never())
+            ->method('createClientWrapper');
 
         $originalRequest = $this->createProgrammaticTokenRequest();
-        $originalRequest->headers->set('X-KBC-RunId', 'run-1');
 
         $token = $this->createFactory(clientRequestFactory: $factoryMock, resolverClient: $resolverClient)
             ->createFromProgrammaticToken($originalRequest, self::SUBJECT_TOKEN);
 
         self::assertSame('legacy-token', $token->getTokenValue());
-        self::assertNotNull($capturedRequest);
+        self::assertSame($tokenDetail, $token->getTokenInfo());
+        self::assertSame('123', $token->getProjectId());
+        self::assertSame(['feat-a'], $token->getFeatures());
 
-        // The request passed to createClientWrapper must NOT have the Authorization header.
-        self::assertFalse(
-            $capturedRequest->headers->has('Authorization'),
-            'Authorization header must be removed from the cloned request.',
-        );
-
-        // The legacy token must be set as the Storage API token header.
-        self::assertSame(
-            'legacy-token',
-            $capturedRequest->headers->get(StorageClientRequestFactory::TOKEN_HEADER),
-        );
-
-        // Other headers must be preserved on the clone.
-        self::assertSame(
-            'run-1',
-            $capturedRequest->headers->get('X-KBC-RunId'),
-        );
-
-        // The ORIGINAL request must remain untouched.
+        // The original request must remain untouched.
         self::assertSame(
             'Bearer ' . self::SUBJECT_TOKEN,
             $originalRequest->headers->get('Authorization'),
             'Original request Authorization header must not be mutated.',
         );
-    }
-
-    // ---------------------------------------------------------------------------
-    // createFromProgrammaticToken – resolved token verification failures
-    // ---------------------------------------------------------------------------
-
-    public function testExchangeMapsResolvedTokenVerificationFailureTo502WithFixedMessage(): void
-    {
-        $resolverClient = $this->createMock(ManageApiClient::class);
-        $resolverClient
-            ->expects(self::once())
-            ->method('resolveStorageToken')
-            ->willReturn(['storageToken' => 'legacy-token']);
-
-        // Storage rejects the resolved token (stale/revoked on Connection's side) - the error
-        // message may echo the presented token, so it must never reach the client response.
-        $clientMock = $this->createMock(Client::class);
-        $clientMock
-            ->expects(self::once())
-            ->method('verifyToken')
-            ->willThrowException(new ClientException('Invalid access token: legacy-token', 401));
-
-        $wrapperMock = $this->createMock(ClientWrapper::class);
-        $wrapperMock
-            ->expects(self::once())
-            ->method('getBasicClient')
-            ->willReturn($clientMock);
-
-        $factoryMock = $this->createMock(StorageClientRequestFactory::class);
-        $factoryMock
-            ->expects(self::once())
-            ->method('createClientWrapper')
-            ->willReturn($wrapperMock);
-
-        $logger = $this->createMock(LoggerInterface::class);
-        $logger
-            ->expects(self::once())
-            ->method('warning')
-            ->with(
-                self::stringContains('resolved token verification failed'),
-                ['projectId' => 123, 'storageStatus' => 401],
-            );
-
-        $factory = $this->createFactory(
-            clientRequestFactory: $factoryMock,
-            resolverClient: $resolverClient,
-            logger: $logger,
-        );
-
-        $exception = $this->captureAuthException(
-            fn() => $factory->createFromProgrammaticToken(
-                $this->createProgrammaticTokenRequest(),
-                self::SUBJECT_TOKEN,
-            ),
-        );
-
-        self::assertSame(502, $exception->getCode());
-        // The Storage error message (which can echo the resolved token) must not be forwarded.
-        self::assertStringNotContainsString('legacy-token', $exception->getMessageKey());
-    }
-
-    public function testExchangeMapsStorageMaintenanceDuringVerificationTo503(): void
-    {
-        $resolverClient = $this->createMock(ManageApiClient::class);
-        $resolverClient
-            ->expects(self::once())
-            ->method('resolveStorageToken')
-            ->willReturn(['storageToken' => 'legacy-token']);
-
-        $clientMock = $this->createMock(Client::class);
-        $clientMock
-            ->expects(self::once())
-            ->method('verifyToken')
-            ->willThrowException(new MaintenanceException('Maintenance', 30, []));
-
-        $wrapperMock = $this->createMock(ClientWrapper::class);
-        $wrapperMock
-            ->expects(self::once())
-            ->method('getBasicClient')
-            ->willReturn($clientMock);
-
-        $factoryMock = $this->createMock(StorageClientRequestFactory::class);
-        $factoryMock
-            ->expects(self::once())
-            ->method('createClientWrapper')
-            ->willReturn($wrapperMock);
-
-        $logger = $this->createMock(LoggerInterface::class);
-        $logger
-            ->expects(self::once())
-            ->method('warning')
-            ->with(
-                self::stringContains('Storage API is in maintenance'),
-                ['projectId' => 123, 'retryAfter' => 30],
-            );
-
-        $factory = $this->createFactory(
-            clientRequestFactory: $factoryMock,
-            resolverClient: $resolverClient,
-            logger: $logger,
-        );
-
-        $exception = $this->captureAuthException(
-            fn() => $factory->createFromProgrammaticToken(
-                $this->createProgrammaticTokenRequest(),
-                self::SUBJECT_TOKEN,
-            ),
-        );
-
-        self::assertSame(503, $exception->getCode());
     }
 
     // ---------------------------------------------------------------------------
@@ -490,7 +351,7 @@ class StorageApiTokenFactoryTest extends TestCase
     }
 
     #[DataProvider('provideInvalidResolverResponses')]
-    public function testExchangeThrowsWith502WhenResolverResponseLacksStorageToken(mixed $response): void
+    public function testExchangeThrowsWith502WhenResolverResponseLacksStorageTokenOrDetail(mixed $response): void
     {
         $resolverClient = $this->createMock(ManageApiClient::class);
         $resolverClient
@@ -520,9 +381,16 @@ class StorageApiTokenFactoryTest extends TestCase
 
     public static function provideInvalidResolverResponses(): Generator
     {
-        yield 'missing storageToken' => ['response' => ['projectId' => 123]];
-        yield 'empty storageToken' => ['response' => ['storageToken' => '']];
-        yield 'non-string storageToken' => ['response' => ['storageToken' => 123]];
+        $tokenDetail = ['id' => '42', 'owner' => ['id' => 123, 'features' => []]];
+
+        yield 'missing storageToken' => ['response' => ['projectId' => 123, 'tokenDetail' => $tokenDetail]];
+        yield 'empty storageToken' => ['response' => ['storageToken' => '', 'tokenDetail' => $tokenDetail]];
+        yield 'non-string storageToken' => ['response' => ['storageToken' => 123, 'tokenDetail' => $tokenDetail]];
+        // Missing detail = Connection deploy without the detail-enriched resolver response
+        // (keboola/connection#7604); the bundle must not fall back to a second verify call.
+        yield 'missing tokenDetail' => ['response' => ['storageToken' => 'legacy-token']];
+        yield 'empty tokenDetail' => ['response' => ['storageToken' => 'legacy-token', 'tokenDetail' => []]];
+        yield 'non-array tokenDetail' => ['response' => ['storageToken' => 'legacy-token', 'tokenDetail' => 'x']];
     }
 
     // ---------------------------------------------------------------------------

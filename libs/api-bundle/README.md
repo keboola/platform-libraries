@@ -112,9 +112,11 @@ the request carries.
 (`kbc_at_*` access tokens and `kbc_pat_*` personal access tokens) in addition to the legacy
 `X-StorageApi-Token`. Programmatic tokens are exchanged for a legacy Storage token via the Manage
 API client's `Client::resolveStorageToken()` (which calls Connection's internal resolver endpoint),
-authenticating with the service's own projected Kubernetes ServiceAccount JWT. The result is a
-normal `StorageApiToken`, so controllers and `#[CurrentUser] StorageApiToken` keep working unchanged
-— no controller change and no configuration switch.
+authenticating with the service's own projected Kubernetes ServiceAccount JWT. The resolver returns
+the legacy token together with its full token detail (the same payload as Storage's
+`tokens/verify`), so the exchange is a single HTTP call — no follow-up Storage verification. The
+result is a normal `StorageApiToken`, so controllers and `#[CurrentUser] StorageApiToken` keep
+working unchanged — no controller change and no configuration switch.
 
 Callers send `Authorization: Bearer kbc_at_…`/`kbc_pat_…` together with an `X-KBC-ProjectId` header
 (the new tokens are not project-scoped on their own).
@@ -166,7 +168,7 @@ class MyActionTest extends KernelTestCase
         $this->setupFakeManageApiToken('my-token', scopes: ['something:manage']);
 
         // for #[StorageApiTokenAuth] with a kbc_at_/kbc_pat_ programmatic token — stubs the
-        // resolver client and Storage verification, so no Connection/Storage API call is made
+        // resolver client (returning the token detail), so no Connection/Storage API call is made
         $token = $this->setupFakeConnectionToken(projectId: '123', features: ['my-feature']);
     }
 }

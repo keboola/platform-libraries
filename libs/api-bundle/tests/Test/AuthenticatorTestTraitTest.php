@@ -79,19 +79,15 @@ class AuthenticatorTestTraitTest extends TestCase
         self::assertSame('789', $token->getProjectId());
         self::assertSame(['feat-x'], $token->getFeatures());
 
-        // The StorageClientRequestFactory stub is wired into the container.
-        self::assertInstanceOf(
-            StorageClientRequestFactory::class,
-            self::$testContainer->get(StorageClientRequestFactory::class),
-        );
-
         // A resolver ManageApiClient mock is registered in the container under the resolver id.
         $resolverClient = self::$testContainer->get(KeboolaApiExtension::STORAGE_TOKEN_RESOLVER_CLIENT_ID);
         self::assertInstanceOf(ManageApiClient::class, $resolverClient);
 
-        // The mock resolver client returns a fixed legacy Storage token for the project.
+        // The mock resolver client returns the legacy Storage token together with its full
+        // detail, matching the returned StorageApiToken - no Storage API stub is involved.
         $resolved = $resolverClient->resolveStorageToken(789, 'kbc_at_x');
         self::assertSame(789, $resolved['projectId']);
-        self::assertSame('fake-resolved-storage-token', $resolved['storageToken']);
+        self::assertSame('tok-x', $resolved['storageToken']);
+        self::assertSame($token->getTokenInfo(), $resolved['tokenDetail']);
     }
 }

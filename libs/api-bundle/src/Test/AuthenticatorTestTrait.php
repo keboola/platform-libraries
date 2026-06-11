@@ -31,15 +31,10 @@ trait AuthenticatorTestTrait
 
     /**
      * @param list<string> $features
+     * @return array<string, mixed>
      */
-    private function setupFakeStorageApiToken(
-        ?string $tokenString = null,
-        string $projectId = '123',
-        array $features = [],
-        ?string $adminId = null,
-    ): StorageApiToken {
-        $tokenString ??= uniqid('fakeStorageToken-', true);
-
+    private function buildFakeStorageTokenData(string $projectId, array $features, ?string $adminId): array
+    {
         $tokenData = [
             'id' => 123,
             'description' => 'foo token',
@@ -51,6 +46,21 @@ trait AuthenticatorTestTrait
         if ($adminId !== null) {
             $tokenData['admin'] = ['id' => $adminId];
         }
+
+        return $tokenData;
+    }
+
+    /**
+     * @param list<string> $features
+     */
+    private function setupFakeStorageApiToken(
+        ?string $tokenString = null,
+        string $projectId = '123',
+        array $features = [],
+        ?string $adminId = null,
+    ): StorageApiToken {
+        $tokenString ??= uniqid('fakeStorageToken-', true);
+        $tokenData = $this->buildFakeStorageTokenData($projectId, $features, $adminId);
 
         $storageApiClient = $this->createMock(StorageApiClient::class);
         $storageApiClient->method('getTokenString')->willReturn($tokenString);
@@ -70,8 +80,9 @@ trait AuthenticatorTestTrait
     /**
      * Stubs the programmatic-token exchange used by transparent #[StorageApiTokenAuth], so guarded
      * controllers can be exercised without reaching Connection or Storage API. The fake resolver
-     * client returns a fixed legacy Storage token and the Storage verification is stubbed via
-     * {@see setupFakeStorageApiToken()}.
+     * client returns a fixed legacy Storage token together with its full token detail, mirroring
+     * the real resolver response - no Storage API stub is needed because the exchange no longer
+     * verifies the resolved token.
      *
      * @param list<string> $features
      */
@@ -81,27 +92,24 @@ trait AuthenticatorTestTrait
         ?string $tokenString = null,
         ?string $adminId = null,
     ): StorageApiToken {
-        $token = $this->setupFakeStorageApiToken(
-            tokenString: $tokenString,
-            projectId: $projectId,
-            features: $features,
-            adminId: $adminId,
-        );
+        $tokenString ??= uniqid('fakeStorageToken-', true);
+        $tokenData = $this->buildFakeStorageTokenData($projectId, $features, $adminId);
 
         $resolverClient = $this->createMock(ManageApiClient::class);
         $resolverClient
             ->method('resolveStorageToken')
             ->willReturn([
-                'storageToken' => 'fake-resolved-storage-token',
+                'storageToken' => $tokenString,
                 'projectId' => (int) $projectId,
                 'tokenId' => '123',
                 'userId' => $adminId ?? '456',
                 'expiresAt' => null,
+                'tokenDetail' => $tokenData,
             ]);
 
         self::getContainer()->set(KeboolaApiExtension::STORAGE_TOKEN_RESOLVER_CLIENT_ID, $resolverClient);
 
-        return $token;
+        return new StorageApiToken($tokenData, $tokenString);
     }
 
     /**

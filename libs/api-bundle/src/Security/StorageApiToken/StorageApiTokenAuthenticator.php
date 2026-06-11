@@ -13,11 +13,11 @@ use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 
 /**
  * Authenticates a Storage API token. Legacy tokens (X-StorageApi-Token / Bearer) are verified
- * directly against Storage API. Connection programmatic tokens (kbc_at_* / kbc_pat_*) are first
- * exchanged for a legacy Storage token through Manage API's auth-bridge resolver, then verified
- * the same way. Both paths are implemented by {@see StorageApiTokenFactory} and yield a
- * {@see StorageApiToken}; this authenticator only extracts the token, picks the path and checks
- * the required features.
+ * directly against Storage API. Connection programmatic tokens (kbc_at_* / kbc_pat_*) are
+ * exchanged through Manage API's auth-bridge resolver, which returns the legacy Storage token
+ * together with its full detail, so no Storage verification call follows. Both paths are
+ * implemented by {@see StorageApiTokenFactory} and yield a {@see StorageApiToken}; this
+ * authenticator only extracts the token, picks the path and checks the required features.
  *
  * @implements TokenAuthenticatorInterface<StorageApiToken>
  */

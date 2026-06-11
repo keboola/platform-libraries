@@ -10,10 +10,11 @@ Instead of routing all traffic through a central proxy (as described in the
 [`auth-bridge-proxy` RFC](https://github.com/keboola/go-monorepo/blob/main/docs/rfcs/2026-05-18-auth-bridge-proxy.md)),
 each service performs the exchange itself: it calls a dedicated **internal Connection
 resolver endpoint**, authenticating with its own projected Kubernetes ServiceAccount JWT,
-hands over the user's bearer token, and receives the matching **legacy Storage token**. From
-that point on the request is handled exactly as if the caller had sent the legacy Storage
-token, so existing controllers (`#[StorageApiTokenAuth]`, `#[CurrentUser] StorageApiToken`)
-keep working unchanged.
+hands over the user's bearer token, and receives the matching **legacy Storage token together
+with its full token detail** (the same payload as `GET /v2/storage/tokens/verify`). The
+`StorageApiToken` is built directly from that single response — no follow-up Storage API call —
+so existing controllers (`#[StorageApiTokenAuth]`, `#[CurrentUser] StorageApiToken`) keep
+working unchanged.
 
 The exchange is **transparent and always on**: `#[StorageApiTokenAuth]` accepts both legacy
 `X-StorageApi-Token` and programmatic `Authorization: Bearer kbc_at_/kbc_pat_` tokens. There is no
@@ -29,7 +30,9 @@ opt-in attribute and no configuration switch — a legacy token never triggers a
 
 ## Connection resolver contract
 
-Implemented in [keboola/connection#7403](https://github.com/keboola/connection/pull/7403).
+Implemented in [keboola/connection#7403](https://github.com/keboola/connection/pull/7403),
+extended in [keboola/connection#7604](https://github.com/keboola/connection/pull/7604) to return
+the full token detail (`tokenDetail`) so callers no longer need a follow-up verify call.
 
 ```
 POST /manage/internal/auth-bridge/resolve-storage-token
@@ -54,12 +57,16 @@ Response `200`:
   "projectId": 123,
   "tokenId": "12345",
   "userId": "67890",
-  "expiresAt": "2026-05-18T12:30:00+00:00"
+  "expiresAt": "2026-05-18T12:30:00+00:00",
+  "tokenDetail": { "id": "12345", "owner": { "id": 123, "features": ["..."] }, "...": "..." }
 }
 ```
 
-Only `storageToken` is consumed by the bundle (the rest of the metadata is informational); the
-resolved legacy token is re-verified against Storage API to build the full `StorageApiToken`.
+The bundle consumes `storageToken` and `tokenDetail` (the rest of the metadata is informational).
+`tokenDetail` carries the same payload as `GET /v2/storage/tokens/verify` — Connection builds both
+from the same provider, so they stay identical by construction — and is used directly as the
+`StorageApiToken` token info, with `storageToken` as the token value. A response missing either
+field (e.g. a Connection deploy that predates keboola/connection#7604) is rejected with `502`.
 
 Errors:
 
@@ -86,19 +93,14 @@ Client ──Authorization: Bearer kbc_at_*, X-KBC-ProjectId: 123──► Servi
     X-Kubernetes-Authorization: Bearer <SA JWT>                     │ validate subject token,
     X-Subject-Token: Bearer kbc_at_*                                │ project scope, decrypt
     { "projectId": 123 }                                   ◄────────┘ legacy Storage token
-                                                                    │
-  then, with the resolved legacy token:                             │
-    clone request, remove Authorization,                            ▼
-    set X-StorageApi-Token = <legacy token>                  Storage API
-    verifyToken() ─────────────────────────────────────────►        │ tokenInfo
-                                                            ◄────────┘
-  => new StorageApiToken(tokenInfo, legacyToken)  →  #[CurrentUser] StorageApiToken
+                                                                      + full tokenDetail
+  => new StorageApiToken(tokenDetail, storageToken)  →  #[CurrentUser] StorageApiToken
 ```
 
-Why the second `verifyToken()` call: the resolver returns only the legacy token plus minimal
-metadata, not the full token info (features, owner, backend, ...) that `StorageApiToken` carries
-and that downstream code relies on. Re-verifying the resolved legacy token yields exactly the
-object the legacy flow produces. There is no result caching in v1 (see [Caching](#caching)).
+The resolver returns the full token detail (features, owner, backend, ...) alongside the legacy
+token — the exact payload Storage's `tokens/verify` would return — so the exchange is a single
+HTTP call and yields exactly the object the legacy flow produces. There is no result caching in
+v1 (see [Caching](#caching)).
 
 ## Integration
 
@@ -144,19 +146,12 @@ None. The feature is always on and uses fixed conventions:
 | `403` subject token cannot access project | `403` |
 | `503` Connection in maintenance (`MaintenanceException`) | `503` |
 | other `5xx` / timeout / network / SA token file error / unexpected | `502` |
-| Storage API in maintenance during the second `verifyToken` | `503` |
-| Storage API rejects or fails verifying the resolved token (any status) | `502` |
+| `200` but response missing `storageToken` / `tokenDetail` | `502` |
 
-The resolved-token verification failures are mapped separately from the legacy path: the resolved
-legacy token came from Connection, so a Storage rejection there (even a `4xx`) is an
-upstream/our-side incident, never the caller's fault, and the Storage error message (which could
-echo the token) is never forwarded.
-
-The `5xx`/`502` and `503` paths are our-side incidents (deploy, identity, Connection or Storage
-outage), so they are logged at `warning` level with the `projectId` and the resolver/Storage
-status or maintenance `retryAfter`. The Manage response body and the resolver response payload are
-never logged - they may carry token material. Client faults (`400`/`401`/`403` from the resolver)
-are not logged.
+The `5xx`/`502` and `503` paths are our-side incidents (deploy, identity, Connection outage), so
+they are logged at `warning` level with the `projectId` and the resolver status or maintenance
+`retryAfter`. The Manage response body and the resolver response payload are never logged - they
+may carry token material. Client faults (`400`/`401`/`403` from the resolver) are not logged.
 
 **Known limitations.**
 
@@ -182,9 +177,9 @@ are not logged.
 
 ## Caching
 
-Not implemented in v1. Each authenticated programmatic request performs one resolver call plus one
-`verifyToken` call. A short-lived (`(subjectTokenHash, projectId)`-keyed, 5-30 s TTL,
-invalidate-on-401/403) cache could be added later, per the RFC guidance.
+Not implemented in v1. Each authenticated programmatic request performs a single resolver call.
+A short-lived (`(subjectTokenHash, projectId)`-keyed, 5-30 s TTL, invalidate-on-401/403) cache
+could be added later, per the RFC guidance.
 
 ## Components
 
@@ -193,7 +188,7 @@ invalidate-on-401/403) cache could be added later, per the RFC guidance.
 | Class | Responsibility |
 | --- | --- |
 | `ProgrammaticToken` | `kbc_at_` / `kbc_pat_` prefix detection. |
-| `StorageApiTokenFactory` | Builds `StorageApiToken`: verifies legacy tokens against Storage API; for programmatic tokens, calls `Client::resolveStorageToken()`, maps resolver errors, then verifies the resolved legacy token. |
+| `StorageApiTokenFactory` | Builds `StorageApiToken`: verifies legacy tokens against Storage API; for programmatic tokens, calls `Client::resolveStorageToken()`, maps resolver errors and builds the token directly from the returned `tokenDetail` + `storageToken`. |
 | `StorageApiTokenAuthenticator` | Extracts the token, routes `Authorization: Bearer kbc_at_/kbc_pat_` to the exchange and everything else to legacy verification, checks required features. |
 
 The resolver client is a `Keboola\ManageApi\Client` registered under
@@ -212,12 +207,15 @@ These live outside `api-bundle` but are required for the exchange to work:
    resolver returns `403`.
 2. **Projected ServiceAccount token** with audience `keboola-connection` mounted at the
    fixed path (already present for services using `#[ApplicationTokenAuth]` via the SA header).
-3. **Callers (UI / clients)** send `Authorization: Bearer kbc_at_/kbc_pat_` and
+3. **Connection deployment including [keboola/connection#7604](https://github.com/keboola/connection/pull/7604)**
+   — the resolver must return `tokenDetail`; older deployments cause the exchange to fail
+   with `502`.
+4. **Callers (UI / clients)** send `Authorization: Bearer kbc_at_/kbc_pat_` and
    `X-KBC-ProjectId` instead of a legacy Storage token.
 
 ## Testing
 
 `Keboola\ApiBundle\Test\AuthenticatorTestTrait::setupFakeConnectionToken()` stubs the resolver
-client (and the Storage client verification) so controllers guarded by `#[StorageApiTokenAuth]`
-can be exercised with a programmatic token in `KernelTestCase` tests without reaching Connection or
-Storage API.
+client (returning the legacy token together with its full `tokenDetail`, like the real resolver)
+so controllers guarded by `#[StorageApiTokenAuth]` can be exercised with a programmatic token in
+`KernelTestCase` tests without reaching Connection or Storage API.

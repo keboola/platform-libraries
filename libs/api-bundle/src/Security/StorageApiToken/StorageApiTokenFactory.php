@@ -8,7 +8,6 @@ use Keboola\ManageApi\Client as ManageApiClient;
 use Keboola\ManageApi\ClientException as ManageApiClientException;
 use Keboola\ManageApi\MaintenanceException;
 use Keboola\StorageApi\ClientException;
-use Keboola\StorageApi\MaintenanceException as StorageApiMaintenanceException;
 use Keboola\StorageApiBranch\Factory\StorageClientRequestFactory;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
@@ -20,9 +19,10 @@ use Symfony\Component\Security\Core\Exception\CustomUserMessageAuthenticationExc
 /**
  * Builds a {@see StorageApiToken}. Legacy tokens carried by the request are verified directly
  * against Storage API ({@see self::createFromRequest()}). Connection programmatic tokens
- * (kbc_at_* / kbc_pat_*) are first exchanged for a legacy Storage token through Manage API's
- * auth-bridge resolver ({@see ManageApiClient::resolveStorageToken()}), then verified the same
- * way ({@see self::createFromProgrammaticToken()}).
+ * (kbc_at_* / kbc_pat_*) are exchanged through Manage API's auth-bridge resolver
+ * ({@see ManageApiClient::resolveStorageToken()}), which returns the legacy Storage token
+ * together with its full token detail (the same payload as GET /v2/storage/tokens/verify), so no
+ * follow-up Storage verification call is needed ({@see self::createFromProgrammaticToken()}).
  *
  * The resolver client authenticates with the service's projected Kubernetes ServiceAccount JWT
  * (read per request, so kubelet-rotated tokens are picked up).
@@ -54,7 +54,9 @@ class StorageApiTokenFactory
     }
 
     /**
-     * Resolves a programmatic token to a legacy Storage token via Manage API and verifies it.
+     * Resolves a programmatic token to a legacy Storage token via Manage API. The resolver
+     * response carries the full token detail (same payload as Storage's tokens/verify), so the
+     * {@see StorageApiToken} is built directly from it without a second Storage API call.
      * Resolver failures are translated to authentication exceptions whose HTTP code is surfaced to
      * the client; error messages are fixed and never echo the Connection/Manage response body,
      * which could otherwise leak subject-token or storage-token material.
@@ -114,10 +116,14 @@ class StorageApiTokenFactory
         }
 
         $storageToken = $resolved['storageToken'] ?? null;
-        if (!is_string($storageToken) || $storageToken === '') {
-            // Never log $resolved itself - it may contain a storageToken value.
+        $tokenDetail = $resolved['tokenDetail'] ?? null;
+        if (!is_string($storageToken) || $storageToken === '' || !is_array($tokenDetail) || $tokenDetail === []) {
+            // Never log $resolved itself - it may contain a storageToken value. A missing
+            // tokenDetail also means a Connection deploy that predates the detail-enriched
+            // resolver response (keboola/connection#7604) - an our-side incident either way.
             $this->logger->warning(
-                'Storage token exchange failed: resolver response did not contain a storage token.',
+                'Storage token exchange failed: resolver response did not contain'
+                . ' a storage token and its detail.',
                 ['projectId' => $projectId],
             );
             throw new CustomUserMessageAuthenticationException(
@@ -127,62 +133,13 @@ class StorageApiTokenFactory
             );
         }
 
-        try {
-            return $this->createFromResolvedToken($request, $storageToken);
-        } catch (StorageApiMaintenanceException $e) {
-            // Storage went into maintenance between the resolver call and the verification.
-            // Surface it as 503 (must be caught before the generic ClientException -
-            // StorageApiMaintenanceException is a subclass) so the client can retry.
-            $this->logger->warning('Storage token exchange unavailable: Storage API is in maintenance.', [
-                'projectId' => $projectId,
-                'retryAfter' => $e->getRetryAfter(),
-            ]);
-            throw new CustomUserMessageAuthenticationException(
-                'Token exchange is temporarily unavailable.',
-                [],
-                Response::HTTP_SERVICE_UNAVAILABLE,
-                $e,
-            );
-        } catch (ClientException $e) {
-            // The resolved legacy token came from Connection, so a Storage rejection here (even a
-            // 4xx) is an upstream/our-side incident, never the caller's fault. Don't echo the
-            // Storage message - it could carry token material - and surface 502.
-            $this->logger->warning('Storage token exchange failed: resolved token verification failed.', [
-                'projectId' => $projectId,
-                'storageStatus' => $e->getCode(),
-            ]);
-            throw new CustomUserMessageAuthenticationException(
-                'Token exchange is temporarily unavailable.',
-                [],
-                Response::HTTP_BAD_GATEWAY,
-                $e,
-            );
-        }
+        return new StorageApiToken($tokenDetail, $storageToken);
     }
 
     /**
-     * Verifies a legacy Storage token resolved from a programmatic token. The resolved token is
-     * placed on a copy of the request as {@see StorageClientRequestFactory::TOKEN_HEADER} and any
-     * incoming Authorization header is dropped, so the Storage client uses the legacy token (not
-     * the original bearer token). The original request is left untouched.
-     */
-    private function createFromResolvedToken(
-        Request $request,
-        #[SensitiveParameter]
-        string $legacyStorageToken,
-    ): StorageApiToken {
-        $exchangedRequest = clone $request;
-        $exchangedRequest->headers = clone $request->headers;
-        $exchangedRequest->headers->remove('Authorization');
-        $exchangedRequest->headers->set(StorageClientRequestFactory::TOKEN_HEADER, $legacyStorageToken);
-
-        return $this->verifyRequestToken($exchangedRequest);
-    }
-
-    /**
-     * Raw verification against Storage API, shared by both paths; callers map the exceptions
-     * ({@see self::createFromRequest()} echoes 4xx messages for legacy tokens,
-     * {@see self::createFromProgrammaticToken()} uses fixed messages for exchanged tokens).
+     * Raw verification against Storage API for legacy tokens carried by the request;
+     * {@see self::createFromRequest()} maps the exceptions (4xx messages are echoed to the
+     * caller). Programmatic tokens never reach this - their detail comes from the resolver.
      */
     private function verifyRequestToken(Request $request): StorageApiToken
     {

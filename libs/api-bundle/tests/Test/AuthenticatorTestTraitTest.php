@@ -85,6 +85,9 @@ class AuthenticatorTestTraitTest extends TestCase
 
         // The mock resolver client returns the legacy Storage token together with its full
         // detail, matching the returned StorageApiToken - no Storage API stub is involved.
+        // tokenDetail is not in the released client's return shape yet (only on its default
+        // branch), so override the type the same way StorageApiTokenFactory does.
+        /** @var array<string, mixed> $resolved */
         $resolved = $resolverClient->resolveStorageToken(789, 'kbc_at_x');
         self::assertSame(789, $resolved['projectId']);
         self::assertSame('tok-x', $resolved['storageToken']);

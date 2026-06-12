@@ -50,6 +50,12 @@ trait AuthenticatorTestTrait
      * Boots a fresh kernel and returns its (reboot-disabled) HTTP client, registered for
      * BrowserKit assertions via getClient(). Use before setupFake*Token() to guarantee a clean
      * container in which the auth services are not yet initialized and can therefore be replaced.
+     *
+     * Because it reboots the kernel (discarding the previous container), it must be called before
+     * ANY getContainer()->set() the test relies on - including app-specific service mocks, not just
+     * the setupFake*Token() helpers. Mocks registered before bootCleanClient() are thrown away by the
+     * reboot and will not be seen by the request. Recommended order: seed the database, then
+     * bootCleanClient(), then register every service mock, then setupFake*Token(), then request.
      */
     protected static function bootCleanClient(): KernelBrowser
     {

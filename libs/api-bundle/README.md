@@ -148,31 +148,86 @@ which the bundle requires directly, so no extra installation is needed.
 ## Testing controllers
 
 `Keboola\ApiBundle\Test\AuthenticatorTestTrait` stubs the authenticators in functional
-(`KernelTestCase`) tests so guarded controllers can be exercised without reaching real
-Storage/Manage APIs:
+(`WebTestCase`) tests so guarded controllers can be exercised without reaching real
+Storage/Manage APIs. It provides four helpers:
+
+| Helper | Stubs auth for | Returns |
+| --- | --- | --- |
+| `setupFakeStorageApiToken(tokenString?, projectId, features, adminId?)` | `#[StorageApiTokenAuth]` via legacy `X-StorageApi-Token` | `StorageApiToken` |
+| `setupFakeConnectionToken(projectId, features, tokenString?, adminId?)` | `#[StorageApiTokenAuth]` via a `kbc_at_`/`kbc_pat_` programmatic token (stubs the exchange resolver client) | `StorageApiToken` |
+| `setupFakeManageApiToken(tokenString, scopes, features)` | `#[ApplicationTokenAuth]` (both the `X-KBC-ManageApiToken` header and the Kubernetes ServiceAccount JWT) | `void` |
+| `bootCleanClient()` | — boots a fresh, reboot-disabled `KernelBrowser` on a clean container | `KernelBrowser` |
+
+### Why `bootCleanClient()`
+
+The `setupFake*Token()` helpers replace services in the test container via
+`getContainer()->set(...)`. That only works while those services are **not yet initialized**: a
+`#[StorageApiTokenAuth]` request initializes `ManageApiClientFactory` (it backs the programmatic-token
+exchange resolver), and an initialized service can no longer be replaced. So whenever a request has
+already run in the test — or you simply want a guaranteed-clean container — call
+`self::bootCleanClient()` first. It boots a fresh kernel, disables client reboot, and returns the
+`KernelBrowser` to use for the request.
+
+> [!IMPORTANT]
+> `bootCleanClient()` **reboots the kernel**, discarding the previous container. Call it before
+> **every** `getContainer()->set(...)` the test relies on — including your own app-specific service
+> mocks, not just the `setupFake*Token()` helpers. Mocks registered *before* `bootCleanClient()` are
+> thrown away by the reboot and will not be seen by the request.
+
+Recommended order: **seed the database → `bootCleanClient()` → register service mocks →
+`setupFake*Token()` → request.**
+
+### Requirements
+
+- The test case must extend Symfony's `WebTestCase` (`bootCleanClient()` uses `bootKernel()` /
+  `getClient()` / the `test.client` service).
+- `symfony/browser-kit` must be installed (dev dependency) for the `KernelBrowser` client.
+
+### Example
 
 ```php
 use Keboola\ApiBundle\Test\AuthenticatorTestTrait;
+use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
-class MyActionTest extends KernelTestCase
+class MyActionTest extends WebTestCase
 {
     use AuthenticatorTestTrait;
 
-    public function testIt(): void
+    public function testUnauthorized(): void
     {
-        // for #[StorageApiTokenAuth]
-        $token = $this->setupFakeStorageApiToken(projectId: '123', features: ['my-feature']);
+        // A request that doesn't fake a token can use the standard client.
+        $client = static::createClient();
+        $client->request('GET', '/my-endpoint');
 
-        // for #[ApplicationTokenAuth] — works for both the X-KBC-ManageApiToken
-        // header and the Kubernetes ServiceAccount JWT
-        $this->setupFakeManageApiToken('my-token', scopes: ['something:manage']);
+        self::assertResponseStatusCodeSame(401);
+    }
 
-        // for #[StorageApiTokenAuth] with a kbc_at_/kbc_pat_ programmatic token — stubs the
-        // resolver client (returning the token detail), so no Connection/Storage API call is made
-        $token = $this->setupFakeConnectionToken(projectId: '123', features: ['my-feature']);
+    public function testAuthorized(): void
+    {
+        self::setupDatabase([$entity]);          // 1) seed state the controller reads
+
+        $client = self::bootCleanClient();       // 2) clean container BEFORE any ->set()
+
+        $myService = $this->createMock(MyService::class);
+        self::getContainer()->set(MyService::class, $myService);   // 3) app service mocks
+
+        $token = $this->setupFakeStorageApiToken( // 4) stub the authenticator
+            projectId: '123',
+            features: ['my-feature'],
+        );
+
+        $client->request('GET', '/my-endpoint', server: [   // 5) authenticated request
+            'HTTP_X_STORAGEAPI_TOKEN' => $token->getTokenValue(),
+        ]);
+
+        self::assertResponseIsSuccessful();
     }
 }
 ```
+
+Swap `setupFakeStorageApiToken()` for `setupFakeConnectionToken()` (programmatic token) or
+`setupFakeManageApiToken()` (`#[ApplicationTokenAuth]`) depending on the attribute under test; the
+clean-client ordering is the same for all three.
 
 ## License
 

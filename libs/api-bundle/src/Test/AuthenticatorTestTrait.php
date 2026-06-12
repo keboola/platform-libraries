@@ -12,13 +12,23 @@ use Keboola\StorageApi\Client as StorageApiClient;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Keboola\StorageApiBranch\Factory\StorageClientRequestFactory;
 use PHPUnit\Framework\MockObject\MockObject;
+use Symfony\Bundle\FrameworkBundle\KernelBrowser;
+use Symfony\Component\BrowserKit\AbstractBrowser;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\HttpKernel\KernelInterface;
 
 /**
- * Helpers for functional (KernelTestCase) tests that stub api-bundle's authenticators, so
+ * Helpers for functional WebTestCase tests that stub api-bundle's authenticators, so
  * controllers guarded by #[StorageApiTokenAuth] / #[ApplicationTokenAuth] can be
  * exercised without reaching real Storage/Manage APIs. The consuming test case provides
- * createMock() and getContainer() (e.g. via KernelTestCase + MockObject).
+ * createMock() and getContainer(); consumers that use {@see bootCleanClient()} must extend
+ * Symfony's WebTestCase (it calls bootKernel()/getClient()).
+ *
+ * The setupFake*Token() helpers register their mocks on the current test container. A
+ * #[StorageApiTokenAuth] request initializes ManageApiClientFactory (it backs the token
+ * exchange resolver), and an initialized service can no longer be replaced via the test
+ * container - so call {@see bootCleanClient()} to get a fresh container/client before
+ * setupFake*Token() whenever a request has already run in the test.
  */
 trait AuthenticatorTestTrait
 {
@@ -28,6 +38,31 @@ trait AuthenticatorTestTrait
     abstract protected function createMock(string $className): MockObject;
 
     abstract protected static function getContainer(): ContainerInterface;
+
+    /**
+     * @param array<string, mixed> $options
+     */
+    abstract protected static function bootKernel(array $options = []): KernelInterface;
+
+    abstract protected static function getClient(?AbstractBrowser $newClient = null): ?AbstractBrowser;
+
+    /**
+     * Boots a fresh kernel and returns its (reboot-disabled) HTTP client, registered for
+     * BrowserKit assertions via getClient(). Use before setupFake*Token() to guarantee a clean
+     * container in which the auth services are not yet initialized and can therefore be replaced.
+     */
+    protected static function bootCleanClient(): KernelBrowser
+    {
+        self::bootKernel();
+
+        $client = self::getContainer()->get('test.client');
+        assert($client instanceof KernelBrowser);
+
+        self::getClient($client);
+        $client->disableReboot();
+
+        return $client;
+    }
 
     /**
      * @param list<string> $features

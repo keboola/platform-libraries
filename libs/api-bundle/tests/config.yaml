@@ -1,5 +1,10 @@
+parameters:
+    app_name: api-bundle-test
+
 framework:
     test: true
+    secret: test
+    http_method_override: false
 
 monolog:
     handlers:

@@ -9,24 +9,20 @@ use Keboola\ApiBundle\Security\ApplicationToken\ManageApiClientFactory;
 use Keboola\ApiBundle\Test\AuthenticatorTestTrait;
 use Keboola\ManageApi\Client as ManageApiClient;
 use Keboola\StorageApiBranch\Factory\StorageClientRequestFactory;
-use PHPUnit\Framework\TestCase;
-use Symfony\Component\DependencyInjection\Container;
-use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use Symfony\Component\DependencyInjection\Exception\InvalidArgumentException;
 
-class AuthenticatorTestTraitTest extends TestCase
+class AuthenticatorTestTraitTest extends WebTestCase
 {
     use AuthenticatorTestTrait;
 
-    private static Container $testContainer;
-
-    protected static function getContainer(): ContainerInterface
+    protected function tearDown(): void
     {
-        return self::$testContainer;
-    }
+        parent::tearDown();
 
-    protected function setUp(): void
-    {
-        self::$testContainer = new Container();
+        // Booting the kernel registers an exception handler that PHPUnit otherwise reports as a
+        // leaked handler ("did not remove its own exception handlers"); restore it here.
+        restore_exception_handler();
     }
 
     public function testSetupFakeStorageApiToken(): void
@@ -44,7 +40,7 @@ class AuthenticatorTestTraitTest extends TestCase
 
         self::assertInstanceOf(
             StorageClientRequestFactory::class,
-            self::$testContainer->get(StorageClientRequestFactory::class),
+            self::getContainer()->get(StorageClientRequestFactory::class),
         );
     }
 
@@ -52,7 +48,7 @@ class AuthenticatorTestTraitTest extends TestCase
     {
         $this->setupFakeManageApiToken('manage-token', ['some:scope'], ['feat-b']);
 
-        $factory = self::$testContainer->get(ManageApiClientFactory::class);
+        $factory = self::getContainer()->get(ManageApiClientFactory::class);
         self::assertInstanceOf(ManageApiClientFactory::class, $factory);
 
         $data = $factory->getClientForManageToken('manage-token')->verifyToken();
@@ -80,7 +76,7 @@ class AuthenticatorTestTraitTest extends TestCase
         self::assertSame(['feat-x'], $token->getFeatures());
 
         // A resolver ManageApiClient mock is registered in the container under the resolver id.
-        $resolverClient = self::$testContainer->get(KeboolaApiExtension::STORAGE_TOKEN_RESOLVER_CLIENT_ID);
+        $resolverClient = self::getContainer()->get(KeboolaApiExtension::STORAGE_TOKEN_RESOLVER_CLIENT_ID);
         self::assertInstanceOf(ManageApiClient::class, $resolverClient);
 
         // The mock resolver client returns the legacy Storage token together with its full
@@ -92,5 +88,35 @@ class AuthenticatorTestTraitTest extends TestCase
         self::assertSame(789, $resolved['projectId']);
         self::assertSame('tok-x', $resolved['storageToken']);
         self::assertSame($token->getTokenInfo(), $resolved['tokenDetail']);
+    }
+
+    public function testStubbingInitializedManageFactoryFailsWithoutCleanClient(): void
+    {
+        // A #[StorageApiTokenAuth] request initializes ManageApiClientFactory (it backs the token
+        // exchange resolver); once initialized the test container can no longer replace it.
+        self::getContainer()->get(ManageApiClientFactory::class);
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessageMatches('/already initialized/');
+
+        $this->setupFakeManageApiToken('manage-token');
+    }
+
+    public function testBootCleanClientAllowsStubbingAfterServiceInitialized(): void
+    {
+        // Initialize ManageApiClientFactory on the current container, as a #[StorageApiTokenAuth]
+        // request would.
+        self::getContainer()->get(ManageApiClientFactory::class);
+
+        // A fresh client gives a clean container where the factory can be stubbed again.
+        self::bootCleanClient();
+        $this->setupFakeManageApiToken('manage-token', ['some:scope']);
+
+        $factory = self::getContainer()->get(ManageApiClientFactory::class);
+        self::assertInstanceOf(ManageApiClientFactory::class, $factory);
+        self::assertSame(
+            ['some:scope'],
+            $factory->getClientForManageToken('manage-token')->verifyToken()['scopes'],
+        );
     }
 }

@@ -4,9 +4,10 @@ declare(strict_types=1);
 
 namespace Keboola\ApiBundle\Tests\Test;
 
+use Keboola\ApiBundle\DependencyInjection\KeboolaApiExtension;
 use Keboola\ApiBundle\Security\ApplicationToken\ManageApiClientFactory;
-use Keboola\ApiBundle\Security\StorageApiToken\StorageApiToken;
 use Keboola\ApiBundle\Test\AuthenticatorTestTrait;
+use Keboola\ManageApi\Client as ManageApiClient;
 use Keboola\StorageApiBranch\Factory\StorageClientRequestFactory;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\DependencyInjection\Container;
@@ -62,5 +63,34 @@ class AuthenticatorTestTraitTest extends TestCase
         // The Kubernetes ServiceAccount JWT path is stubbed identically.
         $jwtData = $factory->getClientForServiceAccountToken('manage-token')->verifyToken();
         self::assertSame(['some:scope'], $jwtData['scopes']);
+    }
+
+    public function testSetupFakeConnectionToken(): void
+    {
+        $token = $this->setupFakeConnectionToken(
+            projectId: '789',
+            features: ['feat-x'],
+            tokenString: 'tok-x',
+            adminId: '7',
+        );
+
+        // The returned StorageApiToken carries the values passed in.
+        self::assertSame('tok-x', $token->getTokenValue());
+        self::assertSame('789', $token->getProjectId());
+        self::assertSame(['feat-x'], $token->getFeatures());
+
+        // A resolver ManageApiClient mock is registered in the container under the resolver id.
+        $resolverClient = self::$testContainer->get(KeboolaApiExtension::STORAGE_TOKEN_RESOLVER_CLIENT_ID);
+        self::assertInstanceOf(ManageApiClient::class, $resolverClient);
+
+        // The mock resolver client returns the legacy Storage token together with its full
+        // detail, matching the returned StorageApiToken - no Storage API stub is involved.
+        // tokenDetail is not in the released client's return shape yet (only on its default
+        // branch), so override the type the same way StorageApiTokenFactory does.
+        /** @var array<string, mixed> $resolved */
+        $resolved = $resolverClient->resolveStorageToken(789, 'kbc_at_x');
+        self::assertSame(789, $resolved['projectId']);
+        self::assertSame('tok-x', $resolved['storageToken']);
+        self::assertSame($token->getTokenInfo(), $resolved['tokenDetail']);
     }
 }

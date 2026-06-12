@@ -8,19 +8,25 @@ use Keboola\ApiBundle\Attribute\AuthAttributeInterface;
 use Keboola\ApiBundle\Attribute\StorageApiTokenAuth;
 use Keboola\ApiBundle\Security\TokenAuthenticatorInterface;
 use Keboola\ApiBundle\Security\TokenInterface;
-use Keboola\StorageApi\ClientException;
-use Keboola\StorageApiBranch\Factory\StorageClientRequestFactory;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Security\Core\Exception\AccessDeniedException;
-use Symfony\Component\Security\Core\Exception\CustomUserMessageAuthenticationException;
 
 /**
+ * Authenticates a Storage API token. Legacy tokens (X-StorageApi-Token / Bearer) are verified
+ * directly against Storage API. Connection programmatic tokens (kbc_at_* / kbc_pat_*) are
+ * exchanged through Manage API's auth-bridge resolver, which returns the legacy Storage token
+ * together with its full detail, so no Storage verification call follows. Both paths are
+ * implemented by {@see StorageApiTokenFactory} and yield a {@see StorageApiToken}; this
+ * authenticator only extracts the token, picks the path and checks the required features.
+ *
  * @implements TokenAuthenticatorInterface<StorageApiToken>
  */
 class StorageApiTokenAuthenticator implements TokenAuthenticatorInterface
 {
+    private const BEARER_PATTERN = '/^Bearer\s+(.+)$/i';
+
     public function __construct(
-        private readonly StorageClientRequestFactory $clientRequestFactory,
+        private readonly StorageApiTokenFactory $tokenFactory,
     ) {
     }
 
@@ -30,7 +36,7 @@ class StorageApiTokenAuthenticator implements TokenAuthenticatorInterface
         $authHeader = $request->headers->get('Authorization');
         if ($authHeader !== null) {
             // Validate it's a Bearer token and strip prefix
-            if (preg_match('/^Bearer\s+(.+)$/i', $authHeader, $matches)) {
+            if (preg_match(self::BEARER_PATTERN, $authHeader, $matches)) {
                 return $matches[1];
             }
             return $authHeader;
@@ -47,18 +53,34 @@ class StorageApiTokenAuthenticator implements TokenAuthenticatorInterface
     ): StorageApiToken {
         assert($authAttribute instanceof StorageApiTokenAuth);
 
-        try {
-            $wrapper = $this->clientRequestFactory->createClientWrapper($request);
-            $storageApiClient = $wrapper->getBasicClient();
-            $tokenInfo = $storageApiClient->verifyToken();
-        } catch (ClientException $e) {
-            if ($e->getCode() >= 400 && $e->getCode() < 500) {
-                throw new CustomUserMessageAuthenticationException($e->getMessage(), [], $e->getCode(), $e);
-            }
-            throw $e;
+        // Exchange is restricted to programmatic tokens that explicitly arrive as
+        // `Authorization: Bearer <kbc_at|kbc_pat>`. A bare `Authorization: <kbc_...>` or
+        // `X-StorageApi-Token: kbc_...` is an undocumented shape and stays on the legacy
+        // verification path, preserving pre-exchange behaviour.
+        if ($this->isProgrammaticBearerToken($request, $token)) {
+            return $this->tokenFactory->createFromProgrammaticToken($request, $token);
         }
 
-        return new StorageApiToken($tokenInfo, $storageApiClient->getTokenString());
+        return $this->tokenFactory->createFromRequest($request);
+    }
+
+    /**
+     * True only when $token is a programmatic token and is exactly the value presented as
+     * `Authorization: Bearer <kbc_...>`. Other carriers (bare Authorization value,
+     * X-StorageApi-Token) are not eligible for exchange. Comparing against $token guarantees
+     * the exchanged token is the one {@see self::extractToken()} returned.
+     */
+    private function isProgrammaticBearerToken(Request $request, string $token): bool
+    {
+        if (!ProgrammaticToken::matches($token)) {
+            return false;
+        }
+
+        $authHeader = $request->headers->get('Authorization');
+
+        return $authHeader !== null
+            && preg_match(self::BEARER_PATTERN, $authHeader, $matches) === 1
+            && $matches[1] === $token;
     }
 
     public function authorizeToken(AuthAttributeInterface $authAttribute, TokenInterface $token): void

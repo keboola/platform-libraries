@@ -106,9 +106,40 @@ and the Kubernetes ServiceAccount JWT header (`X-Kubernetes-Authorization`); Con
 both to a Manage token, so `scopes`/`isSuperAdmin` checks are identical regardless of which header
 the request carries.
 
+### Connection programmatic tokens (Storage token exchange)
+
+`#[StorageApiTokenAuth]` transparently accepts the new Connection programmatic bearer tokens
+(`kbc_at_*` access tokens and `kbc_pat_*` personal access tokens) in addition to the legacy
+`X-StorageApi-Token`. Programmatic tokens are exchanged for a legacy Storage token via the Manage
+API client's `Client::resolveStorageToken()` (which calls Connection's internal resolver endpoint),
+authenticating with the service's own projected Kubernetes ServiceAccount JWT. The resolver returns
+the legacy token together with its full token detail (the same payload as Storage's
+`tokens/verify`), so the exchange is a single HTTP call — no follow-up Storage verification. The
+result is a normal `StorageApiToken`, so controllers and `#[CurrentUser] StorageApiToken` keep
+working unchanged — no controller change and no configuration switch.
+
+Callers send `Authorization: Bearer kbc_at_…`/`kbc_pat_…` together with an `X-KBC-ProjectId` header
+(the new tokens are not project-scoped on their own).
+
+```php
+#[StorageApiTokenAuth]
+class MyController {
+  public function __invoke(#[CurrentUser] StorageApiToken $token) {
+    // accepts X-StorageApi-Token (legacy) OR Authorization: Bearer kbc_at_/kbc_pat_ (+ X-KBC-ProjectId)
+  }
+}
+```
+
+This requires the service's ServiceAccount to be mapped to the
+`internal:auth-bridge:resolve-storage-token` scope in Connection's Kubernetes-auth config. See
+[docs/storage-token-exchange.md](docs/storage-token-exchange.md) for the full design, the resolver
+contract, error mapping, and infrastructure prerequisites.
+
 To use individual authentication attributes, you need to install appropriate client package:
 * to use `StorageApiTokenAuth`, install `keboola/storage-api-client`
-* to use `ApplicationTokenAuth`, install `keboola/kbc-manage-api-php-client`
+
+`ApplicationTokenAuth` and the Storage token exchange rely on `keboola/kbc-manage-api-php-client`,
+which the bundle requires directly, so no extra installation is needed.
 
 > [!NOTE]
 > If you forget to install appropriate client, you will get exception like
@@ -135,6 +166,10 @@ class MyActionTest extends KernelTestCase
         // for #[ApplicationTokenAuth] — works for both the X-KBC-ManageApiToken
         // header and the Kubernetes ServiceAccount JWT
         $this->setupFakeManageApiToken('my-token', scopes: ['something:manage']);
+
+        // for #[StorageApiTokenAuth] with a kbc_at_/kbc_pat_ programmatic token — stubs the
+        // resolver client (returning the token detail), so no Connection/Storage API call is made
+        $token = $this->setupFakeConnectionToken(projectId: '123', features: ['my-feature']);
     }
 }
 ```

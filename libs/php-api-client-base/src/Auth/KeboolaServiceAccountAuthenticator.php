@@ -18,12 +18,26 @@ final readonly class KeboolaServiceAccountAuthenticator implements RequestAuthen
     public const HEADER = 'X-Kubernetes-Authorization';
     public const DEFAULT_TOKEN_PATH = '/var/run/secrets/connection.keboola.com/serviceaccount/token';
 
+    public const DEFAULT_MAX_READ_ATTEMPTS = 6;
+    public const DEFAULT_RETRY_BASE_DELAY_US = 40_000;
+    /** @phpstan-ignore classConstant.unused (used in Task 3 readToken retry loop) */
+    private const MAX_RETRY_DELAY_US = 1_000_000;
+
     /**
      * @param non-empty-string $tokenPath
+     * @param positive-int $maxReadAttempts Total reads (1 initial + N-1 retries) before giving up.
+     * @param int<0, max> $retryBaseDelayMicroseconds Base backoff, doubled each retry, capped at 1 s.
      */
-    public function __construct(private string $tokenPath = self::DEFAULT_TOKEN_PATH)
-    {
+    public function __construct(
+        private string $tokenPath = self::DEFAULT_TOKEN_PATH,
+        /** @phpstan-ignore property.onlyWritten (used in Task 3 readToken retry loop) */
+        private int $maxReadAttempts = self::DEFAULT_MAX_READ_ATTEMPTS,
+        /** @phpstan-ignore property.onlyWritten (used in Task 3 readToken retry loop) */
+        private int $retryBaseDelayMicroseconds = self::DEFAULT_RETRY_BASE_DELAY_US,
+    ) {
         Assert::stringNotEmpty($tokenPath, 'Service account token path must not be empty');
+        Assert::greaterThanEq($maxReadAttempts, 1, 'maxReadAttempts must be at least 1');
+        Assert::greaterThanEq($retryBaseDelayMicroseconds, 0, 'retryBaseDelayMicroseconds must not be negative');
     }
 
     public function __invoke(RequestInterface $request): RequestInterface

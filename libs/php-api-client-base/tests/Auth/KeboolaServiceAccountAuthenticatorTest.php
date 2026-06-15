@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Keboola\ApiClientBase\Tests\Auth;
 
 use GuzzleHttp\Psr7\Request;
+use InvalidArgumentException;
 use Keboola\ApiClientBase\Auth\KeboolaServiceAccountAuthenticator;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
@@ -64,5 +65,27 @@ class KeboolaServiceAccountAuthenticatorTest extends TestCase
         } finally {
             @unlink($path);
         }
+    }
+
+    public function testRejectsZeroMaxReadAttempts(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('maxReadAttempts');
+        /** @phpstan-ignore-next-line argument.type — exercising the runtime guard */
+        new KeboolaServiceAccountAuthenticator('/fake/token', 0);
+    }
+
+    public function testRejectsNegativeRetryDelay(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('retryBaseDelayMicroseconds');
+        /** @phpstan-ignore-next-line argument.type — exercising the runtime guard */
+        new KeboolaServiceAccountAuthenticator('/fake/token', 6, -1);
+    }
+
+    public function testExposesDefaultRetryConstants(): void
+    {
+        self::assertSame(6, KeboolaServiceAccountAuthenticator::DEFAULT_MAX_READ_ATTEMPTS);
+        self::assertSame(40_000, KeboolaServiceAccountAuthenticator::DEFAULT_RETRY_BASE_DELAY_US);
     }
 }

@@ -109,6 +109,12 @@ jobs:
     uses: ./.github/workflows/lib-permission-checker.yml
     secrets: inherit
 
+  php-api-client-base:
+    needs: [detect-changes]
+    if: contains(needs.detect-changes.outputs.libs, '"php-api-client-base"')
+    uses: ./.github/workflows/lib-php-api-client-base.yml
+    secrets: inherit
+
   php-storage-names-sanitizer:
     needs: [detect-changes]
     if: contains(needs.detect-changes.outputs.libs, '"php-storage-names-sanitizer"')
@@ -184,6 +190,7 @@ jobs:
       - messenger-bundle
       - output-mapping
       - permission-checker
+      - php-api-client-base
       - php-storage-names-sanitizer
       - php-test-utils
       - query-service-api-client
@@ -211,6 +218,12 @@ jobs:
       fail-fast: false
       matrix:
         lib: ${{ fromJSON(needs.detect-changes.outputs.libs) }}
+        # php-api-client-base is tested but not yet published — its standalone
+        # repo does not exist yet. Drop this exclude (and add it to
+        # cleanup-branch.yml) once keboola/php-api-client-base is created and
+        # granted to the publish App.
+        exclude:
+          - lib: php-api-client-base
     steps:
       - uses: actions/checkout@v6
         with:

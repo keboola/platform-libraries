@@ -171,6 +171,7 @@ jobs:
 
   tests-result:
     needs:
+      - detect-changes
       - api-bundle
       - azure-api-client
       - configuration-variables-resolver

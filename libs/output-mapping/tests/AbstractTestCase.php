@@ -280,6 +280,21 @@ abstract class AbstractTestCase extends TestCase
         // operationParams when a column is added, so we no longer assert its absence.
     }
 
+    /**
+     * Recursively strips the volatile `timestamp` key the backend stamps on table and column
+     * metadata entries, so equality assertions ignore it (it drifts by seconds between calls).
+     */
+    protected static function dropTimestampsRecursively(array $data): array
+    {
+        unset($data['timestamp']);
+        foreach ($data as $key => $value) {
+            if (is_array($value)) {
+                $data[$key] = self::dropTimestampsRecursively($value);
+            }
+        }
+        return $data;
+    }
+
     public function incrementalFlagProvider(): iterable
     {
         yield 'incremental load' => [true];

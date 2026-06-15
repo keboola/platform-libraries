@@ -443,20 +443,7 @@ class StoragePreparerTest extends AbstractTestCase
         unset($table['id']);
         unset($table['lastChangeDate']);
         unset($table['bucket']['lastChangeDate']);
-        // The backend stamps a volatile `timestamp` on table and column metadata entries; strip it
-        // at every depth so equality ignores it (it drifts by seconds between setup and assertion).
         return self::dropTimestampsRecursively($table);
-    }
-
-    private static function dropTimestampsRecursively(array $data): array
-    {
-        unset($data['timestamp']);
-        foreach ($data as $key => $value) {
-            if (is_array($value)) {
-                $data[$key] = self::dropTimestampsRecursively($value);
-            }
-        }
-        return $data;
     }
 
     private function dropMetadataAndDefinition(array $table): array

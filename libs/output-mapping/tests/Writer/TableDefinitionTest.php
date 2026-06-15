@@ -341,7 +341,7 @@ class TableDefinitionTest extends AbstractTestCase
             'nullable' => true,
         ]);
         self::assertDataTypeDefinition($tableDetails['columnMetadata']['created'], [
-            'type' => Snowflake::TYPE_TIMESTAMP_LTZ,
+            'type' => Snowflake::TYPE_TIMESTAMP,
             'length' => '9',
             'nullable' => true,
         ]);
@@ -470,7 +470,7 @@ class TableDefinitionTest extends AbstractTestCase
             'nullable' => false,
         ]);
         self::assertDataTypeDefinition($tableDetails['columnMetadata']['birthweight'], [
-            'type' => Snowflake::TYPE_NUMBER,
+            'type' => Snowflake::TYPE_DECIMAL,
             'length' => '10,2',
             'nullable' => true,
         ]);

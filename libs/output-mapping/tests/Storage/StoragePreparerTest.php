@@ -139,8 +139,8 @@ class StoragePreparerTest extends AbstractTestCase
         ]);
 
         self::assertEquals(
-            $this->dropMetadataAndDefinition($this->dropTimestampParams($expectedTable)),
-            $this->dropMetadataAndDefinition($this->dropTimestampParams($updatedTable)),
+            $this->getTableDataWithoutMetadataAndDefinition($this->dropTimestampParams($expectedTable)),
+            $this->getTableDataWithoutMetadataAndDefinition($this->dropTimestampParams($updatedTable)),
         );
 
         self::assertStorageSourcesContainBucket($this->testBucketId, $mappingStorageSources);
@@ -446,7 +446,7 @@ class StoragePreparerTest extends AbstractTestCase
         return self::dropTimestampsRecursively($table);
     }
 
-    private function dropMetadataAndDefinition(array $table): array
+    private function getTableDataWithoutMetadataAndDefinition(array $table): array
     {
         unset($table['definition']);
         unset($table['columnMetadata']);

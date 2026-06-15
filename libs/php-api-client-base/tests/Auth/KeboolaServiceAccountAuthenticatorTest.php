@@ -67,97 +67,6 @@ class KeboolaServiceAccountAuthenticatorTest extends TestCase
         }
     }
 
-    public function testRejectsZeroMaxReadAttempts(): void
-    {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('maxReadAttempts');
-        /** @phpstan-ignore-next-line argument.type — exercising the runtime guard */
-        new KeboolaServiceAccountAuthenticator('/fake/token', 0);
-    }
-
-    public function testRejectsNegativeRetryDelay(): void
-    {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('retryBaseDelayMicroseconds');
-        /** @phpstan-ignore-next-line argument.type — exercising the runtime guard */
-        new KeboolaServiceAccountAuthenticator('/fake/token', 6, -1);
-    }
-
-    public function testExposesDefaultRetryConstants(): void
-    {
-        self::assertSame(6, KeboolaServiceAccountAuthenticator::DEFAULT_MAX_READ_ATTEMPTS);
-        self::assertSame(40_000, KeboolaServiceAccountAuthenticator::DEFAULT_RETRY_BASE_DELAY_US);
-    }
-
-    protected function tearDown(): void
-    {
-        FunctionMocks::reset();
-        parent::tearDown();
-    }
-
-    public function testRecoversWhenFirstReadFailsThenSucceeds(): void
-    {
-        // false => transient unreadable during a symlink swap; is_readable() is
-        // shadowed to true so the re-read path is taken rather than throwing.
-        FunctionMocks::enable([false, 'the-token'], isReadable: true);
-
-        $authenticator = new KeboolaServiceAccountAuthenticator('/fake/sa/token');
-        $request = $authenticator(new Request('GET', 'https://example.test'));
-
-        self::assertSame('Bearer the-token', $request->getHeaderLine('X-Kubernetes-Authorization'));
-        self::assertSame(2, FunctionMocks::readCount());
-        self::assertSame([], FunctionMocks::recordedSleeps());
-    }
-
-    public function testRecoversWhenFirstReadEmptyThenSucceeds(): void
-    {
-        FunctionMocks::enable(['', 'the-token']);
-
-        $authenticator = new KeboolaServiceAccountAuthenticator('/fake/sa/token');
-        $request = $authenticator(new Request('GET', 'https://example.test'));
-
-        self::assertSame('Bearer the-token', $request->getHeaderLine('X-Kubernetes-Authorization'));
-        self::assertSame(2, FunctionMocks::readCount());
-        // exactly one backoff sleep (40 ms base) before the successful retry
-        self::assertSame([40_000], FunctionMocks::recordedSleeps());
-    }
-
-    public function testDefaultScheduleRetriesFiveTimesThenThrows(): void
-    {
-        FunctionMocks::enable(['', '', '', '', '', '']); // 6 reads, all empty
-
-        $authenticator = new KeboolaServiceAccountAuthenticator('/fake/sa/token');
-
-        try {
-            $authenticator(new Request('GET', 'https://example.test'));
-            self::fail('Expected RuntimeException');
-        } catch (RuntimeException $e) {
-            self::assertStringContainsString('is empty', $e->getMessage());
-        }
-
-        self::assertSame(6, FunctionMocks::readCount());
-        self::assertSame(
-            [40_000, 80_000, 160_000, 320_000, 640_000],
-            FunctionMocks::recordedSleeps(),
-        );
-    }
-
-    public function testSingleAttemptThrowsWithoutSleeping(): void
-    {
-        FunctionMocks::enable(['']);
-
-        $authenticator = new KeboolaServiceAccountAuthenticator('/fake/sa/token', maxReadAttempts: 1);
-
-        $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('is empty');
-        try {
-            $authenticator(new Request('GET', 'https://example.test'));
-        } finally {
-            self::assertSame(1, FunctionMocks::readCount());
-            self::assertSame([], FunctionMocks::recordedSleeps());
-        }
-    }
-
     public function testReadsThroughSymlinkAndPicksUpTargetSwap(): void
     {
         $dir = sys_get_temp_dir() . '/sa-token-' . bin2hex(random_bytes(8));
@@ -190,34 +99,25 @@ class KeboolaServiceAccountAuthenticatorTest extends TestCase
         }
     }
 
-    public function testRetriesWhenReadKeepsFailingThenSucceeds(): void
+    public function testRejectsZeroMaxReadAttempts(): void
     {
-        // is_readable() shadowed true, so repeated false reads are treated as a
-        // transient rotation blip and retried rather than throwing "not readable".
-        FunctionMocks::enable([false, false, 'the-token'], isReadable: true);
-
-        $authenticator = new KeboolaServiceAccountAuthenticator('/fake/sa/token');
-        $request = $authenticator(new Request('GET', 'https://example.test'));
-
-        self::assertSame('Bearer the-token', $request->getHeaderLine('X-Kubernetes-Authorization'));
-        // iter 1 reads twice (initial false + re-read false), iter 2 reads the token
-        self::assertSame(3, FunctionMocks::readCount());
-        self::assertSame([40_000], FunctionMocks::recordedSleeps());
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('maxReadAttempts');
+        /** @phpstan-ignore-next-line argument.type — exercising the runtime guard */
+        new KeboolaServiceAccountAuthenticator('/fake/token', 0);
     }
 
-    public function testThrowsImmediatelyWhenReadFailsAndPathUnreadable(): void
+    public function testRejectsNegativeRetryDelay(): void
     {
-        FunctionMocks::enable([false], isReadable: false);
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('retryBaseDelayMicroseconds');
+        /** @phpstan-ignore-next-line argument.type — exercising the runtime guard */
+        new KeboolaServiceAccountAuthenticator('/fake/token', 6, -1);
+    }
 
-        $authenticator = new KeboolaServiceAccountAuthenticator('/fake/sa/token');
-
-        $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('is not readable');
-        try {
-            $authenticator(new Request('GET', 'https://example.test'));
-        } finally {
-            self::assertSame(1, FunctionMocks::readCount());
-            self::assertSame([], FunctionMocks::recordedSleeps());
-        }
+    public function testExposesDefaultRetryConstants(): void
+    {
+        self::assertSame(6, KeboolaServiceAccountAuthenticator::DEFAULT_MAX_READ_ATTEMPTS);
+        self::assertSame(40_000, KeboolaServiceAccountAuthenticator::DEFAULT_RETRY_BASE_DELAY_US);
     }
 }

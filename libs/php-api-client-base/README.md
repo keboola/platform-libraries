@@ -114,6 +114,13 @@ Pick the authenticator matching the service's scheme, or implement
 `RequestAuthenticatorInterface` for a service-specific scheme (e.g. azure's
 OAuth).
 
+`KeboolaServiceAccountAuthenticator` re-reads the projected SA token on every
+request, so kubelet-rotated tokens are picked up automatically. The read is
+hardened against the rotation race (read-first, clear PHP's stat cache and
+re-check on failure, then retry empty/failed reads with bounded exponential
+backoff — ~1.24 s over 5 retries by default, tunable via the `maxReadAttempts`
+and `retryBaseDelayMicroseconds` constructor arguments).
+
 ## License
 
 MIT

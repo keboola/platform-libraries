@@ -201,6 +201,11 @@ services:
     image: keboola/git-service-api-client
     working_dir: /code/libs/git-service-api-client
 
+  dev-php-api-client-base:
+    <<: *dev82
+    image: keboola/php-api-client-base
+    working_dir: /code/libs/php-api-client-base
+
   dev-vault-api-client:
     <<: *dev82
     image: keboola/vault-api-client

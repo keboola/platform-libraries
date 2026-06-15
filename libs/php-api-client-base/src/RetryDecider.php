@@ -58,7 +58,7 @@ class RetryDecider
                 $code !== null => 'HTTP ' . $code,
                 default => 'unknown',
             },
-            $retries,
+            $retries + 1,
             $this->maxRetries,
         ));
 

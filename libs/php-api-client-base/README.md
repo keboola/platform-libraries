@@ -112,8 +112,7 @@ $client = new MyServiceClient(
 
 Pick the authenticator matching the service's scheme, or implement
 `RequestAuthenticatorInterface` for a service-specific scheme (e.g. azure's
-OAuth). `Content-Type` is set per request on calls with a body; the only Guzzle
-default header is `User-Agent` (set via `ApiClientOptions::$userAgent`).
+OAuth).
 
 ## License
 

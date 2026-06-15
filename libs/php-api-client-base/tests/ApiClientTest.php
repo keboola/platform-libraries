@@ -18,6 +18,7 @@ use Keboola\ApiClientBase\Exception\ClientException;
 use Keboola\ApiClientBase\Tests\Fixtures\DummyModel;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\RequestInterface;
+use RuntimeException;
 
 class ApiClientTest extends TestCase
 {
@@ -168,5 +169,38 @@ class ApiClientTest extends TestCase
         );
         $client->sendRequest(new Request('GET', 'foo'));
         self::assertSame(0, $mock->count());
+    }
+
+    public function testAuthenticatorFailureIsRetriedAndSurfacesAsClientException(): void
+    {
+        // An authenticator that throws (e.g. a projected SA token momentarily unreadable)
+        // must surface as ClientException and flow through retry — not escape as a raw
+        // RuntimeException that bypasses both error handling and retry.
+        $authenticator = new class implements RequestAuthenticatorInterface {
+            public int $calls = 0;
+
+            public function __invoke(RequestInterface $request): RequestInterface
+            {
+                $this->calls++;
+                throw new RuntimeException('SA token file not readable');
+            }
+        };
+
+        $mock = new MockHandler([new Response(200), new Response(200)]);
+        $client = new ApiClient(
+            'https://example.test',
+            $authenticator,
+            new ApiClientOptions(backoffMaxTries: 1, requestHandler: HandlerStack::create($mock)),
+        );
+
+        try {
+            $client->sendRequest(new Request('GET', 'foo'));
+            self::fail('Expected ClientException to be thrown');
+        } catch (ClientException $e) {
+            self::assertStringContainsString('SA token file not readable', $e->getMessage());
+        }
+
+        // initial attempt + one retry — the auth failure went through RetryDecider
+        self::assertSame(2, $authenticator->calls);
     }
 }

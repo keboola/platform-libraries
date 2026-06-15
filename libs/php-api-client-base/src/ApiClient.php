@@ -10,6 +10,8 @@ use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\MessageFormatter;
 use GuzzleHttp\Middleware;
+use GuzzleHttp\Promise\Create;
+use GuzzleHttp\Promise\PromiseInterface;
 use JsonException;
 use Keboola\ApiClientBase\Auth\RequestAuthenticatorInterface;
 use Keboola\ApiClientBase\Exception\ClientException;
@@ -55,7 +57,35 @@ class ApiClient
             )));
         }
 
-        $stack->push(Middleware::mapRequest($authenticator));
+        // Apply auth as a middleware that turns a thrown authenticator error into a rejected
+        // promise (rather than letting it escape the stack synchronously). This way an
+        // authenticator failure — e.g. a projected SA token momentarily unreadable during
+        // rotation — flows through the retry middleware above and the normal error handling
+        // below (surfacing as ClientException), instead of bypassing both.
+        $stack->push(
+            /**
+             * @param callable(RequestInterface, array<string, mixed>): PromiseInterface $handler
+             * @return callable(RequestInterface, array<string, mixed>): PromiseInterface
+             */
+            static function (callable $handler) use ($authenticator): callable {
+                return static function (
+                    RequestInterface $request,
+                    array $options,
+                ) use (
+                    $handler,
+                    $authenticator,
+                ): PromiseInterface {
+                    try {
+                        $request = $authenticator($request);
+                    } catch (Throwable $e) {
+                        return Create::rejectionFor($e);
+                    }
+
+                    return $handler($request, $options);
+                };
+            },
+            'auth',
+        );
 
         $stack->push(Middleware::log(
             $logger,
@@ -123,6 +153,10 @@ class ApiClient
             throw $this->processRequestException($e);
         } catch (GuzzleException $e) {
             throw new ClientException($e->getMessage(), 0, $e);
+        } catch (Throwable $e) {
+            // Non-Guzzle failure bubbling out of the handler stack — e.g. an authenticator
+            // that could not produce credentials (after retries are exhausted).
+            throw new ClientException(trim($e->getMessage()), 0, $e);
         }
     }
 

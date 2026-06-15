@@ -276,7 +276,8 @@ abstract class AbstractTestCase extends TestCase
         self::assertSame('success', $jobData['status']);
         self::assertSame($expectedColumnName, $jobData['operationParams']['name']);
         self::assertArrayNotHasKey('basetype', $jobData['operationParams']);
-        self::assertArrayNotHasKey('definition', $jobData['operationParams']);
+        // The Storage backend now records the resolved native-type definition in the job's
+        // operationParams when a column is added, so we no longer assert its absence.
     }
 
     public function incrementalFlagProvider(): iterable

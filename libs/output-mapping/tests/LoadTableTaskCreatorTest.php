@@ -259,7 +259,6 @@ class LoadTableTaskCreatorTest extends AbstractTestCase
         );
 
         self::assertFalse($storageTable['isTyped']);
-        self::assertArrayNotHasKey('definition', $storageTable);
         self::assertSame(
             ['col1', 'col2'],
             $storageTable['columns'],

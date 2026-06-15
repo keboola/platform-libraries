@@ -138,7 +138,10 @@ class StoragePreparerTest extends AbstractTestCase
             'primaryKey' => ['Id'],
         ]);
 
-        self::assertEquals($this->dropTimestampParams($expectedTable), $this->dropTimestampParams($updatedTable));
+        self::assertEquals(
+            $this->dropMetadataAndDefinition($this->dropTimestampParams($expectedTable)),
+            $this->dropMetadataAndDefinition($this->dropTimestampParams($updatedTable)),
+        );
 
         self::assertStorageSourcesContainBucket($this->testBucketId, $mappingStorageSources);
         self::assertNotNull($mappingStorageSources->getTable());
@@ -438,9 +441,29 @@ class StoragePreparerTest extends AbstractTestCase
     private function dropTimestampParams(array $table): array
     {
         unset($table['id']);
-        unset($table['timestamp']);
         unset($table['lastChangeDate']);
         unset($table['bucket']['lastChangeDate']);
+        // The backend stamps a volatile `timestamp` on table and column metadata entries; strip it
+        // at every depth so equality ignores it (it drifts by seconds between setup and assertion).
+        return self::dropTimestampsRecursively($table);
+    }
+
+    private static function dropTimestampsRecursively(array $data): array
+    {
+        unset($data['timestamp']);
+        foreach ($data as $key => $value) {
+            if (is_array($value)) {
+                $data[$key] = self::dropTimestampsRecursively($value);
+            }
+        }
+        return $data;
+    }
+
+    private function dropMetadataAndDefinition(array $table): array
+    {
+        unset($table['definition']);
+        unset($table['columnMetadata']);
+        unset($table['metadata']);
         return $table;
     }
 

@@ -58,7 +58,7 @@ class KeboolaServiceAccountAuthenticatorTest extends TestCase
         file_put_contents($path, "   \n");
         try {
             /** @phpstan-ignore-next-line argument.type — tempnam returns string, not non-empty-string */
-            $authenticator = new KeboolaServiceAccountAuthenticator($path);
+            $authenticator = new KeboolaServiceAccountAuthenticator($path, retryBaseDelayMicroseconds: 0);
             $this->expectException(RuntimeException::class);
             $this->expectExceptionMessage('is empty');
             $authenticator(new Request('GET', 'https://example.test'));
@@ -150,6 +150,69 @@ class KeboolaServiceAccountAuthenticatorTest extends TestCase
 
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('is empty');
+        try {
+            $authenticator(new Request('GET', 'https://example.test'));
+        } finally {
+            self::assertSame(1, FunctionMocks::readCount());
+            self::assertSame([], FunctionMocks::recordedSleeps());
+        }
+    }
+
+    public function testReadsThroughSymlinkAndPicksUpTargetSwap(): void
+    {
+        $dir = sys_get_temp_dir() . '/sa-token-' . bin2hex(random_bytes(8));
+        mkdir($dir);
+        $targetA = $dir . '/token-a';
+        $targetB = $dir . '/token-b';
+        $link = $dir . '/token';
+        file_put_contents($targetA, "token-a\n");
+        file_put_contents($targetB, "token-b\n");
+        symlink($targetA, $link);
+
+        try {
+            $authenticator = new KeboolaServiceAccountAuthenticator($link);
+            $first = $authenticator(new Request('GET', 'https://example.test'));
+            self::assertSame('Bearer token-a', $first->getHeaderLine('X-Kubernetes-Authorization'));
+
+            // Atomic symlink swap, as kubelet does when rotating the projected token.
+            $tmpLink = $link . '.tmp';
+            symlink($targetB, $tmpLink);
+            rename($tmpLink, $link);
+
+            $second = $authenticator(new Request('GET', 'https://example.test'));
+            self::assertSame('Bearer token-b', $second->getHeaderLine('X-Kubernetes-Authorization'));
+        } finally {
+            @unlink($link);
+            @unlink($link . '.tmp');
+            @unlink($targetA);
+            @unlink($targetB);
+            @rmdir($dir);
+        }
+    }
+
+    public function testRetriesWhenReadKeepsFailingThenSucceeds(): void
+    {
+        // is_readable() shadowed true, so repeated false reads are treated as a
+        // transient rotation blip and retried rather than throwing "not readable".
+        FunctionMocks::enable([false, false, 'the-token'], isReadable: true);
+
+        $authenticator = new KeboolaServiceAccountAuthenticator('/fake/sa/token');
+        $request = $authenticator(new Request('GET', 'https://example.test'));
+
+        self::assertSame('Bearer the-token', $request->getHeaderLine('X-Kubernetes-Authorization'));
+        // iter 1 reads twice (initial false + re-read false), iter 2 reads the token
+        self::assertSame(3, FunctionMocks::readCount());
+        self::assertSame([40_000], FunctionMocks::recordedSleeps());
+    }
+
+    public function testThrowsImmediatelyWhenReadFailsAndPathUnreadable(): void
+    {
+        FunctionMocks::enable([false], isReadable: false);
+
+        $authenticator = new KeboolaServiceAccountAuthenticator('/fake/sa/token');
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('is not readable');
         try {
             $authenticator(new Request('GET', 'https://example.test'));
         } finally {

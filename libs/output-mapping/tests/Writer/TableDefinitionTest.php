@@ -342,7 +342,7 @@ class TableDefinitionTest extends AbstractTestCase
         ]);
         self::assertDataTypeDefinition($tableDetails['columnMetadata']['created'], [
             'type' => Snowflake::TYPE_TIMESTAMP,
-            'length' => '9',
+            'length' => null,
             'nullable' => true,
         ]);
     }
@@ -476,7 +476,7 @@ class TableDefinitionTest extends AbstractTestCase
         ]);
         self::assertDataTypeDefinition($tableDetails['columnMetadata']['created'], [
             'type' => Snowflake::TYPE_TIMESTAMP_TZ,
-            'length' => '9', // timestamp_tz has length 9 apparently
+            'length' => null,
             'nullable' => true,
         ]);
     }
@@ -652,8 +652,14 @@ class TableDefinitionTest extends AbstractTestCase
             return $metadatum['key'] === Common::KBC_METADATA_KEY_LENGTH
                 && $metadatum['provider'] === 'storage';
         }));
-        self::assertCount(1, $lengthMetadata);
-        self::assertSame($expectedType['length'], $lengthMetadata[0]['value']);
+        // Timestamp columns no longer carry length metadata under the current native-types backend,
+        // so a null expected length means "no length metadata present".
+        if ($expectedType['length'] === null) {
+            self::assertCount(0, $lengthMetadata);
+        } else {
+            self::assertCount(1, $lengthMetadata);
+            self::assertSame($expectedType['length'], $lengthMetadata[0]['value']);
+        }
 
         $nullableMetadata = array_values(array_filter($metadata, function ($metadatum) {
             return $metadatum['key'] === Common::KBC_METADATA_KEY_NULLABLE

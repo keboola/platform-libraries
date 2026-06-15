@@ -88,4 +88,73 @@ class KeboolaServiceAccountAuthenticatorTest extends TestCase
         self::assertSame(6, KeboolaServiceAccountAuthenticator::DEFAULT_MAX_READ_ATTEMPTS);
         self::assertSame(40_000, KeboolaServiceAccountAuthenticator::DEFAULT_RETRY_BASE_DELAY_US);
     }
+
+    protected function tearDown(): void
+    {
+        FunctionMocks::reset();
+        parent::tearDown();
+    }
+
+    public function testRecoversWhenFirstReadFailsThenSucceeds(): void
+    {
+        // false => transient unreadable during a symlink swap; is_readable() is
+        // shadowed to true so the re-read path is taken rather than throwing.
+        FunctionMocks::enable([false, 'the-token'], isReadable: true);
+
+        $authenticator = new KeboolaServiceAccountAuthenticator('/fake/sa/token');
+        $request = $authenticator(new Request('GET', 'https://example.test'));
+
+        self::assertSame('Bearer the-token', $request->getHeaderLine('X-Kubernetes-Authorization'));
+        self::assertSame(2, FunctionMocks::readCount());
+        self::assertSame([], FunctionMocks::recordedSleeps());
+    }
+
+    public function testRecoversWhenFirstReadEmptyThenSucceeds(): void
+    {
+        FunctionMocks::enable(['', 'the-token']);
+
+        $authenticator = new KeboolaServiceAccountAuthenticator('/fake/sa/token');
+        $request = $authenticator(new Request('GET', 'https://example.test'));
+
+        self::assertSame('Bearer the-token', $request->getHeaderLine('X-Kubernetes-Authorization'));
+        self::assertSame(2, FunctionMocks::readCount());
+        // exactly one backoff sleep (40 ms base) before the successful retry
+        self::assertSame([40_000], FunctionMocks::recordedSleeps());
+    }
+
+    public function testDefaultScheduleRetriesFiveTimesThenThrows(): void
+    {
+        FunctionMocks::enable(['', '', '', '', '', '']); // 6 reads, all empty
+
+        $authenticator = new KeboolaServiceAccountAuthenticator('/fake/sa/token');
+
+        try {
+            $authenticator(new Request('GET', 'https://example.test'));
+            self::fail('Expected RuntimeException');
+        } catch (RuntimeException $e) {
+            self::assertStringContainsString('is empty', $e->getMessage());
+        }
+
+        self::assertSame(6, FunctionMocks::readCount());
+        self::assertSame(
+            [40_000, 80_000, 160_000, 320_000, 640_000],
+            FunctionMocks::recordedSleeps(),
+        );
+    }
+
+    public function testSingleAttemptThrowsWithoutSleeping(): void
+    {
+        FunctionMocks::enable(['']);
+
+        $authenticator = new KeboolaServiceAccountAuthenticator('/fake/sa/token', maxReadAttempts: 1);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('is empty');
+        try {
+            $authenticator(new Request('GET', 'https://example.test'));
+        } finally {
+            self::assertSame(1, FunctionMocks::readCount());
+            self::assertSame([], FunctionMocks::recordedSleeps());
+        }
+    }
 }

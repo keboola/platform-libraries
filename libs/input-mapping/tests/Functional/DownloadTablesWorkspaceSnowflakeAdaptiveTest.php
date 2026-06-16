@@ -70,10 +70,7 @@ class DownloadTablesWorkspaceSnowflakeAdaptiveTest extends AbstractTestCase
 
         self::assertCount(1, $tablesResult->getInputTableStateList()->jsonSerialize());
         self::assertTrue($this->testHandler->hasInfoThatContains('Using "workspace-snowflake" table input staging.'));
-        self::assertTrue(
-            $this->testHandler->hasInfoThatContains(sprintf('Table "%s" will be copied.', $this->firstTableId)),
-        );
-        self::assertTrue($this->testHandler->hasInfoThatContains('Copying 1 tables to workspace.'));
+        self::assertTrue($this->testHandler->hasInfoThatContains('Loading 1 tables to workspace.'));
         self::assertTrue($this->testHandler->hasInfoThatContains('Processed 1 workspace exports.'));
     }
 
@@ -190,5 +187,72 @@ class DownloadTablesWorkspaceSnowflakeAdaptiveTest extends AbstractTestCase
             'download',
             new ReaderOptions(true),
         );
+    }
+
+    #[NeedsTestTables(2), NeedsEmptyOutputBucket]
+    public function testTablesAdaptiveChangedSince(): void
+    {
+        $clientWrapper = $this->initClient();
+
+        $reader = new Reader(
+            $clientWrapper,
+            $this->testLogger,
+            $this->getWorkspaceStagingFactory(
+                clientWrapper: $clientWrapper,
+                logger: $this->testLogger,
+            ),
+        );
+        // test1 uses adaptive changed_since (resolved client-side to a timestamp); test2 has no filter
+        $configuration = new InputTableOptionsList([
+            [
+                'source' => $this->firstTableId,
+                'destination' => 'test1',
+                'changed_since' => 'adaptive',
+            ],
+            [
+                'source' => $this->secondTableId,
+                'destination' => 'test2',
+            ],
+        ]);
+
+        $tablesState = new InputTableStateList([
+            [
+                'source' => $this->firstTableId,
+                'lastImportDate' => '1989-11-17T21:00:00+0200',
+            ],
+            [
+                'source' => $this->secondTableId,
+                'lastImportDate' => '1989-11-17T21:00:00+0200',
+            ],
+        ]);
+
+        $reader->downloadTables(
+            $configuration,
+            $tablesState,
+            'download',
+            new ReaderOptions(true),
+        );
+
+        $adapter = new Adapter();
+
+        $manifest = $adapter->readFromFile($this->temp->getTmpFolder() . '/download/test1.manifest');
+        self::assertEquals($this->firstTableId, $manifest['id']);
+        self::assertEquals(
+            ['Id', 'Name', 'foo', 'bar'],
+            $manifest['columns'],
+        );
+        // check that the table exists in the workspace
+        $clientWrapper->getTableAndFileStorageClient()->createTableAsyncDirect(
+            $this->emptyOutputBucketId,
+            [
+                'dataWorkspaceId' => $this->workspaceId,
+                'dataTableName' => 'test1',
+                'name' => 'test1',
+            ],
+        );
+
+        self::assertTrue($this->testHandler->hasInfoThatContains('Using "workspace-snowflake" table input staging.'));
+        self::assertTrue($this->testHandler->hasInfoThatContains('Loading 2 tables to workspace.'));
+        self::assertTrue($this->testHandler->hasInfoThatContains('Processed 1 workspace exports.'));
     }
 }

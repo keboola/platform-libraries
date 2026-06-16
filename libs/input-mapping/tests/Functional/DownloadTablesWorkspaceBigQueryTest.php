@@ -70,11 +70,7 @@ class DownloadTablesWorkspaceBigQueryTest extends AbstractTestCase
         }
 
         self::assertTrue($this->testHandler->hasInfoThatContains('Using "workspace-bigquery" table input staging.'));
-        self::assertTrue($this->testHandler->hasInfoThatContains(sprintf(
-            'Table "%s" will be created as view.',
-            $this->firstTableId,
-        )));
-        self::assertTrue($this->testHandler->hasInfoThatContains('Copying 1 tables to workspace.'));
+        self::assertTrue($this->testHandler->hasInfoThatContains('Loading 1 tables to workspace.'));
         self::assertTrue($this->testHandler->hasInfoThatContains('Processed 1 workspace exports.'));
         // test that the clone jobs are merged into a single one
         sleep(2);
@@ -97,6 +93,7 @@ class DownloadTablesWorkspaceBigQueryTest extends AbstractTestCase
         self::assertNotEmpty($jobParams);
         self::assertCount(1, $jobParams['input']);
         self::assertEquals('test1', $jobParams['input'][0]['destination']);
+        self::assertEquals('VIEW', $jobParams['input'][0]['loadType']);
 
         $workspaceCreateJob = array_shift($jobs);
         self::assertArrayHasKey('operationName', $workspaceCreateJob);

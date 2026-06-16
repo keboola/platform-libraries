@@ -6,7 +6,6 @@ namespace Keboola\InputMapping\Table\Strategy;
 
 use InvalidArgumentException;
 use Keboola\InputMapping\Exception\InputOperationException;
-use Keboola\InputMapping\Helper\LoadTypeDecider;
 use Keboola\InputMapping\Helper\ManifestCreator;
 use Keboola\InputMapping\Helper\PathHelper;
 use Keboola\InputMapping\State\InputTableStateList;
@@ -67,151 +66,45 @@ abstract class AbstractWorkspaceStrategy extends AbstractStrategy
     }
 
     /**
-     * Phase 1: Prepare - Analyze tables and create workspace load instructions
-     * Determines how each table from Table Storage should be loaded into Workspace
+     * Plan and submit the workspace table loads as a single async job, returning a queue handle for
+     * later completion with waitForTableLoadCompletion().
+     *
+     * The load type per item (CLONE / VIEW / COPY) is resolved server-side by the workspace
+     * input-mapping-load endpoint, which accepts the keboola/input-mapping Configuration\Table payload
+     * (snake_case) unchanged. Each table's parsed configuration is passed through as-is (including any
+     * explicit load_type), so no client-side load-type decision is made here.
      *
      * @param RewrittenInputTableOptions[] $tables
-     * @return WorkspaceTableLoadInstruction[]
-     */
-    public function prepareTableLoadsToWorkspace(array $tables): array
-    {
-        $instructions = [];
-
-        foreach ($tables as $table) {
-            $loadOptions = $table->getStorageApiLoadOptions($this->tablesState);
-            $loadType = $this->decideTableLoadMethod($table, $loadOptions);
-
-            $instructionLoadOptions = $loadType === WorkspaceLoadType::CLONE ? null : $loadOptions;
-            $instructions[] = new WorkspaceTableLoadInstruction(
-                $loadType,
-                $table,
-                $instructionLoadOptions,
-            );
-        }
-
-        return $instructions;
-    }
-
-    /**
-     * Phase 2: Execute - Submit single async job to load all tables from Table Storage into Workspace
-     * All operations (CLEAN, CLONE, COPY, VIEW) are batched into a single API call
-     *
-     * This method is used by SQL editor API that enqueues workspace loads asynchronously.
-     * Caller does not wait for load completion. Loading is delegated to the workspace
-     * input-mapping-load endpoint, which resolves the load type per item server-side.
-     */
-    public function executeTableLoadsToWorkspace(WorkspaceLoadPlan $plan): WorkspaceLoadQueue
-    {
-        $workspaces = $this->createWorkspaces();
-        $workspaceId = (int) $this->dataStorage->getWorkspaceId();
-
-        // The input-mapping-load endpoint accepts the keboola/input-mapping Configuration\Table payload
-        // (snake_case) unchanged and resolves the load type per item server-side (CLONE > VIEW > COPY).
-        // We therefore hand it each table's parsed configuration as-is instead of pre-deciding the load
-        // type and translating to the SAPI camelCase /load shape.
-        $allInputs = [];
-        $allTables = [];
-        foreach ([...$plan->getCloneInstructions(), ...$plan->getCopyInstructions()] as $instruction) {
-            $allInputs[] = $instruction->table->getStorageApiWorkspaceLoadConfiguration($this->tablesState);
-            $allTables[] = $instruction->table;
-        }
-
-        // If no tables to load and preserve mode, return empty queue
-        if (empty($allInputs) && $plan->preserve) {
-            return new WorkspaceLoadQueue([], static::class, $this->destination);
-        }
-
-        if (!$plan->preserve) {
-            $this->logger->info('Cleaning workspace and loading tables.');
-        }
-        $this->logger->info(sprintf('Loading %s tables to workspace.', count($allInputs)));
-
-        // Single API call with all operations (preserve: 0 = clean + load, preserve: 1 = load only)
-        $jobId = $workspaces->queueInputMappingLoad($workspaceId, [
-            'input' => $allInputs,
-            'preserve' => $plan->preserve ? 1 : 0,
-        ]);
-
-        // Return single job with all tables
-        return new WorkspaceLoadQueue([
-            new WorkspaceLoadJob((string) $jobId, $allTables),
-        ], static::class, $this->destination);
-    }
-
-    /**
-     * Execute only Phase 1 & 2: Prepare and Execute workspace table loading
-     * Returns WorkspaceLoadQueue for later completion with waitForTableLoadCompletion()
-     *
-     * @param RewrittenInputTableOptions[] $tables
-     * @param bool $preserve
-     * @return WorkspaceLoadQueue
      */
     public function prepareAndExecuteTableLoads(array $tables, bool $preserve): WorkspaceLoadQueue
     {
-        // Phase 1: Prepare
-        $instructions = $this->prepareTableLoadsToWorkspace($tables);
-        $plan = new WorkspaceLoadPlan(
-            $instructions,
-            $preserve,
+        $inputs = [];
+        foreach ($tables as $table) {
+            $inputs[] = $table->getStorageApiWorkspaceLoadConfiguration($this->tablesState);
+        }
+
+        // Nothing to load and the workspace is kept as-is: no job needed.
+        if ($inputs === [] && $preserve) {
+            return new WorkspaceLoadQueue([], static::class, $this->destination);
+        }
+
+        if (!$preserve) {
+            $this->logger->info('Cleaning workspace and loading tables.');
+        }
+        $this->logger->info(sprintf('Loading %s tables to workspace.', count($inputs)));
+
+        // preserve: 0 = clean + load, 1 = load only
+        $jobId = $this->createWorkspaces()->queueInputMappingLoad(
+            (int) $this->dataStorage->getWorkspaceId(),
+            [
+                'input' => $inputs,
+                'preserve' => $preserve ? 1 : 0,
+            ],
         );
 
-        // Phase 2: Execute
-        return $this->executeTableLoadsToWorkspace($plan);
-    }
-
-    private function decideTableLoadMethod(RewrittenInputTableOptions $table, array $loadOptions): WorkspaceLoadType
-    {
-        $explicitlyRequestsView = $table->getLoadType() === WorkspaceLoadType::VIEW->value;
-
-        if ($this->getWorkspaceType() === 'bigquery') {
-            // Validate that table can be loaded to this workspace type
-            LoadTypeDecider::checkViableBigQueryLoadMethod(
-                $table->getTableInfo(),
-                $this->getWorkspaceType(),
-            );
-
-            // Honor an explicit load_type=VIEW request, but only after the viability check above has
-            // confirmed the table can be loaded into a BigQuery workspace at all.
-            if ($explicitlyRequestsView) {
-                $this->logger->info(sprintf('Table "%s" will be created as view.', $table->getSource()));
-                return WorkspaceLoadType::VIEW;
-            }
-
-            if (LoadTypeDecider::canUseView(
-                $table->getTableInfo(),
-                $this->getWorkspaceType(),
-                $loadOptions,
-                $this->clientWrapper->getToken()->getProjectId(),
-            )) {
-                $this->logger->info(sprintf('Table "%s" will be created as view.', $table->getSource()));
-                return WorkspaceLoadType::VIEW;
-            }
-            $this->logger->info(sprintf('Table "%s" will be copied.', $table->getSource()));
-            return WorkspaceLoadType::COPY;
-        }
-
-        // Honor an explicit load_type=VIEW request before auto-deciding the load method.
-        if ($explicitlyRequestsView) {
-            $this->logger->info(sprintf('Table "%s" will be created as view.', $table->getSource()));
-            return WorkspaceLoadType::VIEW;
-        }
-
-        if (LoadTypeDecider::canClone($table->getTableInfo(), $this->getWorkspaceType(), $loadOptions)) {
-            $this->logger->info(sprintf('Table "%s" will be cloned.', $table->getSource()));
-            return WorkspaceLoadType::CLONE;
-        }
-
-        if (LoadTypeDecider::canUseView(
-            $table->getTableInfo(),
-            $this->getWorkspaceType(),
-            $loadOptions,
-            $this->clientWrapper->getToken()->getProjectId(),
-        )) {
-            $this->logger->info(sprintf('Table "%s" will be created as view.', $table->getSource()));
-            return WorkspaceLoadType::VIEW;
-        }
-        $this->logger->info(sprintf('Table "%s" will be copied.', $table->getSource()));
-        return WorkspaceLoadType::COPY;
+        return new WorkspaceLoadQueue([
+            new WorkspaceLoadJob((string) $jobId, $tables),
+        ], static::class, $this->destination);
     }
 
     protected function createWorkspaces(): Workspaces

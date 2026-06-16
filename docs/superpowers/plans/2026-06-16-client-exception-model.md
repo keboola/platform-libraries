@@ -4,9 +4,17 @@
 
 **Goal:** Let consumers identify which Keboola service client failed (via per-client exception subclasses) and give the base `ClientException` structured HTTP context, without losing the clean stack trace.
 
-**Architecture:** `Keboola\ApiClientBase\Exception\ClientException` gains `statusCode`/`responseBody` (+ getters). `ApiClient` gains one facade-supplied argument `exceptionFactory` (a `class-string<ClientException>` — default — or a `Closure`); all throw sites route through a private `makeException()` that instantiates the configured class inline (clean trace) or calls the closure (opt-in). Per-client subclasses (`VaultClientException extends ClientException`) are added in each client's own PR, not here.
+**Architecture:** `Keboola\ApiClientBase\Exception\ClientException` gains `statusCode`/`responseBody` (+ getters). `ApiClient` gains one facade-supplied argument `exceptionClass` (a `class-string<ClientException>`, default `ClientException::class`), instantiated inline at each throw site (clean trace). Per-client subclasses (`VaultClientException extends ClientException`) are added in each client's own PR, not here.
 
 **Tech Stack:** PHP 8.2, Guzzle 7, PHPUnit 9, PHPStan level max, keboola/coding-standard. Spec: `docs/superpowers/specs/2026-06-16-client-exception-model-design.md`.
+
+> **Post-implementation note (refined during code review):** Task 2 below was written around a
+> `class-string<ClientException>|Closure $exceptionFactory` routed through a private `makeException()`
+> helper. That was changed during review: a helper/closure that does the `new` itself spoils the
+> stack trace (origin moves into the helper + an extra frame), so the closure was dropped and the
+> argument is a plain `class-string<ClientException> $exceptionClass` instantiated **inline** at each
+> throw site. The Task 2 steps mentioning `makeException`/the closure are superseded by spec §2; the
+> shipped code (PR #522) reflects the inline design.
 
 ---
 

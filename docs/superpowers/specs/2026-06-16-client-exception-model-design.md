@@ -63,7 +63,7 @@ A concrete base class (not a marker interface) is used so every client exception
 enriched context (see §3) for free, and so the base `ApiClient` can instantiate the client's
 type directly via a `class-string` (see §2) without a factory.
 
-### 2. Throw mechanism — `class-string` default, factory opt-in
+### 2. Throw mechanism — `class-string`, instantiated inline
 
 `ApiClient` gains one facade-mandated constructor argument (appended last, so existing positional
 calls are unaffected):
@@ -75,44 +75,47 @@ public function __construct(
     ?ApiClientOptions $options = null,
     ?ErrorMessageResolverInterface $errorMessageResolver = null,
     array $retryableStatusCodes = [],
-    string|Closure $exceptionFactory = ClientException::class,   // class-string<ClientException> | Closure
+    string $exceptionClass = ClientException::class,   // class-string<ClientException>
 ) { ... }
 ```
 
-At every throw site the exception is produced by a single private helper:
+Each throw site instantiates the configured class **inline** (mirroring the original code, which
+threw `new ClientException(...)` directly at four sites and via `processRequestException()` for the
+request-error path — only the literal class changes):
 
 ```php
-private function makeException(
-    string $message,
-    int $code,
-    ?Throwable $previous,
-    ?int $statusCode,
-    ?string $responseBody,
-): ClientException {
-    $f = $this->exceptionFactory;
-    return is_string($f)
-        ? new $f($message, $code, $previous, $statusCode, $responseBody)   // default: new in base lib → clean trace
-        : $f($message, $code, $previous, $statusCode, $responseBody);        // client opted into a factory
-}
+throw new $this->exceptionClass($message, $code, $previous, $statusCode, $responseBody);
 ```
 
-- **Default** (`ClientException::class`) → same thrown type as today, clean trace (origin stays inside `ApiClient`).
-- A facade passes its own `VaultClientException::class` → `catch (VaultClientException)` works, trace stays clean.
-- A client that needs response-aware construction passes a `Closure` and **knowingly accepts the extra trace frame** — it is never the default.
+- **Default** (`ClientException::class`) → same thrown type and trace as today.
+- A facade passes its own `VaultClientException::class` → `catch (VaultClientException)` works.
+- Customization (e.g. response-aware construction, extra fields) is done in the **subclass
+  constructor**, which receives `($message, $code, $previous, $statusCode, $responseBody)`. Because
+  the `new` is inline at the throw site, a custom constructor does **not** add a trace frame.
+
+**No factory, no shared builder.** The exception is deliberately NOT produced by a shared
+`makeException()` helper, a closure, or a static named constructor. All of those do the `new`
+inside themselves, which moves the exception's origin into that method and inserts it as the top
+trace frame.
 
 **Trace rationale (replicated):** PHP captures an exception's trace and `getFile()`/`getLine()` at
-`new`, not at `throw`. A factory/static-named-constructor does the `new` inside itself, so the
-exception's origin becomes the factory's file/line and an extra factory frame lands on top of the
-trace — which corrupts "where did this happen" in logs and breaks error-tracker grouping
-(Sentry/Datadog group by the top frame). Instantiating via `class-string` keeps `new` inside
-`ApiClient` — the same component that throws today (the base lib's own error-handling code),
-never external factory/consumer code. Therefore static named constructors
-(`ClientException::fromResponse(...)`) are also avoided.
+the `new`, not at the `throw`. Replication confirmed: an inline `throw new $cls(...)` — and an
+inline `new` of a subclass *with a custom constructor* — reports the real throw site as the origin,
+whereas a helper/factory method (`$x->make(...)`), a closure, or `ClientException::fromResponse(...)`
+reports the helper's own file/line and inserts the helper as the top trace frame. That corrupts
+"where did this happen" in logs and breaks error-tracker grouping (Sentry/Datadog group by the top
+frame). Hence: instantiate inline only.
+
+A `Closure` factory was considered as an opt-in escape hatch but dropped (YAGNI): the only thing it
+adds over a subclass is *dynamic exception-type selection by status* (e.g. 404 → `NotFoundException`),
+which no client needs today, and it cannot offer a clean trace. It can be re-introduced later if a
+real need appears.
 
 | Approach | `getFile():getLine()` | top trace frame |
 | --- | --- | --- |
-| direct / class-string `new` in ApiClient | real error site | real call chain |
-| factory / static constructor | factory internals | factory frame |
+| inline `new $this->exceptionClass(...)` at the throw site | real throw site | real call chain |
+| inline `new` of a subclass with a custom constructor | real throw site | real call chain |
+| shared helper / closure / static named constructor | the helper's internals | the helper frame |
 
 ### 3. Enrichment — structured HTTP context on the base exception
 
@@ -170,14 +173,14 @@ $this->apiClient = new ApiClient(
     $options,
     errorMessageResolver: new VaultErrorMessageResolver(),
     retryableStatusCodes: [429],
-    exceptionFactory: VaultClientException::class,
+    exceptionClass: VaultClientException::class,
 );
 ```
 
 ## Affected components
 
-- **Base lib** — `Exception/ClientException.php` (enrich), `ApiClient.php` (add `exceptionFactory`
-  arg + `makeException()` helper, route all throw sites through it). New minor version (additive).
+- **Base lib** — `Exception/ClientException.php` (enrich), `ApiClient.php` (add `exceptionClass`
+  arg; instantiate it inline at each throw site). New minor version (additive).
 - **Each service client** — add `Exception/<Service>ClientException.php` and pass its class.
   The three migrated clients (`vault` #514, `sandboxes-service` #515, `git-service` #516) adopt it
   in their open PRs; `sync-actions` and `azure` adopt when migrated.
@@ -192,9 +195,9 @@ adds its subclass → its own minor bump.
 ## Testing
 
 - Base lib: default still throws `ClientException`; a passed `class-string` is instantiated and
-  thrown (assert `instanceof` the subclass); a passed `Closure` is invoked; `getStatusCode()` /
-  `getResponseBody()` populated for HTTP errors and `null` for transport errors; trace origin stays
-  inside `ApiClient` (assert `getFile()` is the ApiClient file, not a factory) for the default path.
+  thrown (assert `instanceof` the subclass); `getStatusCode()` / `getResponseBody()` populated for
+  HTTP errors, for JSON-decode and response-mapping failures (2xx), and `null` for transport errors;
+  the default exception's origin stays inside `ApiClient` (`getFile()`).
 - Each client: a failing request throws the client's `*ClientException` (which is also a `ClientException`).
 
 ## Rejected alternatives
@@ -205,5 +208,7 @@ adds its subclass → its own minor bump.
   all clients are greenfield bare `RuntimeException`s.
 - **Single base exception + service-name data field** — no type-based catch; consumers would have
   to catch one type and branch on a string.
-- **Exception factory as the default mechanism** — corrupts trace/origin (see §2). Kept only as an
-  opt-in per-client escape hatch.
+- **Factory / closure / shared `makeException()` builder** — any method that does the `new`
+  (helper, closure, or static named constructor) moves the exception's origin into itself and adds a
+  trace frame (see §2, replicated). Dropped entirely; the base instantiates the class-string inline.
+  A closure could be re-added later *only* if dynamic exception-type selection by status is needed.

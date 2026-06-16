@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\ApiClientBase\Tests;
 
+use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Psr7\Request;
@@ -15,6 +16,7 @@ use Keboola\ApiClientBase\Auth\NoAuthAuthenticator;
 use Keboola\ApiClientBase\Auth\RequestAuthenticatorInterface;
 use Keboola\ApiClientBase\ErrorMessageResolverInterface;
 use Keboola\ApiClientBase\Exception\ClientException;
+use Keboola\ApiClientBase\Tests\Fixtures\DummyClientException;
 use Keboola\ApiClientBase\Tests\Fixtures\DummyModel;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\RequestInterface;
@@ -202,5 +204,121 @@ class ApiClientTest extends TestCase
 
         // initial attempt + one retry — the auth failure went through RetryDecider
         self::assertSame(2, $authenticator->calls);
+    }
+
+    public function testThrowsConfiguredExceptionClass(): void
+    {
+        $mock = new MockHandler([new Response(400, [], '{"error":"bad"}')]);
+        $client = new ApiClient(
+            'https://example.test',
+            new NoAuthAuthenticator(),
+            new ApiClientOptions(requestHandler: HandlerStack::create($mock)),
+            exceptionClass: DummyClientException::class,
+        );
+
+        try {
+            $client->sendRequest(new Request('GET', 'foo'));
+            self::fail('Expected exception');
+        } catch (ClientException $e) {
+            self::assertInstanceOf(DummyClientException::class, $e);
+        }
+    }
+
+    public function testPopulatesStatusCodeAndResponseBodyOnHttpError(): void
+    {
+        $mock = new MockHandler([new Response(409, [], '{"error":"conflict"}')]);
+        $client = new ApiClient(
+            'https://example.test',
+            new NoAuthAuthenticator(),
+            new ApiClientOptions(requestHandler: HandlerStack::create($mock)),
+        );
+
+        try {
+            $client->sendRequest(new Request('GET', 'foo'));
+            self::fail('Expected exception');
+        } catch (ClientException $e) {
+            self::assertSame(409, $e->getStatusCode());
+            self::assertSame('{"error":"conflict"}', $e->getResponseBody());
+        }
+    }
+
+    public function testStatusCodeNullOnTransportError(): void
+    {
+        $mock = new MockHandler([
+            new ConnectException('Connection refused', new Request('GET', 'foo')),
+        ]);
+        $client = new ApiClient(
+            'https://example.test',
+            new NoAuthAuthenticator(),
+            new ApiClientOptions(backoffMaxTries: 0, requestHandler: HandlerStack::create($mock)),
+        );
+
+        try {
+            $client->sendRequest(new Request('GET', 'foo'));
+            self::fail('Expected exception');
+        } catch (ClientException $e) {
+            self::assertNull($e->getStatusCode());
+            self::assertNull($e->getResponseBody());
+        }
+    }
+
+    public function testDefaultExceptionOriginatesInApiClient(): void
+    {
+        // Clean-trace guard: the exception is constructed inline at the throw site, so its
+        // origin stays in ApiClient rather than in a factory/builder frame.
+        $mock = new MockHandler([new Response(400, [], 'bad')]);
+        $client = new ApiClient(
+            'https://example.test',
+            new NoAuthAuthenticator(),
+            new ApiClientOptions(requestHandler: HandlerStack::create($mock)),
+        );
+
+        try {
+            $client->sendRequest(new Request('GET', 'foo'));
+            self::fail('Expected exception');
+        } catch (ClientException $e) {
+            self::assertStringContainsString('ApiClient.php', $e->getFile());
+        }
+    }
+
+    public function testPopulatesContextOnInvalidJsonResponse(): void
+    {
+        $mock = new MockHandler([new Response(200, [], 'not json')]);
+        $client = new ApiClient(
+            'https://example.test',
+            new NoAuthAuthenticator(),
+            new ApiClientOptions(requestHandler: HandlerStack::create($mock)),
+        );
+
+        try {
+            $client->sendRequestAndMapResponse(new Request('GET', 'foo'), DummyModel::class);
+            self::fail('Expected exception');
+        } catch (ClientException $e) {
+            self::assertStringContainsString('Response is not valid JSON', $e->getMessage());
+            self::assertSame(200, $e->getStatusCode());
+            self::assertSame('not json', $e->getResponseBody());
+        }
+    }
+
+    public function testPopulatesContextOnMappingFailure(): void
+    {
+        // DummyModel::fromResponseData asserts is_string($data['name']); passing an integer
+        // triggers AssertionError (a Throwable), exercising the mapping-failure branch.
+        $body = '{"name":123}';
+        $mock = new MockHandler([new Response(200, [], $body)]);
+        $client = new ApiClient(
+            'https://example.test',
+            new NoAuthAuthenticator(),
+            new ApiClientOptions(requestHandler: HandlerStack::create($mock)),
+        );
+
+        try {
+            $client->sendRequestAndMapResponse(new Request('GET', 'foo'), DummyModel::class);
+            self::fail('Expected exception');
+        } catch (ClientException $e) {
+            self::assertStringContainsString('Failed to map response data', $e->getMessage());
+            self::assertSame(200, $e->getStatusCode());
+            self::assertSame($body, $e->getResponseBody());
+        }
     }
 }

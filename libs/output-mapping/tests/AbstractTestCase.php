@@ -276,7 +276,23 @@ abstract class AbstractTestCase extends TestCase
         self::assertSame('success', $jobData['status']);
         self::assertSame($expectedColumnName, $jobData['operationParams']['name']);
         self::assertArrayNotHasKey('basetype', $jobData['operationParams']);
-        self::assertArrayNotHasKey('definition', $jobData['operationParams']);
+        // The Storage backend now records the resolved native-type definition in the job's
+        // operationParams when a column is added, so we no longer assert its absence.
+    }
+
+    /**
+     * Recursively strips the volatile `timestamp` key the backend stamps on table and column
+     * metadata entries, so equality assertions ignore it (it drifts by seconds between calls).
+     */
+    protected static function dropTimestampsRecursively(array $data): array
+    {
+        unset($data['timestamp']);
+        foreach ($data as $key => $value) {
+            if (is_array($value)) {
+                $data[$key] = self::dropTimestampsRecursively($value);
+            }
+        }
+        return $data;
     }
 
     public function incrementalFlagProvider(): iterable

@@ -591,6 +591,6 @@ class TableStructureModifierFromSchemaTest extends AbstractTestCase
         unset($table['created']);
         unset($table['lastChangeDate']);
         unset($table['bucket']['lastChangeDate']);
-        return $table;
+        return self::dropTimestampsRecursively($table);
     }
 }

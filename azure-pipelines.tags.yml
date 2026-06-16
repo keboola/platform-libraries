@@ -30,6 +30,10 @@ resources:
       type: github
       endpoint: keboola
       name: keboola/git-service-php-api-client
+    - repository: php-api-client-base
+      type: github
+      endpoint: keboola
+      name: keboola/php-api-client-base
     - repository: input-mapping
       type: github
       endpoint: keboola
@@ -143,6 +147,14 @@ jobs:
       targetRepo: git-service-php-api-client
       libraryPath: libs/git-service-api-client
       tagPrefix: git-service-api-client/
+
+  - template: azure-pipelines/jobs/split-library.yml
+    parameters:
+      condition: startsWith(variables['Build.SourceBranch'], 'refs/tags/php-api-client-base/')
+      sourceRepo: platform-libraries
+      targetRepo: php-api-client-base
+      libraryPath: libs/php-api-client-base
+      tagPrefix: php-api-client-base/
 
   - template: azure-pipelines/jobs/split-library.yml
     parameters:

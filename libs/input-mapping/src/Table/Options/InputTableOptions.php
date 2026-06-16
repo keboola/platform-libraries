@@ -192,6 +192,12 @@ class InputTableOptions
      */
     public function getStorageApiWorkspaceLoadConfiguration(InputTableStateList $states): array
     {
+        if (!empty($this->definition['days'])) {
+            throw new InvalidInputException(
+                'Days option is not supported on workspace, use changed_since instead.',
+            );
+        }
+
         $definition = $this->definition;
         if (($definition['changed_since'] ?? '') === self::ADAPTIVE_INPUT_MAPPING_VALUE) {
             $unixTimestamp = $this->resolveAdaptiveChangedSince($states);

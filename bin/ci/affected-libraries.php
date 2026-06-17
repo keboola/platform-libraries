@@ -8,7 +8,6 @@ use Keboola\PlatformLibrariesCi\AffectedLibrariesResolver;
 require __DIR__ . '/vendor/autoload.php';
 
 $repoRoot = dirname(__DIR__, 2);
-$base = $argv[1] ?? '';
 
 /**
  * @return array<string, array{name: string, devDeps: list<string>}>
@@ -53,28 +52,94 @@ function gitChangedPaths(string $repoRoot, string $base): array
     return array_values(array_filter(array_map('trim', $output), static fn (string $l): bool => $l !== ''));
 }
 
-try {
+function gitCommitExists(string $repoRoot, string $ref): bool
+{
+    $cmd = sprintf(
+        'git -C %s cat-file -e %s 2>/dev/null',
+        escapeshellarg($repoRoot),
+        escapeshellarg($ref . '^{commit}'),
+    );
+    exec($cmd, $output, $exitCode);
+    return $exitCode === 0;
+}
+
+function gitSingleLine(string $repoRoot, string $subcommand): ?string
+{
+    $cmd = sprintf('git -C %s %s 2>/dev/null', escapeshellarg($repoRoot), $subcommand);
+    exec($cmd, $output, $exitCode);
+    if ($exitCode !== 0 || $output === []) {
+        return null;
+    }
+    $line = trim($output[0]);
+    return $line !== '' ? $line : null;
+}
+
+/**
+ * Decide which commit to diff HEAD against.
+ *
+ * Normally this is github.event.before (the ref tip before the push). After a
+ * force-push/rebase — or on a branch's first push — that SHA is zero or points to
+ * an orphaned commit absent from the checkout, so before..HEAD cannot be computed.
+ * Fall back to the merge-base with main to capture the branch's real changes instead
+ * of retesting the whole monorepo. Returns null when no usable base exists (e.g. on
+ * main itself), letting the caller test everything.
+ */
+function resolveBase(string $repoRoot, string $before): ?string
+{
+    $isZeroOrEmpty = $before === '' || preg_match('/^0{40}$/', $before) === 1;
+    if (!$isZeroOrEmpty && gitCommitExists($repoRoot, $before)) {
+        return $before;
+    }
+
+    $mainRef = null;
+    foreach (['origin/main', 'main'] as $ref) {
+        if (gitCommitExists($repoRoot, $ref)) {
+            $mainRef = $ref;
+            break;
+        }
+    }
+    if ($mainRef === null) {
+        return null;
+    }
+
+    $mergeBase = gitSingleLine($repoRoot, sprintf('merge-base %s HEAD', escapeshellarg($mainRef)));
+    $head = gitSingleLine($repoRoot, 'rev-parse HEAD');
+    if ($mergeBase === null || $mergeBase === $head) {
+        return null;
+    }
+    return $mergeBase;
+}
+
+/**
+ * @return list<string> affected library dirs (sorted), or all dirs on fallback
+ */
+function resolveAffected(string $repoRoot, string $before): array
+{
     $packages = loadPackages($repoRoot);
     $resolver = new AffectedLibrariesResolver($packages);
 
-    // Zero SHA / empty base / first commit -> test everything.
-    if ($base === '' || preg_match('/^0{40}$/', $base) === 1) {
-        echo json_encode($resolver->allDirs()), "\n";
-        exit(0);
+    try {
+        $base = resolveBase($repoRoot, $before);
+        if ($base === null) {
+            // No usable base (push to main itself, no main ancestry, ...) -> test everything.
+            return $resolver->allDirs();
+        }
+
+        $changed = gitChangedPaths($repoRoot, $base);
+
+        if ($resolver->isFallbackToAll($changed)) {
+            return $resolver->allDirs();
+        }
+
+        return $resolver->resolve($changed);
+    } catch (Throwable $e) {
+        fwrite(STDERR, 'affected-libraries failed, falling back to all: ' . $e->getMessage() . "\n");
+        return $resolver->allDirs();
     }
+}
 
-    $changed = gitChangedPaths($repoRoot, $base);
-
-    if ($resolver->isFallbackToAll($changed)) {
-        echo json_encode($resolver->allDirs()), "\n";
-        exit(0);
-    }
-
-    echo json_encode($resolver->resolve($changed)), "\n";
-    exit(0);
-} catch (Throwable $e) {
-    fwrite(STDERR, 'affected-libraries failed, falling back to all: ' . $e->getMessage() . "\n");
-    $packages = loadPackages($repoRoot);
-    echo json_encode((new AffectedLibrariesResolver($packages))->allDirs()), "\n";
+// Run only when executed directly as a CLI script (not when included by tests).
+if (isset($argv[0]) && realpath($argv[0]) === realpath(__FILE__)) {
+    echo json_encode(resolveAffected($repoRoot, $argv[1] ?? '')), "\n";
     exit(0);
 }

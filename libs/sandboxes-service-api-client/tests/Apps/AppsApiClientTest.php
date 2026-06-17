@@ -9,10 +9,10 @@ use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\Psr7\Response;
 use InvalidArgumentException;
 use Keboola\ApiClientBase\ApiClient;
-use Keboola\ApiClientBase\Exception\ClientException;
 use Keboola\ApiClientBase\Json;
 use Keboola\SandboxesServiceApiClient\Apps\App;
 use Keboola\SandboxesServiceApiClient\Apps\AppsApiClient;
+use Keboola\SandboxesServiceApiClient\Exception\SandboxesServiceClientException;
 use Keboola\SandboxesServiceApiClient\Tests\ReflectionPropertyAccessTestCase;
 use Monolog\Handler\TestHandler;
 use Monolog\Logger;
@@ -508,8 +508,8 @@ class AppsApiClientTest extends TestCase
 
         try {
             $client->getApp('app-id');
-            self::fail('Expected ClientException');
-        } catch (ClientException $e) {
+            self::fail('Expected SandboxesServiceClientException');
+        } catch (SandboxesServiceClientException $e) {
             self::assertSame('BadRequest: This is not good', $e->getMessage());
             self::assertCount(1, $store->requests);
         }
@@ -536,8 +536,8 @@ class AppsApiClientTest extends TestCase
 
         try {
             $client->getApp('app-id');
-            self::fail('Expected ClientException');
-        } catch (ClientException $e) {
+            self::fail('Expected SandboxesServiceClientException');
+        } catch (SandboxesServiceClientException $e) {
             // trim() should remove trailing space → 'BadRequest: This is not good' not 'BadRequest: This is not good '
             self::assertSame('BadRequest: This is not good', $e->getMessage());
         }
@@ -564,8 +564,8 @@ class AppsApiClientTest extends TestCase
 
         try {
             $client->getApp('app-id');
-            self::fail('Expected ClientException');
-        } catch (ClientException $e) {
+            self::fail('Expected SandboxesServiceClientException');
+        } catch (SandboxesServiceClientException $e) {
             // Should NOT be in "error: message" format since 'error' key is missing
             self::assertStringNotContainsString(': This is not good', $e->getMessage());
         }
@@ -592,8 +592,8 @@ class AppsApiClientTest extends TestCase
 
         try {
             $client->getApp('app-id');
-            self::fail('Expected ClientException');
-        } catch (ClientException $e) {
+            self::fail('Expected SandboxesServiceClientException');
+        } catch (SandboxesServiceClientException $e) {
             // Should NOT produce "BadRequest: " format since 'message' key is missing
             self::assertStringNotContainsString('BadRequest: ', $e->getMessage());
         }
@@ -620,8 +620,8 @@ class AppsApiClientTest extends TestCase
 
         try {
             $client->getApp('app-id');
-            self::fail('Expected ClientException');
-        } catch (ClientException $e) {
+            self::fail('Expected SandboxesServiceClientException');
+        } catch (SandboxesServiceClientException $e) {
             // Empty error field → should NOT produce ": This is not good" format
             self::assertStringNotContainsString(': This is not good', $e->getMessage());
         }
@@ -648,8 +648,8 @@ class AppsApiClientTest extends TestCase
 
         try {
             $client->getApp('app-id');
-            self::fail('Expected ClientException');
-        } catch (ClientException $e) {
+            self::fail('Expected SandboxesServiceClientException');
+        } catch (SandboxesServiceClientException $e) {
             // Empty message field → should NOT produce "BadRequest: " format
             self::assertStringNotContainsString('BadRequest: ', $e->getMessage());
         }

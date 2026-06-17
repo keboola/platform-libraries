@@ -11,6 +11,7 @@ use Keboola\ApiClientBase\ApiClient;
 use Keboola\ApiClientBase\ApiClientOptions;
 use Keboola\ApiClientBase\Auth\StorageApiTokenAuthenticator;
 use Keboola\ApiClientBase\Json;
+use Keboola\SandboxesServiceApiClient\Exception\SandboxesServiceClientException;
 use Keboola\SandboxesServiceApiClient\SandboxesErrorMessageResolver;
 use Psr\Log\LoggerInterface;
 
@@ -47,6 +48,7 @@ class AppsApiClient
                 logger: $logger,
             ),
             errorMessageResolver: new SandboxesErrorMessageResolver(),
+            exceptionClass: SandboxesServiceClientException::class,
         );
     }
 

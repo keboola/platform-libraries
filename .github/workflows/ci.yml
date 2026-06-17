@@ -208,7 +208,7 @@ jobs:
         # Libraries listed in ALLOW_FAIL (space-separated) may fail without blocking the
         # barrier — their failing tests are tolerated. Any other failure still fails the run.
         env:
-          ALLOW_FAIL: input-mapping
+          ALLOW_FAIL: ""
         run: |
           RESULTS='${{ toJSON(needs) }}'
           echo "$RESULTS"

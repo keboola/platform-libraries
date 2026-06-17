@@ -6,8 +6,8 @@ namespace Keboola\VaultApiClient\Tests\Variables;
 
 use GuzzleHttp\Psr7\Response;
 use InvalidArgumentException;
-use Keboola\ApiClientBase\Exception\ClientException;
 use Keboola\ApiClientBase\Json;
+use Keboola\VaultApiClient\Exception\VaultClientException;
 use Keboola\VaultApiClient\Tests\ApiClientTestTrait;
 use Keboola\VaultApiClient\Variables\Model\ListOptions;
 use Keboola\VaultApiClient\Variables\Model\Variable;
@@ -265,7 +265,7 @@ class VariablesApiClientTest extends TestCase
             requestHandler: $requestHandler(...),
         );
 
-        $this->expectException(ClientException::class);
+        $this->expectException(VaultClientException::class);
         $this->expectExceptionMessage('400: Missing data');
 
         $client->deleteVariable('hash');
@@ -290,7 +290,7 @@ class VariablesApiClientTest extends TestCase
             requestHandler: $requestHandler(...),
         );
 
-        $this->expectException(ClientException::class);
+        $this->expectException(VaultClientException::class);
         $this->expectExceptionMessage(
             'Client error: `DELETE https://vault.keboola.com/variables/hash` resulted in a `400 Bad Request` response',
         );
@@ -339,8 +339,8 @@ class VariablesApiClientTest extends TestCase
 
         try {
             $client->deleteVariable('hash');
-            self::fail('Expected ClientException to be thrown');
-        } catch (ClientException $e) {
+            self::fail('Expected VaultClientException to be thrown');
+        } catch (VaultClientException $e) {
             self::assertSame('400 :  some error', $e->getMessage());
         }
     }

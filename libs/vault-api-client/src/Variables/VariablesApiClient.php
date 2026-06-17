@@ -11,6 +11,7 @@ use Keboola\ApiClientBase\ApiClient;
 use Keboola\ApiClientBase\ApiClientOptions;
 use Keboola\ApiClientBase\Auth\StorageApiTokenAuthenticator;
 use Keboola\ApiClientBase\Json;
+use Keboola\VaultApiClient\Exception\VaultClientException;
 use Keboola\VaultApiClient\Variables\Model\ListOptions;
 use Keboola\VaultApiClient\Variables\Model\Variable;
 use Keboola\VaultApiClient\VaultErrorMessageResolver;
@@ -52,6 +53,7 @@ class VariablesApiClient
                 logger: $logger,
             ),
             errorMessageResolver: new VaultErrorMessageResolver(),
+            exceptionClass: VaultClientException::class,
         );
     }
 

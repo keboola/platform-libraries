@@ -211,9 +211,7 @@ abstract class AbstractTestCase extends TestCase
                 )),
             }];
             if ($stagingType === StagingType::WorkspaceSnowflake) {
-                // Create a Snowflake SERVICE user with key-pair auth. The default login type creates a
-                // TYPE=LEGACY_SERVICE user, which Snowflake no longer accepts on some accounts.
-                $createOptions['loginType'] = WorkspaceLoginType::SNOWFLAKE_SERVICE_KEYPAIR->value;
+                $createOptions['loginType'] = WorkspaceLoginType::NONE;
             }
             $workspace = $workspaces->createWorkspace($createOptions, true);
             $this->workspaceId = (string) $workspace['id'];

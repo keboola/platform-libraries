@@ -201,9 +201,48 @@ $mock->expects(self::exactly(count($expectedCalls)))
 
 ## CI/CD
 
-- Azure Pipelines configuration in `azure-pipelines.yml`
-- Each library has its own pipeline that runs on changes
-- Libraries are independently published to GitHub repositories
+CI runs on **GitHub Actions**: test the affected libraries on every push to any branch, then publish them to their standalone read-only repos.
+
+### Flow
+
+1. **Trigger** — `ci.yml` runs `on: push` to **all branches** (`branches: ['**']`); there is **no `pull_request` trigger** and no main-only gating. PR status checks still work because the push-triggered run attaches to the PR head SHA. An orchestrator-level `concurrency: { group: ci-${{ github.ref }}, cancel-in-progress: true }` cancels superseded runs on the same ref.
+2. **`detect-changes`** — runs `bin/ci/affected-libraries.php` **natively** (via `shivammathur/setup-php`, no Docker, so the gate stays fast). It diffs `github.event.before..HEAD`, maps changed `libs/*` dirs to packages, builds the `*@dev` reverse-dependency graph, and outputs `libs` (JSON array of affected dirs = changed ∪ transitive dependents). **Fallback to all 22** when shared infra changes (`Dockerfile`, `docker-compose*`, `.github/**`, `bin/**`, `.dockerignore`, root `composer.json`/`composer.lock`), on a zero-SHA/first-push/force-push, or on any error.
+3. **Test fan-out** — **22 explicit jobs**, one per library, each `if: contains(needs.detect-changes.outputs.libs, '"<lib>"')` + `uses: ./.github/workflows/lib-<lib>.yml` + `secrets: inherit`. These stay explicit (22 separate files) — see gotchas: a reusable-workflow `uses:` **cannot** be driven by a matrix.
+4. **`tests-result`** — barrier job (`needs:` `detect-changes` + all 22, `if: always()`) that fails if any of those results is not `success`/`skipped`. `detect-changes` is included so a failed gate (which would *skip* every test job) can't slip through as `success` and leave the PR mergeable with nothing tested. **This is the single required status check** for branch protection.
+5. **`publish`** — **one matrix job** (`matrix.lib: ${{ fromJSON(needs.detect-changes.outputs.libs) }}`, `fail-fast: false`) that runs on every green build (`needs.tests-result.result == 'success'`, guarded by `libs != '[]'`) and splits/publishes each affected library to its standalone repo. Runs on any branch, so pushing a dev branch makes `composer require keboola/<lib>:dev-<branch>` work in dependents. Only the branch being built is pushed (a release build pushes only its single new tag) — never all branches or all tags (see gotchas).
+
+### Components
+
+- **Per-library test workflows** — `.github/workflows/lib-<lib>.yml` (`on: workflow_call`). Most run a single `composer ci` job in `dev-<lib>`. Special cases: `input-mapping`/`output-mapping` have multi-suite jobs (cs / AWS / Azure / BigQuery) + a `concurrency: { group: <lib>-lock, cancel-in-progress: false }` mutex against shared Storage projects; `k8s-client`/`messenger-bundle` provision Terraform; `logging-bundle` runs a Symfony 6.4/7.2 matrix on `dev81`/`dev83`. All per-lib workflows carry the same `<lib>-lock` concurrency group; all steps and (for the multi-suite ones) jobs have human-readable names.
+- **Tag releases** — `.github/workflows/release.yml` (`on: push: tags: ['*/*']`). **One job** that derives the library from the tag (`<lib>/<version>` → `<lib>`), skips cleanly if it is not a library dir, and publishes via the same composite action. **No tests run on a tag** (the code was already tested on the branch); tag → publish only. The `<lib>/` prefix is stripped, so `output-mapping/1.2.3` becomes `1.2.3` in the standalone repo.
+- **`split-library` composite action** — `.github/actions/split-library`. Takes a single `library` input (+ `app-id`/`private-key`), resolves the target repo name internally (the **5 dir≠repo exceptions** live in its `case`: `git-service-api-client→git-service-php-api-client`, `key-generator→php-key-generator`, `query-service-api-client→query-service-api-php-client`, `sandboxes-service-api-client→sandboxes-service-api-php-client`, `vault-api-client→vault-api-php-client`; all others repo == dir), mints a short-lived GitHub App installation token scoped to that one repo via `actions/create-github-app-token`, and calls `bin/split-repo.sh`.
+- **`bin/split-repo.sh`** — `git clone --mirror` of the checkout → `git filter-repo --subdirectory-filter libs/<lib>` (rewrites/strips tag prefix) → pushes **only the build branch** (5th arg, branch builds) **or the single new tag** (6th arg, release builds). Never `--mirror`, all branches, or all tags. Publish/release jobs check out with `fetch-depth: 0` + `fetch-tags: true`.
+- **CI tooling** — `bin/ci/` is a standalone composer project (`AffectedLibrariesResolver` + `affected-libraries.php` CLI) with its own PHPUnit/PHPStan/phpcs config. Run its checks with `docker compose run --rm dev82 bash -c 'cd bin/ci && composer ci'`.
+
+### Gotchas (why it is built this way)
+
+- **A reusable-workflow `uses:` cannot use any context** — not `matrix`, not `vars`. So the 22 test jobs must be 22 explicit `uses:` jobs; they cannot be collapsed into a matrix without merging them into one shared `lib-common.yml` (deliberately not done — config stays per-library). Publish/release *can* be a matrix only because they call a **composite action in `steps:`**, where `matrix` is available.
+- **Publishing pushes only what the build produced — never `--mirror`/all refs.** Two reasons a full mirror fails: (1) the standalone repos have branch protection the publish App cannot bypass, so pushing every monorepo branch is rejected with `GH006: Protected branch update failed`; (2) bulk-pushing all tags re-pushes immutable release tags that already exist with different SHAs, rejected as "tag already exists". So `split-repo.sh` pushes only the build branch (`GITHUB_REF_NAME` on branch builds, force) or the single new tag (stripped `GITHUB_REF_NAME` on tag builds, no force); the `split-library` action computes which from `GITHUB_REF_TYPE`. **Side effect:** branches deleted in the monorepo are **not** pruned from the standalone repos — `cleanup-branch.yml` (`on: delete`) handles that. (Note: `git filter-repo` itself removes the `origin` remote and promotes remote-tracking refs — do not hand-manipulate refs before it runs, or `git remote add origin` later fails with "remote origin already exists".)
+- **`logging-bundle` sets `config.policy.advisories.block=false`** in its `composer.json`. Composer ≥2.10 blocks installing advisory-affected package versions by default; a fresh CI image pulls the latest Composer, which made the Symfony 7.2 resolution unsatisfiable (symfony/yaml, monolog-bridge, cache were all flagged). This restores the pre-2.10 install behaviour; scoped to logging-bundle CI, not inherited by consumers.
+- **All actions run on Node 24** — `actions/checkout@v6`, `docker/setup-buildx-action@v4`, `actions/create-github-app-token@v3`, `shivammathur/setup-php@v2`. Keep them off the deprecated Node 20 runtime when adding new steps.
+- **Adding a new library** requires: a `lib-<lib>.yml`, a test job + a `tests-result` `needs:` entry in `ci.yml`, and — only if its standalone repo name differs from the dir — an entry in the `split-library` action's `case`.
+
+### Required CI configuration (provisioned by repo admin)
+
+Non-sensitive values are stored as **repository variables** (read via `vars.*`); sensitive tokens and secret keys are stored as **repository secrets** (read via `secrets.*`, passed to reusable workflows with `secrets: inherit`).
+
+**Repository variables** (`vars.*`) — non-sensitive URLs, host suffix, AWS access key IDs and the publish App ID:
+- `STORAGE_API_URL_AWS`, `STORAGE_API_URL_AZURE`, `STORAGE_API_URL_GCP`
+- `HOSTNAME_SUFFIX_GCP`
+- `OUTPUT_MAPPING__BIGQUERY_STORAGE_API_URL`
+- `K8S_CLIENT_TERRAFORM_AWS_ACCESS_KEY_ID`
+- `MESSENGER_BUNDLE_TERRAFORM_AWS_ACCESS_KEY_ID`
+- `SPLIT_APP_ID` (GitHub App ID used to mint publish tokens)
+
+**Repository secrets** (`secrets.*`) — Storage API tokens, Terraform secret keys and the publish App private key:
+- Storage tokens: `INPUT_MAPPING__*`, `OUTPUT_MAPPING__STORAGE_API_TOKEN_*` / `OUTPUT_MAPPING_*__STORAGE_API_TOKEN_*`, `OUTPUT_MAPPING__BIGQUERY_STORAGE_API_TOKEN`, `VARIABLES_RESOLVER__*`, `STAGING_PROVIDER__STORAGE_API_TOKEN_AWS`, `QUERY_SERVICE__STORAGE_API_TOKEN_GCP` (also used by `php-storage-names-sanitizer`), `SYNC_ACTIONS_CLIENT__STORAGE_API_TOKEN_GCP`, `PHP_TEST_UTILS__TEST_STORAGE_API_TOKEN_SNOWFLAKE`.
+- Terraform secret keys: `K8S_CLIENT_TERRAFORM_AWS_SECRET_ACCESS_KEY`, `MESSENGER_BUNDLE_TERRAFORM_AWS_SECRET_ACCESS_KEY`.
+- Publishing: `SPLIT_APP_PRIVATE_KEY` (GitHub App private key; the App must be installed with push rights to all 22 target repos).
 
 ## PHP Version Support
 

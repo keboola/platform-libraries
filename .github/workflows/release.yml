@@ -1,0 +1,32 @@
+name: Release
+on:
+  push:
+    tags: ['*/*']
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+      - name: Resolve library from tag
+        id: lib
+        run: |
+          TAG="${GITHUB_REF#refs/tags/}"
+          LIB="${TAG%%/*}"
+          if [ ! -d "libs/${LIB}" ]; then
+            echo "::notice::Tag '${TAG}' does not map to a library directory; skipping release."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          fi
+          echo "library=${LIB}" >> "$GITHUB_OUTPUT"
+      - uses: ./.github/actions/split-library
+        if: steps.lib.outputs.skip != 'true'
+        with:
+          library: ${{ steps.lib.outputs.library }}
+          app-id: ${{ vars.SPLIT_APP_ID }}
+          private-key: ${{ secrets.SPLIT_APP_PRIVATE_KEY }}

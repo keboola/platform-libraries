@@ -1,0 +1,83 @@
+name: lib-messenger-bundle
+on:
+  workflow_call: {}
+
+concurrency:
+  group: messenger-bundle-lock
+  cancel-in-progress: false
+
+jobs:
+  aws:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      AWS_ACCESS_KEY_ID: ${{ vars.MESSENGER_BUNDLE_TERRAFORM_AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.MESSENGER_BUNDLE_TERRAFORM_AWS_SECRET_ACCESS_KEY }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+      - name: Build image
+        run: docker compose build dev-messenger-bundle
+      - name: Install Terraform
+        run: ./libs/messenger-bundle/provisioning/ci/pipelines-scripts/terraform-install.sh
+      - name: Initialize Terraform
+        run: ./libs/messenger-bundle/provisioning/ci/pipelines-scripts/terraform-init.sh
+      - name: Provision test environment
+        run: ./libs/messenger-bundle/provisioning/ci/update-env.sh -v -e .env -a aws
+      - name: Run tests
+        run: docker compose run --rm dev-messenger-bundle bash -c 'composer install && composer ci'
+      - name: Show logs on failure
+        if: failure()
+        run: docker compose logs
+
+  azure:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      AWS_ACCESS_KEY_ID: ${{ vars.MESSENGER_BUNDLE_TERRAFORM_AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.MESSENGER_BUNDLE_TERRAFORM_AWS_SECRET_ACCESS_KEY }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+      - name: Build image
+        run: docker compose build dev-messenger-bundle
+      - name: Install Terraform
+        run: ./libs/messenger-bundle/provisioning/ci/pipelines-scripts/terraform-install.sh
+      - name: Initialize Terraform
+        run: ./libs/messenger-bundle/provisioning/ci/pipelines-scripts/terraform-init.sh
+      - name: Provision test environment
+        run: ./libs/messenger-bundle/provisioning/ci/update-env.sh -v -e .env -a azure
+      - name: Run tests
+        run: docker compose run --rm dev-messenger-bundle bash -c 'composer install && composer ci'
+      - name: Show logs on failure
+        if: failure()
+        run: docker compose logs
+
+  gcp:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      AWS_ACCESS_KEY_ID: ${{ vars.MESSENGER_BUNDLE_TERRAFORM_AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.MESSENGER_BUNDLE_TERRAFORM_AWS_SECRET_ACCESS_KEY }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+      - name: Build image
+        run: docker compose build dev-messenger-bundle
+      - name: Install Terraform
+        run: ./libs/messenger-bundle/provisioning/ci/pipelines-scripts/terraform-install.sh
+      - name: Initialize Terraform
+        run: ./libs/messenger-bundle/provisioning/ci/pipelines-scripts/terraform-init.sh
+      - name: Provision test environment
+        run: ./libs/messenger-bundle/provisioning/ci/update-env.sh -v -e .env -a gcp
+      - name: Run tests
+        run: docker compose run --rm dev-messenger-bundle bash -c 'composer install && composer ci'
+      - name: Show logs on failure
+        if: failure()
+        run: docker compose logs

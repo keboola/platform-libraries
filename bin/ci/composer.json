@@ -1,0 +1,46 @@
+{
+    "name": "keboola/platform-libraries-ci",
+    "description": "Internal CI tooling for the platform-libraries monorepo",
+    "license": "MIT",
+    "type": "project",
+    "config": {
+        "lock": false,
+        "sort-packages": true,
+        "allow-plugins": {
+            "dealerdirect/phpcodesniffer-composer-installer": true
+        }
+    },
+    "require": {
+        "php": ">=8.2",
+        "ext-json": "*"
+    },
+    "require-dev": {
+        "keboola/coding-standard": ">=15.0",
+        "phpstan/phpstan": "^1.10",
+        "phpunit/phpunit": "^10.5"
+    },
+    "autoload": {
+        "psr-4": {
+            "Keboola\\PlatformLibrariesCi\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Keboola\\PlatformLibrariesCi\\Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "phpcs": "phpcs -n --extensions=php src tests affected-libraries.php",
+        "phpcbf": "phpcbf -n --extensions=php src tests affected-libraries.php",
+        "phpstan": "phpstan analyse --no-progress -c phpstan.neon",
+        "tests": "phpunit",
+        "check": [
+            "@phpcs",
+            "@phpstan"
+        ],
+        "ci": [
+            "@check",
+            "@tests"
+        ]
+    }
+}

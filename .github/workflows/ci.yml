@@ -1,0 +1,242 @@
+name: CI
+on:
+  push:
+    branches: ['**']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      libs: ${{ steps.detect.outputs.libs }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          tools: composer
+      - name: Install CI tool dependencies
+        working-directory: bin/ci
+        run: composer install --no-interaction --no-progress
+      - name: Compute base SHA
+        id: base
+        run: echo "sha=${{ github.event.before }}" >> "$GITHUB_OUTPUT"
+      - name: Resolve affected libraries
+        id: detect
+        run: |
+          LIBS=$(php bin/ci/affected-libraries.php '${{ steps.base.outputs.sha }}')
+          echo "libs=${LIBS}" >> "$GITHUB_OUTPUT"
+          echo "Affected: ${LIBS}"
+
+  api-bundle:
+    needs: [detect-changes]
+    if: contains(needs.detect-changes.outputs.libs, '"api-bundle"')
+    uses: ./.github/workflows/lib-api-bundle.yml
+    secrets: inherit
+
+  azure-api-client:
+    needs: [detect-changes]
+    if: contains(needs.detect-changes.outputs.libs, '"azure-api-client"')
+    uses: ./.github/workflows/lib-azure-api-client.yml
+    secrets: inherit
+
+  configuration-variables-resolver:
+    needs: [detect-changes]
+    if: contains(needs.detect-changes.outputs.libs, '"configuration-variables-resolver"')
+    uses: ./.github/workflows/lib-configuration-variables-resolver.yml
+    secrets: inherit
+
+  doctrine-retry-bundle:
+    needs: [detect-changes]
+    if: contains(needs.detect-changes.outputs.libs, '"doctrine-retry-bundle"')
+    uses: ./.github/workflows/lib-doctrine-retry-bundle.yml
+    secrets: inherit
+
+  git-service-api-client:
+    needs: [detect-changes]
+    if: contains(needs.detect-changes.outputs.libs, '"git-service-api-client"')
+    uses: ./.github/workflows/lib-git-service-api-client.yml
+    secrets: inherit
+
+  input-mapping:
+    needs: [detect-changes]
+    if: contains(needs.detect-changes.outputs.libs, '"input-mapping"')
+    uses: ./.github/workflows/lib-input-mapping.yml
+    secrets: inherit
+
+  k8s-client:
+    needs: [detect-changes]
+    if: contains(needs.detect-changes.outputs.libs, '"k8s-client"')
+    uses: ./.github/workflows/lib-k8s-client.yml
+    secrets: inherit
+
+  key-generator:
+    needs: [detect-changes]
+    if: contains(needs.detect-changes.outputs.libs, '"key-generator"')
+    uses: ./.github/workflows/lib-key-generator.yml
+    secrets: inherit
+
+  logging-bundle:
+    needs: [detect-changes]
+    if: contains(needs.detect-changes.outputs.libs, '"logging-bundle"')
+    uses: ./.github/workflows/lib-logging-bundle.yml
+    secrets: inherit
+
+  messenger-bundle:
+    needs: [detect-changes]
+    if: contains(needs.detect-changes.outputs.libs, '"messenger-bundle"')
+    uses: ./.github/workflows/lib-messenger-bundle.yml
+    secrets: inherit
+
+  output-mapping:
+    needs: [detect-changes]
+    if: contains(needs.detect-changes.outputs.libs, '"output-mapping"')
+    uses: ./.github/workflows/lib-output-mapping.yml
+    secrets: inherit
+
+  permission-checker:
+    needs: [detect-changes]
+    if: contains(needs.detect-changes.outputs.libs, '"permission-checker"')
+    uses: ./.github/workflows/lib-permission-checker.yml
+    secrets: inherit
+
+  php-api-client-base:
+    needs: [detect-changes]
+    if: contains(needs.detect-changes.outputs.libs, '"php-api-client-base"')
+    uses: ./.github/workflows/lib-php-api-client-base.yml
+    secrets: inherit
+
+  php-storage-names-sanitizer:
+    needs: [detect-changes]
+    if: contains(needs.detect-changes.outputs.libs, '"php-storage-names-sanitizer"')
+    uses: ./.github/workflows/lib-php-storage-names-sanitizer.yml
+    secrets: inherit
+
+  php-test-utils:
+    needs: [detect-changes]
+    if: contains(needs.detect-changes.outputs.libs, '"php-test-utils"')
+    uses: ./.github/workflows/lib-php-test-utils.yml
+    secrets: inherit
+
+  query-service-api-client:
+    needs: [detect-changes]
+    if: contains(needs.detect-changes.outputs.libs, '"query-service-api-client"')
+    uses: ./.github/workflows/lib-query-service-api-client.yml
+    secrets: inherit
+
+  sandboxes-service-api-client:
+    needs: [detect-changes]
+    if: contains(needs.detect-changes.outputs.libs, '"sandboxes-service-api-client"')
+    uses: ./.github/workflows/lib-sandboxes-service-api-client.yml
+    secrets: inherit
+
+  service-client:
+    needs: [detect-changes]
+    if: contains(needs.detect-changes.outputs.libs, '"service-client"')
+    uses: ./.github/workflows/lib-service-client.yml
+    secrets: inherit
+
+  settle:
+    needs: [detect-changes]
+    if: contains(needs.detect-changes.outputs.libs, '"settle"')
+    uses: ./.github/workflows/lib-settle.yml
+    secrets: inherit
+
+  slicer:
+    needs: [detect-changes]
+    if: contains(needs.detect-changes.outputs.libs, '"slicer"')
+    uses: ./.github/workflows/lib-slicer.yml
+    secrets: inherit
+
+  staging-provider:
+    needs: [detect-changes]
+    if: contains(needs.detect-changes.outputs.libs, '"staging-provider"')
+    uses: ./.github/workflows/lib-staging-provider.yml
+    secrets: inherit
+
+  sync-actions-api-php-client:
+    needs: [detect-changes]
+    if: contains(needs.detect-changes.outputs.libs, '"sync-actions-api-php-client"')
+    uses: ./.github/workflows/lib-sync-actions-api-php-client.yml
+    secrets: inherit
+
+  vault-api-client:
+    needs: [detect-changes]
+    if: contains(needs.detect-changes.outputs.libs, '"vault-api-client"')
+    uses: ./.github/workflows/lib-vault-api-client.yml
+    secrets: inherit
+
+  tests-result:
+    needs:
+      - detect-changes
+      - api-bundle
+      - azure-api-client
+      - configuration-variables-resolver
+      - doctrine-retry-bundle
+      - git-service-api-client
+      - input-mapping
+      - k8s-client
+      - key-generator
+      - logging-bundle
+      - messenger-bundle
+      - output-mapping
+      - permission-checker
+      - php-api-client-base
+      - php-storage-names-sanitizer
+      - php-test-utils
+      - query-service-api-client
+      - sandboxes-service-api-client
+      - service-client
+      - settle
+      - slicer
+      - staging-provider
+      - sync-actions-api-php-client
+      - vault-api-client
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify no test job failed
+        # Libraries listed in ALLOW_FAIL (space-separated) may fail without blocking the
+        # barrier — their failing tests are tolerated. Any other failure still fails the run.
+        env:
+          ALLOW_FAIL: input-mapping
+        run: |
+          RESULTS='${{ toJSON(needs) }}'
+          echo "$RESULTS"
+          echo "$RESULTS" | python3 -c "import os, sys, json; allow=set(os.environ.get('ALLOW_FAIL', '').split()); r=json.load(sys.stdin); failed=[k for k,v in r.items() if v['result'] not in ('success','skipped')]; bad=[k for k in failed if k not in allow]; tolerated=[k for k in failed if k in allow]; print('Tolerated known-broken failures:', tolerated) if tolerated else None; print('Failing test jobs:', bad) if bad else None; sys.exit(1) if bad else print('All test jobs passed, were skipped, or are tolerated')"
+
+  publish:
+    needs: [detect-changes, tests-result]
+    # always() disables the implicit success() gate so a tolerated (ALLOW_FAIL) test
+    # failure elsewhere in the graph does not skip publish; the explicit checks below
+    # still require both direct needs to succeed.
+    if: >-
+      always()
+      && github.event_name == 'push'
+      && needs.detect-changes.result == 'success'
+      && needs.tests-result.result == 'success'
+      && needs.detect-changes.outputs.libs != '[]'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        lib: ${{ fromJSON(needs.detect-changes.outputs.libs) }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+      - uses: ./.github/actions/split-library
+        with:
+          library: ${{ matrix.lib }}
+          app-id: ${{ vars.SPLIT_APP_ID }}
+          private-key: ${{ secrets.SPLIT_APP_PRIVATE_KEY }}

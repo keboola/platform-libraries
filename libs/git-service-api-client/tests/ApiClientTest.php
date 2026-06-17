@@ -11,7 +11,7 @@ use GuzzleHttp\Psr7\Response;
 use Keboola\ApiClientBase\ApiClient;
 use Keboola\ApiClientBase\ApiClientOptions;
 use Keboola\ApiClientBase\Auth\KeboolaServiceAccountAuthenticator;
-use Keboola\ApiClientBase\Exception\ClientException;
+use Keboola\GitServiceApiClient\Exception\GitServiceClientException;
 use Keboola\GitServiceApiClient\GitServiceApiClient;
 use Keboola\GitServiceApiClient\Model\Repository;
 use PHPUnit\Framework\TestCase;
@@ -152,7 +152,7 @@ class ApiClientTest extends TestCase
             requestHandler: $stack,
         );
 
-        $this->expectException(ClientException::class);
+        $this->expectException(GitServiceClientException::class);
         $this->expectExceptionMessage('repository.notFound: repo missing');
         $this->expectExceptionCode(404);
         $client->deleteRepository('app-1');
@@ -169,7 +169,7 @@ class ApiClientTest extends TestCase
             requestHandler: $stack,
         );
 
-        $this->expectException(ClientException::class);
+        $this->expectException(GitServiceClientException::class);
         $this->expectExceptionCode(400);
         $client->deleteRepository('app-1');
     }
@@ -207,7 +207,7 @@ class ApiClientTest extends TestCase
             requestHandler: $stack,
         );
 
-        $this->expectException(ClientException::class);
+        $this->expectException(GitServiceClientException::class);
         $client->getRepository('app-1');
     }
 }

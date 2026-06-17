@@ -12,6 +12,7 @@ use Keboola\ApiClientBase\ApiClientOptions;
 use Keboola\ApiClientBase\Auth\KeboolaServiceAccountAuthenticator;
 use Keboola\ApiClientBase\Auth\ManageApiTokenAuthenticator;
 use Keboola\ApiClientBase\Json;
+use Keboola\GitServiceApiClient\Exception\GitServiceClientException;
 use Keboola\GitServiceApiClient\Model\CreatedCredential;
 use Keboola\GitServiceApiClient\Model\Credential;
 use Keboola\GitServiceApiClient\Model\CredentialListWrapper;
@@ -60,6 +61,7 @@ class GitServiceApiClient
                 logger: $logger,
             ),
             errorMessageResolver: new GitServiceErrorMessageResolver(),
+            exceptionClass: GitServiceClientException::class,
         );
     }
 

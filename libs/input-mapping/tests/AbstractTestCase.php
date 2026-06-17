@@ -16,6 +16,7 @@ use Keboola\StagingProvider\Staging\StagingType;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Options\ListFilesOptions;
+use Keboola\StorageApi\WorkspaceLoginType;
 use Keboola\StorageApi\Workspaces;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Keboola\StorageApiBranch\Factory\ClientOptions;
@@ -201,14 +202,20 @@ abstract class AbstractTestCase extends TestCase
     ): StrategyFactory {
         if (!$this->workspaceId) {
             $workspaces = new Workspaces($clientWrapper->getBranchClient());
-            $workspace = $workspaces->createWorkspace(['backend' => match ($stagingType) {
+            $createOptions = ['backend' => match ($stagingType) {
                 StagingType::WorkspaceSnowflake => 'snowflake',
                 StagingType::WorkspaceBigquery => 'bigquery',
                 default => throw new InvalidArgumentException(sprintf(
                     'Unknown staging %s',
                     $stagingType->value,
                 )),
-            }], true);
+            }];
+            if ($stagingType === StagingType::WorkspaceSnowflake) {
+                // Create a Snowflake SERVICE user with key-pair auth. The default login type creates a
+                // TYPE=LEGACY_SERVICE user, which Snowflake no longer accepts on some accounts.
+                $createOptions['loginType'] = WorkspaceLoginType::SNOWFLAKE_SERVICE_KEYPAIR->value;
+            }
+            $workspace = $workspaces->createWorkspace($createOptions, true);
             $this->workspaceId = (string) $workspace['id'];
             $this->workspaceCredentials = $workspace['connection'];
             $this->workspaceClient = $workspaces;

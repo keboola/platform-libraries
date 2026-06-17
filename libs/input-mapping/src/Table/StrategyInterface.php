@@ -6,6 +6,7 @@ namespace Keboola\InputMapping\Table;
 
 use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Options\RewrittenInputTableOptions;
+use Keboola\InputMapping\Table\Strategy\TableLoadQueueInterface;
 use Keboola\StagingProvider\Staging\File\FileFormat;
 use Keboola\StagingProvider\Staging\File\FileStagingInterface;
 use Keboola\StagingProvider\Staging\StagingInterface;
@@ -24,7 +25,15 @@ interface StrategyInterface
         FileFormat $format,
     );
 
-    public function downloadTable(RewrittenInputTableOptions $table): array;
+    /**
+     * Phase 1 (start): plan the loads and submit the Storage jobs, return a handle for later completion
+     *
+     * @param RewrittenInputTableOptions[] $tables
+     */
+    public function prepareAndExecuteTableLoads(array $tables, bool $preserve): TableLoadQueueInterface;
 
-    public function handleExports(array $exports, bool $preserve): array;
+    /**
+     * Phase 2 (finish): await the jobs, materialize data/manifests and build the Result
+     */
+    public function waitForTableLoadCompletion(TableLoadQueueInterface $queue): Result;
 }

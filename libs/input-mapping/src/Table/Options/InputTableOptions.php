@@ -195,9 +195,9 @@ class InputTableOptions
         return $exportOptions;
     }
 
-    public function isUseView(): bool
+    public function getLoadType(): ?string
     {
-        return (bool) $this->definition['use_view'];
+        return isset($this->definition['load_type']) ? (string) $this->definition['load_type'] : null;
     }
 
     public function keepInternalTimestampColumn(): bool

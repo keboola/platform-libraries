@@ -6,8 +6,9 @@ namespace Keboola\InputMapping\Tests\Table\Strategy;
 
 use InvalidArgumentException;
 use Keboola\InputMapping\State\InputTableStateList;
-use Keboola\InputMapping\Table\Options\RewrittenInputTableOptions;
 use Keboola\InputMapping\Table\Strategy\AbstractFileStrategy;
+use Keboola\InputMapping\Table\Strategy\TableExportQueue;
+use Keboola\InputMapping\Table\Strategy\TableLoadQueueInterface;
 use Keboola\StagingProvider\Staging\File\FileFormat;
 use Keboola\StagingProvider\Staging\File\FileStagingInterface;
 use Keboola\StagingProvider\Staging\StagingInterface;
@@ -31,14 +32,13 @@ class AbstractFileStrategyTest extends TestCase
             'destination',
             FileFormat::Json,
         ) extends AbstractFileStrategy {
-            public function downloadTable(RewrittenInputTableOptions $table): array
+            public function prepareAndExecuteTableLoads(array $tables, bool $preserve): TableLoadQueueInterface
             {
-                return [];
+                return new TableExportQueue([], static::class, $this->destination);
             }
 
-            public function handleExports(array $exports, bool $preserve): array
+            protected function materializeTableLoads(TableLoadQueueInterface $queue, array $jobResults): void
             {
-                return [];
             }
         };
     }

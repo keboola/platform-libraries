@@ -12,7 +12,10 @@ use Keboola\InputMapping\Staging\StrategyFactory;
 use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Options\InputTableOptionsList;
 use Keboola\InputMapping\Table\Options\ReaderOptions;
+use Keboola\InputMapping\Table\Result;
 use Keboola\InputMapping\Table\Strategy\AbstractWorkspaceStrategy;
+use Keboola\InputMapping\Table\Strategy\Snowflake;
+use Keboola\InputMapping\Table\Strategy\TableExportQueue;
 use Keboola\InputMapping\Table\Strategy\WorkspaceLoadQueue;
 use Keboola\InputMapping\Tests\Needs\NeedsDevBranch;
 use Keboola\InputMapping\Tests\Needs\TestSatisfyer;
@@ -53,31 +56,6 @@ class ReaderTest extends AbstractTestCase
             $clientWrapper,
             $logger ?: new NullLogger(),
             $format,
-        );
-    }
-
-    public function testParentId(): void
-    {
-        $clientWrapper = $this->initClient();
-        $clientWrapper->getTableAndFileStorageClient()->setRunId('123456789');
-        self::assertEquals(
-            '123456789',
-            Reader::getParentRunId((string) $clientWrapper->getTableAndFileStorageClient()->getRunId()),
-        );
-        $clientWrapper->getTableAndFileStorageClient()->setRunId('123456789.98765432');
-        self::assertEquals(
-            '123456789',
-            Reader::getParentRunId((string) $clientWrapper->getTableAndFileStorageClient()->getRunId()),
-        );
-        $clientWrapper->getTableAndFileStorageClient()->setRunId('123456789.98765432.4563456');
-        self::assertEquals(
-            '123456789.98765432',
-            Reader::getParentRunId((string) $clientWrapper->getTableAndFileStorageClient()->getRunId()),
-        );
-        $clientWrapper->getTableAndFileStorageClient()->setRunId(null);
-        self::assertEquals(
-            '',
-            Reader::getParentRunId((string) $clientWrapper->getTableAndFileStorageClient()->getRunId()),
         );
     }
 
@@ -189,7 +167,7 @@ class ReaderTest extends AbstractTestCase
         self::assertArrayHasKey('lastImportDate', $data[0]);
     }
 
-    public function testPrepareAndExecuteTableLoadsWithNonWorkspaceStrategy(): void
+    public function testPrepareAndExecuteTableLoadsWithLocalStrategyReturnsEmptyQueue(): void
     {
         $clientWrapper = $this->initClient();
         $reader = new Reader(
@@ -198,18 +176,15 @@ class ReaderTest extends AbstractTestCase
             $this->getStagingFactory($clientWrapper, StagingType::Local),
         );
 
-        $configuration = new InputTableOptionsList([]);
-        $state = new InputTableStateList([]);
-
-        $this->expectException(InputOperationException::class);
-        $this->expectExceptionMessage('prepareAndExecuteTableLoads() can only be used with workspace strategies');
-
-        $reader->prepareAndExecuteTableLoads(
-            $configuration,
-            $state,
+        $queue = $reader->prepareAndExecuteTableLoads(
+            new InputTableOptionsList([]),
+            new InputTableStateList([]),
             'destination',
             new ReaderOptions(true),
         );
+
+        self::assertInstanceOf(TableExportQueue::class, $queue);
+        self::assertSame([], $queue->getJobIds());
     }
 
     /**
@@ -224,7 +199,7 @@ class ReaderTest extends AbstractTestCase
         $clientWrapper->method('getClientOptionsReadOnly')
             ->willReturn($this->createMock(ClientOptions::class));
 
-        $expectedQueue = new WorkspaceLoadQueue([]);
+        $expectedQueue = new WorkspaceLoadQueue([], AbstractWorkspaceStrategy::class, 'destination');
 
         $workspaceStrategy = $this->createMock(AbstractWorkspaceStrategy::class);
         $workspaceStrategy
@@ -261,5 +236,64 @@ class ReaderTest extends AbstractTestCase
     {
         yield 'with preserve enabled' => [true];
         yield 'with preserve disabled' => [false];
+    }
+
+    public function testWaitForTableLoadCompletionDelegatesToMatchingStrategy(): void
+    {
+        $expectedResult = new Result();
+        $queue = new WorkspaceLoadQueue([], AbstractWorkspaceStrategy::class, 'destination');
+
+        $workspaceStrategy = $this->createMock(AbstractWorkspaceStrategy::class);
+        $workspaceStrategy
+            ->expects(self::once())
+            ->method('waitForTableLoadCompletion')
+            ->with($queue)
+            ->willReturn($expectedResult);
+
+        $strategyFactory = $this->createMock(StrategyFactory::class);
+        $strategyFactory
+            ->expects(self::once())
+            ->method('getTableInputStrategy')
+            ->willReturn($workspaceStrategy);
+
+        $reader = new Reader(
+            $this->createMock(ClientWrapper::class),
+            $this->testLogger,
+            $strategyFactory,
+        );
+
+        self::assertSame($expectedResult, $reader->waitForTableLoadCompletion($queue));
+    }
+
+    public function testWaitForTableLoadCompletionThrowsOnStrategyMismatch(): void
+    {
+        // Queue was stamped by Snowflake, but the current staging provides a different strategy
+        $queue = new WorkspaceLoadQueue([], Snowflake::class, 'destination');
+
+        $currentStrategy = $this->createMock(AbstractWorkspaceStrategy::class);
+        $currentStrategy
+            ->expects(self::never())
+            ->method('waitForTableLoadCompletion');
+
+        $strategyFactory = $this->createMock(StrategyFactory::class);
+        $strategyFactory
+            ->expects(self::once())
+            ->method('getTableInputStrategy')
+            ->willReturn($currentStrategy);
+
+        $reader = new Reader(
+            $this->createMock(ClientWrapper::class),
+            $this->testLogger,
+            $strategyFactory,
+        );
+
+        $this->expectException(InputOperationException::class);
+        $this->expectExceptionMessage(sprintf(
+            'Cannot complete table loads: the queue was created by "%s" but the current staging provides "%s".',
+            Snowflake::class,
+            $currentStrategy::class,
+        ));
+
+        $reader->waitForTableLoadCompletion($queue);
     }
 }

@@ -7,6 +7,7 @@ namespace Keboola\InputMapping\Tests\Table\Strategy;
 use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Options\RewrittenInputTableOptions;
 use Keboola\InputMapping\Table\Strategy\BigQuery;
+use Keboola\InputMapping\Table\Strategy\WorkspaceLoadType;
 use Keboola\InputMapping\Tests\AbstractTestCase;
 use Keboola\InputMapping\Tests\Needs\NeedsStorageBackend;
 use Keboola\InputMapping\Tests\Needs\NeedsTestTables;
@@ -19,7 +20,7 @@ use Psr\Log\NullLogger;
 class BigQueryTest extends AbstractTestCase
 {
     #[NeedsTestTables]
-    public function testBigQueryDownloadTableAsView(): void
+    public function testBigQueryPrepareTableLoadAsView(): void
     {
         $strategy = new BigQuery(
             $this->clientWrapper,
@@ -30,7 +31,7 @@ class BigQueryTest extends AbstractTestCase
             'test',
             FileFormat::Json,
         );
-        $result = $strategy->downloadTable(new RewrittenInputTableOptions(
+        $tableOptions = new RewrittenInputTableOptions(
             [
                 'source' => $this->firstTableId,
                 'destination' => 'my-table',
@@ -38,32 +39,18 @@ class BigQueryTest extends AbstractTestCase
             $this->firstTableId,
             (int) $this->clientWrapper->getDefaultBranch()->id,
             $this->clientWrapper->getBasicClient()->getTable($this->firstTableId),
-        ));
-
-        self::assertEquals(
-            [
-                'table' => [
-                    new RewrittenInputTableOptions(
-                        [
-                            'source' => $this->firstTableId,
-                            'destination' => 'my-table',
-                        ],
-                        $this->firstTableId,
-                        (int) $this->clientWrapper->getDefaultBranch()->id,
-                        $this->clientWrapper->getBasicClient()->getTable($this->firstTableId),
-                    ),
-                    [
-                        'overwrite' => false,
-                    ],
-                ],
-                'type' => 'VIEW',
-            ],
-            $result,
         );
+
+        $instructions = $strategy->prepareTableLoadsToWorkspace([$tableOptions]);
+
+        self::assertCount(1, $instructions);
+        self::assertSame(WorkspaceLoadType::VIEW, $instructions[0]->loadType);
+        self::assertSame($tableOptions, $instructions[0]->table);
+        self::assertSame(['overwrite' => false], $instructions[0]->loadOptions);
     }
 
     #[NeedsTestTables]
-    public function testBigQueryDownloadTableAliasUsesCopy(): void
+    public function testBigQueryPrepareTableLoadAliasUsesCopy(): void
     {
         $strategy = new BigQuery(
             $this->clientWrapper,
@@ -82,7 +69,7 @@ class BigQueryTest extends AbstractTestCase
         );
 
         // Alias tables in current project use COPY instead of VIEW
-        $result = $strategy->downloadTable(new RewrittenInputTableOptions(
+        $tableOptions = new RewrittenInputTableOptions(
             [
                 'source' => $aliasId,
                 'destination' => 'my-table',
@@ -90,28 +77,14 @@ class BigQueryTest extends AbstractTestCase
             $aliasId,
             (int) $this->clientWrapper->getDefaultBranch()->id,
             $this->clientWrapper->getBasicClient()->getTable($aliasId),
-        ));
-
-        self::assertEquals(
-            [
-                'table' => [
-                    new RewrittenInputTableOptions(
-                        [
-                            'source' => $aliasId,
-                            'destination' => 'my-table',
-                        ],
-                        $aliasId,
-                        (int) $this->clientWrapper->getDefaultBranch()->id,
-                        $this->clientWrapper->getBasicClient()->getTable($aliasId),
-                    ),
-                    [
-                        'overwrite' => false,
-                    ],
-                ],
-                'type' => 'COPY',
-            ],
-            $result,
         );
+
+        $instructions = $strategy->prepareTableLoadsToWorkspace([$tableOptions]);
+
+        self::assertCount(1, $instructions);
+        self::assertSame(WorkspaceLoadType::COPY, $instructions[0]->loadType);
+        self::assertSame($tableOptions, $instructions[0]->table);
+        self::assertSame(['overwrite' => false], $instructions[0]->loadOptions);
     }
 
     public function testGetWorkspaceType(): void

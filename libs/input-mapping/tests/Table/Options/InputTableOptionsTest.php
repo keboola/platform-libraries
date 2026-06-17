@@ -51,7 +51,6 @@ class InputTableOptionsTest extends TestCase
                 'where_operator' => 'eq',
                 'column_types' => [],
                 'overwrite' => false,
-                'use_view' => false,
                 'keep_internal_timestamp_column' => true,
             ],
         ];
@@ -72,7 +71,6 @@ class InputTableOptionsTest extends TestCase
                     ['source' => 'b'],
                 ],
                 'overwrite' => false,
-                'use_view' => false,
                 'keep_internal_timestamp_column' => true,
             ],
         ];
@@ -106,7 +104,6 @@ class InputTableOptionsTest extends TestCase
                     ],
                 ],
                 'overwrite' => false,
-                'use_view' => false,
                 'keep_internal_timestamp_column' => true,
             ],
         ];
@@ -316,14 +313,31 @@ class InputTableOptionsTest extends TestCase
         $definition->getStorageApiLoadOptions(new InputTableStateList([]));
     }
 
-    public function testIsUseView(): void
+    public function testGetLoadTypeReturnsNullWhenNotSet(): void
+    {
+        $definition = new InputTableOptions(['source' => 'test']);
+
+        self::assertNull($definition->getLoadType());
+    }
+
+    public function testGetLoadTypeReturnsConfiguredValue(): void
+    {
+        $definition = new InputTableOptions([
+            'source' => 'test',
+            'load_type' => 'VIEW',
+        ]);
+
+        self::assertSame('VIEW', $definition->getLoadType());
+    }
+
+    public function testLegacyUseViewIsNormalizedToLoadTypeView(): void
     {
         $definition = new InputTableOptions([
             'source' => 'test',
             'use_view' => true,
         ]);
 
-        self::assertTrue($definition->isUseView());
+        self::assertSame('VIEW', $definition->getLoadType());
     }
 
     public function testKeepTimestampColumn(): void

@@ -4,38 +4,41 @@ declare(strict_types=1);
 
 namespace Keboola\InputMapping\Table\Strategy;
 
+use Keboola\InputMapping\Exception\InputOperationException;
 use Keboola\InputMapping\Exception\InvalidInputException;
 use Keboola\InputMapping\Helper\PathHelper;
-use Keboola\InputMapping\Table\Options\RewrittenInputTableOptions;
 use Keboola\StorageApi\Options\GetFileOptions;
 
 class S3 extends AbstractFileStrategy
 {
-    public function downloadTable(RewrittenInputTableOptions $table): array
+    public function prepareAndExecuteTableLoads(array $tables, bool $preserve): TableLoadQueueInterface
     {
-        $exportOptions = $table->getStorageApiExportOptions($this->tablesState);
-        $exportOptions['gzip'] = true;
-        $jobId = $this->clientWrapper->getTableAndFileStorageClient()->queueTableExport(
-            $table->getSource(),
-            $exportOptions,
-        );
-        return ['jobId' => $jobId, 'table' => $table];
+        $this->logger->info('Processing ' . count($tables) . ' S3 table exports.');
+        $tablesByJobId = [];
+        foreach ($tables as $table) {
+            $exportOptions = $table->getStorageApiExportOptions($this->tablesState);
+            $exportOptions['gzip'] = true;
+            $jobId = $this->clientWrapper->getTableAndFileStorageClient()->queueTableExport(
+                $table->getSource(),
+                $exportOptions,
+            );
+            $tablesByJobId[$jobId] = $table;
+        }
+        return new TableExportQueue($tablesByJobId, static::class, $this->destination);
     }
 
-    public function handleExports(array $exports, bool $preserve): array
+    protected function materializeTableLoads(TableLoadQueueInterface $queue, array $jobResults): void
     {
-        $this->logger->info('Processing ' . count($exports) . ' S3 table exports.');
-        $jobIds = array_map(function ($export) {
-            return $export['jobId'];
-        }, $exports);
-        $jobResults = $this->clientWrapper->getBranchClient()->handleAsyncTasks($jobIds);
+        if (!$queue instanceof TableExportQueue) {
+            throw new InputOperationException('S3 strategy requires TableExportQueue.');
+        }
+
         $keyedResults = [];
         foreach ($jobResults as $result) {
             $keyedResults[$result['id']] = $result;
         }
 
-        foreach ($exports as $export) {
-            $table = $export['table'];
+        foreach ($queue->tablesByJobId as $jobId => $table) {
             $manifestPath = PathHelper::getManifestPath(
                 $this->metadataStorage,
                 $this->destination,
@@ -43,10 +46,9 @@ class S3 extends AbstractFileStrategy
             );
             $tableInfo = $table->getTableInfo();
             $fileInfo = $this->clientWrapper->getTableAndFileStorageClient()->getFile(
-                $keyedResults[$export['jobId']]['results']['file']['id'],
+                $keyedResults[$jobId]['results']['file']['id'],
                 (new GetFileOptions())->setFederationToken(true),
-            )
-            ;
+            );
             $tableInfo['s3'] = $this->getS3Info($fileInfo);
             $this->manifestCreator->writeTableManifest(
                 $tableInfo,
@@ -55,7 +57,6 @@ class S3 extends AbstractFileStrategy
                 $this->format,
             );
         }
-        return $jobResults;
     }
 
     /**

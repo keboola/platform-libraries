@@ -4,39 +4,41 @@ declare(strict_types=1);
 
 namespace Keboola\InputMapping\Table\Strategy;
 
+use Keboola\InputMapping\Exception\InputOperationException;
 use Keboola\InputMapping\Exception\InvalidInputException;
 use Keboola\InputMapping\Helper\PathHelper;
-use Keboola\InputMapping\Table\Options\RewrittenInputTableOptions;
 use Keboola\StorageApi\Options\GetFileOptions;
 
 class ABS extends AbstractFileStrategy
 {
-    public function downloadTable(RewrittenInputTableOptions $table): array
+    public function prepareAndExecuteTableLoads(array $tables, bool $preserve): TableLoadQueueInterface
     {
-        $exportOptions = $table->getStorageApiExportOptions($this->tablesState);
-        $exportOptions['gzip'] = true;
-        $jobId = $this->clientWrapper->getTableAndFileStorageClient()->queueTableExport(
-            $table->getSource(),
-            $exportOptions,
-        );
-        return [$jobId, $table];
+        $this->logger->info('Processing ' . count($tables) . ' ABS table exports.');
+        $tablesByJobId = [];
+        foreach ($tables as $table) {
+            $exportOptions = $table->getStorageApiExportOptions($this->tablesState);
+            $exportOptions['gzip'] = true;
+            $jobId = $this->clientWrapper->getTableAndFileStorageClient()->queueTableExport(
+                $table->getSource(),
+                $exportOptions,
+            );
+            $tablesByJobId[$jobId] = $table;
+        }
+        return new TableExportQueue($tablesByJobId, static::class, $this->destination);
     }
 
-    public function handleExports(array $exports, bool $preserve): array
+    protected function materializeTableLoads(TableLoadQueueInterface $queue, array $jobResults): void
     {
-        $this->logger->info('Processing ' . count($exports) . ' ABS table exports.');
-        $jobIds = array_map(function ($export) {
-            return $export[0];
-        }, $exports);
-        $jobResults = $this->clientWrapper->getBranchClient()->handleAsyncTasks($jobIds);
+        if (!$queue instanceof TableExportQueue) {
+            throw new InputOperationException('ABS strategy requires TableExportQueue.');
+        }
+
         $keyedResults = [];
         foreach ($jobResults as $result) {
             $keyedResults[$result['id']] = $result;
         }
 
-        foreach ($exports as $export) {
-            /** @var RewrittenInputTableOptions $table */
-            [$jobId, $table] = $export;
+        foreach ($queue->tablesByJobId as $jobId => $table) {
             $manifestPath = PathHelper::getManifestPath(
                 $this->metadataStorage,
                 $this->destination,
@@ -46,8 +48,7 @@ class ABS extends AbstractFileStrategy
             $fileInfo = $this->clientWrapper->getTableAndFileStorageClient()->getFile(
                 $keyedResults[$jobId]['results']['file']['id'],
                 (new GetFileOptions())->setFederationToken(true),
-            )
-            ;
+            );
             $tableInfo['abs'] = $this->getABSInfo($fileInfo);
             $this->manifestCreator->writeTableManifest(
                 $tableInfo,
@@ -56,7 +57,6 @@ class ABS extends AbstractFileStrategy
                 $this->format,
             );
         }
-        return $jobResults;
     }
 
     protected function getABSInfo(array $fileInfo): array

@@ -27,12 +27,6 @@ class Table extends Configuration
             ->children()
                 ->scalarNode('source')->cannotBeEmpty()->end()
                 ->scalarNode('source_branch_id')->end()
-                ->arrayNode('source_search')
-                    ->children()
-                        ->scalarNode('key')->isRequired()->cannotBeEmpty()->end()
-                        ->scalarNode('value')->isRequired()->cannotBeEmpty()->end()
-                    ->end()
-                ->end()
                 ->scalarNode('destination')->end()
                 ->integerNode('days')
                     ->treatNullLike(0)
@@ -105,9 +99,9 @@ class Table extends Configuration
             ->end()
             ->validate()
                 ->ifTrue(function ($v) {
-                    return empty($v['source']) && empty($v['source_search']);
+                    return empty($v['source']);
                 })
-                ->thenInvalid('Either "source" or "source_search" must be configured.')
+                ->thenInvalid('The "source" must be configured.')
             ->end()
             ->validate()
                 ->ifTrue(fn($v) =>

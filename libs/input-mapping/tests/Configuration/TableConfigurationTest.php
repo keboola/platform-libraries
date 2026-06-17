@@ -129,35 +129,6 @@ class TableConfigurationTest extends TestCase
                     'keep_internal_timestamp_column' => true,
                 ],
             ],
-            'SearchSourceConfiguration' => [
-                'config' => [
-                    'source_search' => [
-                        'key' => 'bdm.scaffold.tag',
-                        'value' => 'test_table',
-                    ],
-                    'destination' => 'test',
-                    'changed_since' => '-1 days',
-                    'columns' => ['Id', 'Name'],
-                    'where_column' => 'status',
-                    'where_values' => ['val1', 'val2'],
-                    'where_operator' => 'ne',
-                ],
-                'expected' => [
-                    'source_search' => [
-                        'key' => 'bdm.scaffold.tag',
-                        'value' => 'test_table',
-                    ],
-                    'destination' => 'test',
-                    'changed_since' => '-1 days',
-                    'columns' => ['Id', 'Name'],
-                    'where_column' => 'status',
-                    'where_values' => ['val1', 'val2'],
-                    'where_operator' => 'ne',
-                    'column_types' => [],
-                    'overwrite' => false,
-                    'keep_internal_timestamp_column' => true,
-                ],
-            ],
             'DataTypesConfiguration' => [
                 'config' => [
                     'source' => 'foo',
@@ -607,32 +578,12 @@ class TableConfigurationTest extends TestCase
             'testEmptyConfiguration' => [
                 [],
                 InvalidConfigurationException::class,
-                'Either "source" or "source_search" must be configured.',
+                'The "source" must be configured.',
             ],
             'EmptySourceConfiguration' => [
                 ['source' => ''],
                 InvalidConfigurationException::class,
                 'The path "table.source" cannot contain an empty value, but got "".',
-            ],
-            'InvalidSearchSourceEmptyKey' => [
-                [
-                    'source_search' => [
-                        'key' => '',
-                        'value' => 'test_table',
-                    ],
-                ],
-                InvalidConfigurationException::class,
-                'The path "table.source_search.key" cannot contain an empty value, but got "".',
-            ],
-            'InvalidSearchSourceEmptyValue' => [
-                [
-                    'source_search' => [
-                        'key' => 'bdm.scaffold.tag',
-                        'value' => '',
-                    ],
-                ],
-                InvalidConfigurationException::class,
-                'The path "table.source_search.value" cannot contain an empty value, but got "".',
             ],
             'WhereValuesSetButWhereColumnNotProvided' => [
                 [

@@ -126,7 +126,7 @@ class InputTableOptionsTest extends TestCase
     public function testConstructorMissingSource(): void
     {
         $this->expectException(InvalidConfigurationException::class);
-        $this->expectExceptionMessage('Either "source" or "source_search" must be configured.');
+        $this->expectExceptionMessage('The "source" must be configured.');
         new InputTableOptions([]);
     }
 

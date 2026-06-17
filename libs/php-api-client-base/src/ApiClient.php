@@ -25,9 +25,17 @@ class ApiClient
     private readonly GuzzleClient $httpClient;
     private readonly ErrorMessageResolverInterface $errorMessageResolver;
 
+    /** @var class-string<ClientException> */
+    private readonly string $exceptionClass;
+
     /**
      * @param non-empty-string|null $baseUrl
      * @param list<int> $retryableStatusCodes Non-5xx status codes to also retry (e.g. [429]).
+     * @param class-string<ClientException> $exceptionClass Exception class thrown on failure; a
+     *     ClientException subclass lets callers identify the failing service. It is instantiated
+     *     inline at each throw site so the exception originates there (clean stack trace). A
+     *     subclass that wants richer construction does it in its own constructor, which receives
+     *     ($message, $code, $previous, $statusCode, $responseBody).
      */
     public function __construct(
         ?string $baseUrl,
@@ -35,9 +43,11 @@ class ApiClient
         ?ApiClientOptions $options = null,
         ?ErrorMessageResolverInterface $errorMessageResolver = null,
         array $retryableStatusCodes = [],
+        string $exceptionClass = ClientException::class,
     ) {
         $options ??= new ApiClientOptions();
         $this->errorMessageResolver = $errorMessageResolver ?? new DefaultErrorMessageResolver();
+        $this->exceptionClass = $exceptionClass;
         $logger = $options->logger ?? new NullLogger();
 
         $stack = $options->requestHandler instanceof HandlerStack
@@ -121,11 +131,18 @@ class ApiClient
         bool $isList = false,
     ) {
         $response = $this->doSendRequest($request, $options);
+        $body = $response->getBody()->getContents();
 
         try {
-            $data = Json::decodeArray($response->getBody()->getContents());
+            $data = Json::decodeArray($body);
         } catch (JsonException $e) {
-            throw new ClientException('Response is not valid JSON: ' . $e->getMessage(), 0, $e);
+            throw new $this->exceptionClass(
+                'Response is not valid JSON: ' . $e->getMessage(),
+                0,
+                $e,
+                $response->getStatusCode(),
+                $body,
+            );
         }
 
         try {
@@ -138,7 +155,13 @@ class ApiClient
             }
             return $responseClass::fromResponseData($data);
         } catch (Throwable $e) {
-            throw new ClientException('Failed to map response data: ' . $e->getMessage(), 0, $e);
+            throw new $this->exceptionClass(
+                'Failed to map response data: ' . $e->getMessage(),
+                0,
+                $e,
+                $response->getStatusCode(),
+                $body,
+            );
         }
     }
 
@@ -152,11 +175,11 @@ class ApiClient
         } catch (RequestException $e) {
             throw $this->processRequestException($e);
         } catch (GuzzleException $e) {
-            throw new ClientException($e->getMessage(), 0, $e);
+            throw new $this->exceptionClass($e->getMessage(), 0, $e, null, null);
         } catch (Throwable $e) {
             // Non-Guzzle failure bubbling out of the handler stack — e.g. an authenticator
             // that could not produce credentials (after retries are exhausted).
-            throw new ClientException(trim($e->getMessage()), 0, $e);
+            throw new $this->exceptionClass(trim($e->getMessage()), 0, $e, null, null);
         }
     }
 
@@ -164,13 +187,13 @@ class ApiClient
     {
         $response = $e->getResponse();
         if ($response === null) {
-            return new ClientException(trim($e->getMessage()), 0, $e);
+            return new $this->exceptionClass(trim($e->getMessage()), 0, $e, null, null);
         }
 
         $statusCode = $response->getStatusCode();
         $body = (string) $response->getBody();
 
         $message = ($this->errorMessageResolver)($body, $statusCode);
-        return new ClientException($message ?? trim($e->getMessage()), $statusCode, $e);
+        return new $this->exceptionClass($message ?? trim($e->getMessage()), $statusCode, $e, $statusCode, $body);
     }
 }

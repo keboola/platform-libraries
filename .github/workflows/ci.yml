@@ -218,12 +218,6 @@ jobs:
       fail-fast: false
       matrix:
         lib: ${{ fromJSON(needs.detect-changes.outputs.libs) }}
-        # php-api-client-base is tested but not yet published — its standalone
-        # repo does not exist yet. Drop this exclude (and add it to
-        # cleanup-branch.yml) once keboola/php-api-client-base is created and
-        # granted to the publish App.
-        exclude:
-          - lib: php-api-client-base
     steps:
       - uses: actions/checkout@v6
         with:

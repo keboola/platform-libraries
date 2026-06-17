@@ -28,6 +28,7 @@ jobs:
           - messenger-bundle
           - output-mapping
           - permission-checker
+          - php-api-client-base
           - php-storage-names-sanitizer
           - php-test-utils
           - query-service-api-php-client

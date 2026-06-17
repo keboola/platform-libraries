@@ -226,8 +226,9 @@ class InputTableOptions
         }
 
         // converting to unix timestamp https://keboolaglobal.slack.com/archives/C054VSPFVST/p1723555870048739?thread_ts=1723531121.814779&cid=C054VSPFVST
+        // strtotime() returns false on failure; 0 (the unix epoch) is a valid timestamp, so compare strictly.
         $unixTimestamp = strtotime($lastImportDateString);
-        if (!$unixTimestamp) {
+        if ($unixTimestamp === false) {
             throw new InvalidInputException(
                 sprintf(
                     'Invalid lastImportDate value "%s" for table "%s". '

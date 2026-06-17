@@ -57,8 +57,14 @@ class Local extends AbstractFileStrategy
 
     public function handleExports(array $exports, bool $preserve): array
     {
-        $tableExporter = new TableExporter($this->clientWrapper->getTableAndFileStorageClient());
+        $storageClient = $this->clientWrapper->getTableAndFileStorageClient();
+        $tableExporter = new TableExporter($storageClient);
         $this->logger->info('Processing ' . count($exports) . ' local table exports.');
-        return $tableExporter->exportTables($exports);
+
+        $exportJobs = $tableExporter->queueTableExports($exports);
+        $jobResults = $storageClient->handleAsyncTasks(array_keys($exportJobs));
+        $tableExporter->downloadExportedFiles($jobResults, $exportJobs);
+
+        return $jobResults;
     }
 }

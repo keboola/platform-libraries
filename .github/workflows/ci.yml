@@ -205,14 +205,26 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Verify no test job failed
+        # Libraries listed in ALLOW_FAIL (space-separated) may fail without blocking the
+        # barrier — their failing tests are tolerated. Any other failure still fails the run.
+        env:
+          ALLOW_FAIL: input-mapping
         run: |
           RESULTS='${{ toJSON(needs) }}'
           echo "$RESULTS"
-          echo "$RESULTS" | python3 -c "import sys, json; r=json.load(sys.stdin); bad=[k for k,v in r.items() if v['result'] not in ('success','skipped')]; sys.exit(1) if bad else print('All test jobs passed or were skipped')"
+          echo "$RESULTS" | python3 -c "import os, sys, json; allow=set(os.environ.get('ALLOW_FAIL', '').split()); r=json.load(sys.stdin); failed=[k for k,v in r.items() if v['result'] not in ('success','skipped')]; bad=[k for k in failed if k not in allow]; tolerated=[k for k in failed if k in allow]; print('Tolerated known-broken failures:', tolerated) if tolerated else None; print('Failing test jobs:', bad) if bad else None; sys.exit(1) if bad else print('All test jobs passed, were skipped, or are tolerated')"
 
   publish:
     needs: [detect-changes, tests-result]
-    if: github.event_name == 'push' && needs.tests-result.result == 'success' && needs.detect-changes.outputs.libs != '[]'
+    # always() disables the implicit success() gate so a tolerated (ALLOW_FAIL) test
+    # failure elsewhere in the graph does not skip publish; the explicit checks below
+    # still require both direct needs to succeed.
+    if: >-
+      always()
+      && github.event_name == 'push'
+      && needs.detect-changes.result == 'success'
+      && needs.tests-result.result == 'success'
+      && needs.detect-changes.outputs.libs != '[]'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false

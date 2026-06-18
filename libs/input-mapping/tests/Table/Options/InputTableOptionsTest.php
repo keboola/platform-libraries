@@ -165,9 +165,13 @@ class InputTableOptionsTest extends TestCase
         self::assertSame('test', $config['source']);
         self::assertSame('dest', $config['destination']);
         // typed columns stay snake_case (no camelCase translation as the legacy /load builder did)
-        self::assertSame('col1', $config['column_types'][0]['source']);
-        self::assertTrue($config['column_types'][0]['convert_empty_values_to_null']);
-        self::assertArrayNotHasKey('convertEmptyValuesToNull', $config['column_types'][0]);
+        $columnTypes = $config['column_types'];
+        self::assertIsArray($columnTypes);
+        $columnType = $columnTypes[0];
+        self::assertIsArray($columnType);
+        self::assertSame('col1', $columnType['source']);
+        self::assertTrue($columnType['convert_empty_values_to_null']);
+        self::assertArrayNotHasKey('convertEmptyValuesToNull', $columnType);
         self::assertSame('-1 days', $config['changed_since']);
         self::assertSame('col1', $config['where_column']);
         self::assertSame(['1', '2'], $config['where_values']);

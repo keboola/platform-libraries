@@ -137,33 +137,7 @@ class InputTableOptionsTest extends TestCase
         new InputTableOptions(['source' => 'test', 'days' => 1, 'changed_since' => '-2 days']);
     }
 
-    public function testGetLoadOptionsSimpleColumns(): void
-    {
-        $definition = new InputTableOptions([
-            'source' => 'test',
-            'destination' => 'dest',
-            'columns' => ['col1', 'col2'],
-            'changed_since' => '-1 days',
-            'where_column' => 'col1',
-            'where_operator' => 'ne',
-            'where_values' => ['1', '2'],
-            'limit' => 100,
-        ]);
-        self::assertEquals([
-            'columns' => [
-                ['source' => 'col1'],
-                ['source' => 'col2'],
-            ],
-            'seconds' => 86400,
-            'whereColumn' => 'col1',
-            'whereValues' => ['1', '2'],
-            'whereOperator' => 'ne',
-            'rows' => 100,
-            'overwrite' => false,
-        ], $definition->getStorageApiLoadOptions(new InputTableStateList([])));
-    }
-
-    public function testGetLoadOptionsExtendedColumns(): void
+    public function testGetWorkspaceLoadConfigurationPassesParsedConfigThrough(): void
     {
         $definition = new InputTableOptions([
             'source' => 'test',
@@ -177,12 +151,6 @@ class InputTableOptionsTest extends TestCase
                     'nullable' => false,
                     'convert_empty_values_to_null' => true,
                 ],
-                [
-                    'source' => 'col2',
-                    'type' => 'VARCHAR',
-                    'nullable' => true,
-                    'convert_empty_values_to_null' => false,
-                ],
             ],
             'changed_since' => '-1 days',
             'where_column' => 'col1',
@@ -190,30 +158,35 @@ class InputTableOptionsTest extends TestCase
             'where_values' => ['1', '2'],
             'limit' => 100,
         ]);
-        self::assertEquals([
-            'columns' => [
-                [
-                    'source' => 'col1',
-                    'type' => 'VARCHAR',
-                    'length' => '200',
-                    'destination' => 'colone',
-                    'nullable' => false,
-                    'convertEmptyValuesToNull' => true,
-                ],
-                [
-                    'source' => 'col2',
-                    'type' => 'VARCHAR',
-                    'nullable' => true,
-                    'convertEmptyValuesToNull' => false,
-                ],
-            ],
-            'seconds' => 86400,
-            'whereColumn' => 'col1',
-            'whereValues' => ['1', '2'],
-            'whereOperator' => 'ne',
-            'rows' => 100,
-            'overwrite' => false,
-        ], $definition->getStorageApiLoadOptions(new InputTableStateList([])));
+
+        // The workspace input-mapping-load endpoint accepts the parsed snake_case config unchanged.
+        $config = $definition->getStorageApiWorkspaceLoadConfiguration(new InputTableStateList([]));
+
+        self::assertSame('test', $config['source']);
+        self::assertSame('dest', $config['destination']);
+        // typed columns stay snake_case (no camelCase translation as the legacy /load builder did)
+        self::assertSame('col1', $config['column_types'][0]['source']);
+        self::assertTrue($config['column_types'][0]['convert_empty_values_to_null']);
+        self::assertArrayNotHasKey('convertEmptyValuesToNull', $config['column_types'][0]);
+        self::assertSame('-1 days', $config['changed_since']);
+        self::assertSame('col1', $config['where_column']);
+        self::assertSame(['1', '2'], $config['where_values']);
+        self::assertSame('ne', $config['where_operator']);
+        self::assertSame(100, $config['limit']);
+        self::assertFalse($config['overwrite']);
+    }
+
+    public function testGetWorkspaceLoadConfigurationKeepsAbsoluteChangedSince(): void
+    {
+        // a concrete date/timestamp is forwarded unchanged; only the "adaptive" marker is resolved
+        $definition = new InputTableOptions([
+            'source' => 'test',
+            'changed_since' => '2022-06-03T03:31:43+0200',
+        ]);
+
+        $config = $definition->getStorageApiWorkspaceLoadConfiguration(new InputTableStateList([]));
+
+        self::assertSame('2022-06-03T03:31:43+0200', $config['changed_since']);
     }
 
     public function testInvalidColumnsMissing(): void
@@ -268,7 +241,7 @@ class InputTableOptionsTest extends TestCase
         ]);
     }
 
-    public function testGetLoadOptionsAdaptiveInputMapping(): void
+    public function testGetWorkspaceLoadConfigurationResolvesAdaptiveChangedSince(): void
     {
         $definition = new InputTableOptions([
             'source' => 'test',
@@ -278,31 +251,27 @@ class InputTableOptionsTest extends TestCase
             'source' => 'test',
             'lastImportDate' => '1989-11-17T21:00:00+0200',
         ]]);
-        self::assertEquals(
-            [
-                'changedSince' => '627332400',
-                'overwrite' => false,
-            ],
-            $definition->getStorageApiLoadOptions($tablesState),
-        );
+
+        $config = $definition->getStorageApiWorkspaceLoadConfiguration($tablesState);
+
+        // the adaptive marker is resolved to the source's last import date as a unix timestamp
+        self::assertSame('627332400', $config['changed_since']);
     }
 
-    public function testGetExportOptionsAdaptiveInputMappingMissingTable(): void
+    public function testGetWorkspaceLoadConfigurationDropsAdaptiveChangedSinceWhenStateMissing(): void
     {
         $definition = new InputTableOptions([
             'source' => 'test',
             'changed_since' => InputTableOptions::ADAPTIVE_INPUT_MAPPING_VALUE,
         ]);
-        $tablesState = new InputTableStateList([]);
-        self::assertEquals(
-            [
-                'overwrite' => false,
-            ],
-            $definition->getStorageApiLoadOptions($tablesState),
-        );
+
+        $config = $definition->getStorageApiWorkspaceLoadConfiguration(new InputTableStateList([]));
+
+        // no recorded state for the source -> marker dropped so the whole table is loaded
+        self::assertArrayNotHasKey('changed_since', $config);
     }
 
-    public function testGetLoadOptionsDaysMapping(): void
+    public function testGetWorkspaceLoadConfigurationRejectsDays(): void
     {
         $definition = new InputTableOptions([
             'source' => 'test',
@@ -310,7 +279,7 @@ class InputTableOptionsTest extends TestCase
         ]);
         $this->expectExceptionMessage('Days option is not supported on workspace, use changed_since instead.');
         $this->expectException(InvalidInputException::class);
-        $definition->getStorageApiLoadOptions(new InputTableStateList([]));
+        $definition->getStorageApiWorkspaceLoadConfiguration(new InputTableStateList([]));
     }
 
     public function testGetLoadTypeReturnsNullWhenNotSet(): void

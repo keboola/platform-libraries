@@ -9,15 +9,6 @@ use Keboola\InputMapping\Exception\InvalidInputException;
 use Keboola\InputMapping\Exception\TableNotFoundException;
 use Keboola\InputMapping\State\InputTableStateList;
 
-/** @phpstan-type ColumnType = array{
- *     source: string,
- *     type?: string,
- *     destination?: string,
- *     length?: integer,
- *     nullable?: bool,
- *     convertEmptyValuesToNull?: bool,
- * }
- */
 class InputTableOptions
 {
     public const ADAPTIVE_INPUT_MAPPING_VALUE = 'adaptive';
@@ -95,98 +86,13 @@ class InputTableOptions
     }
 
     /**
-     * @return array<int, ColumnType>
-     */
-    private function getColumnTypes(): array
-    {
-        if ($this->definition['column_types']) {
-            $ret = [];
-            foreach ($this->definition['column_types'] as $column_type) {
-                $item = [
-                    'source' => $column_type['source'],
-                ];
-                if (isset($column_type['type'])) {
-                    $item['type'] = $column_type['type'];
-                }
-                if (isset($column_type['destination'])) {
-                    $item['destination'] = $column_type['destination'];
-                }
-                if (isset($column_type['length'])) {
-                    $item['length'] = $column_type['length'];
-                }
-                if (isset($column_type['nullable'])) {
-                    $item['nullable'] = $column_type['nullable'];
-                }
-                if (isset($column_type['convert_empty_values_to_null'])) {
-                    $item['convertEmptyValuesToNull'] = $column_type['convert_empty_values_to_null'];
-                }
-                $ret[] = $item;
-            }
-            return $ret;
-        } else {
-            return [];
-        }
-    }
-
-    /**
-     * @return array{
-     *     columns?: array<int, ColumnType>,
-     *     seconds?: integer,
-     *     whereColumn?: string,
-     *     whereValues?: array<string>,
-     *     whereOperator?: string,
-     *     rows?: integer,
-     *     overwrite: bool,
-     * }
-     */
-    public function getStorageApiLoadOptions(InputTableStateList $states): array
-    {
-        $exportOptions = [];
-        if ($this->definition['column_types']) {
-            $exportOptions['columns'] = $this->getColumnTypes();
-        }
-        if (!empty($this->definition['days'])) {
-            throw new InvalidInputException(
-                'Days option is not supported on workspace, use changed_since instead.',
-            );
-        }
-        if (!empty($this->definition['changed_since'])) {
-            if ($this->definition['changed_since'] === self::ADAPTIVE_INPUT_MAPPING_VALUE) {
-                $unixTimestamp = $this->resolveAdaptiveChangedSince($states);
-                if ($unixTimestamp !== null) {
-                    $exportOptions['changedSince'] = $unixTimestamp;
-                }
-            } else {
-                if (strtotime($this->definition['changed_since']) === false) {
-                    throw new InvalidInputException(
-                        sprintf('Error parsing changed_since expression "%s".', $this->definition['changed_since']),
-                    );
-                }
-                $exportOptions['seconds'] = time() - strtotime($this->definition['changed_since']);
-            }
-        }
-
-        if (isset($this->definition['where_column']) && count($this->definition['where_values'])) {
-            $exportOptions['whereColumn'] = $this->definition['where_column'];
-            $exportOptions['whereValues'] = $this->definition['where_values'];
-            $exportOptions['whereOperator'] = $this->definition['where_operator'];
-        }
-        if (isset($this->definition['limit'])) {
-            $exportOptions['rows'] = $this->definition['limit'];
-        }
-        $exportOptions['overwrite'] = $this->definition['overwrite'];
-        return $exportOptions;
-    }
-
-    /**
      * Returns the parsed (snake_case) input-mapping configuration for the workspace input-mapping-load
      * endpoint, which accepts the Configuration\Table payload unchanged.
      *
      * The only value the endpoint cannot interpret is the "adaptive" changed_since marker — it is
      * specific to input mapping and depends on the previous run's state — so we resolve it here to the
-     * source's last import date (as a unix timestamp), exactly as getStorageApiLoadOptions() does for the
-     * legacy /load endpoint. When the source has no recorded state yet (e.g. first run), the marker is
-     * dropped so the whole table is loaded.
+     * source's last import date (as a unix timestamp). When the source has no recorded state yet
+     * (e.g. first run), the marker is dropped so the whole table is loaded.
      *
      * @return array<string, mixed>
      */

@@ -22,7 +22,6 @@
             <exclude>tests/Functional/DownloadTablesABSDefaultTest.php</exclude>
             <exclude>tests/Functional/DownloadTablesBigQueryTest.php</exclude>
             <exclude>tests/Functional/DownloadTablesWorkspaceBigQueryTest.php</exclude>
-            <exclude>tests/Table/Strategy/BigQueryTest.php</exclude>
         </testsuite>
         <testsuite name="CommonPart2">
             <file>tests/Functional/DownloadTablesDefaultTest.php</file>
@@ -40,7 +39,6 @@
             <file>tests/Functional/DownloadTablesABSDefaultTest.php</file>
         </testsuite>
         <testsuite name="BigQuery">
-            <file>tests/Table/Strategy/BigQueryTest.php</file>
             <file>tests/Functional/DownloadTablesBigQueryTest.php</file>
             <file>tests/Functional/DownloadTablesWorkspaceBigQueryTest.php</file>
         </testsuite>

@@ -223,60 +223,6 @@ class DownloadTablesDefaultTest extends AbstractTestCase
     }
 
     #[NeedsTestTables]
-    public function testReadTablesWithSourceSearch(): void
-    {
-        $clientWrapper = $this->initClient();
-        $bucket = $clientWrapper->getTableAndFileStorageClient()->getBucket($this->testBucketId);
-        $sourceName = $bucket['name'];
-        $tableMetadata = [
-            [
-                'key' => 'source',
-                'value' => $sourceName,
-            ],
-        ];
-        $metadata = new Metadata($clientWrapper->getTableAndFileStorageClient());
-        $metadata->postTableMetadataWithColumns(
-            new TableMetadataUpdateOptions($this->firstTableId, 'dataLoaderTest', $tableMetadata),
-        );
-
-        $reader = new Reader(
-            $clientWrapper,
-            $this->testLogger,
-            $this->getLocalStagingFactory($clientWrapper),
-        );
-        $configuration = new InputTableOptionsList([
-            [
-                'source_search' => [
-                    'key' => 'source',
-                    'value' => $sourceName,
-                ],
-                'destination' => 'test.csv',
-            ],
-        ]);
-
-        $reader->downloadTables(
-            $configuration,
-            new InputTableStateList([]),
-            'download',
-            new ReaderOptions(true),
-        );
-
-        $adapter = new Adapter();
-        $manifest = $adapter->readFromFile($this->temp->getTmpFolder() . '/download/test.csv.manifest');
-        self::assertEquals($this->firstTableId, $manifest['id']);
-        self::assertArrayHasKey('metadata', $manifest);
-        self::assertCount(1, $manifest['metadata']);
-        self::assertArrayHasKey('id', $manifest['metadata'][0]);
-        self::assertArrayHasKey('key', $manifest['metadata'][0]);
-        self::assertArrayHasKey('value', $manifest['metadata'][0]);
-        self::assertArrayHasKey('provider', $manifest['metadata'][0]);
-        self::assertArrayHasKey('timestamp', $manifest['metadata'][0]);
-        self::assertEquals('dataLoaderTest', $manifest['metadata'][0]['provider']);
-        self::assertEquals('source', $manifest['metadata'][0]['key']);
-        self::assertEquals($sourceName, $manifest['metadata'][0]['value']);
-    }
-
-    #[NeedsTestTables]
     public function testReadTableColumns(): void
     {
         $clientWrapper = $this->initClient();

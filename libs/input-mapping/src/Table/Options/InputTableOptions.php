@@ -9,15 +9,6 @@ use Keboola\InputMapping\Exception\InvalidInputException;
 use Keboola\InputMapping\Exception\TableNotFoundException;
 use Keboola\InputMapping\State\InputTableStateList;
 
-/** @phpstan-type ColumnType = array{
- *     source: string,
- *     type?: string,
- *     destination?: string,
- *     length?: integer,
- *     nullable?: bool,
- *     convertEmptyValuesToNull?: bool,
- * }
- */
 class InputTableOptions
 {
     public const ADAPTIVE_INPUT_MAPPING_VALUE = 'adaptive';
@@ -95,104 +86,65 @@ class InputTableOptions
     }
 
     /**
-     * @return array<int, ColumnType>
+     * Returns the parsed (snake_case) input-mapping configuration for the workspace input-mapping-load
+     * endpoint, which accepts the Configuration\Table payload unchanged.
+     *
+     * The only value the endpoint cannot interpret is the "adaptive" changed_since marker — it is
+     * specific to input mapping and depends on the previous run's state — so we resolve it here to the
+     * source's last import date (as a unix timestamp). When the source has no recorded state yet
+     * (e.g. first run), the marker is dropped so the whole table is loaded.
+     *
+     * @return array<string, mixed>
      */
-    private function getColumnTypes(): array
+    public function getStorageApiWorkspaceLoadConfiguration(InputTableStateList $states): array
     {
-        if ($this->definition['column_types']) {
-            $ret = [];
-            foreach ($this->definition['column_types'] as $column_type) {
-                $item = [
-                    'source' => $column_type['source'],
-                ];
-                if (isset($column_type['type'])) {
-                    $item['type'] = $column_type['type'];
-                }
-                if (isset($column_type['destination'])) {
-                    $item['destination'] = $column_type['destination'];
-                }
-                if (isset($column_type['length'])) {
-                    $item['length'] = $column_type['length'];
-                }
-                if (isset($column_type['nullable'])) {
-                    $item['nullable'] = $column_type['nullable'];
-                }
-                if (isset($column_type['convert_empty_values_to_null'])) {
-                    $item['convertEmptyValuesToNull'] = $column_type['convert_empty_values_to_null'];
-                }
-                $ret[] = $item;
-            }
-            return $ret;
-        } else {
-            return [];
-        }
-    }
-
-    /**
-     * @return array{
-     *     columns?: array<int, ColumnType>,
-     *     seconds?: integer,
-     *     whereColumn?: string,
-     *     whereValues?: array<string>,
-     *     whereOperator?: string,
-     *     rows?: integer,
-     *     overwrite: bool,
-     * }
-     */
-    public function getStorageApiLoadOptions(InputTableStateList $states): array
-    {
-        $exportOptions = [];
-        if ($this->definition['column_types']) {
-            $exportOptions['columns'] = $this->getColumnTypes();
-        }
         if (!empty($this->definition['days'])) {
             throw new InvalidInputException(
                 'Days option is not supported on workspace, use changed_since instead.',
             );
         }
-        if (!empty($this->definition['changed_since'])) {
-            if ($this->definition['changed_since'] === self::ADAPTIVE_INPUT_MAPPING_VALUE) {
-                try {
-                    $lastImportDateString = $states
-                        ->getTable($this->getSource())
-                        ->getLastImportDate();
 
-                    // converting to unix timestamp https://keboolaglobal.slack.com/archives/C054VSPFVST/p1723555870048739?thread_ts=1723531121.814779&cid=C054VSPFVST
-                    $unixTimestamp = strtotime($lastImportDateString);
-                    if (!$unixTimestamp) {
-                        throw new InvalidInputException(
-                            sprintf(
-                                'Invalid lastImportDate value "%s" for table "%s". '
-                                . 'This value cannot be converted to a valid timestamp.',
-                                $lastImportDateString,
-                                $this->getSource(),
-                            ),
-                        );
-                    }
-                    $exportOptions['changedSince'] = $unixTimestamp;
-                } catch (TableNotFoundException) {
-                    // intentionally blank
-                }
+        $definition = $this->definition;
+        if (($definition['changed_since'] ?? '') === self::ADAPTIVE_INPUT_MAPPING_VALUE) {
+            $unixTimestamp = $this->resolveAdaptiveChangedSince($states);
+            if ($unixTimestamp !== null) {
+                $definition['changed_since'] = (string) $unixTimestamp;
             } else {
-                if (strtotime($this->definition['changed_since']) === false) {
-                    throw new InvalidInputException(
-                        sprintf('Error parsing changed_since expression "%s".', $this->definition['changed_since']),
-                    );
-                }
-                $exportOptions['seconds'] = time() - strtotime($this->definition['changed_since']);
+                unset($definition['changed_since']);
             }
         }
+        return $definition;
+    }
 
-        if (isset($this->definition['where_column']) && count($this->definition['where_values'])) {
-            $exportOptions['whereColumn'] = $this->definition['where_column'];
-            $exportOptions['whereValues'] = $this->definition['where_values'];
-            $exportOptions['whereOperator'] = $this->definition['where_operator'];
+    /**
+     * Resolves the "adaptive" changed_since marker to the source's last import date as a unix timestamp.
+     * Returns null when the source has no recorded state yet (e.g. first run), in which case callers omit
+     * the filter and load the whole table.
+     */
+    private function resolveAdaptiveChangedSince(InputTableStateList $states): ?int
+    {
+        try {
+            $lastImportDateString = $states
+                ->getTable($this->getSource())
+                ->getLastImportDate();
+        } catch (TableNotFoundException) {
+            return null;
         }
-        if (isset($this->definition['limit'])) {
-            $exportOptions['rows'] = $this->definition['limit'];
+
+        // converting to unix timestamp https://keboolaglobal.slack.com/archives/C054VSPFVST/p1723555870048739?thread_ts=1723531121.814779&cid=C054VSPFVST
+        // strtotime() returns false on failure; 0 (the unix epoch) is a valid timestamp, so compare strictly.
+        $unixTimestamp = strtotime($lastImportDateString);
+        if ($unixTimestamp === false) {
+            throw new InvalidInputException(
+                sprintf(
+                    'Invalid lastImportDate value "%s" for table "%s". '
+                    . 'This value cannot be converted to a valid timestamp.',
+                    $lastImportDateString,
+                    $this->getSource(),
+                ),
+            );
         }
-        $exportOptions['overwrite'] = $this->definition['overwrite'];
-        return $exportOptions;
+        return $unixTimestamp;
     }
 
     public function getLoadType(): ?string

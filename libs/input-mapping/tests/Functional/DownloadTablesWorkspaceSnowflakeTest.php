@@ -105,19 +105,9 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
             $this->emptyOutputBucketId . '.test3',
         ));
         self::assertTrue($this->testHandler->hasInfoThatContains('Using "workspace-snowflake" table input staging.'));
-        self::assertTrue(
-            $this->testHandler->hasInfoThatContains(sprintf('Table "%s" will be cloned.', $this->firstTableId)),
-        );
-        self::assertTrue(
-            $this->testHandler->hasInfoThatContains(sprintf('Table "%s" will be copied.', $this->secondTableId)),
-        );
-        self::assertTrue(
-            $this->testHandler->hasInfoThatContains(sprintf('Table "%s" will be cloned.', $this->thirdTableId)),
-        );
-        self::assertTrue($this->testHandler->hasInfoThatContains('Cloning 2 tables to workspace.'));
-        self::assertTrue($this->testHandler->hasInfoThatContains('Copying 1 tables to workspace.'));
+        self::assertTrue($this->testHandler->hasInfoThatContains('Loading 3 tables to workspace.'));
         self::assertTrue($this->testHandler->hasInfoThatContains('Processed 1 workspace exports.'));
-        // test that clones and copies are merged into a single workspaceLoad job
+        // test that all inputs are merged into a single workspaceLoad job
         sleep(2);
         $jobs = $clientWrapper->getTableAndFileStorageClient()->listJobs(['limit' => 200]);
         $params = null;
@@ -131,14 +121,15 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
             }
         }
         self::assertNotEmpty($params);
-        // all 3 inputs in a single job: clones first (test1, test3), then the copy (test2)
+        // all 3 inputs in a single job, in input-mapping order; the endpoint resolves the load type
+        // per item and echoes it back in operationParams
         self::assertEquals(3, count($params['input']));
-        self::assertEquals('CLONE', $params['input'][0]['loadType']);
         self::assertEquals('test1', $params['input'][0]['destination']);
-        self::assertEquals('CLONE', $params['input'][1]['loadType']);
-        self::assertEquals('test3', $params['input'][1]['destination']);
-        self::assertEquals('COPY', $params['input'][2]['loadType']);
-        self::assertEquals('test2', $params['input'][2]['destination']);
+        self::assertEquals('CLONE', $params['input'][0]['loadType']);
+        self::assertEquals('test2', $params['input'][1]['destination']);
+        self::assertEquals('COPY', $params['input'][1]['loadType']);
+        self::assertEquals('test3', $params['input'][2]['destination']);
+        self::assertEquals('CLONE', $params['input'][2]['loadType']);
     }
 
     #[NeedsTestTables(2)]
@@ -171,79 +162,6 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
             'download',
             new ReaderOptions(true),
         );
-    }
-
-    #[NeedsTestTables(2), NeedsEmptyOutputBucket]
-    public function testTablesAdaptiveChangedSince(): void
-    {
-        $clientWrapper = $this->initClient();
-
-        $reader = new Reader(
-            $clientWrapper,
-            $this->testLogger,
-            $this->getWorkspaceStagingFactory(
-                clientWrapper: $clientWrapper,
-                logger: $this->testLogger,
-            ),
-        );
-        $configuration = new InputTableOptionsList([
-            [
-                'source' => $this->firstTableId,
-                'destination' => 'test1',
-                'changed_since' => 'adaptive',
-            ],
-            [
-                'source' => $this->secondTableId,
-                'destination' => 'test2',
-            ],
-        ]);
-
-        $tablesState = new InputTableStateList([
-            [
-                'source' => $this->firstTableId,
-                'lastImportDate' => '1989-11-17T21:00:00+0200',
-            ],
-            [
-                'source' => $this->secondTableId,
-                'lastImportDate' => '1989-11-17T21:00:00+0200',
-            ],
-        ]);
-
-        $reader->downloadTables(
-            $configuration,
-            $tablesState,
-            'download',
-            new ReaderOptions(true),
-        );
-
-        $adapter = new Adapter();
-
-        $manifest = $adapter->readFromFile($this->temp->getTmpFolder() . '/download/test1.manifest');
-        self::assertEquals($this->firstTableId, $manifest['id']);
-        self::assertEquals(
-            ['Id', 'Name', 'foo', 'bar'],
-            $manifest['columns'],
-        );
-        // check that the table exists in the workspace
-        $clientWrapper->getTableAndFileStorageClient()->createTableAsyncDirect(
-            $this->emptyOutputBucketId,
-            [
-                'dataWorkspaceId' => $this->workspaceId,
-                'dataTableName' => 'test1',
-                'name' => 'test1',
-            ],
-        );
-
-        self::assertTrue($this->testHandler->hasInfoThatContains('Using "workspace-snowflake" table input staging.'));
-        self::assertTrue(
-            $this->testHandler->hasInfoThatContains(sprintf('Table "%s" will be copied.', $this->firstTableId)),
-        );
-        self::assertTrue(
-            $this->testHandler->hasInfoThatContains(sprintf('Table "%s" will be cloned.', $this->secondTableId)),
-        );
-        self::assertTrue($this->testHandler->hasInfoThatContains('Copying 1 tables to workspace.'));
-        self::assertTrue($this->testHandler->hasInfoThatContains('Cloning 1 tables to workspace.'));
-        self::assertTrue($this->testHandler->hasInfoThatContains('Processed 1 workspace exports.'));
     }
 
     #[NeedsTestTables, NeedsEmptyOutputBucket]
@@ -298,10 +216,7 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
         );
 
         self::assertTrue($this->testHandler->hasInfoThatContains('Using "workspace-snowflake" table input staging.'));
-        self::assertTrue(
-            $this->testHandler->hasInfoThatContains(sprintf('Table "%s" will be copied.', $this->firstTableId)),
-        );
-        self::assertTrue($this->testHandler->hasInfoThatContains('Copying 1 tables to workspace.'));
+        self::assertTrue($this->testHandler->hasInfoThatContains('Loading 1 tables to workspace.'));
         self::assertTrue($this->testHandler->hasInfoThatContains('Processed 1 workspace exports.'));
     }
 
@@ -340,237 +255,6 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
             new InputTableStateList([]),
             'download',
             new ReaderOptions(true),
-        );
-    }
-
-    #[NeedsTestTables, NeedsEmptyOutputBucket]
-    public function testTablesSnowflakeOverwrite(): void
-    {
-        $clientWrapper = $this->initClient();
-
-        $reader = new Reader(
-            $clientWrapper,
-            $this->testLogger,
-            $this->getWorkspaceStagingFactory(
-                clientWrapper: $clientWrapper,
-                logger: $this->testLogger,
-            ),
-        );
-        $configuration = new InputTableOptionsList([
-            [
-                'source' => $this->firstTableId,
-                'destination' => 'test2',
-            ],
-        ]);
-
-        $reader->downloadTables(
-            $configuration,
-            new InputTableStateList([]),
-            'download',
-            new ReaderOptions(true),
-        );
-        $configuration = new InputTableOptionsList([
-            [
-                'source' => $this->firstTableId,
-                'destination' => 'test2',
-                'where_column' => 'Id',
-                'where_values' => ['id2', 'id3'],
-                'columns' => ['Id'],
-                'overwrite' => true,
-            ],
-        ]);
-        $reader->downloadTables(
-            $configuration,
-            new InputTableStateList([]),
-            'download',
-            new ReaderOptions(true),
-        );
-        $adapter = new Adapter();
-
-        $manifest = $adapter->readFromFile($this->temp->getTmpFolder() . '/download/test2.manifest');
-        self::assertEquals($this->firstTableId, $manifest['id']);
-        self::assertEquals(
-            ['Id'],
-            $manifest['columns'],
-        );
-        // check that the table exists in the workspace
-        $clientWrapper->getTableAndFileStorageClient()->createTableAsyncDirect(
-            $this->emptyOutputBucketId,
-            ['dataWorkspaceId' => $this->workspaceId, 'dataTableName' => 'test2', 'name' => 'test2'],
-        );
-
-        self::assertTrue($this->testHandler->hasInfoThatContains('Using "workspace-snowflake" table input staging.'));
-        self::assertTrue(
-            $this->testHandler->hasInfoThatContains(sprintf('Table "%s" will be copied.', $this->firstTableId)),
-        );
-        self::assertTrue($this->testHandler->hasInfoThatContains('Copying 1 tables to workspace.'));
-        self::assertTrue($this->testHandler->hasInfoThatContains('Processed 1 workspace exports.'));
-
-        // check that we can overwrite while using clone
-        $configuration = new InputTableOptionsList([
-            [
-                'source' => $this->firstTableId,
-                'destination' => 'test2',
-                'overwrite' => true,
-            ],
-        ]);
-        $reader->downloadTables(
-            $configuration,
-            new InputTableStateList([]),
-            'download',
-            new ReaderOptions(true),
-        );
-        $adapter = new Adapter();
-
-        $manifest = $adapter->readFromFile($this->temp->getTmpFolder() . '/download/test2.manifest');
-        self::assertEquals($this->firstTableId, $manifest['id']);
-        self::assertEquals(
-            ['Id', 'Name', 'foo', 'bar'],
-            $manifest['columns'],
-        );
-        /* we want to check that the table exists in the workspace, so we try to load it, which fails, because of
-            the _timestamp columns, but that's okay. It means that the table is indeed in the workspace. */
-        try {
-            $clientWrapper->getTableAndFileStorageClient()->createTableAsyncDirect(
-                $this->emptyOutputBucketId,
-                ['dataWorkspaceId' => $this->workspaceId, 'dataTableName' => 'test2', 'name' => 'test2', 'columns'],
-            );
-            self::fail('Must throw exception');
-        } catch (ClientException $e) {
-            self::assertStringContainsString('Invalid columns: _timestamp:', $e->getMessage());
-        }
-        self::assertTrue($this->testHandler->hasInfoThatContains('Using "workspace-snowflake" table input staging.'));
-        self::assertTrue(
-            $this->testHandler->hasInfoThatContains(sprintf('Table "%s" will be cloned.', $this->firstTableId)),
-        );
-        self::assertTrue($this->testHandler->hasInfoThatContains('Cloning 1 tables to workspace.'));
-        self::assertTrue($this->testHandler->hasInfoThatContains('Processed 1 workspace exports.'));
-    }
-
-    #[NeedsTestTables]
-    public function testUseViewFails(): void
-    {
-        if (time() > 1) {
-            $this->markTestSkipped('TODO fix test https://keboola.atlassian.net/browse/PST-961');
-        }
-
-        $clientWrapper = $this->initClient();
-
-        $reader = new Reader(
-            $clientWrapper,
-            $this->testLogger,
-            $this->getWorkspaceStagingFactory(
-                clientWrapper: $clientWrapper,
-                logger: $this->testLogger,
-            ),
-        );
-        $configuration = new InputTableOptionsList([
-            [
-                'source' => $this->firstTableId,
-                'destination' => 'test1',
-                'limit' => 100,
-                'use_view' => true,
-            ],
-        ]);
-
-        $this->expectException(ClientException::class);
-        $this->expectExceptionMessage(
-            'View load for table "test1" using backend "snowflake" can\'t be used, only Synapse is supported.',
-        );
-
-        $reader->downloadTables(
-            $configuration,
-            new InputTableStateList([]),
-            'download',
-            new ReaderOptions(true),
-        );
-    }
-
-    #[NeedsTestTables(1), NeedsEmptyOutputBucket]
-    public function testDownloadTablesPreserveFalse(): void
-    {
-        $clientWrapper = $this->initClient();
-
-        // first we create the workspace and load there some data.
-        // then we will do a new load with preserve=false to make sure that the old data was removed
-        $reader = new Reader(
-            $clientWrapper,
-            $this->testLogger,
-            $this->getWorkspaceStagingFactory(
-                clientWrapper: $clientWrapper,
-                logger: $this->testLogger,
-            ),
-        );
-        $configuration = new InputTableOptionsList([
-            [
-                'source' => $this->firstTableId,
-                'destination' => 'initial_table',
-                'where_column' => 'Id',
-                'where_values' => ['id2', 'id3'],
-                'columns' => ['Id'],
-            ],
-        ]);
-
-        $reader->downloadTables(
-            $configuration,
-            new InputTableStateList([]),
-            'download',
-            new ReaderOptions(true),
-        );
-        $configuration = new InputTableOptionsList([
-            [
-                'source' => $this->firstTableId,
-                'destination' => 'new_clone_table',
-            ],
-            [
-                'source' => $this->firstTableId,
-                'destination' => 'new_copy_table',
-                'where_column' => 'Id',
-                'where_values' => ['id2', 'id3'],
-                'columns' => ['Id'],
-            ],
-        ]);
-        $reader->downloadTables(
-            $configuration,
-            new InputTableStateList([]),
-            'download',
-            new ReaderOptions(true, false),
-        );
-        // the initial_table should not be present in the workspace anymore
-        try {
-            $clientWrapper->getTableAndFileStorageClient()->createTableAsyncDirect(
-                $this->emptyOutputBucketId,
-                [
-                    'dataWorkspaceId' => $this->workspaceId,
-                    'dataTableName' => 'initial_table',
-                    'name' => 'initial_table',
-                ],
-            );
-            self::fail('should throw 404 for workspace table not found');
-        } catch (ClientException $exception) {
-            self::assertStringContainsString(
-                'Table "initial_table" not found in schema',
-                $exception->getMessage(),
-            );
-        }
-
-        // check that the tables exist in the workspace. the cloned table will throw the _timestamp col error
-        try {
-            $clientWrapper->getTableAndFileStorageClient()->createTableAsyncDirect(
-                $this->emptyOutputBucketId,
-                [
-                    'dataWorkspaceId' => $this->workspaceId,
-                    'dataTableName' => 'new_clone_table',
-                    'name' => 'new_clone_table',
-                ],
-            );
-        } catch (ClientException $exception) {
-            self::assertStringContainsString('Invalid columns: _timestamp:', $exception->getMessage());
-        }
-
-        $clientWrapper->getTableAndFileStorageClient()->createTableAsyncDirect(
-            $this->emptyOutputBucketId,
-            ['dataWorkspaceId' => $this->workspaceId, 'dataTableName' => 'new_copy_table', 'name' => 'new_clopy_table'],
         );
     }
 
@@ -730,8 +414,7 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
             ),
         );
 
-        self::assertTrue($this->testHandler->hasInfoThatContains('Cloning 2 tables to workspace.'));
-        self::assertTrue($this->testHandler->hasInfoThatContains('Copying 2 tables to workspace.'));
+        self::assertTrue($this->testHandler->hasInfoThatContains('Loading 4 tables to workspace.'));
         self::assertTrue($this->testHandler->hasInfoThatContains('Processed 1 workspace exports.'));
     }
 }

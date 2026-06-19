@@ -18,7 +18,6 @@ use Keboola\InputMapping\Table\Options\ReaderOptions;
 use Keboola\InputMapping\Table\Options\RewrittenInputTableOptionsList;
 use Keboola\InputMapping\Table\Result;
 use Keboola\InputMapping\Table\Strategy\TableLoadQueueInterface;
-use Keboola\InputMapping\Table\TableDefinitionResolver;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Psr\Log\LoggerInterface;
 
@@ -47,14 +46,6 @@ class Reader
             return new InputFileStateList([]);
         }
         return $strategy->downloadFiles($configuration, $destination);
-    }
-
-    private function createTableResolver(): TableDefinitionResolver
-    {
-        return new TableDefinitionResolver(
-            $this->clientWrapper->getTableAndFileStorageClient(),
-            $this->logger,
-        );
     }
 
     private function rewriteTableStatesDestinations(InputTableStateList $tablesState): InputTableStateList
@@ -134,7 +125,6 @@ class Reader
     ): TableLoadQueueInterface {
         $tablesState = $this->rewriteTableStatesDestinations($tablesState);
 
-        $tablesDefinition = $this->createTableResolver()->resolve($tablesDefinition);
         $strategy = $this->strategyFactory->getTableInputStrategy($destination, $tablesState);
         $tablesDefinition = $this->validateAndRewriteDevBuckets($tablesDefinition, $readerOptions);
 

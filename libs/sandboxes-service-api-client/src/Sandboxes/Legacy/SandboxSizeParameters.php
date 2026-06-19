@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Keboola\SandboxesServiceApiClient\Sandboxes\Legacy;
 
-class SandboxSizeParameters
+use Keboola\ApiClientBase\ResponseModelInterface;
+
+final class SandboxSizeParameters implements ResponseModelInterface
 {
     private ?int $storageSize_GB = null;
 
@@ -13,7 +15,7 @@ class SandboxSizeParameters
         return new self();
     }
 
-    public static function fromArray(array $data): self
+    public static function fromResponseData(array $data): static
     {
         $instance = new self();
         $instance->setStorageSizeGB($data['storageSize_GB'] ?? null);

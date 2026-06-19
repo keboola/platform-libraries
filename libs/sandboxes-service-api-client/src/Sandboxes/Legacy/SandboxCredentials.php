@@ -5,8 +5,9 @@ declare(strict_types=1);
 namespace Keboola\SandboxesServiceApiClient\Sandboxes\Legacy;
 
 use InvalidArgumentException;
+use Keboola\ApiClientBase\ResponseModelInterface;
 
-class SandboxCredentials
+final class SandboxCredentials implements ResponseModelInterface
 {
     private string $type;
     private string $projectId;
@@ -32,7 +33,7 @@ class SandboxCredentials
         'private_key',
     ];
 
-    public static function fromArray(array $data): self
+    public static function fromResponseData(array $data): static
     {
         self::checkRequiredKeys($data);
 

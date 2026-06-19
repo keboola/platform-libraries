@@ -10,14 +10,14 @@ use PHPUnit\Framework\TestCase;
 
 class PersistentStorageTest extends TestCase
 {
-    /** @dataProvider fromArrayProvider */
-    public function testFromArray(array $data, PersistentStorage $expectedValue): void
+    /** @dataProvider fromResponseDataProvider */
+    public function testFromResponseData(array $data, PersistentStorage $expectedValue): void
     {
-        $persistentStorage = PersistentStorage::fromArray($data);
+        $persistentStorage = PersistentStorage::fromResponseData($data);
         self::assertEquals($expectedValue, $persistentStorage);
     }
 
-    public function fromArrayProvider(): Generator
+    public function fromResponseDataProvider(): Generator
     {
         yield 'empty' => [
             [],

@@ -4,9 +4,10 @@ declare(strict_types=1);
 
 namespace Keboola\SandboxesServiceApiClient\Sandboxes\Legacy;
 
-use Keboola\SandboxesServiceApiClient\Exception\ClientException;
+use Keboola\ApiClientBase\Exception\ClientException;
+use Keboola\ApiClientBase\ResponseModelInterface;
 
-class Sandbox
+final class Sandbox implements ResponseModelInterface
 {
     public const DEFAULT_EXPIRATION_DAYS = 7;
     protected const REQUIRED_PROPERTIES = ['id', 'projectId', 'tokenId', 'type', 'active', 'createdTimestamp'];
@@ -155,63 +156,63 @@ class Sandbox
 
     private ?SandboxCredentials $credentials = null;
 
-    public static function fromArray(array $in): self
+    public static function fromResponseData(array $data): static
     {
         foreach (self::REQUIRED_PROPERTIES as $property) {
-            if (!isset($in[$property])) {
+            if (!isset($data[$property])) {
                 throw new ClientException("Property $property is missing from API response");
             }
         }
 
-        $sandbox = new Sandbox();
-        $sandbox->setId((string) $in['id']);
-        $sandbox->setComponentId((string) $in['componentId']);
-        $sandbox->setProjectId((string) $in['projectId']);
-        $sandbox->setTokenId((string) $in['tokenId']);
-        $sandbox->setType($in['type']);
-        $sandbox->setActive($in['active'] ?? false);
-        $sandbox->setShared($in['shared'] ?? false);
-        $sandbox->setCreatedTimestamp($in['createdTimestamp']);
+        $sandbox = new self();
+        $sandbox->setId((string) $data['id']);
+        $sandbox->setComponentId((string) $data['componentId']);
+        $sandbox->setProjectId((string) $data['projectId']);
+        $sandbox->setTokenId((string) $data['tokenId']);
+        $sandbox->setType($data['type']);
+        $sandbox->setActive($data['active'] ?? false);
+        $sandbox->setShared($data['shared'] ?? false);
+        $sandbox->setCreatedTimestamp($data['createdTimestamp']);
 
-        $sandbox->setBranchId(isset($in['branchId']) ? (string) $in['branchId'] : null);
-        $sandbox->setConfigurationId(isset($in['configurationId']) ? (string) $in['configurationId'] : '');
-        $sandbox->setConfigurationVersion((string) $in['configurationVersion']);
-        $sandbox->setPhysicalId($in['physicalId'] ?? '');
-        $sandbox->setSize($in['size'] ?? '');
+        $sandbox->setBranchId(isset($data['branchId']) ? (string) $data['branchId'] : null);
+        $sandbox->setConfigurationId(isset($data['configurationId']) ? (string) $data['configurationId'] : '');
+        $sandbox->setConfigurationVersion((string) $data['configurationVersion']);
+        $sandbox->setPhysicalId($data['physicalId'] ?? '');
+        $sandbox->setSize($data['size'] ?? '');
         $sandbox->setSizeParameters(
-            isset($in['sizeParameters']) ?
-                SandboxSizeParameters::fromArray($in['sizeParameters']) :
+            isset($data['sizeParameters']) ?
+                SandboxSizeParameters::fromResponseData($data['sizeParameters']) :
                 null,
         );
-        $sandbox->setUser($in['user'] ?? '');
-        $sandbox->setHost($in['host'] ?? '');
-        $sandbox->setUrl($in['url'] ?? '');
-        $sandbox->setImageVersion($in['imageVersion'] ?? '');
-        $sandbox->setStagingWorkspaceId(isset($in['stagingWorkspaceId']) ? (string) $in['stagingWorkspaceId'] : '');
-        $sandbox->setStagingWorkspaceType($in['stagingWorkspaceType'] ?? '');
-        $sandbox->setWorkspaceDetails($in['workspaceDetails'] ?? []);
-        $sandbox->setAutosaveTokenId(isset($in['autosaveTokenId']) ? (string) $in['autosaveTokenId'] : '');
-        $sandbox->setPackages($in['packages'] ?? []);
-        $sandbox->setUpdatedTimestamp($in['updatedTimestamp'] ?? '');
-        $sandbox->setExpirationTimestamp($in['expirationTimestamp'] ?? '');
-        $sandbox->setLastAutosaveTimestamp($in['lastAutosaveTimestamp'] ?? '');
-        $sandbox->setExpirationAfterHours($in['expirationAfterHours'] ?? 0);
-        $sandbox->setAutoSuspendAfterSeconds($in['autoSuspendAfterSeconds'] ?? 0);
-        $sandbox->setDeletedTimestamp($in['deletedTimestamp'] ?? '');
+        $sandbox->setUser($data['user'] ?? '');
+        $sandbox->setHost($data['host'] ?? '');
+        $sandbox->setUrl($data['url'] ?? '');
+        $sandbox->setImageVersion($data['imageVersion'] ?? '');
+        $sandbox->setStagingWorkspaceId(isset($data['stagingWorkspaceId']) ? (string) $data['stagingWorkspaceId'] : '');
+        $sandbox->setStagingWorkspaceType($data['stagingWorkspaceType'] ?? '');
+        $sandbox->setWorkspaceDetails($data['workspaceDetails'] ?? []);
+        $sandbox->setAutosaveTokenId(isset($data['autosaveTokenId']) ? (string) $data['autosaveTokenId'] : '');
+        $sandbox->setPackages($data['packages'] ?? []);
+        $sandbox->setUpdatedTimestamp($data['updatedTimestamp'] ?? '');
+        $sandbox->setExpirationTimestamp($data['expirationTimestamp'] ?? '');
+        $sandbox->setLastAutosaveTimestamp($data['lastAutosaveTimestamp'] ?? '');
+        $sandbox->setExpirationAfterHours($data['expirationAfterHours'] ?? 0);
+        $sandbox->setAutoSuspendAfterSeconds($data['autoSuspendAfterSeconds'] ?? 0);
+        $sandbox->setDeletedTimestamp($data['deletedTimestamp'] ?? '');
 
-        $sandbox->setDatabricksSparkVersion($in['databricks']['sparkVersion'] ?? '');
-        $sandbox->setDatabricksNodeType($in['databricks']['nodeType'] ?? '');
-        $sandbox->setDatabricksNumberOfNodes($in['databricks']['numberOfNodes'] ?? 0);
-        $sandbox->setDatabricksClusterId($in['databricks']['clusterId'] ?? '');
+        $sandbox->setDatabricksSparkVersion($data['databricks']['sparkVersion'] ?? '');
+        $sandbox->setDatabricksNodeType($data['databricks']['nodeType'] ?? '');
+        $sandbox->setDatabricksNumberOfNodes($data['databricks']['numberOfNodes'] ?? 0);
+        $sandbox->setDatabricksClusterId($data['databricks']['clusterId'] ?? '');
 
-        $sandbox->persistentStoragePvcName = $in['persistentStorage']['pvcName'] ?? null;
-        $sandbox->persistentStorageK8sManifest = $in['persistentStorage']['k8sManifest'] ?? null;
-        $sandbox->persistentStorageReady = isset($in['persistentStorage']['ready'])
-            ? (bool) $in['persistentStorage']['ready']
+        $sandbox->persistentStoragePvcName = $data['persistentStorage']['pvcName'] ?? null;
+        $sandbox->persistentStorageK8sManifest = $data['persistentStorage']['k8sManifest'] ?? null;
+        $sandbox->persistentStorageReady = isset($data['persistentStorage']['ready'])
+            ? (bool) $data['persistentStorage']['ready']
             : null;
-        $sandbox->persistentStorageK8sStorageClassName = $in['persistentStorage']['k8sStorageClassName'] ?? null;
+        $sandbox->persistentStorageK8sStorageClassName = $data['persistentStorage']['k8sStorageClassName'] ?? null;
 
-        self::setPasswordOrCredentials($in, $sandbox);
+        self::setPasswordOrCredentials($data, $sandbox);
 
         return $sandbox;
     }
@@ -225,7 +226,7 @@ class Sandbox
         if (isset($in['password'])) {
             $sandbox->setPassword($in['password']);
         } elseif (isset($in['credentials'])) {
-            $sandbox->setCredentials(SandboxCredentials::fromArray($in['credentials']));
+            $sandbox->setCredentials(SandboxCredentials::fromResponseData($in['credentials']));
         } else {
             $sandbox->setPassword('');
         }

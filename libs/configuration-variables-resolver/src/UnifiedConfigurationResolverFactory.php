@@ -6,7 +6,6 @@ namespace Keboola\ConfigurationVariablesResolver;
 
 use Keboola\ServiceClient\ServiceClient;
 use Keboola\StorageApiBranch\ClientWrapper;
-use Keboola\VaultApiClient\ApiClientConfiguration as VaultVariablesApiClientConfiguration;
 use Keboola\VaultApiClient\Variables\VariablesApiClient;
 use Psr\Log\LoggerInterface;
 
@@ -30,10 +29,13 @@ class UnifiedConfigurationResolverFactory
         $token = $clientWrapper->getToken()->getTokenValue();
         assert($token !== '');
 
+        $config = $this->vaultVariablesApiClientConfiguration;
         $vaultVariablesApiClient = new VariablesApiClient(
             baseUrl: $this->serviceClient->getVaultUrl(),
             token: $token,
-            configuration: $this->vaultVariablesApiClientConfiguration,
+            logger: $this->logger,
+            backoffMaxTries: $config->backoffMaxTries,
+            userAgent: 'Keboola Vault PHP Client' . ($config->userAgent !== null ? ' - ' . $config->userAgent : ''),
         );
 
         $sharedCodeResolver = new SharedCodeResolver($clientWrapper, $this->logger);

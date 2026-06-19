@@ -25,12 +25,12 @@ class SandboxesApiClient
 
     /**
      * @param non-empty-string $baseUrl
-     * @param non-empty-string $token
+     * @param non-empty-string $storageToken
      * @param int<0, max> $backoffMaxTries
      */
     public function __construct(
         string $baseUrl,
-        string $token,
+        string $storageToken,
         ?LoggerInterface $logger = null,
         int $backoffMaxTries = ApiClientOptions::DEFAULT_BACKOFF_MAX_TRIES,
         int $connectTimeout = ApiClientOptions::DEFAULT_CONNECT_TIMEOUT,
@@ -40,7 +40,7 @@ class SandboxesApiClient
     ) {
         $this->apiClient = new ApiClient(
             $baseUrl,
-            new StorageApiTokenAuthenticator($token),
+            new StorageApiTokenAuthenticator($storageToken),
             new ApiClientOptions(
                 userAgent: $userAgent,
                 backoffMaxTries: $backoffMaxTries,

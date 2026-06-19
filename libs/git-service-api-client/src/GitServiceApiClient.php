@@ -4,29 +4,65 @@ declare(strict_types=1);
 
 namespace Keboola\GitServiceApiClient;
 
+use Closure;
+use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Psr7\Request;
+use Keboola\ApiClientBase\ApiClient;
+use Keboola\ApiClientBase\ApiClientOptions;
+use Keboola\ApiClientBase\Auth\KeboolaServiceAccountAuthenticator;
+use Keboola\ApiClientBase\Auth\ManageApiTokenAuthenticator;
+use Keboola\ApiClientBase\Json;
+use Keboola\GitServiceApiClient\Exception\GitServiceClientException;
 use Keboola\GitServiceApiClient\Model\CreatedCredential;
 use Keboola\GitServiceApiClient\Model\Credential;
 use Keboola\GitServiceApiClient\Model\CredentialListWrapper;
 use Keboola\GitServiceApiClient\Model\Repository;
+use Psr\Log\LoggerInterface;
 
 class GitServiceApiClient
 {
+    private const FALLBACK_USER_AGENT = 'Keboola Git Service PHP Client';
     private const JSON_HEADERS = ['Content-Type' => 'application/json'];
 
     private ApiClient $apiClient;
 
     /**
      * @param non-empty-string $baseUrl
+     * @param non-empty-string|null $manageToken
+     * @param int<0, max> $backoffMaxTries
      *
-     * Authentication and all other client options come from
-     * {@see ApiClientConfiguration}. See {@see ApiClient::__construct()}.
+     * When $manageToken is provided, authenticates with X-KBC-ManageApiToken.
+     * When null (default), authenticates via the projected Kubernetes ServiceAccount
+     * token at the default path — see {@see KeboolaServiceAccountAuthenticator}.
      */
     public function __construct(
         string $baseUrl,
-        ?ApiClientConfiguration $configuration = null,
+        ?string $manageToken = null,
+        ?LoggerInterface $logger = null,
+        int $backoffMaxTries = ApiClientOptions::DEFAULT_BACKOFF_MAX_TRIES,
+        int $connectTimeout = ApiClientOptions::DEFAULT_CONNECT_TIMEOUT,
+        int $requestTimeout = ApiClientOptions::DEFAULT_REQUEST_TIMEOUT,
+        string $userAgent = self::FALLBACK_USER_AGENT,
+        null|Closure|HandlerStack $requestHandler = null,
     ) {
-        $this->apiClient = new ApiClient($baseUrl, $configuration);
+        $authenticator = $manageToken !== null
+            ? new ManageApiTokenAuthenticator($manageToken)
+            : new KeboolaServiceAccountAuthenticator();
+
+        $this->apiClient = new ApiClient(
+            $baseUrl,
+            $authenticator,
+            new ApiClientOptions(
+                userAgent: $userAgent,
+                backoffMaxTries: $backoffMaxTries,
+                connectTimeout: $connectTimeout,
+                requestTimeout: $requestTimeout,
+                requestHandler: $requestHandler,
+                logger: $logger,
+            ),
+            errorMessageResolver: new GitServiceErrorMessageResolver(),
+            exceptionClass: GitServiceClientException::class,
+        );
     }
 
     public function createRepository(string $name): Repository

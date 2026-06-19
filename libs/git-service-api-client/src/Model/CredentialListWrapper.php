@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\GitServiceApiClient\Model;
 
-use Keboola\GitServiceApiClient\ResponseModelInterface;
+use Keboola\ApiClientBase\ResponseModelInterface;
 use Webmozart\Assert\Assert;
 
 /**

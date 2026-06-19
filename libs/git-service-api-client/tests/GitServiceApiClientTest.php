@@ -7,8 +7,6 @@ namespace Keboola\GitServiceApiClient\Tests;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Psr7\Response;
-use Keboola\GitServiceApiClient\ApiClientConfiguration;
-use Keboola\GitServiceApiClient\Auth\ManageApiTokenAuth;
 use Keboola\GitServiceApiClient\CredentialType;
 use Keboola\GitServiceApiClient\GitServiceApiClient;
 use Keboola\GitServiceApiClient\KeyPermission;
@@ -22,10 +20,8 @@ class GitServiceApiClientTest extends TestCase
         $stack = HandlerStack::create($mock);
         return new GitServiceApiClient(
             'https://example.test',
-            new ApiClientConfiguration(
-                auth: new ManageApiTokenAuth('token'),
-                requestHandler: $stack,
-            ),
+            manageToken: 'token',
+            requestHandler: $stack,
         );
     }
 

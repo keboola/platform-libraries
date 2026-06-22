@@ -57,11 +57,11 @@ class TestSatisfyer
     ): string {
         $bucketId = self::getBucketIdByDisplayName($clientWrapper, $bucketName, $stage);
         if ($bucketId !== null) {
-            $tables = $clientWrapper->getTableAndFileStorageClient()->listTables($bucketId, ['include' => '']);
-            foreach ($tables as $table) {
-                $clientWrapper->getTableAndFileStorageClient()->dropTable($table['id']);
-            }
-            return $bucketId;
+            // Force-drop and recreate the bucket instead of emptying it table by table. Dropping the bucket
+            // drops the whole backend schema, which also removes backend objects orphaned by an interrupted
+            // run (e.g. a build cancelled mid-test): those are not tracked as Storage tables, so emptying
+            // would leave them behind and the next table creation would fail with "object already exists".
+            $clientWrapper->getTableAndFileStorageClient()->dropBucket($bucketId, ['force' => true]);
         }
         return $clientWrapper->getTableAndFileStorageClient()->createBucket(
             name: $bucketName,

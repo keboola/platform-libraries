@@ -2276,10 +2276,11 @@ CSV;
             $this->fail('Must throw exception');
         } catch (InvalidOutputException $e) {
             // Non-typed tables are created through the create-table-definition endpoint, which reports an
-            // invalid (too long) column name with this message.
+            // invalid (too long) column name with this message. The message embeds the raw (still
+            // JSON-encoded) API response, so assert only on the unambiguous, quote-free parts.
+            $this->assertStringContainsString('Invalid column name', $e->getMessage());
             $this->assertStringContainsString(
-                'Invalid column name: '.
-                '"LongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongName"',
+                'LongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongName',
                 $e->getMessage(),
             );
         }

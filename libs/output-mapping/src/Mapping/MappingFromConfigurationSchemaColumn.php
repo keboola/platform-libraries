@@ -6,6 +6,8 @@ namespace Keboola\OutputMapping\Mapping;
 
 class MappingFromConfigurationSchemaColumn
 {
+    private const DESCRIPTION_METADATA_KEY = 'KBC.description';
+
     public function __construct(private readonly array $mapping)
     {
     }
@@ -43,12 +45,22 @@ class MappingFromConfigurationSchemaColumn
         return !empty($this->getMetadata());
     }
 
+    /**
+     * Column metadata without the description. Description is applied through the table-definition
+     * endpoint (see TableDefinitionDescription), not stored as KBC.description metadata.
+     */
     public function getMetadata(): array
     {
         $metadata = $this->mapping['metadata'] ?? [];
-        if (isset($this->mapping['description'])) {
-            $metadata['KBC.description'] = $this->mapping['description'];
-        }
+        unset($metadata[self::DESCRIPTION_METADATA_KEY]);
         return $metadata;
+    }
+
+    public function getDescription(): ?string
+    {
+        if (isset($this->mapping['description'])) {
+            return $this->mapping['description'];
+        }
+        return $this->mapping['metadata'][self::DESCRIPTION_METADATA_KEY] ?? null;
     }
 }

@@ -18,6 +18,8 @@ class SchemaColumnsMetadataTest extends TestCase
 
     public function applyDataProvider(): Generator
     {
+        // col2 carries only a description which is applied through the table-definition endpoint,
+        // so it must NOT be posted as column metadata here.
         yield 'load at once' => [
             'bulkSize' => 10,
             'expectedApiCalls' => 1,
@@ -35,11 +37,11 @@ class SchemaColumnsMetadataTest extends TestCase
                             'value' => 'val2',
                         ],
                     ],
-                    'col2' => [
+                    'col3' => [
                         [
-                            'columnName' => 'col2',
-                            'key' => 'KBC.description',
-                            'value' => 'col2 description',
+                            'columnName' => 'col3',
+                            'key' => 'key3',
+                            'value' => 'val3',
                         ],
                     ],
                 ],
@@ -65,11 +67,11 @@ class SchemaColumnsMetadataTest extends TestCase
                     ],
                 ],
                 [
-                    'col2' => [
+                    'col3' => [
                         [
-                            'columnName' => 'col2',
-                            'key' => 'KBC.description',
-                            'value' => 'col2 description',
+                            'columnName' => 'col3',
+                            'key' => 'key3',
+                            'value' => 'val3',
                         ],
                     ],
                 ],
@@ -115,6 +117,9 @@ class SchemaColumnsMetadataTest extends TestCase
             ]),
             new MappingFromConfigurationSchemaColumn([
                 'name' => 'col3',
+                'metadata' => [
+                    'key3' => 'val3',
+                ],
             ]),
         ];
 

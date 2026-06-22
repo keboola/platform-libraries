@@ -92,9 +92,60 @@ class MappingFromProcessedConfigurationTest extends TestCase
         self::assertEquals([
             'key1' => 'val1',
             'key2' => 'val2',
-            'KBC.description' => 'table desc',
         ], $mapping->getTableMetadata());
         self::assertTrue($mapping->hasTableMetadata());
+        self::assertSame('table desc', $mapping->getTableDescription());
+    }
+
+    public function testTableDescriptionFromMetadataKey(): void
+    {
+        $mapping = [
+            'destination' => 'in.c-main.table',
+            'delimiter' => ',',
+            'enclosure' => '"',
+            'table_metadata' => [
+                'key1' => 'val1',
+                'KBC.description' => 'table desc',
+            ],
+        ];
+
+        $physicalDataWithManifest = $this->createMock(MappingFromRawConfigurationAndPhysicalDataWithManifest::class);
+        $mapping = new MappingFromProcessedConfiguration($mapping, $physicalDataWithManifest);
+
+        self::assertEquals(['key1' => 'val1'], $mapping->getTableMetadata());
+        self::assertSame('table desc', $mapping->getTableDescription());
+    }
+
+    public function testColumnDescriptionsFromColumnMetadata(): void
+    {
+        $mapping = [
+            'destination' => 'in.c-main.table',
+            'delimiter' => ',',
+            'enclosure' => '"',
+            'columns' => ['col1', 'col2'],
+            'column_metadata' => [
+                'col1' => [
+                    ['key' => 'KBC.datatype.type', 'value' => 'INT'],
+                    ['key' => 'KBC.description', 'value' => 'col1 desc'],
+                ],
+                'col2' => [
+                    ['key' => 'KBC.datatype.type', 'value' => 'INT'],
+                ],
+            ],
+        ];
+
+        $physicalDataWithManifest = $this->createMock(MappingFromRawConfigurationAndPhysicalDataWithManifest::class);
+        $mapping = new MappingFromProcessedConfiguration($mapping, $physicalDataWithManifest);
+
+        self::assertSame(['col1' => 'col1 desc'], $mapping->getColumnDescriptions());
+
+        // KBC.description must be stripped from the column metadata
+        $metadataList = $mapping->getColumnMetadata();
+        self::assertCount(2, $metadataList);
+        self::assertSame(
+            [['key' => 'KBC.datatype.type', 'value' => 'INT']],
+            $metadataList[0]->getMetadata(),
+        );
     }
 
     public function testHasSchemaConfiguration(): void

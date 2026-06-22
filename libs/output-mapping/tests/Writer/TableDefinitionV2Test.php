@@ -697,21 +697,29 @@ class TableDefinitionV2Test extends AbstractTestCase
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
 
+        // descriptions are stored as first-class table-definition fields, not as KBC.description metadata
+        $tableDetails = $this->clientWrapper->getTableAndFileStorageClient()->getTable($tableId);
+        self::assertSame('table description', $tableDetails['description']);
+
+        $columnsByName = [];
+        foreach ($tableDetails['definition']['columns'] as $column) {
+            $columnsByName[$column['name']] = $column;
+        }
+        self::assertNull($columnsByName['Id']['description'] ?? null);
+        self::assertSame('name description', $columnsByName['Name']['description'] ?? null);
+        self::assertSame('foo description', $columnsByName['foo']['description'] ?? null);
+
         $metadataApi = new Metadata($this->clientWrapper->getTableAndFileStorageClient());
 
-        // Table has only description
+        // description is no longer written as component-provided KBC.description metadata
         $tableMetadata = $metadataApi->listTableMetadata($tableId);
-        $filteredTableMetadata = array_filter(
+        $tableDescriptionMetadata = array_filter(
             $tableMetadata,
-            fn($v) => in_array($v['key'], ['KBC.description']),
+            fn($v) => $v['key'] === 'KBC.description' && $v['provider'] === 'foo',
         );
-        self::assertCount(1, $filteredTableMetadata);
-        self::assertEquals(
-            ['KBC.description' => 'table description'],
-            $this->getMetadataValues($filteredTableMetadata),
-        );
+        self::assertCount(0, $tableDescriptionMetadata);
 
-        // Id column has only metadata
+        // Id column keeps its (non-description) metadata
         $columnIdMetadata = $metadataApi->listColumnMetadata($tableId . '.Id');
         $filteredColumnIdMetadata = array_filter(
             $columnIdMetadata,
@@ -726,30 +734,15 @@ class TableDefinitionV2Test extends AbstractTestCase
             $this->getMetadataValues($filteredColumnIdMetadata),
         );
 
-        // Name column has only description
-        $columnNameMetadata = $metadataApi->listColumnMetadata($tableId . '.Name');
-        $filteredColumnNameMetadata = array_filter(
-            $columnNameMetadata,
-            fn($v) => in_array($v['key'], ['KBC.description']),
-        );
-        self::assertCount(1, $filteredColumnNameMetadata);
-        self::assertEquals(
-            ['KBC.description' => 'name description'],
-            $this->getMetadataValues($filteredColumnNameMetadata),
-        );
-
-        // foo column has metadata and description
+        // foo column keeps its (non-description) metadata
         $columnFooMetadata = $metadataApi->listColumnMetadata($tableId . '.foo');
         $filteredColumnFooMetadata = array_filter(
             $columnFooMetadata,
-            fn($v) => in_array($v['key'], ['key3', 'KBC.description']),
+            fn($v) => in_array($v['key'], ['key3']),
         );
-        self::assertCount(2, $filteredColumnFooMetadata);
+        self::assertCount(1, $filteredColumnFooMetadata);
         self::assertEquals(
-            [
-                'key3' => 'value3',
-                'KBC.description' => 'foo description',
-            ],
+            ['key3' => 'value3'],
             $this->getMetadataValues($filteredColumnFooMetadata),
         );
     }

@@ -12,6 +12,8 @@ use Keboola\OutputMapping\Writer\Table\Source\SourceType;
 
 class MappingFromProcessedConfiguration
 {
+    private const DESCRIPTION_METADATA_KEY = 'KBC.description';
+
     private MappingDestination $destination;
     private MappingFromRawConfigurationAndPhysicalDataWithManifest $source;
     private array $mapping;
@@ -140,10 +142,53 @@ class MappingFromProcessedConfiguration
 
         $return = [];
         foreach ($columnMetadataFromConfiguration as $columnName => $metadata) {
+            // description is applied through the table-definition endpoint, not as KBC.description metadata
+            $metadata = array_values(array_filter(
+                $metadata,
+                fn(array $item): bool => ($item['key'] ?? null) !== self::DESCRIPTION_METADATA_KEY,
+            ));
+            if (!$metadata) {
+                continue;
+            }
             $return[] = new MappingColumnMetadata((string) $columnName, $metadata);
         }
 
         return $return;
+    }
+
+    /**
+     * Column descriptions keyed by column name, sourced from the schema or the column metadata.
+     * These are applied through the table-definition endpoint instead of KBC.description metadata.
+     *
+     * @return array<string, string>
+     */
+    public function getColumnDescriptions(): array
+    {
+        $result = [];
+
+        $schema = $this->getSchema();
+        if ($schema !== null) {
+            foreach ($schema as $column) {
+                $description = $column->getDescription();
+                if ($description !== null) {
+                    $result[$column->getName()] = $description;
+                }
+            }
+            return $result;
+        }
+
+        $columnMetadata = $this->mapping['column_metadata'] ?
+            RestrictedColumnsHelper::removeRestrictedColumnsFromColumnMetadata($this->mapping['column_metadata']) :
+            [];
+        foreach ($columnMetadata as $columnName => $metadata) {
+            foreach ($metadata as $item) {
+                if (($item['key'] ?? null) === self::DESCRIPTION_METADATA_KEY) {
+                    $result[(string) $columnName] = (string) $item['value'];
+                }
+            }
+        }
+
+        return $result;
     }
 
     public function getPathName(): string
@@ -184,10 +229,17 @@ class MappingFromProcessedConfiguration
     public function getTableMetadata(): array
     {
         $metadata = $this->mapping['table_metadata'] ?? [];
-        if (isset($this->mapping['description'])) {
-            $metadata['KBC.description'] = $this->mapping['description'];
-        }
+        // description is applied through the table-definition endpoint, not as KBC.description metadata
+        unset($metadata[self::DESCRIPTION_METADATA_KEY]);
         return $metadata;
+    }
+
+    public function getTableDescription(): ?string
+    {
+        if (isset($this->mapping['description'])) {
+            return $this->mapping['description'];
+        }
+        return $this->mapping['table_metadata'][self::DESCRIPTION_METADATA_KEY] ?? null;
     }
 
     /** @return null|MappingFromConfigurationSchemaColumn[] */

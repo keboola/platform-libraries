@@ -54,9 +54,32 @@ class MappingFromConfigurationSchemaColumnTest extends TestCase
         self::assertSame(
             [
                 'KBC.datatype.type' => 'STRING',
-                'KBC.description' => 'Some description of the newColumn.',
             ],
             $schemColumn->getMetadata(),
         );
+        self::assertSame('Some description of the newColumn.', $schemColumn->getDescription());
+    }
+
+    public function testDescriptionFromMetadataKey(): void
+    {
+        $schemColumn = new MappingFromConfigurationSchemaColumn([
+            'name' => 'newColumn',
+            'metadata' => [
+                'KBC.datatype.type' => 'STRING',
+                'KBC.description' => 'desc from metadata',
+            ],
+        ]);
+
+        self::assertSame(['KBC.datatype.type' => 'STRING'], $schemColumn->getMetadata());
+        self::assertSame('desc from metadata', $schemColumn->getDescription());
+    }
+
+    public function testNoDescription(): void
+    {
+        $schemColumn = new MappingFromConfigurationSchemaColumn([
+            'name' => 'newColumn',
+        ]);
+
+        self::assertNull($schemColumn->getDescription());
     }
 }

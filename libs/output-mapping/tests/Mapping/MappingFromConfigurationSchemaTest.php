@@ -71,7 +71,7 @@ class MappingFromConfigurationSchemaTest extends TestCase
         self::assertEquals([
             'key1' => 'value1',
             'key2' => 'value2',
-            'KBC.description' => 'col1 description',
         ], $mappingSchema->getMetadata());
+        self::assertSame('col1 description', $mappingSchema->getDescription());
     }
 }

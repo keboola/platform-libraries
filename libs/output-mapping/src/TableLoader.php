@@ -17,6 +17,7 @@ use Keboola\OutputMapping\Storage\TableChangesStore;
 use Keboola\OutputMapping\Storage\TableStructureValidatorFactory;
 use Keboola\OutputMapping\Writer\Helper\Path;
 use Keboola\OutputMapping\Writer\Table\BranchResolver;
+use Keboola\OutputMapping\Writer\Table\DescriptionSetter;
 use Keboola\OutputMapping\Writer\Table\MetadataSetter;
 use Keboola\OutputMapping\Writer\Table\SlicerDecider;
 use Keboola\OutputMapping\Writer\Table\Strategy\SqlWorkspaceTableStrategy;
@@ -151,6 +152,12 @@ class TableLoader
                 $processedSource,
                 $storageSources,
                 $systemMetadata,
+            );
+
+            $descriptionSetter = new DescriptionSetter();
+            $loadTableTask = $descriptionSetter->setDescription(
+                $loadTableTask,
+                $processedSource,
             );
 
             $loadTableTasks[] = $loadTableTask;

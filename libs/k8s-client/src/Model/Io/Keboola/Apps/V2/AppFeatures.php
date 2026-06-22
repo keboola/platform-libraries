@@ -45,4 +45,13 @@ class AppFeatures extends AbstractModel
      * @var WorkspaceSpec
      */
     public $workspace = null;
+
+    /**
+     * ManagedGitRepo, when set, signals that the operator should mint per-AppRun
+     * ephemeral git credentials (HTTP token or SSH key) and overlay them into the
+     * rendered config.json Secret. Requires mountConfig to be set.
+     *
+     * @var ManagedGitRepoSpec|null
+     */
+    public $managedGitRepo = null;
 }

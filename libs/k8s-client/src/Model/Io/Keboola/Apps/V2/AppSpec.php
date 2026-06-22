@@ -91,13 +91,4 @@ class AppSpec extends AbstractModel
      * @var AppDevModeSpec|null
      */
     public $devMode = null;
-
-    /**
-     * ManagedGitRepo, when set, signals that the operator should mint per-AppRun
-     * ephemeral git credentials (HTTP token or SSH key) and overlay them into the
-     * rendered config.json Secret. Requires mountConfig to be set.
-     *
-     * @var ManagedGitRepoSpec|null
-     */
-    public $managedGitRepo = null;
 }

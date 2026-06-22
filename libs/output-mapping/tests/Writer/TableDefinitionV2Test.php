@@ -697,30 +697,31 @@ class TableDefinitionV2Test extends AbstractTestCase
         $jobIds = $tableQueue->waitForAll();
         self::assertCount(1, $jobIds);
 
-        // descriptions are stored as first-class table-definition fields, not as KBC.description metadata
+        // The table description lands on the native first-class table-definition field
+        // (definition.description), not as a top-level getTable field.
         $tableDetails = $this->clientWrapper->getTableAndFileStorageClient()->getTable($tableId);
-        self::assertSame('table description', $tableDetails['description']);
-
-        $columnsByName = [];
-        foreach ($tableDetails['definition']['columns'] as $column) {
-            $columnsByName[$column['name']] = $column;
-        }
-        self::assertNull($columnsByName['Id']['description'] ?? null);
-        self::assertSame('name description', $columnsByName['Name']['description'] ?? null);
-        self::assertSame('foo description', $columnsByName['foo']['description'] ?? null);
+        self::assertSame('table description', $tableDetails['definition']['description']);
 
         $metadataApi = new Metadata($this->clientWrapper->getTableAndFileStorageClient());
 
-        // description is no longer written as component-provided KBC.description metadata
+        // Descriptions are also recorded as component-provided KBC.description metadata for provenance (so
+        // they are attributable to the component) and as the read-precedence source for column descriptions
+        // (the native column-definition description is only persisted for natively typed columns, not for the
+        // base-type/hint columns used here).
         $tableMetadata = $metadataApi->listTableMetadata($tableId);
-        $tableDescriptionMetadata = array_filter(
+        $tableDescriptionMetadata = array_values(array_filter(
             $tableMetadata,
             fn($v) => $v['key'] === 'KBC.description' && $v['provider'] === 'foo',
-        );
-        self::assertCount(0, $tableDescriptionMetadata);
+        ));
+        self::assertCount(1, $tableDescriptionMetadata);
+        self::assertSame('table description', $tableDescriptionMetadata[0]['value']);
 
-        // Id column keeps its (non-description) metadata
+        // Id column has no description and keeps its (non-description) metadata
         $columnIdMetadata = $metadataApi->listColumnMetadata($tableId . '.Id');
+        self::assertCount(
+            0,
+            array_filter($columnIdMetadata, fn($v) => $v['key'] === 'KBC.description'),
+        );
         $filteredColumnIdMetadata = array_filter(
             $columnIdMetadata,
             fn($v) => in_array($v['key'], ['key1', 'key2']),
@@ -734,8 +735,22 @@ class TableDefinitionV2Test extends AbstractTestCase
             $this->getMetadataValues($filteredColumnIdMetadata),
         );
 
-        // foo column keeps its (non-description) metadata
+        // Name column description is recorded as component-provided KBC.description metadata
+        $columnNameDescription = array_values(array_filter(
+            $metadataApi->listColumnMetadata($tableId . '.Name'),
+            fn($v) => $v['key'] === 'KBC.description' && $v['provider'] === 'foo',
+        ));
+        self::assertCount(1, $columnNameDescription);
+        self::assertSame('name description', $columnNameDescription[0]['value']);
+
+        // foo column records its description and keeps its (non-description) metadata
         $columnFooMetadata = $metadataApi->listColumnMetadata($tableId . '.foo');
+        $columnFooDescription = array_values(array_filter(
+            $columnFooMetadata,
+            fn($v) => $v['key'] === 'KBC.description' && $v['provider'] === 'foo',
+        ));
+        self::assertCount(1, $columnFooDescription);
+        self::assertSame('foo description', $columnFooDescription[0]['value']);
         $filteredColumnFooMetadata = array_filter(
             $columnFooMetadata,
             fn($v) => in_array($v['key'], ['key3']),

@@ -15,6 +15,7 @@ use Keboola\VaultApiClient\Variables\VariablesApiClient;
 use Monolog\Handler\TestHandler;
 use Monolog\Logger;
 use PHPUnit\Framework\TestCase;
+use ReflectionMethod;
 
 class VariablesApiClientTest extends TestCase
 {
@@ -388,21 +389,17 @@ class VariablesApiClientTest extends TestCase
 
     public function testDefaultBackoffMaxTriesIsUsed(): void
     {
-        // Default backoffMaxTries is 5, so 5 failures + 1 success = 6 requests.
-        $responses = array_fill(0, 5, new Response(500));
-        $responses[] = new Response(200);
+        // Asserted via the constructor default rather than exhausting 10 real exponential-backoff
+        // retries (~17 min); testBackoffMaxTriesIsForwardedFromOptions proves a value is wired
+        // through to actual retries.
+        $default = null;
+        foreach ((new ReflectionMethod(VariablesApiClient::class, '__construct'))->getParameters() as $parameter) {
+            if ($parameter->getName() === 'backoffMaxTries') {
+                $default = $parameter->getDefaultValue();
+            }
+        }
 
-        $requestHandler = self::createRequestHandler($requestsHistory, $responses);
-
-        $client = new VariablesApiClient(
-            self::BASE_URL,
-            self::API_TOKEN,
-            requestHandler: $requestHandler(...),
-        );
-
-        $client->deleteVariable('hash');
-
-        self::assertCount(6, $requestsHistory);
+        self::assertSame(10, $default);
     }
 
     public function testDefaultConnectTimeoutIsForwardedToGuzzle(): void

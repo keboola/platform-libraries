@@ -21,6 +21,7 @@ use Webmozart\Assert\Assert;
 class VariablesApiClient
 {
     private const FALLBACK_USER_AGENT = 'Keboola Vault PHP Client';
+    private const DEFAULT_BACKOFF_MAX_TRIES = 10;
 
     private ApiClient $apiClient;
 
@@ -33,7 +34,7 @@ class VariablesApiClient
         string $baseUrl,
         string $token,
         ?LoggerInterface $logger = null,
-        int $backoffMaxTries = ApiClientOptions::DEFAULT_BACKOFF_MAX_TRIES,
+        int $backoffMaxTries = self::DEFAULT_BACKOFF_MAX_TRIES,
         int $connectTimeout = ApiClientOptions::DEFAULT_CONNECT_TIMEOUT,
         int $requestTimeout = ApiClientOptions::DEFAULT_REQUEST_TIMEOUT,
         string $userAgent = self::FALLBACK_USER_AGENT,

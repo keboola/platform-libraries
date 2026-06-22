@@ -67,6 +67,11 @@ class StoragePreparer
             $destinationTableInfo = $this->getDestinationTableInfoIfExists(
                 $processedSource->getDestination()->getTableId(),
             );
+
+            if ($destinationTableInfo !== null) {
+                (new TableDescriptionUpdater($this->clientWrapper))
+                    ->updateDescriptions($destinationTableInfo, $processedSource);
+            }
         }
 
         return new MappingStorageSources($destinationBucket, $destinationTableInfo);

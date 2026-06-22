@@ -15,6 +15,22 @@ class TableInfo
         return $this->tableInfo['columns'] ?? [];
     }
 
+    /**
+     * Table-level metadata as returned by Storage (list of {key, value, provider, ...}).
+     */
+    public function getMetadata(): array
+    {
+        return $this->tableInfo['metadata'] ?? [];
+    }
+
+    /**
+     * Column-level metadata keyed by column name, each a list of {key, value, provider, ...}.
+     */
+    public function getColumnMetadata(): array
+    {
+        return $this->tableInfo['columnMetadata'] ?? [];
+    }
+
     public function getId(): string
     {
         return $this->tableInfo['id'];

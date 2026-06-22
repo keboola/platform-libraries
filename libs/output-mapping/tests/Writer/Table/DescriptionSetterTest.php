@@ -21,7 +21,7 @@ class DescriptionSetterTest extends TestCase
         return new SystemMetadata(['componentId' => 'keboola.my-component']);
     }
 
-    public function testWritesComponentMetadataForExistingTable(): void
+    public function testWritesTableAndColumnDescriptionAsComponentMetadata(): void
     {
         $processedSource = $this->createMock(MappingFromProcessedConfiguration::class);
         $processedSource->method('getDestination')->willReturn(new MappingDestination('in.c-main.table'));
@@ -30,7 +30,6 @@ class DescriptionSetterTest extends TestCase
 
         $collected = [];
         $loadTask = $this->createMock(LoadTableTaskInterface::class);
-        $loadTask->method('isDescriptionInTableDefinition')->willReturn(false);
         $loadTask->expects(self::exactly(2))
             ->method('addMetadata')
             ->willReturnCallback(function (MetadataInterface $metadata) use (&$collected): void {
@@ -43,16 +42,17 @@ class DescriptionSetterTest extends TestCase
         self::assertInstanceOf(ColumnsMetadata::class, $collected[1]);
     }
 
-    public function testSkipsWhenDescriptionIsInTableDefinition(): void
+    public function testWritesOnlyTableDescription(): void
     {
         $processedSource = $this->createMock(MappingFromProcessedConfiguration::class);
         $processedSource->method('getDestination')->willReturn(new MappingDestination('in.c-main.table'));
         $processedSource->method('getTableDescription')->willReturn('table desc');
-        $processedSource->method('getColumnDescriptions')->willReturn(['col1' => 'col1 desc']);
+        $processedSource->method('getColumnDescriptions')->willReturn([]);
 
         $loadTask = $this->createMock(LoadTableTaskInterface::class);
-        $loadTask->method('isDescriptionInTableDefinition')->willReturn(true);
-        $loadTask->expects(self::never())->method('addMetadata');
+        $loadTask->expects(self::once())
+            ->method('addMetadata')
+            ->with(self::isInstanceOf(TableMetadata::class));
 
         (new DescriptionSetter())->setDescription($loadTask, $processedSource, $this->systemMetadata());
     }
@@ -65,7 +65,6 @@ class DescriptionSetterTest extends TestCase
         $processedSource->method('getColumnDescriptions')->willReturn([]);
 
         $loadTask = $this->createMock(LoadTableTaskInterface::class);
-        $loadTask->method('isDescriptionInTableDefinition')->willReturn(false);
         $loadTask->expects(self::never())->method('addMetadata');
 
         (new DescriptionSetter())->setDescription($loadTask, $processedSource, $this->systemMetadata());

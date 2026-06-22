@@ -12,15 +12,14 @@ use Keboola\OutputMapping\Mapping\MappingFromProcessedConfiguration;
 use Keboola\OutputMapping\SystemMetadata;
 
 /**
- * Stores table/column descriptions for tables that are NOT freshly created through a table definition
- * (i.e. pre-existing tables and non-typed tables created from a CSV header).
+ * Records table/column descriptions as `KBC.description` metadata under the component provider, so the
+ * description is attributed to the component - consistently with the other metadata written by output mapping
+ * (table_metadata, column_metadata) and regardless of whether the table is freshly created or already exists.
  *
- * For these the description is written as `KBC.description` metadata under the component provider. The
- * Storage read precedence (native first-class description set by a user in the UI takes priority over the
- * component-provided key/value metadata) ensures this never overwrites a description set manually by a user.
- *
- * Freshly created typed/schema tables carry the description directly in the table-definition request (native
- * field) and are skipped here - see LoadTableTaskCreator.
+ * Storage read precedence (the native first-class description, e.g. one set by a user in the UI, takes priority
+ * over the component-provided key/value metadata) ensures this never overwrites a description set manually by a
+ * user. Freshly created tables additionally carry the description directly in the table-definition request so it
+ * lands on the native field at creation time - see LoadTableTaskCreator.
  */
 class DescriptionSetter
 {
@@ -31,10 +30,6 @@ class DescriptionSetter
         MappingFromProcessedConfiguration $processedSource,
         SystemMetadata $systemMetadata,
     ): LoadTableTaskInterface {
-        if ($loadTask->isDescriptionInTableDefinition()) {
-            return $loadTask;
-        }
-
         $tableId = $processedSource->getDestination()->getTableId();
         $provider = (string) $systemMetadata->getSystemMetadata(SystemMetadata::SYSTEM_KEY_COMPONENT_ID);
 

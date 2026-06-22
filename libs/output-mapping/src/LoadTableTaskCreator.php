@@ -70,7 +70,6 @@ class LoadTableTaskCreator
             );
             $this->tableCreator->createTableDefinition($source->getDestination()->getBucketId(), $tableDefinition);
             $loadTask = new LoadTableTask($source->getDestination(), $loadOptions, true);
-            $loadTask->setDescriptionInTableDefinition(true);
         } elseif ($settings->hasNewNativeTypesFeature() &&
             !$storageSources->didTableExistBefore() &&
             $source->getSchema()
@@ -83,7 +82,6 @@ class LoadTableTaskCreator
             );
             $this->tableCreator->createTableDefinition($source->getDestination()->getBucketId(), $tableDefinition);
             $loadTask = new LoadTableTask($source->getDestination(), $loadOptions, true);
-            $loadTask->setDescriptionInTableDefinition(true);
         } elseif (!$storageSources->didTableExistBefore() && $source->hasColumns()) {
             // table does not exist and we know the columns from the manifest; create it through a table
             // definition without column types - a definition where no column carries a type/basetype is
@@ -106,7 +104,6 @@ class LoadTableTaskCreator
             );
             $this->tableCreator->createTableDefinition($source->getDestination()->getBucketId(), $tableDefinition);
             $loadTask = new LoadTableTask($source->getDestination(), $loadOptions, true);
-            $loadTask->setDescriptionInTableDefinition(true);
         } elseif ($storageSources->didTableExistBefore()) {
             // tabulka existuje takže nahráváme data
             $loadTask = new LoadTableTask($source->getDestination(), $loadOptions, false);

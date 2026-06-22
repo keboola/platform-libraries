@@ -17,7 +17,6 @@ abstract class AbstractLoadTableTask implements LoadTableTaskInterface
     protected string $storageJobId;
     /** @var MetadataInterface[] */
     protected array $metadata = [];
-    protected bool $descriptionInTableDefinition = false;
 
     public function __construct(MappingDestination $destination, array $options, bool $freshlyCreatedTable)
     {
@@ -41,16 +40,6 @@ abstract class AbstractLoadTableTask implements LoadTableTaskInterface
         foreach ($this->metadata as $metadataDefinition) {
             $metadataDefinition->apply($metadataApiClient);
         }
-    }
-
-    public function setDescriptionInTableDefinition(bool $descriptionInTableDefinition): void
-    {
-        $this->descriptionInTableDefinition = $descriptionInTableDefinition;
-    }
-
-    public function isDescriptionInTableDefinition(): bool
-    {
-        return $this->descriptionInTableDefinition;
     }
 
     public function getDestinationTableName(): string

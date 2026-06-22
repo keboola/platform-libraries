@@ -23,8 +23,4 @@ interface LoadTableTaskInterface
     public function isUsingFreshlyCreatedTable(): bool;
 
     public function addMetadata(MetadataInterface $metadataDefinition): void;
-
-    public function setDescriptionInTableDefinition(bool $descriptionInTableDefinition): void;
-
-    public function isDescriptionInTableDefinition(): bool;
 }

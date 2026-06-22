@@ -33,6 +33,36 @@ class TableDefinitionFromSchemaColumnTest extends TestCase
             ],
         ];
 
+        yield 'with description' => [
+            'column' => new MappingFromConfigurationSchemaColumn([
+                'name' => 'test_table_name',
+                'description' => 'column description',
+            ]),
+            'backend' => 'snowflake',
+            'expectedStructure' => [
+                'name' => 'test_table_name',
+                'description' => 'column description',
+            ],
+        ];
+
+        yield 'with basetype and description' => [
+            'column' => new MappingFromConfigurationSchemaColumn([
+                'name' => 'test_table_name',
+                'data_type' => [
+                    'base' => [
+                        'type' => 'STRING',
+                    ],
+                ],
+                'description' => 'column description',
+            ]),
+            'backend' => 'snowflake',
+            'expectedStructure' => [
+                'name' => 'test_table_name',
+                'description' => 'column description',
+                'basetype' => 'STRING',
+            ],
+        ];
+
         yield 'simple with basetype' => [
             'column' => new MappingFromConfigurationSchemaColumn([
                 'name' => 'test_table_name',

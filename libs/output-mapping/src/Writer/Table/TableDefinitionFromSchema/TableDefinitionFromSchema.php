@@ -13,8 +13,12 @@ class TableDefinitionFromSchema implements TableDefinitionInterface
 
     private array $columns = [];
 
-    public function __construct(readonly private string $tableName, array $columns, string $backend)
-    {
+    public function __construct(
+        readonly private string $tableName,
+        array $columns,
+        string $backend,
+        readonly private ?string $tableDescription = null,
+    ) {
         foreach ($columns as $column) {
             $this->addColumn($column, $backend);
         }
@@ -32,11 +36,15 @@ class TableDefinitionFromSchema implements TableDefinitionInterface
 
     public function getRequestData(): array
     {
-        return [
+        $requestData = [
             'name' => $this->tableName,
             'primaryKeysNames' => $this->primaryKeys,
             'columns' => $this->columns,
         ];
+        if ($this->tableDescription !== null) {
+            $requestData['description'] = $this->tableDescription;
+        }
+        return $requestData;
     }
 
     public function getTableName(): string

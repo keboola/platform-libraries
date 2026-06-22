@@ -80,4 +80,40 @@ class TableDefinitionTest extends TestCase
         $tableDefinition->setTableName('testTableName');
         self::assertSame('testTableName', $tableDefinition->getTableName());
     }
+
+    public function testRequestDataContainsTableAndColumnDescriptions(): void
+    {
+        $tableDefinition = new TableDefinition(
+            new TableDefinitionColumnFactory([], 'snowflake', false),
+        );
+        $tableDefinition->setTableName('testTableName');
+        $tableDefinition->setPrimaryKeysNames(['id']);
+        $tableDefinition->setTableDescription('table description');
+        $tableDefinition->setColumnDescriptions(['id' => 'id description']);
+        $tableDefinition->addColumn('id', (new GenericStorage('varchar', ['length' => '25']))->toMetadata());
+        $tableDefinition->addColumn('name', (new GenericStorage('varchar', ['length' => '25']))->toMetadata());
+
+        $requestData = $tableDefinition->getRequestData();
+
+        self::assertSame('table description', $requestData['description']);
+        self::assertSame('id', $requestData['columns'][0]['name']);
+        self::assertSame('id description', $requestData['columns'][0]['description']);
+        self::assertSame('name', $requestData['columns'][1]['name']);
+        self::assertArrayNotHasKey('description', $requestData['columns'][1]);
+    }
+
+    public function testRequestDataOmitsDescriptionWhenNotSet(): void
+    {
+        $tableDefinition = new TableDefinition(
+            new TableDefinitionColumnFactory([], 'snowflake', false),
+        );
+        $tableDefinition->setTableName('testTableName');
+        $tableDefinition->setPrimaryKeysNames([]);
+        $tableDefinition->addColumn('id', (new GenericStorage('varchar', ['length' => '25']))->toMetadata());
+
+        $requestData = $tableDefinition->getRequestData();
+
+        self::assertArrayNotHasKey('description', $requestData);
+        self::assertArrayNotHasKey('description', $requestData['columns'][0]);
+    }
 }

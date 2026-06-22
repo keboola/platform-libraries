@@ -20,6 +20,10 @@ class TableDefinitionFromSchemaColumn
             'name' => $this->column->getName(),
         ];
 
+        if ($this->column->getDescription() !== null) {
+            $data['description'] = $this->column->getDescription();
+        }
+
         $dataType = $this->column->getDataType();
         if ($dataType) {
             $data['basetype'] = $dataType->getBaseTypeName();

@@ -20,6 +20,11 @@ class TableDefinition implements TableDefinitionInterface
 
     private array $primaryKeysNames = [];
 
+    private ?string $tableDescription = null;
+
+    /** @var array<string, string> column name => description */
+    private array $columnDescriptions = [];
+
     public function setTableName(string $tableName): self
     {
         $this->tableName = $tableName;
@@ -34,6 +39,21 @@ class TableDefinition implements TableDefinitionInterface
     public function setPrimaryKeysNames(array $primaryKeys): self
     {
         $this->primaryKeysNames = $primaryKeys;
+        return $this;
+    }
+
+    public function setTableDescription(?string $tableDescription): self
+    {
+        $this->tableDescription = $tableDescription;
+        return $this;
+    }
+
+    /**
+     * @param array<string, string> $columnDescriptions column name => description
+     */
+    public function setColumnDescriptions(array $columnDescriptions): self
+    {
+        $this->columnDescriptions = $columnDescriptions;
         return $this;
     }
 
@@ -55,12 +75,20 @@ class TableDefinition implements TableDefinitionInterface
     {
         $columns = [];
         foreach ($this->columns as $column) {
-            $columns[] = $column->toArray();
+            $columnData = $column->toArray();
+            if (isset($this->columnDescriptions[$column->getName()])) {
+                $columnData['description'] = $this->columnDescriptions[$column->getName()];
+            }
+            $columns[] = $columnData;
         }
-        return [
+        $requestData = [
             'name' => $this->tableName,
             'primaryKeysNames' => $this->primaryKeysNames,
             'columns' => $columns,
         ];
+        if ($this->tableDescription !== null) {
+            $requestData['description'] = $this->tableDescription;
+        }
+        return $requestData;
     }
 }

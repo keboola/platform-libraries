@@ -93,21 +93,6 @@ class LoadTableQueue
                     );
                 }
 
-                try {
-                    $task->applyDescription($this->clientWrapper->getTableAndFileStorageClient());
-                } catch (ClientException $e) {
-                    if ($e->getCode() >= 500) {
-                        throw $e;
-                    }
-                    $extendedInfo = $e->getContextParams()['errors'] ?? [];
-                    $errors[] = sprintf(
-                        'Failed to update description for table "%s": %s (%s)',
-                        $task->getDestinationTableName(),
-                        $e->getMessage(),
-                        json_encode($extendedInfo),
-                    );
-                }
-
                 switch ($jobResult['operationName']) {
                     case 'tableImport':
                         $tableData = $this->clientWrapper->getTableAndFileStorageClient()->getTable(

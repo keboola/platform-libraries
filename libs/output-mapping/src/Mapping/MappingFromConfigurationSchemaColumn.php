@@ -46,8 +46,8 @@ class MappingFromConfigurationSchemaColumn
     }
 
     /**
-     * Column metadata without the description. Description is applied through the table-definition
-     * endpoint (see TableDefinitionDescription), not stored as KBC.description metadata.
+     * Column metadata without the description. The description is handled separately (getDescription()):
+     * for freshly created tables it goes into the table definition, otherwise as KBC.description metadata.
      */
     public function getMetadata(): array
     {

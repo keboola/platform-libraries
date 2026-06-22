@@ -158,6 +158,7 @@ class TableLoader
             $loadTableTask = $descriptionSetter->setDescription(
                 $loadTableTask,
                 $processedSource,
+                $systemMetadata,
             );
 
             $loadTableTasks[] = $loadTableTask;

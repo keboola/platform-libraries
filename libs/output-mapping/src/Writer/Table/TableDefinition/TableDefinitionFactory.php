@@ -17,9 +17,15 @@ class TableDefinitionFactory
 
     /**
      * @param MappingColumnMetadata[] $columnMetadata
+     * @param array<string, string> $columnDescriptions column name => description
      */
-    public function createTableDefinition(string $tableName, array $primaryKeys, array $columnMetadata): TableDefinition
-    {
+    public function createTableDefinition(
+        string $tableName,
+        array $primaryKeys,
+        array $columnMetadata,
+        ?string $tableDescription = null,
+        array $columnDescriptions = [],
+    ): TableDefinition {
         $tableDefinition = new TableDefinition(
             new TableDefinitionColumnFactory(
                 $this->tableMetadata,
@@ -29,6 +35,8 @@ class TableDefinitionFactory
         );
         $tableDefinition->setTableName($tableName);
         $tableDefinition->setPrimaryKeysNames($primaryKeys);
+        $tableDefinition->setTableDescription($tableDescription);
+        $tableDefinition->setColumnDescriptions($columnDescriptions);
 
         foreach ($columnMetadata as $metadata) {
             $tableDefinition->addColumn(

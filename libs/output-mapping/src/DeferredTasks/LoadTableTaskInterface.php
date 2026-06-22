@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Keboola\OutputMapping\DeferredTasks;
 
 use Keboola\OutputMapping\DeferredTasks\Metadata\MetadataInterface;
-use Keboola\OutputMapping\DeferredTasks\TableDefinition\TableDefinitionDescription;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\Metadata;
 
@@ -25,7 +24,7 @@ interface LoadTableTaskInterface
 
     public function addMetadata(MetadataInterface $metadataDefinition): void;
 
-    public function setDescription(TableDefinitionDescription $description): void;
+    public function setDescriptionInTableDefinition(bool $descriptionInTableDefinition): void;
 
-    public function applyDescription(Client $client): void;
+    public function isDescriptionInTableDefinition(): bool;
 }

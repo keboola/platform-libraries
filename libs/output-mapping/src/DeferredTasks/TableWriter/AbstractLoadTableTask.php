@@ -6,9 +6,7 @@ namespace Keboola\OutputMapping\DeferredTasks\TableWriter;
 
 use Keboola\OutputMapping\DeferredTasks\LoadTableTaskInterface;
 use Keboola\OutputMapping\DeferredTasks\Metadata\MetadataInterface;
-use Keboola\OutputMapping\DeferredTasks\TableDefinition\TableDefinitionDescription;
 use Keboola\OutputMapping\Writer\Table\MappingDestination;
-use Keboola\StorageApi\Client;
 use Keboola\StorageApi\Metadata;
 
 abstract class AbstractLoadTableTask implements LoadTableTaskInterface
@@ -19,7 +17,7 @@ abstract class AbstractLoadTableTask implements LoadTableTaskInterface
     protected string $storageJobId;
     /** @var MetadataInterface[] */
     protected array $metadata = [];
-    protected ?TableDefinitionDescription $description = null;
+    protected bool $descriptionInTableDefinition = false;
 
     public function __construct(MappingDestination $destination, array $options, bool $freshlyCreatedTable)
     {
@@ -45,14 +43,14 @@ abstract class AbstractLoadTableTask implements LoadTableTaskInterface
         }
     }
 
-    public function setDescription(TableDefinitionDescription $description): void
+    public function setDescriptionInTableDefinition(bool $descriptionInTableDefinition): void
     {
-        $this->description = $description;
+        $this->descriptionInTableDefinition = $descriptionInTableDefinition;
     }
 
-    public function applyDescription(Client $client): void
+    public function isDescriptionInTableDefinition(): bool
     {
-        $this->description?->apply($client);
+        return $this->descriptionInTableDefinition;
     }
 
     public function getDestinationTableName(): string

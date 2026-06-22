@@ -64,9 +64,12 @@ class LoadTableTaskCreator
                 $source->getDestination()->getTableName(),
                 $source->getPrimaryKey(),
                 $source->getColumnMetadata(),
+                $source->getTableDescription(),
+                $source->getColumnDescriptions(),
             );
             $this->tableCreator->createTableDefinition($source->getDestination()->getBucketId(), $tableDefinition);
             $loadTask = new LoadTableTask($source->getDestination(), $loadOptions, true);
+            $loadTask->setDescriptionInTableDefinition(true);
         } elseif ($settings->hasNewNativeTypesFeature() &&
             !$storageSources->didTableExistBefore() &&
             $source->getSchema()
@@ -75,9 +78,11 @@ class LoadTableTaskCreator
                 $source->getDestination()->getTableName(),
                 $source->getSchema(),
                 $storageSources->getBucket()->backend,
+                $source->getTableDescription(),
             );
             $this->tableCreator->createTableDefinition($source->getDestination()->getBucketId(), $tableDefinition);
             $loadTask = new LoadTableTask($source->getDestination(), $loadOptions, true);
+            $loadTask->setDescriptionInTableDefinition(true);
         } elseif (!$storageSources->didTableExistBefore() && $source->hasColumns()) {
             // tabulka neexistuje a známe sloupce z manifestu
             $this->tableCreator->createTable(

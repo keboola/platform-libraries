@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace Keboola\ConfigurationVariablesResolver\Tests;
 
 use Keboola\ConfigurationVariablesResolver\UnifiedConfigurationResolverFactory;
+use Keboola\ConfigurationVariablesResolver\VaultVariablesApiClientConfiguration;
 use Keboola\ServiceClient\ServiceClient;
 use Keboola\StorageApi\BranchAwareClient;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Keboola\StorageApiBranch\StorageApiToken;
-use Keboola\VaultApiClient\ApiClientConfiguration as VaultVariablesApiClientConfiguration;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 
@@ -235,11 +235,9 @@ class UnifiedConfigurationResolverFactoryTest extends TestCase
         $serviceClient = $this->createMock(ServiceClient::class);
         $serviceClient->method('getVaultUrl')->willReturn($this->variablesApiMock->getServerUrl());
 
-        $vaultVariablesApiClientConfiguration = new VaultVariablesApiClientConfiguration();
-
         return new UnifiedConfigurationResolverFactory(
             $serviceClient,
-            $vaultVariablesApiClientConfiguration,
+            new VaultVariablesApiClientConfiguration(),
             new NullLogger,
         );
     }

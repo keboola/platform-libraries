@@ -71,11 +71,11 @@ class AppModelTest extends TestCase
                     'gitPollInterval' => '5s',
                     'autoRunSetupOnDepChange' => false,
                 ],
-                'managedGitRepo' => [
-                    'repoId' => 'repo-abc-123',
-                    'credentialType' => 'ssh_key',
-                ],
                 'features' => [
+                    'managedGitRepo' => [
+                        'repoId' => 'repo-abc-123',
+                        'credentialType' => 'ssh_key',
+                    ],
                     'storageToken' => [
                         'description' => '[_internal][app] App 12345',
                         'expiresIn' => 86400,
@@ -274,11 +274,12 @@ class AppModelTest extends TestCase
         self::assertSame('5s', $app->spec->devMode->gitPollInterval);
         self::assertFalse($app->spec->devMode->autoRunSetupOnDepChange);
 
-        // ManagedGitRepo
-        self::assertNotNull($app->spec->managedGitRepo);
-        self::assertInstanceOf(ManagedGitRepoSpec::class, $app->spec->managedGitRepo);
-        self::assertSame('repo-abc-123', $app->spec->managedGitRepo->repoId);
-        self::assertSame('ssh_key', $app->spec->managedGitRepo->credentialType);
+        // ManagedGitRepo (under features)
+        self::assertInstanceOf(AppFeatures::class, $app->spec->features);
+        self::assertNotNull($app->spec->features->managedGitRepo);
+        self::assertInstanceOf(ManagedGitRepoSpec::class, $app->spec->features->managedGitRepo);
+        self::assertSame('repo-abc-123', $app->spec->features->managedGitRepo->repoId);
+        self::assertSame('ssh_key', $app->spec->features->managedGitRepo->credentialType);
 
         // Features
         self::assertNotNull($app->spec->features);
@@ -516,10 +517,10 @@ class AppModelTest extends TestCase
         self::assertSame('5s', $serialized['spec']['devMode']['gitPollInterval']);
         self::assertFalse($serialized['spec']['devMode']['autoRunSetupOnDepChange']);
 
-        // Verify managedGitRepo survives round-trip
-        self::assertArrayHasKey('managedGitRepo', $serialized['spec']);
-        self::assertSame('repo-abc-123', $serialized['spec']['managedGitRepo']['repoId']);
-        self::assertSame('ssh_key', $serialized['spec']['managedGitRepo']['credentialType']);
+        // Verify managedGitRepo survives round-trip (under features)
+        self::assertArrayHasKey('managedGitRepo', $serialized['spec']['features']);
+        self::assertSame('repo-abc-123', $serialized['spec']['features']['managedGitRepo']['repoId']);
+        self::assertSame('ssh_key', $serialized['spec']['features']['managedGitRepo']['credentialType']);
 
         // Verify containerSpec is present and podSpec is not
         self::assertArrayHasKey('containerSpec', $serialized['spec']);

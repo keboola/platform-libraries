@@ -80,6 +80,15 @@ class AppStatus extends AbstractModel
     public $e2bSandbox = null;
 
     /**
+     * ManagedGitCredential holds the active credential identifier for the current
+     * AppRun, populated when the operator successfully registers an ephemeral credential
+     * with git-service and cleared when revoked.
+     *
+     * @var ManagedGitCredentialStatus|null
+     */
+    public $managedGitCredential = null;
+
+    /**
      * Conditions represents the latest available observations of the app's current state
      *
      * @var Condition[]|null

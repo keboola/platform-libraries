@@ -82,4 +82,16 @@ class MappingFromConfigurationSchemaColumnTest extends TestCase
 
         self::assertNull($schemColumn->getDescription());
     }
+
+    public function testNonArrayMetadataIsHandledGracefully(): void
+    {
+        // metadata is a variableNode and may end up as a non-array value
+        $schemColumn = new MappingFromConfigurationSchemaColumn([
+            'name' => 'newColumn',
+            'metadata' => 'not-an-array',
+        ]);
+
+        self::assertSame([], $schemColumn->getMetadata());
+        self::assertNull($schemColumn->getDescription());
+    }
 }

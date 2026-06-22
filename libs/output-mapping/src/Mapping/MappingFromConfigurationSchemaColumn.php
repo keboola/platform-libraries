@@ -52,6 +52,10 @@ class MappingFromConfigurationSchemaColumn
     public function getMetadata(): array
     {
         $metadata = $this->mapping['metadata'] ?? [];
+        // metadata is a variableNode in configuration, so it is not guaranteed to be an array
+        if (!is_array($metadata)) {
+            return [];
+        }
         unset($metadata[self::DESCRIPTION_METADATA_KEY]);
         return $metadata;
     }
@@ -61,6 +65,10 @@ class MappingFromConfigurationSchemaColumn
         if (isset($this->mapping['description'])) {
             return $this->mapping['description'];
         }
-        return $this->mapping['metadata'][self::DESCRIPTION_METADATA_KEY] ?? null;
+        $metadata = $this->mapping['metadata'] ?? [];
+        if (is_array($metadata) && isset($metadata[self::DESCRIPTION_METADATA_KEY])) {
+            return $metadata[self::DESCRIPTION_METADATA_KEY];
+        }
+        return null;
     }
 }

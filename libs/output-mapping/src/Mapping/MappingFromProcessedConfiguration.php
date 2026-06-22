@@ -229,6 +229,10 @@ class MappingFromProcessedConfiguration
     public function getTableMetadata(): array
     {
         $metadata = $this->mapping['table_metadata'] ?? [];
+        // table_metadata is a variableNode in configuration, so it is not guaranteed to be an array
+        if (!is_array($metadata)) {
+            return [];
+        }
         // description is applied through the table-definition endpoint, not as KBC.description metadata
         unset($metadata[self::DESCRIPTION_METADATA_KEY]);
         return $metadata;
@@ -239,7 +243,11 @@ class MappingFromProcessedConfiguration
         if (isset($this->mapping['description'])) {
             return $this->mapping['description'];
         }
-        return $this->mapping['table_metadata'][self::DESCRIPTION_METADATA_KEY] ?? null;
+        $metadata = $this->mapping['table_metadata'] ?? [];
+        if (is_array($metadata) && isset($metadata[self::DESCRIPTION_METADATA_KEY])) {
+            return $metadata[self::DESCRIPTION_METADATA_KEY];
+        }
+        return null;
     }
 
     /** @return null|MappingFromConfigurationSchemaColumn[] */

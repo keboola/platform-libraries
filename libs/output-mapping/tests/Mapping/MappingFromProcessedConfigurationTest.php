@@ -116,6 +116,24 @@ class MappingFromProcessedConfigurationTest extends TestCase
         self::assertSame('table desc', $mapping->getTableDescription());
     }
 
+    public function testNonArrayTableMetadataIsHandledGracefully(): void
+    {
+        // table_metadata is a variableNode and may end up as a non-array value
+        $mapping = [
+            'destination' => 'in.c-main.table',
+            'delimiter' => ',',
+            'enclosure' => '"',
+            'table_metadata' => 'not-an-array',
+        ];
+
+        $physicalDataWithManifest = $this->createMock(MappingFromRawConfigurationAndPhysicalDataWithManifest::class);
+        $mapping = new MappingFromProcessedConfiguration($mapping, $physicalDataWithManifest);
+
+        self::assertSame([], $mapping->getTableMetadata());
+        self::assertFalse($mapping->hasTableMetadata());
+        self::assertNull($mapping->getTableDescription());
+    }
+
     public function testColumnDescriptionsFromColumnMetadata(): void
     {
         $mapping = [

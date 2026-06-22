@@ -20,15 +20,12 @@ class TableDefinitionFromSchemaColumn
             'name' => $this->column->getName(),
         ];
 
-        if ($this->column->getDescription() !== null) {
-            $data['description'] = $this->column->getDescription();
-        }
+        $definition = [];
 
         $dataType = $this->column->getDataType();
         if ($dataType) {
             $data['basetype'] = $dataType->getBaseTypeName();
 
-            $definition = [];
             if ($this->backend !== null && $dataType->hasBackendType($this->backend)) {
                 $definition['type'] = $dataType->getBackendTypeName($this->backend);
             }
@@ -46,9 +43,18 @@ class TableDefinitionFromSchemaColumn
             if ($definition && !isset($definition['type'])) {
                 $definition['type'] = $dataType->getTypeName($this->backend);
             }
-            if ($definition) {
-                $data['definition'] = $definition;
-            }
+        }
+
+        // The create-table-definition endpoint stores the column description inside the column `definition`
+        // (definition.description), unlike the update endpoint which uses a top-level `description`. A
+        // definition without a type may carry only a description, so this is valid even when the column has
+        // no data type.
+        if ($this->column->getDescription() !== null) {
+            $definition['description'] = $this->column->getDescription();
+        }
+
+        if ($definition) {
+            $data['definition'] = $definition;
         }
 
         return $data;

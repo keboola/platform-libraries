@@ -41,7 +41,9 @@ class TableDefinitionFromSchemaColumnTest extends TestCase
             'backend' => 'snowflake',
             'expectedStructure' => [
                 'name' => 'test_table_name',
-                'description' => 'column description',
+                'definition' => [
+                    'description' => 'column description',
+                ],
             ],
         ];
 
@@ -58,8 +60,10 @@ class TableDefinitionFromSchemaColumnTest extends TestCase
             'backend' => 'snowflake',
             'expectedStructure' => [
                 'name' => 'test_table_name',
-                'description' => 'column description',
                 'basetype' => 'STRING',
+                'definition' => [
+                    'description' => 'column description',
+                ],
             ],
         ];
 

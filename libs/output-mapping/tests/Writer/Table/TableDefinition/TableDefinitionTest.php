@@ -97,9 +97,12 @@ class TableDefinitionTest extends TestCase
 
         self::assertSame('table description', $requestData['description']);
         self::assertSame('id', $requestData['columns'][0]['name']);
-        self::assertSame('id description', $requestData['columns'][0]['description']);
+        // create-table-definition carries the column description inside the column definition
+        self::assertSame('id description', $requestData['columns'][0]['definition']['description']);
+        self::assertArrayNotHasKey('description', $requestData['columns'][0]);
         self::assertSame('name', $requestData['columns'][1]['name']);
         self::assertArrayNotHasKey('description', $requestData['columns'][1]);
+        self::assertArrayNotHasKey('description', $requestData['columns'][1]['definition'] ?? []);
     }
 
     public function testRequestDataOmitsDescriptionWhenNotSet(): void
@@ -115,5 +118,6 @@ class TableDefinitionTest extends TestCase
 
         self::assertArrayNotHasKey('description', $requestData);
         self::assertArrayNotHasKey('description', $requestData['columns'][0]);
+        self::assertArrayNotHasKey('description', $requestData['columns'][0]['definition'] ?? []);
     }
 }

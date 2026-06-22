@@ -77,7 +77,13 @@ class TableDefinition implements TableDefinitionInterface
         foreach ($this->columns as $column) {
             $columnData = $column->toArray();
             if (isset($this->columnDescriptions[$column->getName()])) {
-                $columnData['description'] = $this->columnDescriptions[$column->getName()];
+                // The create-table-definition endpoint stores the column description inside the column
+                // `definition` (definition.description), unlike the update endpoint which uses a top-level
+                // `description`. A definition without a type may carry only a description, so this is valid
+                // for typed, base-type and non-typed columns alike.
+                $definition = $columnData['definition'] ?? [];
+                $definition['description'] = $this->columnDescriptions[$column->getName()];
+                $columnData['definition'] = $definition;
             }
             $columns[] = $columnData;
         }

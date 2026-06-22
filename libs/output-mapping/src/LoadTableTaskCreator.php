@@ -7,6 +7,7 @@ namespace Keboola\OutputMapping;
 use Keboola\OutputMapping\DeferredTasks\LoadTableTaskInterface;
 use Keboola\OutputMapping\DeferredTasks\TableWriter\CreateAndLoadTableTask;
 use Keboola\OutputMapping\DeferredTasks\TableWriter\LoadTableTask;
+use Keboola\OutputMapping\Mapping\MappingColumnMetadata;
 use Keboola\OutputMapping\Mapping\MappingFromConfigurationSchemaColumn;
 use Keboola\OutputMapping\Mapping\MappingFromProcessedConfiguration;
 use Keboola\OutputMapping\Mapping\MappingStorageSources;
@@ -84,14 +85,28 @@ class LoadTableTaskCreator
             $loadTask = new LoadTableTask($source->getDestination(), $loadOptions, true);
             $loadTask->setDescriptionInTableDefinition(true);
         } elseif (!$storageSources->didTableExistBefore() && $source->hasColumns()) {
-            // tabulka neexistuje a známe sloupce z manifestu
-            $this->tableCreator->createTable(
-                $source->getDestination()->getBucketId(),
-                $source->getDestination()->getTableName(),
-                $source->getColumns(),
-                $loadOptions,
+            // table does not exist and we know the columns from the manifest; create it through a table
+            // definition without column types - a definition where no column carries a type/basetype is
+            // created as a non-typed table (Storage isTypedTable() == false), and lets us store table and
+            // column descriptions on the native field at creation time
+            $tableDefinitionFactory = new TableDefinitionFactory(
+                [],
+                $storageSources->getBucket()->backend,
+                true,
             );
+            $tableDefinition = $tableDefinitionFactory->createTableDefinition(
+                $source->getDestination()->getTableName(),
+                $source->getPrimaryKey(),
+                array_map(
+                    fn(string $columnName) => new MappingColumnMetadata($columnName, []),
+                    $source->getColumns(),
+                ),
+                $source->getTableDescription(),
+                $source->getColumnDescriptions(),
+            );
+            $this->tableCreator->createTableDefinition($source->getDestination()->getBucketId(), $tableDefinition);
             $loadTask = new LoadTableTask($source->getDestination(), $loadOptions, true);
+            $loadTask->setDescriptionInTableDefinition(true);
         } elseif ($storageSources->didTableExistBefore()) {
             // tabulka existuje takže nahráváme data
             $loadTask = new LoadTableTask($source->getDestination(), $loadOptions, false);

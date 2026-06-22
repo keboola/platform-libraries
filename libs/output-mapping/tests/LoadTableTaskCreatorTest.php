@@ -231,11 +231,20 @@ class LoadTableTaskCreatorTest extends AbstractTestCase
         $source->expects(self::exactly(3))->method('getDestination')->willReturn(
             new MappingDestination($this->emptyOutputBucketId . '.destinationTable'),
         );
-        $source->expects(self::once())->method('getPrimaryKey')->willReturn([]);
+        $source->expects(self::exactly(2))->method('getPrimaryKey')->willReturn([]);
         $source->expects(self::exactly(2))->method('getColumns')->willReturn(['col1', 'col2']);
+        $source->expects(self::once())->method('getTableDescription')->willReturn(null);
+        $source->expects(self::once())->method('getColumnDescriptions')->willReturn([]);
 
         $storageSources = self::createMock(MappingStorageSources::class);
         $storageSources->expects(self::exactly(2))->method('didTableExistBefore')->willReturn(false);
+        $storageSources->expects(self::once())->method('getBucket')->willReturn(
+            new BucketInfo([
+                'id' => $this->emptyOutputBucketId,
+                'backend' => 'Snowflake',
+                'metadata' => [],
+            ]),
+        );
 
         $loadTableTaskCreator = new LoadTableTaskCreator(
             $this->clientWrapper,

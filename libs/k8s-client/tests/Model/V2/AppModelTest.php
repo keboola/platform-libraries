@@ -20,6 +20,7 @@ use Keboola\K8sClient\Model\Io\Keboola\Apps\V2\DataDirMountSpec;
 use Keboola\K8sClient\Model\Io\Keboola\Apps\V2\DataDirSpec;
 use Keboola\K8sClient\Model\Io\Keboola\Apps\V2\DataLoaderSpec;
 use Keboola\K8sClient\Model\Io\Keboola\Apps\V2\E2bSandboxStatus;
+use Keboola\K8sClient\Model\Io\Keboola\Apps\V2\ManagedGitCredentialStatus;
 use Keboola\K8sClient\Model\Io\Keboola\Apps\V2\ManagedGitRepoSpec;
 use Keboola\K8sClient\Model\Io\Keboola\Apps\V2\MountConfigField;
 use Keboola\K8sClient\Model\Io\Keboola\Apps\V2\MountPathSpec;
@@ -72,6 +73,7 @@ class AppModelTest extends TestCase
                 ],
                 'managedGitRepo' => [
                     'repoId' => 'repo-abc-123',
+                    'credentialType' => 'ssh_key',
                 ],
                 'features' => [
                     'storageToken' => [
@@ -218,6 +220,10 @@ class AppModelTest extends TestCase
                     'syncedFileHashes' => ['app.py' => 'abc123'],
                     'templateBuildID' => 'build-xyz',
                 ],
+                'managedGitCredential' => [
+                    'id' => 'cred-xyz-789',
+                    'repoId' => 'repo-abc-123',
+                ],
                 'conditions' => [
                     [
                         'type' => 'Ready',
@@ -272,6 +278,7 @@ class AppModelTest extends TestCase
         self::assertNotNull($app->spec->managedGitRepo);
         self::assertInstanceOf(ManagedGitRepoSpec::class, $app->spec->managedGitRepo);
         self::assertSame('repo-abc-123', $app->spec->managedGitRepo->repoId);
+        self::assertSame('ssh_key', $app->spec->managedGitRepo->credentialType);
 
         // Features
         self::assertNotNull($app->spec->features);
@@ -319,6 +326,12 @@ class AppModelTest extends TestCase
         self::assertSame(0, $app->status->e2bSandbox->startupProbeFailures);
         self::assertSame(['app.py' => 'abc123'], $app->status->e2bSandbox->syncedFileHashes);
         self::assertSame('build-xyz', $app->status->e2bSandbox->templateBuildID);
+
+        // Status - managedGitCredential
+        self::assertNotNull($app->status->managedGitCredential);
+        self::assertInstanceOf(ManagedGitCredentialStatus::class, $app->status->managedGitCredential);
+        self::assertSame('cred-xyz-789', $app->status->managedGitCredential->id);
+        self::assertSame('repo-abc-123', $app->status->managedGitCredential->repoId);
 
         // Status - conditions
         self::assertNotNull($app->status->conditions);
@@ -506,6 +519,7 @@ class AppModelTest extends TestCase
         // Verify managedGitRepo survives round-trip
         self::assertArrayHasKey('managedGitRepo', $serialized['spec']);
         self::assertSame('repo-abc-123', $serialized['spec']['managedGitRepo']['repoId']);
+        self::assertSame('ssh_key', $serialized['spec']['managedGitRepo']['credentialType']);
 
         // Verify containerSpec is present and podSpec is not
         self::assertArrayHasKey('containerSpec', $serialized['spec']);
@@ -525,6 +539,11 @@ class AppModelTest extends TestCase
         self::assertSame('Running', $serialized['status']['currentState']);
         self::assertArrayHasKey('appsProxy', $serialized['status']);
         self::assertArrayHasKey('e2bSandbox', $serialized['status']);
+
+        // Verify managedGitCredential survives round-trip
+        self::assertArrayHasKey('managedGitCredential', $serialized['status']);
+        self::assertSame('cred-xyz-789', $serialized['status']['managedGitCredential']['id']);
+        self::assertSame('repo-abc-123', $serialized['status']['managedGitCredential']['repoId']);
     }
 
     public function testCreateAppWithNestedObjects(): void

@@ -113,9 +113,22 @@ class ApiClient
         ]);
     }
 
-    public function sendRequest(RequestInterface $request): void
+    /**
+     * @param array<string, mixed> $options
+     */
+    public function sendRequest(RequestInterface $request, array $options = []): ResponseInterface
     {
-        $this->doSendRequest($request);
+        try {
+            return $this->httpClient->send($request, $options);
+        } catch (RequestException $e) {
+            throw $this->processRequestException($e);
+        } catch (GuzzleException $e) {
+            throw new $this->exceptionClass($e->getMessage(), 0, $e, null, null);
+        } catch (Throwable $e) {
+            // Non-Guzzle failure bubbling out of the handler stack — e.g. an authenticator
+            // that could not produce credentials (after retries are exhausted).
+            throw new $this->exceptionClass(trim($e->getMessage()), 0, $e, null, null);
+        }
     }
 
     /**
@@ -130,7 +143,7 @@ class ApiClient
         array $options = [],
         bool $isList = false,
     ) {
-        $response = $this->doSendRequest($request, $options);
+        $response = $this->sendRequest($request, $options);
         $body = $response->getBody()->getContents();
 
         try {
@@ -162,24 +175,6 @@ class ApiClient
                 $response->getStatusCode(),
                 $body,
             );
-        }
-    }
-
-    /**
-     * @param array<string, mixed> $options
-     */
-    private function doSendRequest(RequestInterface $request, array $options = []): ResponseInterface
-    {
-        try {
-            return $this->httpClient->send($request, $options);
-        } catch (RequestException $e) {
-            throw $this->processRequestException($e);
-        } catch (GuzzleException $e) {
-            throw new $this->exceptionClass($e->getMessage(), 0, $e, null, null);
-        } catch (Throwable $e) {
-            // Non-Guzzle failure bubbling out of the handler stack — e.g. an authenticator
-            // that could not produce credentials (after retries are exhausted).
-            throw new $this->exceptionClass(trim($e->getMessage()), 0, $e, null, null);
         }
     }
 

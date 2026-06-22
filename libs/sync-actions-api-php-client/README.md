@@ -1,30 +1,38 @@
 # Sync Actions PHP Client
 
-PHP client for the Job Queue API ([API docs](https://app.swaggerhub.com/apis-docs/keboola/job-queue-api/1.0.0)).
+PHP client for the Keboola sync actions API, built on top of
+[`keboola/php-api-client-base`](../php-api-client-base).
 
 ## Usage
 ```bash
-composer require keboola/sync-actions-api-php-client
+composer require keboola/sync-actions-client
 ```
 
 ```php
-use Keboola\SyncActionsClient\Client;
-use Keboola\SyncActionsClient\JobData;
-use Psr\Log\NullLogger;
+use Keboola\SyncActionsClient\ActionData;
+use Keboola\SyncActionsClient\SyncActionsApiClient;
 
-$client = new Client(
-    'http://sync-actions.keboola.com/',
-    'xxx-xxxxx-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+$client = new SyncActionsApiClient(
+    'https://sync-actions.keboola.com/',
+    'xxx-xxxxx-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
 );
-$result = $client->createJob(new JobData(
+
+// Invoke a component action; $response->data is a stdClass with the raw action payload.
+$response = $client->callAction(new ActionData(
     'keboola.ex-db-snowflake',
-    'getTables'
+    'getTables',
 ));
-var_dump($result);
+var_dump($response->data);
+
+// List the actions a component exposes.
+$actions = $client->getActions('keboola.ex-db-snowflake');
+var_dump($actions->actions);
 ```
 
+Failures throw `Keboola\SyncActionsClient\Exception\SyncActionsClientException`.
+
 ## Development
- 
+
 Clone this repository and init the workspace with following command:
 
 ```
@@ -46,7 +54,7 @@ Run the test suite using this command:
 ```
 docker-compose run --rm dev composer tests
 ```
- 
+
 # Integration
 
-For information about deployment and integration with KBC, please refer to the [deployment section of developers documentation](https://developers.keboola.com/extend/component/deployment/) 
+For information about deployment and integration with KBC, please refer to the [deployment section of developers documentation](https://developers.keboola.com/extend/component/deployment/)

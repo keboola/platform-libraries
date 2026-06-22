@@ -5,9 +5,10 @@ declare(strict_types=1);
 namespace Keboola\SyncActionsClient\Tests;
 
 use Keboola\SyncActionsClient\ActionData;
-use Keboola\SyncActionsClient\Client;
-use Keboola\SyncActionsClient\Exception\ClientException;
+use Keboola\SyncActionsClient\Exception\SyncActionsClientException;
+use Keboola\SyncActionsClient\SyncActionsApiClient;
 use PHPUnit\Framework\TestCase;
+use Webmozart\Assert\Assert;
 
 class ClientFunctionalTest extends TestCase
 {
@@ -55,7 +56,7 @@ class ClientFunctionalTest extends TestCase
     {
         $client = $this->getClient();
 
-        $this->expectException(ClientException::class);
+        $this->expectException(SyncActionsClientException::class);
         $this->expectExceptionMessage('Component "non-existent-component" not found');
         $client->callAction(new ActionData('non-existent-component', 'non-existent-action', []));
     }
@@ -64,7 +65,7 @@ class ClientFunctionalTest extends TestCase
     {
         $client = $this->getClient();
 
-        $this->expectException(ClientException::class);
+        $this->expectException(SyncActionsClientException::class);
         $this->expectExceptionMessage(sprintf(
             'Action "non-existent-action" not defined for component "%s".',
             self::COMPONENT_ID,
@@ -72,11 +73,12 @@ class ClientFunctionalTest extends TestCase
         $client->callAction(new ActionData(self::COMPONENT_ID, 'non-existent-action', []));
     }
 
-    private function getClient(): Client
+    private function getClient(): SyncActionsApiClient
     {
-        return new Client(
-            sprintf('https://sync-actions.%s', getenv('HOSTNAME_SUFFIX')),
-            (string) getenv('STORAGE_API_TOKEN'),
-        );
+        $baseUrl = sprintf('https://sync-actions.%s', getenv('HOSTNAME_SUFFIX'));
+        $token = (string) getenv('STORAGE_API_TOKEN');
+        Assert::stringNotEmpty($token);
+
+        return new SyncActionsApiClient($baseUrl, $token);
     }
 }

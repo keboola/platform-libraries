@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Keboola\OutputMapping\Tests;
 
 use InvalidArgumentException;
+use Keboola\KeyGenerator\PemKeyCertificateGenerator;
 use Keboola\OutputMapping\Staging\StrategyFactory;
 use Keboola\OutputMapping\TableLoader;
 use Keboola\OutputMapping\Tests\Needs\TestSatisfyer;
@@ -12,8 +13,10 @@ use Keboola\StagingProvider\Staging\File\FileFormat;
 use Keboola\StagingProvider\Staging\File\FileStagingInterface;
 use Keboola\StagingProvider\Staging\StagingProvider;
 use Keboola\StagingProvider\Staging\StagingType;
+use Keboola\StagingProvider\Workspace\SnowflakeKeypairGenerator;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Options\ListFilesOptions;
+use Keboola\StorageApi\WorkspaceLoginType;
 use Keboola\StorageApi\Workspaces;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Keboola\StorageApiBranch\Factory\ClientOptions;
@@ -138,14 +141,25 @@ abstract class AbstractTestCase extends TestCase
 
         $stagingType = StagingType::from('workspace-' . $this->clientWrapper->getToken()->getProjectBackend());
 
-        $workspace = $workspaces->createWorkspace(['backend' => match ($stagingType) {
+        $options = ['backend' => match ($stagingType) {
             StagingType::WorkspaceSnowflake => 'snowflake',
             StagingType::WorkspaceBigquery => 'bigquery',
             default => throw new InvalidArgumentException(sprintf(
                 'Unknown staging %s',
                 $stagingType->value,
             )),
-        }], true);
+        }];
+
+        // Snowflake no longer allows creating workspace users with the legacy service account type, which is
+        // what the empty/default login type maps to. Request a key-pair service login instead and register a
+        // generated public key for it.
+        if ($stagingType === StagingType::WorkspaceSnowflake) {
+            $keyPair = (new SnowflakeKeypairGenerator(new PemKeyCertificateGenerator()))->generateKeyPair();
+            $options['loginType'] = WorkspaceLoginType::SNOWFLAKE_SERVICE_KEYPAIR;
+            $options['publicKey'] = $keyPair->publicKey;
+        }
+
+        $workspace = $workspaces->createWorkspace($options, true);
 
         $this->workspaceId = (string) $workspace['id'];
         $this->workspaceCredentials = $workspace['connection'];

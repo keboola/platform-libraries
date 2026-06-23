@@ -8,9 +8,13 @@ use Keboola\ApiBundle\DependencyInjection\KeboolaApiExtension;
 use Keboola\ApiBundle\Security\ApplicationToken\ManageApiClientFactory;
 use Keboola\ApiBundle\Security\StorageApiToken\StorageApiTokenAuthenticator;
 use Keboola\ApiBundle\Security\StorageApiToken\StorageApiTokenFactory;
+use Keboola\ApiBundle\StorageApiClient\StorageClientApiFactory;
 use Keboola\ManageApi\Client as ManageApiClient;
+use Keboola\ServiceClient\ServiceClient;
+use Keboola\StorageApiBranch\Factory\ClientOptions;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\Reference;
 
 class KeboolaApiExtensionTest extends TestCase
@@ -50,6 +54,37 @@ class KeboolaApiExtensionTest extends TestCase
             $container->hasDefinition(StorageApiTokenAuthenticator::class),
             'StorageApiTokenAuthenticator must be registered',
         );
+    }
+
+    public function testStorageClientApiFactoryIsRegisteredWithBaseOptions(): void
+    {
+        $container = $this->buildContainer([['app_name' => 'storage-test-app']]);
+
+        self::assertTrue(
+            $container->hasDefinition(StorageClientApiFactory::class),
+            'StorageClientApiFactory must be registered',
+        );
+
+        $clientOptions = $container->getDefinition(StorageClientApiFactory::class)->getArgument('$clientOptions');
+        self::assertInstanceOf(Definition::class, $clientOptions);
+        self::assertSame(ClientOptions::class, $clientOptions->getClass());
+
+        // userAgent is the configured app name
+        self::assertSame('storage-test-app', $clientOptions->getArgument('$userAgent'));
+
+        // logger is the shared @logger service
+        $logger = $clientOptions->getArgument('$logger');
+        self::assertInstanceOf(Reference::class, $logger);
+        self::assertSame('logger', (string) $logger);
+
+        // url is resolved at runtime from ServiceClient::getConnectionServiceUrl()
+        $url = $clientOptions->getArgument('$url');
+        self::assertInstanceOf(Definition::class, $url);
+        $urlFactory = $url->getFactory();
+        self::assertIsArray($urlFactory);
+        self::assertInstanceOf(Reference::class, $urlFactory[0]);
+        self::assertSame(ServiceClient::class, (string) $urlFactory[0]);
+        self::assertSame('getConnectionServiceUrl', $urlFactory[1]);
     }
 
     // -------------------------------------------------------------------------

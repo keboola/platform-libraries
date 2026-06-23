@@ -10,12 +10,15 @@ use Keboola\ApiBundle\Security\ApplicationToken\ApplicationTokenAuthenticator;
 use Keboola\ApiBundle\Security\ApplicationToken\ManageApiClientFactory;
 use Keboola\ApiBundle\Security\StorageApiToken\StorageApiTokenAuthenticator;
 use Keboola\ApiBundle\Security\StorageApiToken\StorageApiTokenFactory;
+use Keboola\ApiBundle\StorageApiClient\StorageClientApiFactory;
 use Keboola\ManageApi\Client as ManageApiClient;
 use Keboola\ServiceClient\ServiceClient;
 use Keboola\ServiceClient\ServiceDnsType;
+use Keboola\StorageApiBranch\Factory\ClientOptions;
 use Keboola\StorageApiBranch\Factory\StorageClientRequestFactory;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\Loader\PhpFileLoader;
 use Symfony\Component\DependencyInjection\Reference;
 use Symfony\Component\HttpKernel\DependencyInjection\Extension;
@@ -92,6 +95,20 @@ class KeboolaApiExtension extends Extension
             ->setArgument('$tokenFactory', new Reference(StorageApiTokenFactory::class))
         ;
         $authenticators[StorageApiTokenAuth::class] = new Reference(StorageApiTokenAuthenticator::class);
+
+        // Storage API client factory available to controllers/services for building a ClientWrapper
+        // from the resolved StorageApiToken.
+        $connectionUrl = (new Definition())
+            ->setFactory([new Reference(ServiceClient::class), 'getConnectionServiceUrl']);
+
+        $baseClientOptions = (new Definition(ClientOptions::class))
+            ->setArgument('$url', $connectionUrl)
+            ->setArgument('$logger', new Reference('logger'))
+            ->setArgument('$userAgent', $config['app_name']);
+
+        $container->register(StorageClientApiFactory::class)
+            ->setArgument('$clientOptions', $baseClientOptions)
+        ;
     }
 
     private function setupApplicationTokenAuthenticator(

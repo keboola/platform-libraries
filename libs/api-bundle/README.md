@@ -145,6 +145,36 @@ which the bundle requires directly, so no extra installation is needed.
 > If you forget to install appropriate client, you will get exception like
 > `Service "Keboola\ApiBundle\Attribute\ApplicationTokenAuth" not found: the container inside "Symfony\Component\DependencyInjection\Argument\ServiceLocator" is a smaller service locator`
 
+## Storage API client
+
+When `#[StorageApiTokenAuth]` is enabled, the bundle registers a
+`Keboola\ApiBundle\StorageApiClient\StorageClientApiFactory` service. Depend on it and build a
+Storage `ClientWrapper` from the resolved `#[CurrentUser] StorageApiToken` — unlike the header-based
+`StorageClientRequestFactory`, it uses the token already resolved by the authenticator, so it works
+for programmatic (`kbc_pat_*` / `kbc_at_*`) tokens too.
+
+The base options are preconfigured by the bundle: the Connection (Storage API) URL is taken from the
+`ServiceClient`, the logger is the shared logger, and the user agent is the configured `app_name`.
+The token comes from the `StorageApiToken` you pass, the run id from the request's `X-KBC-RunId`
+header, and branch / backend from an optional per-call `ClientOptions`.
+
+```php
+public function __construct(
+    private readonly StorageClientApiFactory $storageClientApiFactory,
+) {}
+
+#[StorageApiTokenAuth]
+public function __invoke(#[CurrentUser] StorageApiToken $token, Request $request)
+{
+    $client = $this->storageClientApiFactory->createClientWrapper($request, $token)->getBasicClient();
+
+    // branch-aware / per-call overrides:
+    // $wrapper = $this->storageClientApiFactory->createClientWrapper(
+    //     $request, $token, new ClientOptions(branchId: $branchId),
+    // );
+}
+```
+
 ## Testing controllers
 
 `Keboola\ApiBundle\Test\AuthenticatorTestTrait` stubs the authenticators in functional

@@ -8,6 +8,7 @@ use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Psr7\Response;
 use Keboola\GitServiceApiClient\CredentialType;
+use Keboola\GitServiceApiClient\Exception\GitServiceClientException;
 use Keboola\GitServiceApiClient\GitServiceApiClient;
 use Keboola\GitServiceApiClient\KeyPermission;
 use Keboola\GitServiceApiClient\NewCredential;
@@ -252,5 +253,133 @@ class GitServiceApiClientTest extends TestCase
         self::assertNotNull($request);
         self::assertSame('DELETE', $request->getMethod());
         self::assertSame('https://example.test/repos/app-1/credentials/42', (string) $request->getUri());
+    }
+
+    public function testListCommits(): void
+    {
+        $mock = new MockHandler([new Response(200, [], (string) json_encode([
+            'commits' => [
+                [
+                    'sha' => 'abc123',
+                    'created' => '2026-06-01T10:00:00Z',
+                    'message' => 'first commit',
+                    'author' => [
+                        'name' => 'Alice',
+                        'email' => 'alice@example.com',
+                        'date' => '2026-06-01T10:00:00Z',
+                    ],
+                ],
+                [
+                    'sha' => 'def456',
+                    'created' => '2026-06-02T10:00:00Z',
+                    'message' => 'second commit',
+                    'author' => [
+                        'name' => 'Bob',
+                        'email' => 'bob@example.com',
+                        'date' => '2026-06-02T10:00:00Z',
+                    ],
+                ],
+            ],
+            'total' => 25,
+        ]))]);
+        $client = $this->buildClient($mock);
+
+        $list = $client->listCommits('app-1', 'main');
+
+        self::assertCount(2, $list->commits);
+        self::assertSame(25, $list->total);
+        self::assertSame('abc123', $list->commits[0]->sha);
+        self::assertSame('first commit', $list->commits[0]->message);
+        self::assertSame('Alice', $list->commits[0]->author->name);
+        self::assertSame('alice@example.com', $list->commits[0]->author->email);
+        self::assertSame('2026-06-01T10:00:00Z', $list->commits[0]->author->date);
+        $request = $mock->getLastRequest();
+        self::assertNotNull($request);
+        self::assertSame('GET', $request->getMethod());
+        self::assertSame(
+            'https://example.test/repos/app-1/refs/main/commits?page=1&limit=30',
+            (string) $request->getUri(),
+        );
+    }
+
+    public function testListCommitsWithPaginationAndEncodedRef(): void
+    {
+        $mock = new MockHandler([new Response(200, [], (string) json_encode([
+            'commits' => [],
+            'total' => 0,
+        ]))]);
+        $client = $this->buildClient($mock);
+
+        $list = $client->listCommits('app/1', 'feature/foo', 2, 10);
+
+        self::assertSame([], $list->commits);
+        self::assertSame(0, $list->total);
+        $request = $mock->getLastRequest();
+        self::assertNotNull($request);
+        self::assertSame(
+            'https://example.test/repos/app%2F1/refs/feature%2Ffoo/commits?page=2&limit=10',
+            (string) $request->getUri(),
+        );
+    }
+
+    public function testListCommitsNotFound(): void
+    {
+        $mock = new MockHandler([
+            new Response(404, [], '{"code":"repository.notFound","error":"repo or ref not found"}'),
+        ]);
+        $client = $this->buildClient($mock);
+
+        $this->expectException(GitServiceClientException::class);
+        $this->expectExceptionCode(404);
+        $client->listCommits('app-1', 'main');
+    }
+
+    public function testListRefs(): void
+    {
+        $mock = new MockHandler([new Response(200, [], (string) json_encode([
+            'refs' => [
+                ['ref' => 'refs/heads/main', 'sha' => 'abc123', 'type' => 'commit'],
+                ['ref' => 'refs/tags/v1.0.0', 'sha' => 'def456', 'type' => 'tag'],
+            ],
+        ]))]);
+        $client = $this->buildClient($mock);
+
+        $refs = $client->listRefs('app-1');
+
+        self::assertCount(2, $refs);
+        self::assertSame('refs/heads/main', $refs[0]->ref);
+        self::assertSame('abc123', $refs[0]->sha);
+        self::assertSame('commit', $refs[0]->type);
+        self::assertSame('refs/tags/v1.0.0', $refs[1]->ref);
+        self::assertSame('tag', $refs[1]->type);
+        $request = $mock->getLastRequest();
+        self::assertNotNull($request);
+        self::assertSame('GET', $request->getMethod());
+        self::assertSame('https://example.test/repos/app-1/refs', (string) $request->getUri());
+    }
+
+    public function testListRefsEncodesName(): void
+    {
+        $mock = new MockHandler([new Response(200, [], (string) json_encode(['refs' => []]))]);
+        $client = $this->buildClient($mock);
+
+        $refs = $client->listRefs('app/1');
+
+        self::assertSame([], $refs);
+        $request = $mock->getLastRequest();
+        self::assertNotNull($request);
+        self::assertSame('https://example.test/repos/app%2F1/refs', (string) $request->getUri());
+    }
+
+    public function testListRefsNotFound(): void
+    {
+        $mock = new MockHandler([
+            new Response(404, [], '{"code":"repository.notFound","error":"repo not found"}'),
+        ]);
+        $client = $this->buildClient($mock);
+
+        $this->expectException(GitServiceClientException::class);
+        $this->expectExceptionCode(404);
+        $client->listRefs('app-1');
     }
 }

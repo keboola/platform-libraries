@@ -10,6 +10,7 @@ use Keboola\ApiBundle\Security\ApplicationToken\ApplicationTokenAuthenticator;
 use Keboola\ApiBundle\Security\ApplicationToken\ManageApiClientFactory;
 use Keboola\ApiBundle\Security\StorageApiToken\StorageApiTokenAuthenticator;
 use Keboola\ApiBundle\Security\StorageApiToken\StorageApiTokenFactory;
+use Keboola\ApiBundle\StorageApiClient\StorageApiClientResolver;
 use Keboola\ApiBundle\StorageApiClient\StorageClientApiFactory;
 use Keboola\ManageApi\Client as ManageApiClient;
 use Keboola\ServiceClient\ServiceClient;
@@ -22,6 +23,7 @@ use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\Loader\PhpFileLoader;
 use Symfony\Component\DependencyInjection\Reference;
 use Symfony\Component\HttpKernel\DependencyInjection\Extension;
+use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 
 class KeboolaApiExtension extends Extension
 {
@@ -108,6 +110,15 @@ class KeboolaApiExtension extends Extension
 
         $container->register(StorageClientApiFactory::class)
             ->setArgument('$clientOptions', $baseClientOptions)
+        ;
+
+        // Controller-argument value resolver that hands controllers a RequestStorageClientFactory
+        // bound to the current request and the resolved StorageApiToken. Triggers purely on the
+        // argument type; the token comes from security's TokenStorage (same source as #[CurrentUser]).
+        $container->register(StorageApiClientResolver::class)
+            ->setArgument('$factory', new Reference(StorageClientApiFactory::class))
+            ->setArgument('$tokenStorage', new Reference(TokenStorageInterface::class))
+            ->addTag('controller.argument_value_resolver')
         ;
     }
 

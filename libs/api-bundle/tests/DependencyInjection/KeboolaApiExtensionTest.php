@@ -8,6 +8,7 @@ use Keboola\ApiBundle\DependencyInjection\KeboolaApiExtension;
 use Keboola\ApiBundle\Security\ApplicationToken\ManageApiClientFactory;
 use Keboola\ApiBundle\Security\StorageApiToken\StorageApiTokenAuthenticator;
 use Keboola\ApiBundle\Security\StorageApiToken\StorageApiTokenFactory;
+use Keboola\ApiBundle\StorageApiClient\StorageApiClientResolver;
 use Keboola\ApiBundle\StorageApiClient\StorageClientApiFactory;
 use Keboola\ManageApi\Client as ManageApiClient;
 use Keboola\ServiceClient\ServiceClient;
@@ -16,6 +17,7 @@ use PHPUnit\Framework\TestCase;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\Reference;
+use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 
 class KeboolaApiExtensionTest extends TestCase
 {
@@ -85,6 +87,27 @@ class KeboolaApiExtensionTest extends TestCase
         self::assertInstanceOf(Reference::class, $urlFactory[0]);
         self::assertSame(ServiceClient::class, (string) $urlFactory[0]);
         self::assertSame('getConnectionServiceUrl', $urlFactory[1]);
+    }
+
+    public function testStorageApiClientResolverIsRegisteredAndTagged(): void
+    {
+        $container = $this->buildContainer([[]]);
+
+        self::assertTrue(
+            $container->hasDefinition(StorageApiClientResolver::class),
+            'StorageApiClientResolver must be registered',
+        );
+
+        $definition = $container->getDefinition(StorageApiClientResolver::class);
+        self::assertArrayHasKey('controller.argument_value_resolver', $definition->getTags());
+
+        $factory = $definition->getArgument('$factory');
+        self::assertInstanceOf(Reference::class, $factory);
+        self::assertSame(StorageClientApiFactory::class, (string) $factory);
+
+        $tokenStorage = $definition->getArgument('$tokenStorage');
+        self::assertInstanceOf(Reference::class, $tokenStorage);
+        self::assertSame(TokenStorageInterface::class, (string) $tokenStorage);
     }
 
     // -------------------------------------------------------------------------

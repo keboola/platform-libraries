@@ -175,6 +175,22 @@ public function __invoke(#[CurrentUser] StorageApiToken $token, Request $request
 }
 ```
 
+For controllers, you can skip the `$request`/`$token` plumbing: type-hint
+`Keboola\ApiBundle\StorageApiClient\RequestStorageClientFactory` on a controller argument and the
+bundle injects a factory already bound to the current request and resolved `StorageApiToken`. You
+only pass optional per-call `ClientOptions`:
+
+```php
+#[StorageApiTokenAuth]
+public function __invoke(RequestStorageClientFactory $storage)
+{
+    $client = $storage->createClientWrapper()->getBasicClient();
+
+    // branch-aware / per-call overrides:
+    // $wrapper = $storage->createClientWrapper(new ClientOptions(branchId: $branchId));
+}
+```
+
 ## Testing controllers
 
 `Keboola\ApiBundle\Test\AuthenticatorTestTrait` stubs the authenticators in functional

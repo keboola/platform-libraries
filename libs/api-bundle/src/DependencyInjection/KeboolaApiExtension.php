@@ -10,6 +10,7 @@ use Keboola\ApiBundle\Security\ApplicationToken\ApplicationTokenAuthenticator;
 use Keboola\ApiBundle\Security\ApplicationToken\ManageApiClientFactory;
 use Keboola\ApiBundle\Security\StorageApiToken\StorageApiTokenAuthenticator;
 use Keboola\ApiBundle\Security\StorageApiToken\StorageApiTokenFactory;
+use Keboola\ApiBundle\StorageApiClient\StorageClientApiFactory;
 use Keboola\ApiBundle\StorageApiClient\StorageClientApiFactoryResolver;
 use Keboola\ManageApi\Client as ManageApiClient;
 use Keboola\ServiceClient\ServiceClient;
@@ -97,9 +98,7 @@ class KeboolaApiExtension extends Extension
         ;
         $authenticators[StorageApiTokenAuth::class] = new Reference(StorageApiTokenAuthenticator::class);
 
-        // Base Storage client options preconfigured by the bundle: Connection URL from the
-        // ServiceClient (resolved at runtime), the shared logger, and the app name as user agent.
-        // Token, run id, branch and backend stay per-request / per-call.
+        // StorageClientApiFactory controller-argument value resolver
         $connectionUrl = (new Definition())
             ->setFactory([new Reference(ServiceClient::class), 'getConnectionServiceUrl']);
 
@@ -108,9 +107,6 @@ class KeboolaApiExtension extends Extension
             ->setArgument('$logger', new Reference('logger'))
             ->setArgument('$userAgent', $config['app_name']);
 
-        // Controller-argument value resolver that hands controllers a RequestStorageClientFactory
-        // bound to the current request and the resolved StorageApiToken (from security's TokenStorage,
-        // same source as #[CurrentUser]). Triggers purely on the argument type.
         $container->register(StorageClientApiFactoryResolver::class)
             ->setArgument('$baseClientOptions', $baseClientOptions)
             ->setArgument('$tokenStorage', new Reference(TokenStorageInterface::class))

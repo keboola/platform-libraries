@@ -74,7 +74,7 @@ class StorageClientApiFactoryResolverTest extends TestCase
         self::assertSame('resolved-token', $result[0]->createClientWrapper()->getClientOptionsReadOnly()->getToken());
     }
 
-    public function testThrowsWhenNoStorageApiTokenInSecurityContext(): void
+    public function testThrowsForRequiredArgumentWhenNoStorageApiToken(): void
     {
         $controller = new class {
             public function __invoke(StorageClientApiFactory $storage): void
@@ -89,5 +89,49 @@ class StorageClientApiFactoryResolverTest extends TestCase
         $this->expectExceptionMessage('#[StorageApiTokenAuth]');
 
         [...$this->resolver($tokenStorage)->resolve(new Request(), $this->metadataFor($controller, 'storage'))];
+    }
+
+    public function testResolvesNullForNullableArgumentWhenNoStorageApiToken(): void
+    {
+        // Dual-guarded controller (e.g. also #[ApplicationTokenAuth]) authenticated through the
+        // other path: the security user is not a StorageApiToken, so a nullable argument gets null.
+        $controller = new class {
+            public function __invoke(?StorageClientApiFactory $storage): void
+            {
+            }
+        };
+
+        $tokenStorage = $this->createMock(TokenStorageInterface::class);
+        $tokenStorage->expects(self::once())->method('getToken')->willReturn(null);
+
+        $result = [...$this->resolver($tokenStorage)->resolve(
+            new Request(),
+            $this->metadataFor($controller, 'storage'),
+        )];
+
+        self::assertSame([null], $result);
+    }
+
+    public function testResolvesFactoryForNullableArgumentWhenStorageApiTokenPresent(): void
+    {
+        $controller = new class {
+            public function __invoke(?StorageClientApiFactory $storage): void
+            {
+            }
+        };
+
+        $storageToken = new SecurityStorageApiToken([], 'resolved-token');
+        $securityToken = $this->createMock(TokenInterface::class);
+        $securityToken->expects(self::once())->method('getUser')->willReturn($storageToken);
+        $tokenStorage = $this->createMock(TokenStorageInterface::class);
+        $tokenStorage->expects(self::once())->method('getToken')->willReturn($securityToken);
+
+        $result = [...$this->resolver($tokenStorage)->resolve(
+            new Request(),
+            $this->metadataFor($controller, 'storage'),
+        )];
+
+        self::assertCount(1, $result);
+        self::assertInstanceOf(StorageClientApiFactory::class, $result[0]);
     }
 }

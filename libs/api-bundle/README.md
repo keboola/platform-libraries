@@ -169,6 +169,20 @@ public function __invoke(StorageClientApiFactory $storage)
 }
 ```
 
+On a controller that may authenticate through another attribute too (e.g.
+`#[ApplicationTokenAuth]` alongside `#[StorageApiTokenAuth]` — they are OR'd), the request can be
+authenticated without a Storage token. Make the argument nullable to receive `null` in that case;
+a required (non-nullable) argument throws when no Storage token is present:
+
+```php
+#[ApplicationTokenAuth(scopes: ['something:manage'])]
+#[StorageApiTokenAuth]
+public function __invoke(?StorageClientApiFactory $storage)
+{
+    $client = $storage?->createClientWrapper()->getBasicClient(); // null when authenticated via Manage token
+}
+```
+
 ## Testing controllers
 
 `Keboola\ApiBundle\Test\AuthenticatorTestTrait` stubs the authenticators in functional

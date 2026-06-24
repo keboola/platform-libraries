@@ -28,9 +28,16 @@ class StorageClientApiFactoryResolver implements ValueResolverInterface
 
         $user = $this->tokenStorage->getToken()?->getUser();
         if (!$user instanceof StorageApiToken) {
+            // No Storage token in the security context - e.g. the request authenticated through a
+            // different attribute on the same controller (#[ApplicationTokenAuth]). A nullable
+            // argument opts into receiving null; a required one is treated as a misconfiguration.
+            if ($argument->isNullable()) {
+                return [null];
+            }
+
             throw new RuntimeException(sprintf(
-                'Cannot resolve argument "$%s": no authenticated Storage API token. '
-                . 'The controller must be guarded by #[StorageApiTokenAuth].',
+                'Cannot resolve argument "$%s": no authenticated Storage API token. Guard the '
+                . 'controller with #[StorageApiTokenAuth], or make the argument nullable to allow null.',
                 $argument->getName(),
             ));
         }

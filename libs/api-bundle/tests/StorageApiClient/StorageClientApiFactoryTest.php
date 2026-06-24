@@ -4,18 +4,18 @@ declare(strict_types=1);
 
 namespace Keboola\ApiBundle\Tests\StorageApiClient;
 
-use Keboola\ApiBundle\StorageApiClient\RequestStorageClientFactory;
+use Keboola\ApiBundle\StorageApiClient\StorageClientApiFactory;
 use Keboola\StorageApiBranch\Factory\AuthType;
 use Keboola\StorageApiBranch\Factory\ClientOptions;
 use Keboola\StorageApiBranch\StorageApiToken;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpFoundation\Request;
 
-class RequestStorageClientFactoryTest extends TestCase
+class StorageClientApiFactoryTest extends TestCase
 {
-    private static function factory(ClientOptions $baseClientOptions, Request $request): RequestStorageClientFactory
+    private static function factory(ClientOptions $baseClientOptions, Request $request): StorageClientApiFactory
     {
-        return new RequestStorageClientFactory($baseClientOptions, $request, new StorageApiToken([], 'bound-token'));
+        return new StorageClientApiFactory($baseClientOptions, $request, new StorageApiToken([], 'bound-token'));
     }
 
     public function testCreateClientWrapperUsesBoundTokenWithStorageTokenAuth(): void

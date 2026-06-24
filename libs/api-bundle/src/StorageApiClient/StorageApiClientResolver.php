@@ -22,7 +22,7 @@ class StorageApiClientResolver implements ValueResolverInterface
 
     public function resolve(Request $request, ArgumentMetadata $argument): iterable
     {
-        if ($argument->getType() !== RequestStorageClientFactory::class) {
+        if ($argument->getType() !== StorageClientApiFactory::class) {
             return [];
         }
 
@@ -35,6 +35,6 @@ class StorageApiClientResolver implements ValueResolverInterface
             ));
         }
 
-        return [new RequestStorageClientFactory($this->baseClientOptions, $request, $user)];
+        return [new StorageClientApiFactory($this->baseClientOptions, $request, $user)];
     }
 }

@@ -148,7 +148,7 @@ which the bundle requires directly, so no extra installation is needed.
 ## Storage API client
 
 When `#[StorageApiTokenAuth]` is enabled, type-hint
-`Keboola\ApiBundle\StorageApiClient\RequestStorageClientFactory` on a controller argument; the bundle
+`Keboola\ApiBundle\StorageApiClient\StorageClientApiFactory` on a controller argument; the bundle
 injects a factory already bound to the current request and the resolved `StorageApiToken`. Unlike the
 header-based `StorageClientRequestFactory`, it uses the token resolved by the authenticator, so it
 works for programmatic (`kbc_pat_*` / `kbc_at_*`) tokens too.
@@ -160,7 +160,7 @@ from the request's `X-KBC-RunId` header; branch / backend come from an optional 
 
 ```php
 #[StorageApiTokenAuth]
-public function __invoke(RequestStorageClientFactory $storage)
+public function __invoke(StorageClientApiFactory $storage)
 {
     $client = $storage->createClientWrapper()->getBasicClient();
 

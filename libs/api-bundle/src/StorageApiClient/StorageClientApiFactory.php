@@ -10,7 +10,7 @@ use Keboola\StorageApiBranch\Factory\ClientOptions;
 use Keboola\StorageApiBranch\StorageApiToken;
 use Symfony\Component\HttpFoundation\Request;
 
-class RequestStorageClientFactory
+class StorageClientApiFactory
 {
     public const RUN_ID_HEADER = 'X-KBC-RunId';
 

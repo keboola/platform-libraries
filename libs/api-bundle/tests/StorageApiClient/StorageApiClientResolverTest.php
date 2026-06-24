@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Keboola\ApiBundle\Tests\StorageApiClient;
 
 use Keboola\ApiBundle\Security\StorageApiToken\StorageApiToken as SecurityStorageApiToken;
-use Keboola\ApiBundle\StorageApiClient\RequestStorageClientFactory;
 use Keboola\ApiBundle\StorageApiClient\StorageApiClientResolver;
+use Keboola\ApiBundle\StorageApiClient\StorageClientApiFactory;
 use Keboola\StorageApiBranch\Factory\ClientOptions;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
@@ -53,7 +53,7 @@ class StorageApiClientResolverTest extends TestCase
     public function testResolvesBoundFactoryBuildingClientFromSecurityToken(): void
     {
         $controller = new class {
-            public function __invoke(RequestStorageClientFactory $storage): void
+            public function __invoke(StorageClientApiFactory $storage): void
             {
             }
         };
@@ -70,14 +70,14 @@ class StorageApiClientResolverTest extends TestCase
         )];
 
         self::assertCount(1, $result);
-        self::assertInstanceOf(RequestStorageClientFactory::class, $result[0]);
+        self::assertInstanceOf(StorageClientApiFactory::class, $result[0]);
         self::assertSame('resolved-token', $result[0]->createClientWrapper()->getClientOptionsReadOnly()->getToken());
     }
 
     public function testThrowsWhenNoStorageApiTokenInSecurityContext(): void
     {
         $controller = new class {
-            public function __invoke(RequestStorageClientFactory $storage): void
+            public function __invoke(StorageClientApiFactory $storage): void
             {
             }
         };

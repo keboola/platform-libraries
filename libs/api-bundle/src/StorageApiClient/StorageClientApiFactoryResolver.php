@@ -12,7 +12,7 @@ use Symfony\Component\HttpKernel\Controller\ValueResolverInterface;
 use Symfony\Component\HttpKernel\ControllerMetadata\ArgumentMetadata;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 
-class StorageApiClientResolver implements ValueResolverInterface
+class StorageClientApiFactoryResolver implements ValueResolverInterface
 {
     public function __construct(
         private readonly ClientOptions $baseClientOptions,

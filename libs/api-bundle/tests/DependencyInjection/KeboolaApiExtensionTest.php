@@ -8,7 +8,7 @@ use Keboola\ApiBundle\DependencyInjection\KeboolaApiExtension;
 use Keboola\ApiBundle\Security\ApplicationToken\ManageApiClientFactory;
 use Keboola\ApiBundle\Security\StorageApiToken\StorageApiTokenAuthenticator;
 use Keboola\ApiBundle\Security\StorageApiToken\StorageApiTokenFactory;
-use Keboola\ApiBundle\StorageApiClient\StorageApiClientResolver;
+use Keboola\ApiBundle\StorageApiClient\StorageClientApiFactoryResolver;
 use Keboola\ManageApi\Client as ManageApiClient;
 use Keboola\ServiceClient\ServiceClient;
 use Keboola\StorageApiBranch\Factory\ClientOptions;
@@ -57,16 +57,16 @@ class KeboolaApiExtensionTest extends TestCase
         );
     }
 
-    public function testStorageApiClientResolverIsRegisteredWithBaseOptionsAndTagged(): void
+    public function testStorageClientApiFactoryResolverIsRegisteredWithBaseOptionsAndTagged(): void
     {
         $container = $this->buildContainer([['app_name' => 'storage-test-app']]);
 
         self::assertTrue(
-            $container->hasDefinition(StorageApiClientResolver::class),
-            'StorageApiClientResolver must be registered',
+            $container->hasDefinition(StorageClientApiFactoryResolver::class),
+            'StorageClientApiFactoryResolver must be registered',
         );
 
-        $definition = $container->getDefinition(StorageApiClientResolver::class);
+        $definition = $container->getDefinition(StorageClientApiFactoryResolver::class);
         self::assertArrayHasKey('controller.argument_value_resolver', $definition->getTags());
 
         $baseClientOptions = $definition->getArgument('$baseClientOptions');

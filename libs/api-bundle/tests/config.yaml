@@ -15,7 +15,7 @@ monolog:
 
 services:
     # This minimal kernel has no SecurityBundle, so TokenStorageInterface would be missing and the
-    # tagged StorageApiClientResolver could not compile. Provide a plain TokenStorage (public so a
+    # tagged StorageClientApiFactoryResolver could not compile. Provide a plain TokenStorage (public so a
     # test can seed a token). Real apps get this from SecurityBundle.
     Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface:
         class: Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorage

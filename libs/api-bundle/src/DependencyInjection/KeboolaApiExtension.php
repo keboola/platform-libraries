@@ -10,7 +10,7 @@ use Keboola\ApiBundle\Security\ApplicationToken\ApplicationTokenAuthenticator;
 use Keboola\ApiBundle\Security\ApplicationToken\ManageApiClientFactory;
 use Keboola\ApiBundle\Security\StorageApiToken\StorageApiTokenAuthenticator;
 use Keboola\ApiBundle\Security\StorageApiToken\StorageApiTokenFactory;
-use Keboola\ApiBundle\StorageApiClient\StorageApiClientResolver;
+use Keboola\ApiBundle\StorageApiClient\StorageClientApiFactoryResolver;
 use Keboola\ManageApi\Client as ManageApiClient;
 use Keboola\ServiceClient\ServiceClient;
 use Keboola\ServiceClient\ServiceDnsType;
@@ -111,7 +111,7 @@ class KeboolaApiExtension extends Extension
         // Controller-argument value resolver that hands controllers a RequestStorageClientFactory
         // bound to the current request and the resolved StorageApiToken (from security's TokenStorage,
         // same source as #[CurrentUser]). Triggers purely on the argument type.
-        $container->register(StorageApiClientResolver::class)
+        $container->register(StorageClientApiFactoryResolver::class)
             ->setArgument('$baseClientOptions', $baseClientOptions)
             ->setArgument('$tokenStorage', new Reference(TokenStorageInterface::class))
             ->addTag('controller.argument_value_resolver')

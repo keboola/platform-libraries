@@ -101,35 +101,16 @@ abstract class BaseFunctionalTestCase extends TestCase
         // Create a workspace for testing queries
         $workspaces = new Workspaces($this->branchAwareStorageClient);
         // Snowflake no longer allows creating workspace users with the legacy service account type (the
-        // empty/default login type). Create the workspace with a key-pair service login so a usable service
-        // user is provisioned; the generated public key is registered with the workspace.
+        // empty/default login type). The Query Service executes SQL against the workspace on the server side,
+        // so the test never connects with workspace credentials and the workspace needs no login of its own.
         $workspaceData = $workspaces->createWorkspace([
             'name' => sprintf('query-test-workspace-%d', random_int(1000, 9999)),
             'backend' => 'snowflake',
-            'loginType' => WorkspaceLoginType::SNOWFLAKE_SERVICE_KEYPAIR,
-            'publicKey' => self::generateWorkspacePublicKey(),
+            'loginType' => WorkspaceLoginType::NONE,
         ], true);
 
         /** @var array{id: int|string} $workspaceData */
         $this->testWorkspaceId = (string) $workspaceData['id'];
-    }
-
-    private static function generateWorkspacePublicKey(): string
-    {
-        $key = openssl_pkey_new([
-            'private_key_bits' => 2048,
-            'private_key_type' => OPENSSL_KEYTYPE_RSA,
-        ]);
-        if ($key === false) {
-            throw new RuntimeException('Failed to generate a workspace key pair');
-        }
-
-        $details = openssl_pkey_get_details($key);
-        if ($details === false || !isset($details['key']) || !is_string($details['key'])) {
-            throw new RuntimeException('Failed to extract the workspace public key');
-        }
-
-        return $details['key'];
     }
 
     protected function getTestBranchId(): string

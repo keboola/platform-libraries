@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Keboola\OutputMapping\Tests;
 
 use InvalidArgumentException;
-use Keboola\KeyGenerator\PemKeyCertificateGenerator;
 use Keboola\OutputMapping\Staging\StrategyFactory;
 use Keboola\OutputMapping\TableLoader;
 use Keboola\OutputMapping\Tests\Needs\TestSatisfyer;
@@ -13,7 +12,6 @@ use Keboola\StagingProvider\Staging\File\FileFormat;
 use Keboola\StagingProvider\Staging\File\FileStagingInterface;
 use Keboola\StagingProvider\Staging\StagingProvider;
 use Keboola\StagingProvider\Staging\StagingType;
-use Keboola\StagingProvider\Workspace\SnowflakeKeypairGenerator;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Options\ListFilesOptions;
 use Keboola\StorageApi\WorkspaceLoginType;
@@ -151,12 +149,10 @@ abstract class AbstractTestCase extends TestCase
         }];
 
         // Snowflake no longer allows creating workspace users with the legacy service account type, which is
-        // what the empty/default login type maps to. Request a key-pair service login instead and register a
-        // generated public key for it.
+        // what the empty/default login type maps to. These tests never connect to the workspace directly (data
+        // is loaded server-side via the Storage API), so create it without any login.
         if ($stagingType === StagingType::WorkspaceSnowflake) {
-            $keyPair = (new SnowflakeKeypairGenerator(new PemKeyCertificateGenerator()))->generateKeyPair();
-            $options['loginType'] = WorkspaceLoginType::SNOWFLAKE_SERVICE_KEYPAIR;
-            $options['publicKey'] = $keyPair->publicKey;
+            $options['loginType'] = WorkspaceLoginType::NONE;
         }
 
         $workspace = $workspaces->createWorkspace($options, true);

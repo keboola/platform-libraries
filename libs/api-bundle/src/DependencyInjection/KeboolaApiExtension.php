@@ -10,15 +10,20 @@ use Keboola\ApiBundle\Security\ApplicationToken\ApplicationTokenAuthenticator;
 use Keboola\ApiBundle\Security\ApplicationToken\ManageApiClientFactory;
 use Keboola\ApiBundle\Security\StorageApiToken\StorageApiTokenAuthenticator;
 use Keboola\ApiBundle\Security\StorageApiToken\StorageApiTokenFactory;
+use Keboola\ApiBundle\StorageApiClient\StorageClientApiFactory;
+use Keboola\ApiBundle\StorageApiClient\StorageClientApiFactoryResolver;
 use Keboola\ManageApi\Client as ManageApiClient;
 use Keboola\ServiceClient\ServiceClient;
 use Keboola\ServiceClient\ServiceDnsType;
+use Keboola\StorageApiBranch\Factory\ClientOptions;
 use Keboola\StorageApiBranch\Factory\StorageClientRequestFactory;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\Loader\PhpFileLoader;
 use Symfony\Component\DependencyInjection\Reference;
 use Symfony\Component\HttpKernel\DependencyInjection\Extension;
+use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 
 class KeboolaApiExtension extends Extension
 {
@@ -92,6 +97,21 @@ class KeboolaApiExtension extends Extension
             ->setArgument('$tokenFactory', new Reference(StorageApiTokenFactory::class))
         ;
         $authenticators[StorageApiTokenAuth::class] = new Reference(StorageApiTokenAuthenticator::class);
+
+        // StorageClientApiFactory controller-argument value resolver
+        $connectionUrl = (new Definition())
+            ->setFactory([new Reference(ServiceClient::class), 'getConnectionServiceUrl']);
+
+        $baseClientOptions = (new Definition(ClientOptions::class))
+            ->setArgument('$url', $connectionUrl)
+            ->setArgument('$logger', new Reference('logger'))
+            ->setArgument('$userAgent', $config['app_name']);
+
+        $container->register(StorageClientApiFactoryResolver::class)
+            ->setArgument('$baseClientOptions', $baseClientOptions)
+            ->setArgument('$tokenStorage', new Reference(TokenStorageInterface::class))
+            ->addTag('controller.argument_value_resolver')
+        ;
     }
 
     private function setupApplicationTokenAuthenticator(

@@ -8,10 +8,15 @@ use Keboola\ApiBundle\DependencyInjection\KeboolaApiExtension;
 use Keboola\ApiBundle\Security\ApplicationToken\ManageApiClientFactory;
 use Keboola\ApiBundle\Security\StorageApiToken\StorageApiTokenAuthenticator;
 use Keboola\ApiBundle\Security\StorageApiToken\StorageApiTokenFactory;
+use Keboola\ApiBundle\StorageApiClient\StorageClientApiFactoryResolver;
 use Keboola\ManageApi\Client as ManageApiClient;
+use Keboola\ServiceClient\ServiceClient;
+use Keboola\StorageApiBranch\Factory\ClientOptions;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\Reference;
+use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 
 class KeboolaApiExtensionTest extends TestCase
 {
@@ -50,6 +55,44 @@ class KeboolaApiExtensionTest extends TestCase
             $container->hasDefinition(StorageApiTokenAuthenticator::class),
             'StorageApiTokenAuthenticator must be registered',
         );
+    }
+
+    public function testStorageClientApiFactoryResolverIsRegisteredWithBaseOptionsAndTagged(): void
+    {
+        $container = $this->buildContainer([['app_name' => 'storage-test-app']]);
+
+        self::assertTrue(
+            $container->hasDefinition(StorageClientApiFactoryResolver::class),
+            'StorageClientApiFactoryResolver must be registered',
+        );
+
+        $definition = $container->getDefinition(StorageClientApiFactoryResolver::class);
+        self::assertArrayHasKey('controller.argument_value_resolver', $definition->getTags());
+
+        $baseClientOptions = $definition->getArgument('$baseClientOptions');
+        self::assertInstanceOf(Definition::class, $baseClientOptions);
+        self::assertSame(ClientOptions::class, $baseClientOptions->getClass());
+
+        // userAgent is the configured app name
+        self::assertSame('storage-test-app', $baseClientOptions->getArgument('$userAgent'));
+
+        // logger is the shared @logger service
+        $logger = $baseClientOptions->getArgument('$logger');
+        self::assertInstanceOf(Reference::class, $logger);
+        self::assertSame('logger', (string) $logger);
+
+        // url is resolved at runtime from ServiceClient::getConnectionServiceUrl()
+        $url = $baseClientOptions->getArgument('$url');
+        self::assertInstanceOf(Definition::class, $url);
+        $urlFactory = $url->getFactory();
+        self::assertIsArray($urlFactory);
+        self::assertInstanceOf(Reference::class, $urlFactory[0]);
+        self::assertSame(ServiceClient::class, (string) $urlFactory[0]);
+        self::assertSame('getConnectionServiceUrl', $urlFactory[1]);
+
+        $tokenStorage = $definition->getArgument('$tokenStorage');
+        self::assertInstanceOf(Reference::class, $tokenStorage);
+        self::assertSame(TokenStorageInterface::class, (string) $tokenStorage);
     }
 
     // -------------------------------------------------------------------------

@@ -145,6 +145,44 @@ which the bundle requires directly, so no extra installation is needed.
 > If you forget to install appropriate client, you will get exception like
 > `Service "Keboola\ApiBundle\Attribute\ApplicationTokenAuth" not found: the container inside "Symfony\Component\DependencyInjection\Argument\ServiceLocator" is a smaller service locator`
 
+## Storage API client
+
+When `#[StorageApiTokenAuth]` is enabled, type-hint
+`Keboola\ApiBundle\StorageApiClient\StorageClientApiFactory` on a controller argument; the bundle
+injects a factory already bound to the current request and the resolved `StorageApiToken`. Unlike the
+header-based `StorageClientRequestFactory`, it uses the token resolved by the authenticator, so it
+works for programmatic (`kbc_pat_*` / `kbc_at_*`) tokens too.
+
+The base options are preconfigured by the bundle: the Connection (Storage API) URL from the
+`ServiceClient`, the shared logger, and the configured `app_name` as user agent. The run id comes
+from the request's `X-KBC-RunId` header; branch / backend come from an optional per-call
+`ClientOptions`.
+
+```php
+#[StorageApiTokenAuth]
+public function __invoke(StorageClientApiFactory $storage)
+{
+    $client = $storage->createClientWrapper()->getBasicClient();
+
+    // branch-aware / per-call overrides:
+    // $wrapper = $storage->createClientWrapper(new ClientOptions(branchId: $branchId));
+}
+```
+
+On a controller that may authenticate through another attribute too (e.g.
+`#[ApplicationTokenAuth]` alongside `#[StorageApiTokenAuth]` — they are OR'd), the request can be
+authenticated without a Storage token. Make the argument nullable to receive `null` in that case;
+a required (non-nullable) argument throws when no Storage token is present:
+
+```php
+#[ApplicationTokenAuth(scopes: ['something:manage'])]
+#[StorageApiTokenAuth]
+public function __invoke(?StorageClientApiFactory $storage)
+{
+    $client = $storage?->createClientWrapper()->getBasicClient(); // null when authenticated via Manage token
+}
+```
+
 ## Testing controllers
 
 `Keboola\ApiBundle\Test\AuthenticatorTestTrait` stubs the authenticators in functional

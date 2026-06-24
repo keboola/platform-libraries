@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\ApiBundle\StorageApiClient;
 
+use Keboola\StorageApiBranch\Factory\ClientOptions;
 use Keboola\StorageApiBranch\StorageApiToken;
 use RuntimeException;
 use Symfony\Component\HttpFoundation\Request;
@@ -14,7 +15,7 @@ use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInt
 class StorageApiClientResolver implements ValueResolverInterface
 {
     public function __construct(
-        private readonly StorageClientApiFactory $factory,
+        private readonly ClientOptions $baseClientOptions,
         private readonly TokenStorageInterface $tokenStorage,
     ) {
     }
@@ -34,6 +35,6 @@ class StorageApiClientResolver implements ValueResolverInterface
             ));
         }
 
-        return [new RequestStorageClientFactory($this->factory, $request, $user)];
+        return [new RequestStorageClientFactory($this->baseClientOptions, $request, $user)];
     }
 }

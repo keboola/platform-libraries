@@ -9,7 +9,6 @@ use Keboola\ApiBundle\Security\ApplicationToken\ManageApiClientFactory;
 use Keboola\ApiBundle\Security\StorageApiToken\StorageApiTokenAuthenticator;
 use Keboola\ApiBundle\Security\StorageApiToken\StorageApiTokenFactory;
 use Keboola\ApiBundle\StorageApiClient\StorageApiClientResolver;
-use Keboola\ApiBundle\StorageApiClient\StorageClientApiFactory;
 use Keboola\ManageApi\Client as ManageApiClient;
 use Keboola\ServiceClient\ServiceClient;
 use Keboola\StorageApiBranch\Factory\ClientOptions;
@@ -58,40 +57,9 @@ class KeboolaApiExtensionTest extends TestCase
         );
     }
 
-    public function testStorageClientApiFactoryIsRegisteredWithBaseOptions(): void
+    public function testStorageApiClientResolverIsRegisteredWithBaseOptionsAndTagged(): void
     {
         $container = $this->buildContainer([['app_name' => 'storage-test-app']]);
-
-        self::assertTrue(
-            $container->hasDefinition(StorageClientApiFactory::class),
-            'StorageClientApiFactory must be registered',
-        );
-
-        $clientOptions = $container->getDefinition(StorageClientApiFactory::class)->getArgument('$clientOptions');
-        self::assertInstanceOf(Definition::class, $clientOptions);
-        self::assertSame(ClientOptions::class, $clientOptions->getClass());
-
-        // userAgent is the configured app name
-        self::assertSame('storage-test-app', $clientOptions->getArgument('$userAgent'));
-
-        // logger is the shared @logger service
-        $logger = $clientOptions->getArgument('$logger');
-        self::assertInstanceOf(Reference::class, $logger);
-        self::assertSame('logger', (string) $logger);
-
-        // url is resolved at runtime from ServiceClient::getConnectionServiceUrl()
-        $url = $clientOptions->getArgument('$url');
-        self::assertInstanceOf(Definition::class, $url);
-        $urlFactory = $url->getFactory();
-        self::assertIsArray($urlFactory);
-        self::assertInstanceOf(Reference::class, $urlFactory[0]);
-        self::assertSame(ServiceClient::class, (string) $urlFactory[0]);
-        self::assertSame('getConnectionServiceUrl', $urlFactory[1]);
-    }
-
-    public function testStorageApiClientResolverIsRegisteredAndTagged(): void
-    {
-        $container = $this->buildContainer([[]]);
 
         self::assertTrue(
             $container->hasDefinition(StorageApiClientResolver::class),
@@ -101,9 +69,26 @@ class KeboolaApiExtensionTest extends TestCase
         $definition = $container->getDefinition(StorageApiClientResolver::class);
         self::assertArrayHasKey('controller.argument_value_resolver', $definition->getTags());
 
-        $factory = $definition->getArgument('$factory');
-        self::assertInstanceOf(Reference::class, $factory);
-        self::assertSame(StorageClientApiFactory::class, (string) $factory);
+        $baseClientOptions = $definition->getArgument('$baseClientOptions');
+        self::assertInstanceOf(Definition::class, $baseClientOptions);
+        self::assertSame(ClientOptions::class, $baseClientOptions->getClass());
+
+        // userAgent is the configured app name
+        self::assertSame('storage-test-app', $baseClientOptions->getArgument('$userAgent'));
+
+        // logger is the shared @logger service
+        $logger = $baseClientOptions->getArgument('$logger');
+        self::assertInstanceOf(Reference::class, $logger);
+        self::assertSame('logger', (string) $logger);
+
+        // url is resolved at runtime from ServiceClient::getConnectionServiceUrl()
+        $url = $baseClientOptions->getArgument('$url');
+        self::assertInstanceOf(Definition::class, $url);
+        $urlFactory = $url->getFactory();
+        self::assertIsArray($urlFactory);
+        self::assertInstanceOf(Reference::class, $urlFactory[0]);
+        self::assertSame(ServiceClient::class, (string) $urlFactory[0]);
+        self::assertSame('getConnectionServiceUrl', $urlFactory[1]);
 
         $tokenStorage = $definition->getArgument('$tokenStorage');
         self::assertInstanceOf(Reference::class, $tokenStorage);

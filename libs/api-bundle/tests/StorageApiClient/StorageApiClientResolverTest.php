@@ -7,7 +7,6 @@ namespace Keboola\ApiBundle\Tests\StorageApiClient;
 use Keboola\ApiBundle\Security\StorageApiToken\StorageApiToken as SecurityStorageApiToken;
 use Keboola\ApiBundle\StorageApiClient\RequestStorageClientFactory;
 use Keboola\ApiBundle\StorageApiClient\StorageApiClientResolver;
-use Keboola\ApiBundle\StorageApiClient\StorageClientApiFactory;
 use Keboola\StorageApiBranch\Factory\ClientOptions;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
@@ -21,10 +20,7 @@ class StorageApiClientResolverTest extends TestCase
 {
     private function resolver(TokenStorageInterface $tokenStorage): StorageApiClientResolver
     {
-        return new StorageApiClientResolver(
-            new StorageClientApiFactory(new ClientOptions('https://connection.test')),
-            $tokenStorage,
-        );
+        return new StorageApiClientResolver(new ClientOptions('https://connection.test'), $tokenStorage);
     }
 
     private function metadataFor(object $controller, string $arg): ArgumentMetadata

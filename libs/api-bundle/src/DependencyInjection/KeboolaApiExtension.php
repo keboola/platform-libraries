@@ -11,7 +11,6 @@ use Keboola\ApiBundle\Security\ApplicationToken\ManageApiClientFactory;
 use Keboola\ApiBundle\Security\StorageApiToken\StorageApiTokenAuthenticator;
 use Keboola\ApiBundle\Security\StorageApiToken\StorageApiTokenFactory;
 use Keboola\ApiBundle\StorageApiClient\StorageApiClientResolver;
-use Keboola\ApiBundle\StorageApiClient\StorageClientApiFactory;
 use Keboola\ManageApi\Client as ManageApiClient;
 use Keboola\ServiceClient\ServiceClient;
 use Keboola\ServiceClient\ServiceDnsType;
@@ -98,8 +97,9 @@ class KeboolaApiExtension extends Extension
         ;
         $authenticators[StorageApiTokenAuth::class] = new Reference(StorageApiTokenAuthenticator::class);
 
-        // Storage API client factory available to controllers/services for building a ClientWrapper
-        // from the resolved StorageApiToken.
+        // Base Storage client options preconfigured by the bundle: Connection URL from the
+        // ServiceClient (resolved at runtime), the shared logger, and the app name as user agent.
+        // Token, run id, branch and backend stay per-request / per-call.
         $connectionUrl = (new Definition())
             ->setFactory([new Reference(ServiceClient::class), 'getConnectionServiceUrl']);
 
@@ -108,15 +108,11 @@ class KeboolaApiExtension extends Extension
             ->setArgument('$logger', new Reference('logger'))
             ->setArgument('$userAgent', $config['app_name']);
 
-        $container->register(StorageClientApiFactory::class)
-            ->setArgument('$clientOptions', $baseClientOptions)
-        ;
-
         // Controller-argument value resolver that hands controllers a RequestStorageClientFactory
-        // bound to the current request and the resolved StorageApiToken. Triggers purely on the
-        // argument type; the token comes from security's TokenStorage (same source as #[CurrentUser]).
+        // bound to the current request and the resolved StorageApiToken (from security's TokenStorage,
+        // same source as #[CurrentUser]). Triggers purely on the argument type.
         $container->register(StorageApiClientResolver::class)
-            ->setArgument('$factory', new Reference(StorageClientApiFactory::class))
+            ->setArgument('$baseClientOptions', $baseClientOptions)
             ->setArgument('$tokenStorage', new Reference(TokenStorageInterface::class))
             ->addTag('controller.argument_value_resolver')
         ;

@@ -147,38 +147,16 @@ which the bundle requires directly, so no extra installation is needed.
 
 ## Storage API client
 
-When `#[StorageApiTokenAuth]` is enabled, the bundle registers a
-`Keboola\ApiBundle\StorageApiClient\StorageClientApiFactory` service. Depend on it and build a
-Storage `ClientWrapper` from the resolved `#[CurrentUser] StorageApiToken` — unlike the header-based
-`StorageClientRequestFactory`, it uses the token already resolved by the authenticator, so it works
-for programmatic (`kbc_pat_*` / `kbc_at_*`) tokens too.
+When `#[StorageApiTokenAuth]` is enabled, type-hint
+`Keboola\ApiBundle\StorageApiClient\RequestStorageClientFactory` on a controller argument; the bundle
+injects a factory already bound to the current request and the resolved `StorageApiToken`. Unlike the
+header-based `StorageClientRequestFactory`, it uses the token resolved by the authenticator, so it
+works for programmatic (`kbc_pat_*` / `kbc_at_*`) tokens too.
 
-The base options are preconfigured by the bundle: the Connection (Storage API) URL is taken from the
-`ServiceClient`, the logger is the shared logger, and the user agent is the configured `app_name`.
-The token comes from the `StorageApiToken` you pass, the run id from the request's `X-KBC-RunId`
-header, and branch / backend from an optional per-call `ClientOptions`.
-
-```php
-public function __construct(
-    private readonly StorageClientApiFactory $storageClientApiFactory,
-) {}
-
-#[StorageApiTokenAuth]
-public function __invoke(#[CurrentUser] StorageApiToken $token, Request $request)
-{
-    $client = $this->storageClientApiFactory->createClientWrapper($request, $token)->getBasicClient();
-
-    // branch-aware / per-call overrides:
-    // $wrapper = $this->storageClientApiFactory->createClientWrapper(
-    //     $request, $token, new ClientOptions(branchId: $branchId),
-    // );
-}
-```
-
-For controllers, you can skip the `$request`/`$token` plumbing: type-hint
-`Keboola\ApiBundle\StorageApiClient\RequestStorageClientFactory` on a controller argument and the
-bundle injects a factory already bound to the current request and resolved `StorageApiToken`. You
-only pass optional per-call `ClientOptions`:
+The base options are preconfigured by the bundle: the Connection (Storage API) URL from the
+`ServiceClient`, the shared logger, and the configured `app_name` as user agent. The run id comes
+from the request's `X-KBC-RunId` header; branch / backend come from an optional per-call
+`ClientOptions`.
 
 ```php
 #[StorageApiTokenAuth]

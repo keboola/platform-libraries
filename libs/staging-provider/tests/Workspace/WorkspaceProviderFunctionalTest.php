@@ -93,12 +93,11 @@ class WorkspaceProviderFunctionalTest extends TestCase
     private function createWorkspace(array $options): array
     {
         // Snowflake no longer allows creating workspace users with the legacy service account type (the
-        // empty/default login type). Default Snowflake workspaces to a key-pair service login so a usable
-        // service user is created; callers that need a specific login type still set it explicitly.
+        // empty/default login type). The tests using this helper only inspect workspace metadata and never
+        // connect to it, so default Snowflake workspaces to no login; callers that need a specific login type
+        // (e.g. the key-pair credential-reset test) still set it explicitly.
         if (($options['backend'] ?? null) === 'snowflake' && !isset($options['loginType'])) {
-            $keyPair = (new SnowflakeKeypairGenerator(new PemKeyCertificateGenerator()))->generateKeyPair();
-            $options['loginType'] = WorkspaceLoginType::SNOWFLAKE_SERVICE_KEYPAIR;
-            $options['publicKey'] = $keyPair->publicKey;
+            $options['loginType'] = WorkspaceLoginType::NONE;
         }
 
         $workspaceData = $this->workspacesApiClient->createWorkspace($options, async: true);

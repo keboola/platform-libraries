@@ -13,9 +13,12 @@ use Keboola\ApiClientBase\Auth\KeboolaServiceAccountAuthenticator;
 use Keboola\ApiClientBase\Auth\ManageApiTokenAuthenticator;
 use Keboola\ApiClientBase\Json;
 use Keboola\GitServiceApiClient\Exception\GitServiceClientException;
+use Keboola\GitServiceApiClient\Model\CommitList;
 use Keboola\GitServiceApiClient\Model\CreatedCredential;
 use Keboola\GitServiceApiClient\Model\Credential;
 use Keboola\GitServiceApiClient\Model\CredentialListWrapper;
+use Keboola\GitServiceApiClient\Model\GitRef;
+use Keboola\GitServiceApiClient\Model\GitRefListWrapper;
 use Keboola\GitServiceApiClient\Model\Repository;
 use Psr\Log\LoggerInterface;
 
@@ -137,5 +140,37 @@ class GitServiceApiClient
                 'repos/' . rawurlencode($repo) . '/credentials/' . rawurlencode($credentialId),
             ),
         );
+    }
+
+    /**
+     * List the commit history of a branch or tag, most recent first.
+     *
+     * @param int<1, max> $page  1-based page number
+     * @param int<1, 50> $limit  page size (git-service caps this at 50)
+     */
+    public function listCommits(string $repo, string $ref, int $page = 1, int $limit = 30): CommitList
+    {
+        $query = http_build_query(['page' => $page, 'limit' => $limit]);
+        return $this->apiClient->sendRequestAndMapResponse(
+            new Request(
+                'GET',
+                'repos/' . rawurlencode($repo) . '/refs/' . rawurlencode($ref) . '/commits?' . $query,
+            ),
+            CommitList::class,
+        );
+    }
+
+    /**
+     * List all git references (branches and tags) of a repository.
+     *
+     * @return list<GitRef>
+     */
+    public function listRefs(string $repo): array
+    {
+        $wrapper = $this->apiClient->sendRequestAndMapResponse(
+            new Request('GET', 'repos/' . rawurlencode($repo) . '/refs'),
+            GitRefListWrapper::class,
+        );
+        return $wrapper->refs;
     }
 }

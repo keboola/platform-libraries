@@ -45,7 +45,8 @@ class AdapterTest extends AbstractManifestAdapterTest
     "distribution_key": [],
     "columns": [],
     "metadata": [],
-    "column_metadata": []
+    "column_metadata": [],
+    "schema": []
 }
 EOF,
         ];
@@ -58,6 +59,7 @@ distribution_key: {  }
 columns: {  }
 metadata: {  }
 column_metadata: {  }
+schema: {  }
 
 EOF,
         ];
@@ -97,7 +99,8 @@ EOF,
     "distribution_key": [],
     "columns": [],
     "metadata": [],
-    "column_metadata": []
+    "column_metadata": [],
+    "schema": []
 }
 EOF,
         ];
@@ -110,6 +113,7 @@ distribution_key: {  }
 columns: {  }
 metadata: {  }
 column_metadata: {  }
+schema: {  }
 
 EOF,
         ];
@@ -139,6 +143,7 @@ EOF,
             'columns' => [],
             'metadata' => [],
             'column_metadata' => [],
+            'schema' => [],
         ], $adapter->readFromFile($filePathname));
     }
 

@@ -56,6 +56,7 @@ class TableManifestConfigurationTest extends TestCase
             'column_metadata' => $columnsMetadata,
         ];
         $expectedResponse = $config;
+        $expectedResponse['schema'] = [];
         $processedConfiguration = (new Manifest())->parse(['config' => $config]);
 
         self::assertEquals($expectedResponse, $processedConfiguration);

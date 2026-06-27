@@ -20,7 +20,7 @@
     "require-dev": {
         "ext-pdo": "*",
         "ihsw/toxiproxy-php-client": "^3.0",
-        "keboola/coding-standard": "^15.1",
+        "keboola/coding-standard": "^16.0",
         "monolog/monolog": "^3.9",
         "phpstan/phpstan": "^2.1",
         "phpstan/phpstan-phpunit": "^2.0",
@@ -47,8 +47,8 @@
     "scripts": {
         "phpunit": "phpunit",
         "phpstan": "phpstan analyse",
-        "phpcs": "phpcs -n --ignore=vendor --extensions=php .",
-        "phpcbf": "phpcbf -n --ignore=vendor --extensions=php .",
+        "phpcs": "phpcs --extensions=php src tests",
+        "phpcbf": "phpcbf --extensions=php src tests",
         "build": [
             "@composer validate --no-check-publish --no-check-all",
             "@phpcs",

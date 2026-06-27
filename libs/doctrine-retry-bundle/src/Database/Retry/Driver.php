@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Keboola\DoctrineRetryBundle\Database\Retry;
 
-use Doctrine\DBAL\Driver\Connection;
 use Doctrine\DBAL\Driver as DriverInterface;
+use Doctrine\DBAL\Driver\Connection;
 use Doctrine\DBAL\Driver\Middleware\AbstractDriverMiddleware;
 use Retry\RetryProxyInterface;
 

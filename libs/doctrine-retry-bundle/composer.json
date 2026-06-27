@@ -27,7 +27,6 @@
         "phpstan/phpstan-phpunit": "^2.0",
         "phpstan/phpstan-symfony": "^2.0",
         "phpunit/phpunit": "^13.0",
-        "rector/rector": "^1.2 || ^2.0",
         "symfony/dotenv": "^8.0|^7.4"
     },
     "autoload": {

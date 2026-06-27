@@ -23,11 +23,12 @@
         "keboola/coding-standard": "^16.0",
         "monolog/monolog": "^3.9",
         "phpstan/phpstan": "^2.1",
+        "phpstan/phpstan-doctrine": "^2.0",
         "phpstan/phpstan-phpunit": "^2.0",
-        "phpunit/phpunit": "^12.1",
-        "symfony/dotenv": "^6.0|^7.0",
         "phpstan/phpstan-symfony": "^2.0",
-        "phpstan/phpstan-doctrine": "^2.0"
+        "phpunit/phpunit": "^12.1",
+        "rector/rector": "^2.0",
+        "symfony/dotenv": "^6.0|^7.0"
     },
     "autoload": {
         "psr-4": {

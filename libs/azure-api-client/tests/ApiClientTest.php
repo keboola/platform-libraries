@@ -83,7 +83,8 @@ class ApiClientTest extends TestCase
     {
 
         $client = new ApiClient(
-            configuration: new ApiClientConfiguration(
+            'https://example.com/',
+            new ApiClientConfiguration(
                 requestHandler: fn($request) => Create::promiseFor(new Response(201, [], 'boo')),
                 logger: $this->logger,
             ),

@@ -21,9 +21,11 @@ class SettleFactoryTest extends TestCase
         $settle = $factory->createSettle(2, 1);
 
         try {
+            /** @var mixed $expectedConditionValue */
+            $expectedConditionValue = true;
             $settle->settle(
-                fn($v) => $v === true,
-                fn() => false,
+                fn($v): bool => $v === $expectedConditionValue,
+                fn(): bool => false,
             );
 
             self::fail('Settle is expected to fail');
@@ -36,12 +38,12 @@ class SettleFactoryTest extends TestCase
 
         $checks = array_filter(
             $logsHandler->getRecords(),
-            fn(array $log) => $log['message'] === 'Checking current value',
+            fn(array $log): bool => $log['message'] === 'Checking current value',
         );
 
         $fails = array_filter(
             $logsHandler->getRecords(),
-            fn(array $log) => $log['message'] === 'Current value does not match expectation',
+            fn(array $log): bool => $log['message'] === 'Current value does not match expectation',
         );
 
         // check logs contains 2 value checks and 2 compare failures

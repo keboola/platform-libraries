@@ -9,15 +9,11 @@ use RuntimeException;
 
 class Settle
 {
-    private LoggerInterface $logger;
-    private int $maxAttempts;
-    private int $maxAttemptsDelay;
-
-    public function __construct(LoggerInterface $logger, int $maxAttempts, int $maxAttemptsDelay)
-    {
-        $this->logger = $logger;
-        $this->maxAttempts = $maxAttempts;
-        $this->maxAttemptsDelay = $maxAttemptsDelay;
+    public function __construct(
+        private readonly LoggerInterface $logger,
+        private readonly int $maxAttempts,
+        private readonly int $maxAttemptsDelay,
+    ) {
     }
 
     /**

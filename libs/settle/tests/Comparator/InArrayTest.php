@@ -11,6 +11,7 @@ class InArrayTest extends TestCase
 {
     /**
      * @dataProvider provideInvokeStrictTestData
+     * @param list<mixed> $targetValue
      * @param mixed $currentValue
      */
     public function testInvokeStrict(array $targetValue, $currentValue, bool $expectedResult): void
@@ -18,7 +19,10 @@ class InArrayTest extends TestCase
         self::assertSame($expectedResult, (new InArray($targetValue, true))($currentValue));
     }
 
-    public function provideInvokeStrictTestData(): iterable
+    /**
+     * @return iterable<string, array{target: list<mixed>, current: mixed, result: bool}>
+     */
+    public static function provideInvokeStrictTestData(): iterable
     {
         yield 'empty array' => [
             'target' => [],
@@ -47,6 +51,7 @@ class InArrayTest extends TestCase
 
     /**
      * @dataProvider provideInvokeNotStrictTestData
+     * @param list<mixed> $targetValue
      * @param mixed $currentValue
      */
     public function testInvokeNotStrict(array $targetValue, $currentValue, bool $expectedResult): void
@@ -54,7 +59,10 @@ class InArrayTest extends TestCase
         self::assertSame($expectedResult, (new InArray($targetValue, false))($currentValue));
     }
 
-    public function provideInvokeNotStrictTestData(): iterable
+    /**
+     * @return iterable<string, array{target: list<mixed>, current: mixed, result: bool}>
+     */
+    public static function provideInvokeNotStrictTestData(): iterable
     {
         yield 'empty array' => [
             'target' => [],

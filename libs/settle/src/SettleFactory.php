@@ -8,11 +8,8 @@ use Psr\Log\LoggerInterface;
 
 class SettleFactory
 {
-    private LoggerInterface $logger;
-
-    public function __construct(LoggerInterface $logger)
+    public function __construct(private readonly LoggerInterface $logger)
     {
-        $this->logger = $logger;
     }
 
     public function createSettle(int $maxAttempts, int $maxAttemptsDelay): Settle

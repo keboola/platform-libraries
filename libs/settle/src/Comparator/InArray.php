@@ -10,17 +10,12 @@ namespace Keboola\Settle\Comparator;
  */
 class InArray implements ComparatorInterface
 {
-    private array $targetValues;
-    private bool $strict;
-
     /**
      * @phpstan-param TValue[] $targetValues
-     * @param mixed $targetValues
+     * @param array $targetValues
      */
-    public function __construct(array $targetValues, bool $strict)
+    public function __construct(private readonly array $targetValues, private readonly bool $strict)
     {
-        $this->targetValues = $targetValues;
-        $this->strict = $strict;
     }
 
     /**

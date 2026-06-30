@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Keboola\DoctrineRetryBundle\Database\Retry;
 
 use Doctrine\DBAL\Driver as DriverInterface;
+use Doctrine\DBAL\Driver\Connection;
 use Doctrine\DBAL\Driver\Middleware\AbstractDriverMiddleware;
 use Retry\RetryProxyInterface;
 
@@ -28,7 +29,7 @@ class Driver extends AbstractDriverMiddleware
     public function connect(array $params): DriverInterface\Connection
     {
         /** @var DriverInterface\Connection $result */
-        $result = $this->retryProxy->call(fn() => parent::connect($params));
+        $result = $this->retryProxy->call(fn(): Connection => parent::connect($params));
         return $result;
     }
 }

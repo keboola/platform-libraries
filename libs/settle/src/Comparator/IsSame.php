@@ -10,16 +10,12 @@ namespace Keboola\Settle\Comparator;
  */
 class IsSame implements ComparatorInterface
 {
-    /** @var TValue */
-    private $targetValue;
-
     /**
      * @phpstan-param TValue $targetValue
      * @param mixed $targetValue
      */
-    public function __construct($targetValue)
+    public function __construct(private readonly mixed $targetValue)
     {
-        $this->targetValue = $targetValue;
     }
 
     /**

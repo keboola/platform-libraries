@@ -18,7 +18,10 @@ class IsTrueTest extends TestCase
         self::assertSame($expectedResult, (new IsTrue())($currentValue)); // @phpstan-ignore-line
     }
 
-    public function provideInvokeTestData(): iterable
+    /**
+     * @return iterable<string, array{current: mixed, result: bool}>
+     */
+    public static function provideInvokeTestData(): iterable
     {
         yield 'true' => [
             'current' => true,

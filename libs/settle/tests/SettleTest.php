@@ -10,7 +10,6 @@ use Monolog\Handler\TestHandler;
 use Monolog\Logger;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
-use Psr\Log\NullLogger;
 use RuntimeException;
 
 class SettleTest extends TestCase
@@ -28,13 +27,17 @@ class SettleTest extends TestCase
 
     public function testSettleImmediately(): void
     {
-        $logger = new NullLogger();
-        $factory = new SettleFactory($logger);
+        $settle = (new SettleFactory($this->logger))->createSettle(1, 1);
 
-        $settle = new Settle($this->logger, 1, 1);
+        $currentValue = function (): int {
+            /** @var int $i */
+            static $i = 1;
+            return $i;
+        };
+
         $result = $settle->settle(
-            fn($v) => $v === 1,
-            fn() => 1,
+            fn($v): bool => $v === 1,
+            $currentValue,
         );
 
         self::assertSame(1, $result);
@@ -48,32 +51,33 @@ class SettleTest extends TestCase
         $settle = new Settle($this->logger, 5, 1);
 
         $currentValue = function (): int {
+            /** @var int $i */
             static $i = 0;
             return [1, 1, 1, 2][$i++];
         };
 
         $result = $settle->settle(
-            fn($v) => $v === 2,
+            fn($v): bool => $v === 2,
             $currentValue,
         );
 
         self::assertSame(2, $result);
         self::assertLogsCount(4, 'Checking current value');
         self::assertTrue(self::$logsHandler->hasRecordThatPasses(
-            fn ($v) => $v['message'] === 'Checking current value' &&
+            fn ($v): bool => $v['message'] === 'Checking current value' &&
                 $v['context']['attempt'] === 1,
             Logger::DEBUG,
         ));
         self::assertLogsCount(1, 'Condition settled');
         self::assertTrue(self::$logsHandler->hasRecordThatPasses(
-            fn ($v) => $v['message'] === 'Condition settled' &&
+            fn ($v): bool => $v['message'] === 'Condition settled' &&
                 $v['context']['currentValue'] === '2' &&
                 $v['context']['attempts'] === 4,
             Logger::DEBUG,
         ));
         self::assertLogsCount(3, 'Current value does not match expectation');
         self::assertTrue(self::$logsHandler->hasRecordThatPasses(
-            fn ($v) => $v['message'] === 'Current value does not match expectation' &&
+            fn ($v): bool => $v['message'] === 'Current value does not match expectation' &&
                 $v['context']['currentValue'] === '1' &&
                 $v['context']['attempts'] === 1,
             Logger::DEBUG,
@@ -85,9 +89,11 @@ class SettleTest extends TestCase
         $settle = new Settle($this->logger, 3, 1);
 
         try {
+            /** @var mixed $expectedConditionValue */
+            $expectedConditionValue = 2;
             $settle->settle(
-                fn($v) => $v === 2,
-                fn() => 1,
+                fn($v): bool => $v === $expectedConditionValue,
+                fn(): int => 1,
             );
             self::fail('Settle was expected to fail');
         } catch (RuntimeException $e) {
@@ -108,6 +114,7 @@ class SettleTest extends TestCase
         $settle = new Settle($this->logger, 4, 60);
 
         $currentValue = function (): int {
+            /** @var int $i */
             static $i = 0;
             return [1, 1, 1, 2][$i++];
         };
@@ -115,7 +122,7 @@ class SettleTest extends TestCase
         $startTime = microtime(true);
 
         $settle->settle(
-            fn($v) => $v === 2,
+            fn($v): bool => $v === 2,
             $currentValue,
         );
 
@@ -131,6 +138,7 @@ class SettleTest extends TestCase
         $settle = new Settle($this->logger, 4, 2);
 
         $currentValue = function (): int {
+            /** @var int $i */
             static $i = 0;
             return [1, 1, 1, 2][$i++];
         };
@@ -138,7 +146,7 @@ class SettleTest extends TestCase
         $startTime = microtime(true);
 
         $settle->settle(
-            fn($v) => $v === 2,
+            fn($v): bool => $v === 2,
             $currentValue,
         );
 
@@ -152,7 +160,7 @@ class SettleTest extends TestCase
     {
         self::assertCount(
             $expectedCount,
-            array_filter(self::$logsHandler->getRecords(), fn(array $log) => $log['message'] === $message),
+            array_filter(self::$logsHandler->getRecords(), fn(array $log): bool => $log['message'] === $message),
         );
     }
 }

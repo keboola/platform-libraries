@@ -25,19 +25,20 @@
         }
     },
     "require": {
-        "php": ">=7.4",
+        "php": "^8.2",
         "ext-json": "*",
         "keboola/common-exceptions": "^1.1",
         "psr/log": "^1.1|^2.0|^3.0",
         "symfony/config": "^5.2|^6.2|^7.0"
     },
     "require-dev": {
-        "infection/infection": "^0.26",
-        "keboola/coding-standard": ">=14.0.0",
+        "infection/infection": "^0.34",
+        "keboola/coding-standard": "^16.0",
         "monolog/monolog": "^2.1",
-        "phpstan/phpstan": "^1.9",
-        "phpunit/phpunit": "^9.5",
-        "sempro/phpunit-pretty-print": "^1.4",
+        "phpstan/phpstan": "^2.1",
+        "phpstan/phpstan-phpunit": "^2.0",
+        "phpstan/phpstan-symfony": "^2.0",
+        "phpunit/phpunit": "^10.5",
         "symfony/dotenv": "^6.2|^7.0"
     },
     "scripts": {
@@ -45,7 +46,7 @@
             "@putenv XDEBUG_MODE=coverage",
             "phpunit --coverage-clover build/logs/clover.xml --coverage-xml=build/logs/coverage-xml --log-junit=build/logs/phpunit.junit.xml"
         ],
-        "phpstan": "phpstan analyse --no-progress -c phpstan.neon",
+        "phpstan": "phpstan analyse --no-progress",
         "phpcs": "phpcs --extensions=php src tests",
         "phpcbf": "phpcbf --extensions=php src tests",
         "infection": "infection --threads=2 --min-covered-msi=90 --coverage=build/logs",

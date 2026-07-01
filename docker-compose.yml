@@ -179,7 +179,7 @@ services:
     working_dir: /code/libs/service-client
 
   dev-settle:
-    <<: *dev
+    <<: *dev84
     image: keboola/settle
     working_dir: /code/libs/settle
 

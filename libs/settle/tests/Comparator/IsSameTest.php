@@ -19,7 +19,10 @@ class IsSameTest extends TestCase
         self::assertSame($expectedResult, (new IsSame($targetValue))($currentValue));
     }
 
-    public function provideInvokeTestData(): iterable
+    /**
+     * @return iterable<string, array{target: mixed, current: mixed, result: bool}>
+     */
+    public static function provideInvokeTestData(): iterable
     {
         yield 'matching string' => [
             'target' => 'a',

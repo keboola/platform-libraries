@@ -90,8 +90,7 @@ class StorageApiTokenFactoryTest extends TestCase
     }
 
     /**
-     * The resulting token records the auth type the request was actually verified with, so OAuth
-     * bearer tokens are not later mistaken for legacy Storage tokens.
+     * The resulting token records the auth type the request was verified with.
      */
     #[DataProvider('provideRequestAuthTypes')]
     public function testCreateFromRequestSetsTokenTypeFromResolvedAuthType(
@@ -244,7 +243,7 @@ class StorageApiTokenFactoryTest extends TestCase
         self::assertSame($tokenDetail, $token->getTokenInfo());
         self::assertSame('123', $token->getProjectId());
         self::assertSame(['feat-a'], $token->getFeatures());
-        // The exchange yields a legacy Storage token, so it must be typed as such - never as bearer.
+        // The exchange yields a legacy Storage token.
         self::assertSame(AuthType::STORAGE_TOKEN, $token->getTokenType());
 
         // The original request must remain untouched.

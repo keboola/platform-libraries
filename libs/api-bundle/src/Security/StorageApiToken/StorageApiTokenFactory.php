@@ -134,8 +134,7 @@ class StorageApiTokenFactory
             );
         }
 
-        // The exchange resolves the programmatic token to a legacy Storage token, so it is always
-        // typed as a Storage token regardless of the bearer token the caller sent.
+        // The exchange resolves the programmatic token to a legacy Storage token.
         return new StorageApiToken($tokenDetail, $storageToken, AuthType::STORAGE_TOKEN);
     }
 
@@ -150,9 +149,7 @@ class StorageApiTokenFactory
         $storageApiClient = $wrapper->getBasicClient();
         $tokenInfo = $storageApiClient->verifyToken();
 
-        // The request factory already decided the auth type from the request headers (bearer vs
-        // X-StorageApi-Token); reuse that decision so the token is not later mistaken for a legacy
-        // Storage token. Falls back to Storage token if, unexpectedly, no type was resolved.
+        // Reuse the auth type the request factory resolved from the request headers.
         $authType = $wrapper->getClientOptionsReadOnly()->getAuthType() ?? AuthType::STORAGE_TOKEN;
 
         return new StorageApiToken($tokenInfo, $storageApiClient->getTokenString(), $authType);

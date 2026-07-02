@@ -58,8 +58,7 @@ class AuthenticatorTestTraitTest extends WebTestCase
         self::assertSame('oauth-token', $token->getTokenValue());
         self::assertSame('456', $token->getProjectId());
         self::assertSame(['feat-a'], $token->getFeatures());
-        // An OAuth request resolves to a bearer-typed token, so a Storage client built from it
-        // authenticates with the bearer scheme instead of X-StorageApi-Token.
+        // An OAuth request resolves to a bearer-typed token.
         self::assertSame(AuthType::BEARER, $token->getTokenType());
 
         self::assertInstanceOf(

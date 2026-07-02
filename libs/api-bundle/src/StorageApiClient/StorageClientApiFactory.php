@@ -28,8 +28,6 @@ class StorageClientApiFactory
         }
 
         $options->setToken($this->token->getTokenValue());
-        // Propagate the auth type the token was resolved with (bearer for OAuth tokens, storage
-        // token otherwise) instead of assuming the value is always a legacy Storage token.
         $options->setAuthType($this->token->getTokenType());
         $options->setRunId($this->getRunId($options));
 

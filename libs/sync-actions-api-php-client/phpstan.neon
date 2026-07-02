@@ -1,7 +1,15 @@
 parameters:
     level: max
+    # The client validates non-empty-string params at runtime (Assert::stringNotEmpty) for
+    # callers who bypass the type hints, so don't treat those PHPDoc types as certain.
+    treatPhpDocTypesAsCertain: false
     paths:
         - src
         - tests
     ignoreErrors:
         - identifier: missingType.iterableValue
+        # Guzzle's Middleware::history() types its by-ref container as array|ArrayAccess,
+        # so PHPStan cannot verify the (correct) @param-out type of the test request handler.
+        -
+            identifier: paramOut.type
+            path: tests/ApiClientTestTrait.php

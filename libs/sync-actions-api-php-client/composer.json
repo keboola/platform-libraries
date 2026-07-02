@@ -16,21 +16,27 @@
     ],
     "type": "library",
     "license": "MIT",
+    "repositories": {
+        "libs": {
+            "type": "path",
+            "url": "../../libs/*"
+        }
+    },
     "require": {
         "php": "^8.4",
         "guzzlehttp/guzzle": "^7.8",
+        "keboola/php-api-client-base": "*@dev",
         "psr/log": "^3.0",
-        "symfony/config": "^7.3",
-        "symfony/validator": "^7.3"
+        "webmozart/assert": "^1.11"
     },
     "require-dev": {
         "keboola/coding-standard": ">=16.0",
         "keboola/php-temp": "^2.0",
+        "monolog/monolog": "^3.9",
         "phpstan/phpstan": "^2.1",
         "phpunit/phpunit": "^12.3",
-        "symfony/process": "^7.3",
         "symfony/dotenv": "^7.3",
-        "monolog/monolog": "^3.9"
+        "symfony/process": "^7.3"
     },
     "autoload": {
         "psr-4": {

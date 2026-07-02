@@ -8,6 +8,7 @@ use Keboola\ApiBundle\DependencyInjection\KeboolaApiExtension;
 use Keboola\ApiBundle\Security\ApplicationToken\ManageApiClientFactory;
 use Keboola\ApiBundle\Test\AuthenticatorTestTrait;
 use Keboola\ManageApi\Client as ManageApiClient;
+use Keboola\StorageApiBranch\Factory\AuthType;
 use Keboola\StorageApiBranch\Factory\StorageClientRequestFactory;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\DependencyInjection\Exception\InvalidArgumentException;
@@ -37,6 +38,28 @@ class AuthenticatorTestTraitTest extends WebTestCase
         self::assertSame('my-token', $token->getTokenValue());
         self::assertSame('456', $token->getProjectId());
         self::assertSame(['feat-a'], $token->getFeatures());
+        self::assertSame(AuthType::STORAGE_TOKEN, $token->getTokenType());
+
+        self::assertInstanceOf(
+            StorageClientRequestFactory::class,
+            self::getContainer()->get(StorageClientRequestFactory::class),
+        );
+    }
+
+    public function testSetupFakeOAuthToken(): void
+    {
+        $token = $this->setupFakeOAuthToken(
+            tokenString: 'oauth-token',
+            projectId: '456',
+            features: ['feat-a'],
+            adminId: '99',
+        );
+
+        self::assertSame('oauth-token', $token->getTokenValue());
+        self::assertSame('456', $token->getProjectId());
+        self::assertSame(['feat-a'], $token->getFeatures());
+        // An OAuth request resolves to a bearer-typed token.
+        self::assertSame(AuthType::BEARER, $token->getTokenType());
 
         self::assertInstanceOf(
             StorageClientRequestFactory::class,

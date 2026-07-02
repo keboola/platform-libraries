@@ -7,6 +7,7 @@ namespace Keboola\ApiBundle\Tests\StorageApiClient;
 use Keboola\ApiBundle\Security\StorageApiToken\StorageApiToken as SecurityStorageApiToken;
 use Keboola\ApiBundle\StorageApiClient\StorageClientApiFactory;
 use Keboola\ApiBundle\StorageApiClient\StorageClientApiFactoryResolver;
+use Keboola\StorageApiBranch\Factory\AuthType;
 use Keboola\StorageApiBranch\Factory\ClientOptions;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
@@ -58,7 +59,7 @@ class StorageClientApiFactoryResolverTest extends TestCase
             }
         };
 
-        $storageToken = new SecurityStorageApiToken([], 'resolved-token');
+        $storageToken = new SecurityStorageApiToken([], 'resolved-token', AuthType::STORAGE_TOKEN);
         $securityToken = $this->createMock(TokenInterface::class);
         $securityToken->expects(self::once())->method('getUser')->willReturn($storageToken);
         $tokenStorage = $this->createMock(TokenStorageInterface::class);
@@ -120,7 +121,7 @@ class StorageClientApiFactoryResolverTest extends TestCase
             }
         };
 
-        $storageToken = new SecurityStorageApiToken([], 'resolved-token');
+        $storageToken = new SecurityStorageApiToken([], 'resolved-token', AuthType::STORAGE_TOKEN);
         $securityToken = $this->createMock(TokenInterface::class);
         $securityToken->expects(self::once())->method('getUser')->willReturn($storageToken);
         $tokenStorage = $this->createMock(TokenStorageInterface::class);

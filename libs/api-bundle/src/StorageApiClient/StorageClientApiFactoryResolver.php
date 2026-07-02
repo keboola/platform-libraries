@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Keboola\ApiBundle\StorageApiClient;
 
+use Keboola\ApiBundle\Security\StorageApiToken\StorageApiToken;
 use Keboola\StorageApiBranch\Factory\ClientOptions;
-use Keboola\StorageApiBranch\StorageApiToken;
 use RuntimeException;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Controller\ValueResolverInterface;

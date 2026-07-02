@@ -8,6 +8,7 @@ use Keboola\ManageApi\Client as ManageApiClient;
 use Keboola\ManageApi\ClientException as ManageApiClientException;
 use Keboola\ManageApi\MaintenanceException;
 use Keboola\StorageApi\ClientException;
+use Keboola\StorageApiBranch\Factory\AuthType;
 use Keboola\StorageApiBranch\Factory\StorageClientRequestFactory;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
@@ -133,7 +134,8 @@ class StorageApiTokenFactory
             );
         }
 
-        return new StorageApiToken($tokenDetail, $storageToken);
+        // The exchange resolves the programmatic token to a legacy Storage token.
+        return new StorageApiToken($tokenDetail, $storageToken, AuthType::STORAGE_TOKEN);
     }
 
     /**
@@ -147,7 +149,10 @@ class StorageApiTokenFactory
         $storageApiClient = $wrapper->getBasicClient();
         $tokenInfo = $storageApiClient->verifyToken();
 
-        return new StorageApiToken($tokenInfo, $storageApiClient->getTokenString());
+        // Reuse the auth type the request factory resolved from the request headers.
+        $authType = $wrapper->getClientOptionsReadOnly()->getAuthType() ?? AuthType::STORAGE_TOKEN;
+
+        return new StorageApiToken($tokenInfo, $storageApiClient->getTokenString(), $authType);
     }
 
     private function extractProjectId(Request $request): int

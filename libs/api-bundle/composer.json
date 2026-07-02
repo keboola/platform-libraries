@@ -2,12 +2,6 @@
     "name": "keboola/api-bundle",
     "description": "Keboola API Bundle",
     "type": "symfony-bundle",
-    "repositories": [
-        {
-            "type": "vcs",
-            "url": "https://github.com/keboola/storage-api-php-client-branch-wrapper"
-        }
-    ],
     "require": {
         "php": ">=8.2",
         "cuyz/valinor-bundle": "^0.4",

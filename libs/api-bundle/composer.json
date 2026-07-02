@@ -2,13 +2,19 @@
     "name": "keboola/api-bundle",
     "description": "Keboola API Bundle",
     "type": "symfony-bundle",
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/keboola/storage-api-php-client-branch-wrapper"
+        }
+    ],
     "require": {
         "php": ">=8.2",
         "cuyz/valinor-bundle": "^0.4",
         "keboola/kbc-manage-api-php-client": "^v10.2",
         "keboola/permission-checker": "^2.0|^3.0",
         "keboola/service-client": "^1.0",
-        "keboola/storage-api-php-client-branch-wrapper": "^6.7",
+        "keboola/storage-api-php-client-branch-wrapper": "dev-pepa/PAT-1902_token-type as 6.8.x-dev",
         "monolog/monolog": "^2.0|^3.0",
         "psr/log": "^1.1|^2.0|^3.0",
         "symfony/dependency-injection": "^6.0|^7.0",

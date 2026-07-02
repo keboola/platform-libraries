@@ -17,20 +17,12 @@ class StorageApiToken extends BaseStorageApiToken implements TokenInterface
     public function __construct(
         array $tokenInfo,
         #[SensitiveParameter] string $tokenValue,
-        private readonly AuthType $tokenType,
+        AuthType $tokenType,
     ) {
-        parent::__construct($tokenInfo, $tokenValue);
-    }
-
-    /**
-     * Auth type the token was resolved with: {@see AuthType::STORAGE_TOKEN} for a legacy Storage
-     * token (also the exchanged programmatic-token path) or {@see AuthType::BEARER} for an OAuth
-     * bearer token. Lets consumers build a Storage client with the matching auth scheme instead of
-     * assuming the token value is always a Storage token.
-     */
-    public function getTokenType(): AuthType
-    {
-        return $this->tokenType;
+        // Auth type stays mandatory here (unlike the deprecated-optional base constructor) so every
+        // api-bundle construction states it explicitly; forwarding it to the base means getTokenType()
+        // is inherited and no deprecation is triggered.
+        parent::__construct($tokenInfo, $tokenValue, $tokenType);
     }
 
     public function eraseCredentials(): void

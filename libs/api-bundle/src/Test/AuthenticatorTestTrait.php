@@ -10,6 +10,8 @@ use Keboola\ApiBundle\Security\StorageApiToken\StorageApiToken;
 use Keboola\ManageApi\Client as ManageApiClient;
 use Keboola\StorageApi\Client as StorageApiClient;
 use Keboola\StorageApiBranch\ClientWrapper;
+use Keboola\StorageApiBranch\Factory\AuthType;
+use Keboola\StorageApiBranch\Factory\ClientOptions;
 use Keboola\StorageApiBranch\Factory\StorageClientRequestFactory;
 use PHPUnit\Framework\MockObject\MockObject;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
@@ -92,6 +94,9 @@ trait AuthenticatorTestTrait
     }
 
     /**
+     * Stubs #[StorageApiTokenAuth] authenticated with a legacy X-StorageApi-Token, so the resolved
+     * token is typed as a Storage token.
+     *
      * @param list<string> $features
      */
     private function setupFakeStorageApiToken(
@@ -100,7 +105,51 @@ trait AuthenticatorTestTrait
         array $features = [],
         ?string $adminId = null,
     ): StorageApiToken {
-        $tokenString ??= uniqid('fakeStorageToken-', true);
+        return $this->registerFakeRequestToken(
+            $tokenString ?? uniqid('fakeStorageToken-', true),
+            $projectId,
+            $features,
+            $adminId,
+            AuthType::STORAGE_TOKEN,
+        );
+    }
+
+    /**
+     * Stubs #[StorageApiTokenAuth] authenticated with an OAuth bearer token (Authorization: Bearer),
+     * so the resolved token is typed as a bearer token and a Storage client built from it via
+     * {@see StorageClientApiFactory} authenticates with the bearer scheme.
+     *
+     * @param list<string> $features
+     */
+    private function setupFakeOAuthToken(
+        ?string $tokenString = null,
+        string $projectId = '123',
+        array $features = [],
+        ?string $adminId = null,
+    ): StorageApiToken {
+        return $this->registerFakeRequestToken(
+            $tokenString ?? uniqid('fakeOAuthToken-', true),
+            $projectId,
+            $features,
+            $adminId,
+            AuthType::BEARER,
+        );
+    }
+
+    /**
+     * Stubs the request-verification path ({@see StorageApiTokenFactory::createFromRequest()}) for a
+     * token carried directly by the request, tagging the fake wrapper with $authType so the resolved
+     * {@see StorageApiToken} carries the matching type.
+     *
+     * @param list<string> $features
+     */
+    private function registerFakeRequestToken(
+        string $tokenString,
+        string $projectId,
+        array $features,
+        ?string $adminId,
+        AuthType $authType,
+    ): StorageApiToken {
         $tokenData = $this->buildFakeStorageTokenData($projectId, $features, $adminId);
 
         $storageApiClient = $this->createMock(StorageApiClient::class);
@@ -109,13 +158,14 @@ trait AuthenticatorTestTrait
 
         $clientWrapper = $this->createMock(ClientWrapper::class);
         $clientWrapper->method('getBasicClient')->willReturn($storageApiClient);
+        $clientWrapper->method('getClientOptionsReadOnly')->willReturn(new ClientOptions(authType: $authType));
 
         $clientRequestFactory = $this->createMock(StorageClientRequestFactory::class);
         $clientRequestFactory->method('createClientWrapper')->willReturn($clientWrapper);
 
         self::getContainer()->set(StorageClientRequestFactory::class, $clientRequestFactory);
 
-        return new StorageApiToken($tokenData, $tokenString);
+        return new StorageApiToken($tokenData, $tokenString, $authType);
     }
 
     /**
@@ -150,7 +200,8 @@ trait AuthenticatorTestTrait
 
         self::getContainer()->set(KeboolaApiExtension::STORAGE_TOKEN_RESOLVER_CLIENT_ID, $resolverClient);
 
-        return new StorageApiToken($tokenData, $tokenString);
+        // The exchange resolves the programmatic token to a legacy Storage token.
+        return new StorageApiToken($tokenData, $tokenString, AuthType::STORAGE_TOKEN);
     }
 
     /**

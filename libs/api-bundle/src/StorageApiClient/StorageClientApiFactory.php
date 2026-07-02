@@ -4,10 +4,9 @@ declare(strict_types=1);
 
 namespace Keboola\ApiBundle\StorageApiClient;
 
+use Keboola\ApiBundle\Security\StorageApiToken\StorageApiToken;
 use Keboola\StorageApiBranch\ClientWrapper;
-use Keboola\StorageApiBranch\Factory\AuthType;
 use Keboola\StorageApiBranch\Factory\ClientOptions;
-use Keboola\StorageApiBranch\StorageApiToken;
 use Symfony\Component\HttpFoundation\Request;
 
 class StorageClientApiFactory
@@ -29,7 +28,9 @@ class StorageClientApiFactory
         }
 
         $options->setToken($this->token->getTokenValue());
-        $options->setAuthType(AuthType::STORAGE_TOKEN);
+        // Propagate the auth type the token was resolved with (bearer for OAuth tokens, storage
+        // token otherwise) instead of assuming the value is always a legacy Storage token.
+        $options->setAuthType($this->token->getTokenType());
         $options->setRunId($this->getRunId($options));
 
         return new ClientWrapper($options);

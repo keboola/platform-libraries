@@ -8,7 +8,7 @@
         "keboola/kbc-manage-api-php-client": "^v10.2",
         "keboola/permission-checker": "^2.0|^3.0",
         "keboola/service-client": "^1.0",
-        "keboola/storage-api-php-client-branch-wrapper": "^6.7",
+        "keboola/storage-api-php-client-branch-wrapper": "^6.8.0",
         "monolog/monolog": "^2.0|^3.0",
         "psr/log": "^1.1|^2.0|^3.0",
         "symfony/dependency-injection": "^6.0|^7.0",

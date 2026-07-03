@@ -16,6 +16,8 @@ use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\MaintenanceException;
 use Keboola\StorageApiBranch\ClientWrapper;
+use Keboola\StorageApiBranch\Factory\AuthType;
+use Keboola\StorageApiBranch\Factory\ClientOptions;
 use Keboola\StorageApiBranch\Factory\StorageClientRequestFactory;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
@@ -85,6 +87,52 @@ class StorageApiTokenFactoryTest extends TestCase
         $token = $this->createFactory(clientRequestFactory: $factoryMock)->createFromRequest($request);
 
         self::assertSame('tok', $token->getTokenValue());
+    }
+
+    /**
+     * The resulting token records the auth type the request was verified with.
+     */
+    #[DataProvider('provideRequestAuthTypes')]
+    public function testCreateFromRequestSetsTokenTypeFromResolvedAuthType(
+        ?AuthType $resolvedAuthType,
+        AuthType $expectedTokenType,
+    ): void {
+        $clientMock = $this->createMock(Client::class);
+        $clientMock->method('verifyToken')->willReturn(['id' => '42', 'description' => 'test']);
+        $clientMock->method('getTokenString')->willReturn('tok');
+
+        $wrapperMock = $this->createMock(ClientWrapper::class);
+        $wrapperMock->method('getBasicClient')->willReturn($clientMock);
+        $wrapperMock
+            ->method('getClientOptionsReadOnly')
+            ->willReturn(new ClientOptions(authType: $resolvedAuthType));
+
+        $factoryMock = $this->createMock(StorageClientRequestFactory::class);
+        $factoryMock
+            ->expects(self::once())
+            ->method('createClientWrapper')
+            ->willReturn($wrapperMock);
+
+        $token = $this->createFactory(clientRequestFactory: $factoryMock)
+            ->createFromRequest(Request::create('https://keboola.com'));
+
+        self::assertSame($expectedTokenType, $token->getTokenType());
+    }
+
+    public static function provideRequestAuthTypes(): Generator
+    {
+        yield 'oauth bearer token' => [
+            'resolvedAuthType' => AuthType::BEARER,
+            'expectedTokenType' => AuthType::BEARER,
+        ];
+        yield 'legacy storage token' => [
+            'resolvedAuthType' => AuthType::STORAGE_TOKEN,
+            'expectedTokenType' => AuthType::STORAGE_TOKEN,
+        ];
+        yield 'unknown auth type falls back to storage token' => [
+            'resolvedAuthType' => null,
+            'expectedTokenType' => AuthType::STORAGE_TOKEN,
+        ];
     }
 
     // ---------------------------------------------------------------------------
@@ -195,6 +243,8 @@ class StorageApiTokenFactoryTest extends TestCase
         self::assertSame($tokenDetail, $token->getTokenInfo());
         self::assertSame('123', $token->getProjectId());
         self::assertSame(['feat-a'], $token->getFeatures());
+        // The exchange yields a legacy Storage token.
+        self::assertSame(AuthType::STORAGE_TOKEN, $token->getTokenType());
 
         // The original request must remain untouched.
         self::assertSame(

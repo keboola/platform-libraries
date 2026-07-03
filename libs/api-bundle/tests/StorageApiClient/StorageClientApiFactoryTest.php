@@ -4,18 +4,25 @@ declare(strict_types=1);
 
 namespace Keboola\ApiBundle\Tests\StorageApiClient;
 
+use Keboola\ApiBundle\Security\StorageApiToken\StorageApiToken;
 use Keboola\ApiBundle\StorageApiClient\StorageClientApiFactory;
 use Keboola\StorageApiBranch\Factory\AuthType;
 use Keboola\StorageApiBranch\Factory\ClientOptions;
-use Keboola\StorageApiBranch\StorageApiToken;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpFoundation\Request;
 
 class StorageClientApiFactoryTest extends TestCase
 {
-    private static function factory(ClientOptions $baseClientOptions, Request $request): StorageClientApiFactory
-    {
-        return new StorageClientApiFactory($baseClientOptions, $request, new StorageApiToken([], 'bound-token'));
+    private static function factory(
+        ClientOptions $baseClientOptions,
+        Request $request,
+        ?StorageApiToken $token = null,
+    ): StorageClientApiFactory {
+        return new StorageClientApiFactory(
+            $baseClientOptions,
+            $request,
+            $token ?? new StorageApiToken([], 'bound-token', AuthType::STORAGE_TOKEN),
+        );
     }
 
     public function testCreateClientWrapperUsesBoundTokenWithStorageTokenAuth(): void
@@ -26,6 +33,20 @@ class StorageClientApiFactoryTest extends TestCase
 
         self::assertSame('bound-token', $options->getToken());
         self::assertSame(AuthType::STORAGE_TOKEN, $options->getAuthType());
+    }
+
+    public function testCreateClientWrapperUsesBearerAuthTypeForOAuthToken(): void
+    {
+        $factory = self::factory(
+            new ClientOptions('https://connection.test'),
+            new Request(),
+            new StorageApiToken([], 'oauth-bearer-token', AuthType::BEARER),
+        );
+
+        $options = $factory->createClientWrapper()->getClientOptionsReadOnly();
+
+        self::assertSame('oauth-bearer-token', $options->getToken());
+        self::assertSame(AuthType::BEARER, $options->getAuthType());
     }
 
     public function testRunIdTakenFromRequestHeaderWhenPresent(): void

@@ -158,6 +158,12 @@ The base options are preconfigured by the bundle: the Connection (Storage API) U
 from the request's `X-KBC-RunId` header; branch / backend come from an optional per-call
 `ClientOptions`.
 
+The client uses the auth type the request was authenticated with: a legacy or exchanged Storage
+token is sent as `X-StorageApi-Token`, while an OAuth token (`Authorization: Bearer …`) is sent with
+the bearer scheme. `StorageApiToken::getTokenType()` exposes it (`AuthType::STORAGE_TOKEN` /
+`AuthType::BEARER`) so a token value carried as a bearer token is not mistaken for a Storage token
+if you build a client yourself.
+
 ```php
 #[StorageApiTokenAuth]
 public function __invoke(StorageClientApiFactory $storage)
@@ -187,11 +193,12 @@ public function __invoke(?StorageClientApiFactory $storage)
 
 `Keboola\ApiBundle\Test\AuthenticatorTestTrait` stubs the authenticators in functional
 (`WebTestCase`) tests so guarded controllers can be exercised without reaching real
-Storage/Manage APIs. It provides four helpers:
+Storage/Manage APIs. It provides five helpers:
 
 | Helper | Stubs auth for | Returns |
 | --- | --- | --- |
-| `setupFakeStorageApiToken(tokenString?, projectId, features, adminId?)` | `#[StorageApiTokenAuth]` via legacy `X-StorageApi-Token` | `StorageApiToken` |
+| `setupFakeStorageApiToken(tokenString?, projectId, features, adminId?)` | `#[StorageApiTokenAuth]` via legacy `X-StorageApi-Token` (resolves to an `AuthType::STORAGE_TOKEN` token) | `StorageApiToken` |
+| `setupFakeOAuthToken(tokenString?, projectId, features, adminId?)` | `#[StorageApiTokenAuth]` via an OAuth `Authorization: Bearer` token (resolves to an `AuthType::BEARER` token) | `StorageApiToken` |
 | `setupFakeConnectionToken(projectId, features, tokenString?, adminId?)` | `#[StorageApiTokenAuth]` via a `kbc_at_`/`kbc_pat_` programmatic token (stubs the exchange resolver client) | `StorageApiToken` |
 | `setupFakeManageApiToken(tokenString, scopes, features)` | `#[ApplicationTokenAuth]` (both the `X-KBC-ManageApiToken` header and the Kubernetes ServiceAccount JWT) | `void` |
 | `bootCleanClient()` | — boots a fresh, reboot-disabled `KernelBrowser` on a clean container | `KernelBrowser` |

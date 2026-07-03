@@ -9,6 +9,7 @@ use Keboola\ApiBundle\Attribute\StorageApiTokenAuth;
 use Keboola\ApiBundle\Security\StorageApiToken\StorageApiToken;
 use Keboola\ApiBundle\Security\StorageApiToken\StorageApiTokenAuthenticator;
 use Keboola\ApiBundle\Security\StorageApiToken\StorageApiTokenFactory;
+use Keboola\StorageApiBranch\Factory\AuthType;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpFoundation\Request;
@@ -215,7 +216,7 @@ class StorageApiTokenAuthenticatorTest extends TestCase
             'description' => 'test',
             'owner' => ['features' => ['feature-a']],
         ];
-        $storageApiToken = new StorageApiToken($tokenData, 'tok');
+        $storageApiToken = new StorageApiToken($tokenData, 'tok', AuthType::STORAGE_TOKEN);
 
         $authenticator = new StorageApiTokenAuthenticator(
             $this->createMock(StorageApiTokenFactory::class),
@@ -233,7 +234,7 @@ class StorageApiTokenAuthenticatorTest extends TestCase
             'description' => 'test',
             'owner' => ['features' => ['feature-a']],
         ];
-        $storageApiToken = new StorageApiToken($tokenData, 'tok');
+        $storageApiToken = new StorageApiToken($tokenData, 'tok', AuthType::STORAGE_TOKEN);
 
         $authenticator = new StorageApiTokenAuthenticator(
             $this->createMock(StorageApiTokenFactory::class),

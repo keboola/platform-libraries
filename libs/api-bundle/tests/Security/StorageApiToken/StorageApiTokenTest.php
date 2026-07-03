@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Keboola\ApiBundle\Tests\Security\StorageApiToken;
 
 use Keboola\ApiBundle\Security\StorageApiToken\StorageApiToken;
+use Keboola\StorageApiBranch\Factory\AuthType;
 use PHPUnit\Framework\TestCase;
 
 class StorageApiTokenTest extends TestCase
@@ -36,6 +37,7 @@ class StorageApiTokenTest extends TestCase
                 'componentAccess' => ['keboola.component'],
             ],
             'tokenValue',
+            AuthType::STORAGE_TOKEN,
         );
 
         self::assertSame('123', $token->getTokenId());
@@ -105,6 +107,7 @@ class StorageApiTokenTest extends TestCase
                 ],
             ],
             'tokenValue',
+            AuthType::STORAGE_TOKEN,
         );
 
         self::assertNull($token->getRole());
@@ -124,6 +127,7 @@ class StorageApiTokenTest extends TestCase
                 'componentAccess' => [],
             ],
             'tokenValue',
+            AuthType::STORAGE_TOKEN,
         );
 
         self::assertSame([], $token->getAllowedComponents());
@@ -141,8 +145,31 @@ class StorageApiTokenTest extends TestCase
                 ],
             ],
             'tokenValue',
+            AuthType::STORAGE_TOKEN,
         );
 
         self::assertSame(null, $token->getAllowedComponents());
+    }
+
+    public function testTokenTypeIsStorageTokenWhenSpecified(): void
+    {
+        $token = new StorageApiToken(
+            ['id' => '123', 'owner' => ['id' => '456', 'features' => []]],
+            'tokenValue',
+            AuthType::STORAGE_TOKEN,
+        );
+
+        self::assertSame(AuthType::STORAGE_TOKEN, $token->getTokenType());
+    }
+
+    public function testTokenTypeIsBearerWhenSpecified(): void
+    {
+        $token = new StorageApiToken(
+            ['id' => '123', 'owner' => ['id' => '456', 'features' => []]],
+            'oauth-bearer-value',
+            AuthType::BEARER,
+        );
+
+        self::assertSame(AuthType::BEARER, $token->getTokenType());
     }
 }

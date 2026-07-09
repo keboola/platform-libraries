@@ -107,11 +107,52 @@ class KeboolaApiExtension extends Extension
             ->setArgument('$logger', new Reference('logger'))
             ->setArgument('$userAgent', $config['app_name']);
 
+        $storageClientOptions = $config['storage_client_options'] ?? [];
+        assert(is_array($storageClientOptions));
+        $this->applyStorageClientOptions($baseClientOptions, $storageClientOptions);
+
         $container->register(StorageClientApiFactoryResolver::class)
             ->setArgument('$baseClientOptions', $baseClientOptions)
             ->setArgument('$tokenStorage', new Reference(TokenStorageInterface::class))
             ->addTag('controller.argument_value_resolver')
         ;
+    }
+
+    /**
+     * Merge consumer-configured Storage ClientOptions onto the bundle-built base definition.
+     *
+     * @param array<array-key, mixed> $options
+     */
+    private function applyStorageClientOptions(Definition $baseClientOptions, array $options): void
+    {
+        if (isset($options['service'])) {
+            // Merge the referenced ClientOptions' non-null values on top at instantiation.
+            $service = $options['service'];
+            assert(is_string($service));
+            $baseClientOptions->addMethodCall('addValuesFrom', [new Reference($service)]);
+            return;
+        }
+
+        $scalarArgs = [
+            'backoff_max_tries' => '$backoffMaxTries',
+            'aws_retries' => '$awsRetries',
+            'aws_debug' => '$awsDebug',
+            'retry_on_maintenance' => '$retryOnMaintenance',
+            'use_branch_storage' => '$useBranchStorage',
+            'user_agent' => '$userAgent',
+        ];
+        foreach ($scalarArgs as $key => $arg) {
+            if (isset($options[$key])) {
+                $baseClientOptions->setArgument($arg, $options[$key]);
+            }
+        }
+
+        // logger is a service id → reference, overriding the default @logger.
+        if (isset($options['logger'])) {
+            $logger = $options['logger'];
+            assert(is_string($logger));
+            $baseClientOptions->setArgument('$logger', new Reference($logger));
+        }
     }
 
     private function setupApplicationTokenAuthenticator(

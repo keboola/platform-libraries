@@ -183,6 +183,46 @@ public function __invoke(?StorageClientApiFactory $storage)
 }
 ```
 
+### Configuring the base client options
+
+The base `ClientOptions` (Connection URL, `@logger`, `app_name` user agent) can be tuned with the
+optional `storage_client_options` node. Values are **merged onto** the bundle-built base — you never
+have to reproduce the Connection URL resolution.
+
+Set individual options (only YAML-expressible options are supported here):
+
+```yaml
+keboola_api:
+  storage_client_options:
+    backoff_max_tries: 10
+    aws_retries: 5
+    aws_debug: false
+    retry_on_maintenance: true
+    use_branch_storage: false
+    user_agent: my-service/1.0
+    logger: monolog.logger.storage_api   # a service id for a PSR LoggerInterface
+```
+
+Or reference a fully-custom `ClientOptions` service — the only way to set options that cannot be
+expressed in YAML (`jobPollRetryDelay` / `runIdGenerator` closures, `BackendConfiguration`):
+
+```yaml
+keboola_api:
+  storage_client_options: app.storage_client_options   # service id
+```
+
+```php
+// services.php
+$services->set('app.storage_client_options', ClientOptions::class)
+    ->args([
+        '$backoffMaxTries' => 10,
+        '$jobPollRetryDelay' => /* Closure */,
+    ]);
+```
+
+The service's non-null values are merged over the bundle base via `ClientOptions::addValuesFrom()`.
+The `service` (string) form and the individual options are mutually exclusive.
+
 ## Testing controllers
 
 `Keboola\ApiBundle\Test\AuthenticatorTestTrait` stubs the authenticators in functional

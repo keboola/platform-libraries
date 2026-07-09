@@ -53,6 +53,19 @@ class ApiClientTest extends TestCase
         self::assertSame('secret-token', $last->getHeaderLine('X-KBC-ManageApiToken'));
     }
 
+    public function testSendRequestReturnsResponse(): void
+    {
+        $mock = new MockHandler([new Response(201, [], '{"hello":"world"}')]);
+        $client = new ApiClient('https://example.test', new NoAuthAuthenticator(), new ApiClientOptions(
+            requestHandler: HandlerStack::create($mock),
+        ));
+
+        $response = $client->sendRequest(new Request('GET', 'foo'));
+
+        self::assertSame(201, $response->getStatusCode());
+        self::assertSame('{"hello":"world"}', (string) $response->getBody());
+    }
+
     public function testMapsResponseToModel(): void
     {
         $mock = new MockHandler([new Response(200, [], '{"name":"foo"}')]);

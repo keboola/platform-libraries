@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 namespace Keboola\SyncActionsClient\Model;
 
-use stdClass;
+use InvalidArgumentException;
+use Keboola\ApiClientBase\ResponseModelInterface;
 
 final readonly class ListActionsResponse implements ResponseModelInterface
 {
@@ -16,11 +17,15 @@ final readonly class ListActionsResponse implements ResponseModelInterface
     ) {
     }
 
-    public static function fromResponseData(stdClass $data): static
+    public static function fromResponseData(array $data): static
     {
-        return new self(
-            // @phpstan-ignore-next-line
-            $data->actions,
-        );
+        if (!isset($data['actions']) || !is_array($data['actions'])) {
+            throw new InvalidArgumentException('Response does not contain an "actions" array');
+        }
+
+        /** @var array<string> $actions */
+        $actions = $data['actions'];
+
+        return new self($actions);
     }
 }

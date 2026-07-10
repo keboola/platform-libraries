@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Keboola\ApiBundle\Tests\DependencyInjection;
 
+use Generator;
 use Keboola\ApiBundle\DependencyInjection\Configuration;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 use Symfony\Component\Config\Definition\Processor;
@@ -86,5 +88,23 @@ class ConfigurationTest extends TestCase
                 'backoff_max_tries' => 'not-a-number',
             ],
         ]);
+    }
+
+    #[DataProvider('negativeIntegerOptionProvider')]
+    public function testStorageClientOptionsRejectsNegativeIntegers(string $option): void
+    {
+        $this->expectException(InvalidConfigurationException::class);
+
+        $this->process([
+            'storage_client_options' => [
+                $option => -1,
+            ],
+        ]);
+    }
+
+    public static function negativeIntegerOptionProvider(): Generator
+    {
+        yield 'backoff_max_tries' => ['backoff_max_tries'];
+        yield 'aws_retries' => ['aws_retries'];
     }
 }

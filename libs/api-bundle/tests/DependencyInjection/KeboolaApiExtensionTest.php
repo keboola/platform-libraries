@@ -146,4 +146,91 @@ class KeboolaApiExtensionTest extends TestCase
         self::assertInstanceOf(Reference::class, $tokenFactory);
         self::assertSame(StorageApiTokenFactory::class, (string) $tokenFactory);
     }
+
+    // -------------------------------------------------------------------------
+    // storage_client_options
+    // -------------------------------------------------------------------------
+
+    public function testStorageClientOptionsObjectFormSetsScalarArgs(): void
+    {
+        $container = $this->buildContainer([[
+            'storage_client_options' => [
+                'backoff_max_tries' => 10,
+                'aws_retries' => 5,
+                'aws_debug' => true,
+                'retry_on_maintenance' => true,
+                'use_branch_storage' => false,
+                'user_agent' => 'custom-ua/1.0',
+            ],
+        ]]);
+
+        $base = $container->getDefinition(StorageClientApiFactoryResolver::class)->getArgument('$baseClientOptions');
+        self::assertInstanceOf(Definition::class, $base);
+
+        self::assertSame(10, $base->getArgument('$backoffMaxTries'));
+        self::assertSame(5, $base->getArgument('$awsRetries'));
+        self::assertTrue($base->getArgument('$awsDebug'));
+        self::assertTrue($base->getArgument('$retryOnMaintenance'));
+        self::assertFalse($base->getArgument('$useBranchStorage'));
+        self::assertSame('custom-ua/1.0', $base->getArgument('$userAgent'));
+
+        // object form must not add any method calls
+        self::assertSame([], $base->getMethodCalls());
+    }
+
+    public function testStorageClientOptionsLoggerOverridesDefaultLogger(): void
+    {
+        $container = $this->buildContainer([[
+            'storage_client_options' => [
+                'logger' => 'monolog.logger.storage_api',
+            ],
+        ]]);
+
+        $base = $container->getDefinition(StorageClientApiFactoryResolver::class)->getArgument('$baseClientOptions');
+        self::assertInstanceOf(Definition::class, $base);
+
+        $logger = $base->getArgument('$logger');
+        self::assertInstanceOf(Reference::class, $logger);
+        self::assertSame('monolog.logger.storage_api', (string) $logger);
+    }
+
+    public function testStorageClientOptionsServiceFormAddsAddValuesFromMerge(): void
+    {
+        $container = $this->buildContainer([[
+            'storage_client_options' => 'app.storage_options',
+        ]]);
+
+        $base = $container->getDefinition(StorageClientApiFactoryResolver::class)->getArgument('$baseClientOptions');
+        self::assertInstanceOf(Definition::class, $base);
+
+        $calls = $base->getMethodCalls();
+        self::assertCount(1, $calls);
+
+        $call = $calls[0];
+        self::assertIsArray($call);
+        self::assertSame('addValuesFrom', $call[0]);
+        self::assertIsArray($call[1]);
+
+        $reference = $call[1][0];
+        self::assertInstanceOf(Reference::class, $reference);
+        self::assertSame('app.storage_options', (string) $reference);
+
+        // service form must not touch the scalar args
+        $args = $base->getArguments();
+        self::assertArrayNotHasKey('$backoffMaxTries', $args);
+    }
+
+    public function testStorageClientOptionsAbsentLeavesBaseUntouched(): void
+    {
+        $container = $this->buildContainer([[]]);
+
+        $base = $container->getDefinition(StorageClientApiFactoryResolver::class)->getArgument('$baseClientOptions');
+        self::assertInstanceOf(Definition::class, $base);
+
+        self::assertSame([], $base->getMethodCalls());
+        self::assertSame(
+            ['$url', '$logger', '$userAgent'],
+            array_keys($base->getArguments()),
+        );
+    }
 }

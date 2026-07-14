@@ -38,5 +38,10 @@ class MappingStorageSourcesTest extends TestCase
         self::assertEquals($bucketInfo, $source->getBucket());
         self::assertFalse($source->didTableExistBefore());
         self::assertNull($source->getTable());
+        self::assertNull($source->getDefaultBranchTable());
+
+        $source = new MappingStorageSources($bucketInfo, null, $table);
+        self::assertFalse($source->didTableExistBefore());
+        self::assertEquals($table, $source->getDefaultBranchTable());
     }
 }

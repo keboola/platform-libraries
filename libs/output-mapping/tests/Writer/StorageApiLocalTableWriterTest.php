@@ -320,6 +320,85 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
     }
 
     #[NeedsEmptyOutputBucket]
+    #[NeedsDevBranch]
+    public function testFirstDevBranchWritePreservesNonTypedProductionTable(): void
+    {
+        $root = $this->temp->getTmpFolder();
+        $tableName = 'table';
+        $tableId = $this->emptyOutputBucketId . '.' . $tableName;
+        $productionCsv = new CsvFile($root . '/production.csv');
+        $productionCsv->writeRow(['Id', 'Name']);
+        $productionCsv->writeRow(['1', 'production']);
+
+        $this->clientWrapper->getTableAndFileStorageClient()->createTableAsync(
+            $this->emptyOutputBucketId,
+            $tableName,
+            $productionCsv,
+        );
+        self::assertFalse($this->clientWrapper->getTableAndFileStorageClient()->getTable($tableId)['isTyped']);
+
+        $clientOptions = $this->clientWrapper->getClientOptionsReadOnly()
+            ->setBranchId($this->devBranchId)
+            ->setUseBranchStorage(true)
+        ;
+        $this->clientWrapper = new ClientWrapper($clientOptions);
+
+        file_put_contents(
+            $root . '/upload/table.csv',
+            "\"2\",\"development\"\n",
+        );
+
+        $realToken = $this->clientWrapper->getToken();
+        $token = $this->createMock(StorageApiToken::class);
+        $token
+            ->method('hasFeature')
+            ->willReturnCallback(
+                static fn(string $feature): bool => $feature === OutputMappingSettings::NEW_NATIVE_TYPES_FEATURE
+                    || $realToken->hasFeature($feature),
+            )
+        ;
+
+        $tableQueue = $this->getTableLoader()->uploadTables(
+            configuration: new OutputMappingSettings(
+                configuration: [
+                    'mapping' => [
+                        [
+                            'source' => 'table.csv',
+                            'destination' => $tableId,
+                            'schema' => [
+                                [
+                                    'name' => 'Id',
+                                    'data_type' => [
+                                        'base' => [
+                                            'type' => 'INTEGER',
+                                        ],
+                                    ],
+                                ],
+                                [
+                                    'name' => 'Name',
+                                    'data_type' => [
+                                        'base' => [
+                                            'type' => 'STRING',
+                                        ],
+                                    ],
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+                sourcePathPrefix: 'upload',
+                storageApiToken: $token,
+                isFailedJob: false,
+                dataTypeSupport: OutputMappingSettings::DATA_TYPES_SUPPORT_AUTHORITATIVE,
+            ),
+            systemMetadata: new SystemMetadata(['componentId' => 'foo', 'branchId' => $this->devBranchId]),
+        );
+        $tableQueue->waitForAll();
+
+        self::assertFalse($this->clientWrapper->getTableAndFileStorageClient()->getTable($tableId)['isTyped']);
+    }
+
+    #[NeedsEmptyOutputBucket]
     public function testWriteTableOutputMappingExistingTable(): void
     {
         $root = $this->temp->getTmpFolder();

@@ -25,7 +25,6 @@ class AppTest extends TestCase
             'lastRequestTimestamp' => '2024-02-02T12:00:00+01:00',
             'url' => 'https://example.com',
             'autoSuspendAfterSeconds' => 3600,
-            'provisioningStrategy' => 'operator',
         ]);
 
         self::assertSame('app-id', $app->getId());
@@ -39,7 +38,6 @@ class AppTest extends TestCase
         self::assertSame('2024-02-02T12:00:00+01:00', $app->getLastRequestTimestamp());
         self::assertSame('https://example.com', $app->getUrl());
         self::assertSame(3600, $app->getAutoSuspendAfterSeconds());
-        self::assertSame('operator', $app->getProvisioningStrategy());
     }
 
     public function testGettersWithNullableValues(): void
@@ -56,7 +54,6 @@ class AppTest extends TestCase
             'lastRequestTimestamp' => null,
             'url' => null,
             'autoSuspendAfterSeconds' => 0,
-            'provisioningStrategy' => 'jobQueue',
         ]);
 
         self::assertNull($app->getBranchId());
@@ -80,7 +77,6 @@ class AppTest extends TestCase
             'lastRequestTimestamp' => '2024-02-02T12:00:00+01:00',
             'url' => 'https://example.com',
             'autoSuspendAfterSeconds' => 3600,
-            'provisioningStrategy' => 'operator',
         ];
 
         $app = App::fromResponseData($expectedData);
@@ -101,7 +97,6 @@ class AppTest extends TestCase
             'configVersion',
             'state',
             'desiredState',
-            'provisioningStrategy',
         ];
 
         foreach ($requiredProps as $property) {
@@ -122,7 +117,6 @@ class AppTest extends TestCase
             'configVersion' => '5',
             'state' => 'running',
             'desiredState' => 'running',
-            'provisioningStrategy' => 'operator',
         ];
 
         unset($data[$missingProperty]);
@@ -221,50 +215,6 @@ class AppTest extends TestCase
         self::assertSame($app, $result);
     }
 
-    /**
-     * @return Generator<string, array{string}>
-     */
-    public function invalidProvisioningStrategiesDataProvider(): Generator
-    {
-        yield 'invalid strategy' => ['invalid'];
-        yield 'empty strategy' => [''];
-        yield 'kubernetes strategy' => ['kubernetes'];
-    }
-
-    /**
-     * @dataProvider invalidProvisioningStrategiesDataProvider
-     */
-    public function testInvalidProvisioningStrategy(string $invalidStrategy): void
-    {
-        $this->expectException(ClientException::class);
-        $this->expectExceptionMessage('Invalid provisioning strategy');
-
-        $app = new App();
-        $app->setProvisioningStrategy($invalidStrategy);
-    }
-
-    /**
-     * @return Generator<string, array{string}>
-     */
-    public function validProvisioningStrategiesDataProvider(): Generator
-    {
-        foreach (App::VALID_PROVISIONING_STRATEGIES as $strategy) {
-            yield $strategy => [$strategy];
-        }
-    }
-
-    /**
-     * @dataProvider validProvisioningStrategiesDataProvider
-     */
-    public function testValidProvisioningStrategy(string $validStrategy): void
-    {
-        $app = new App();
-        $result = $app->setProvisioningStrategy($validStrategy);
-
-        self::assertSame($validStrategy, $app->getProvisioningStrategy());
-        self::assertSame($app, $result);
-    }
-
     public function testSettersReturnSelfForChaining(): void
     {
         $app = new App();
@@ -291,7 +241,6 @@ class AppTest extends TestCase
             'configVersion' => '5',
             'state' => 'running',
             'desiredState' => 'running',
-            'provisioningStrategy' => 'operator',
         ]);
 
         self::assertSame(0, $app->getAutoSuspendAfterSeconds());
@@ -320,16 +269,6 @@ class AppTest extends TestCase
                 self::assertStringContainsString($state, $message);
             }
         }
-
-        try {
-            $app->setProvisioningStrategy('invalid');
-            self::fail('Expected exception was not thrown');
-        } catch (ClientException $e) {
-            $message = $e->getMessage();
-            foreach (App::VALID_PROVISIONING_STRATEGIES as $strategy) {
-                self::assertStringContainsString($strategy, $message);
-            }
-        }
     }
 
     public function testFromResponseDataCastsNumericValuesToStrings(): void
@@ -343,7 +282,6 @@ class AppTest extends TestCase
             'configVersion' => 5,
             'state' => 'running',
             'desiredState' => 'running',
-            'provisioningStrategy' => 'operator',
             'type' => 42,
             'autoSuspendAfterSeconds' => '3600',
         ]);
@@ -375,21 +313,5 @@ class AppTest extends TestCase
 
         self::assertNull($app->getType());
         self::assertSame($app, $result);
-    }
-
-    public function testFromResponseDataSetsProvisioningStrategyFromCast(): void
-    {
-        $app = App::fromResponseData([
-            'id' => 'app-id',
-            'projectId' => 'project-id',
-            'componentId' => 'keboola.data-apps',
-            'configId' => 'config-id',
-            'configVersion' => '1',
-            'state' => 'running',
-            'desiredState' => 'running',
-            'provisioningStrategy' => 'jobQueue',
-        ]);
-
-        self::assertSame('jobQueue', $app->getProvisioningStrategy());
     }
 }

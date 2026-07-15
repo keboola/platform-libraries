@@ -17,7 +17,6 @@ final class App implements ResponseModelInterface
         'configVersion',
         'state',
         'desiredState',
-        'provisioningStrategy',
     ];
 
     public const STATE_CREATED = 'created';
@@ -31,9 +30,6 @@ final class App implements ResponseModelInterface
     public const DESIRED_STATE_RUNNING = 'running';
     public const DESIRED_STATE_STOPPED = 'stopped';
     public const DESIRED_STATE_DELETED = 'deleted';
-
-    public const PROVISIONING_STRATEGY_JOB_QUEUE = 'jobQueue';
-    public const PROVISIONING_STRATEGY_OPERATOR = 'operator';
 
     /** @var array<string> */
     public const VALID_STATES = [
@@ -53,12 +49,6 @@ final class App implements ResponseModelInterface
         self::DESIRED_STATE_DELETED,
     ];
 
-    /** @var array<string> */
-    public const VALID_PROVISIONING_STRATEGIES = [
-        self::PROVISIONING_STRATEGY_JOB_QUEUE,
-        self::PROVISIONING_STRATEGY_OPERATOR,
-    ];
-
     private string $id;
     private string $projectId;
     private string $componentId;
@@ -71,7 +61,6 @@ final class App implements ResponseModelInterface
     private ?string $lastRequestTimestamp = null;
     private ?string $url = null;
     private int $autoSuspendAfterSeconds;
-    private string $provisioningStrategy;
 
     public static function fromResponseData(array $data): static
     {
@@ -94,7 +83,6 @@ final class App implements ResponseModelInterface
         $app->setLastRequestTimestamp($data['lastRequestTimestamp'] ?? null);
         $app->setUrl($data['url'] ?? null);
         $app->setAutoSuspendAfterSeconds((int) ($data['autoSuspendAfterSeconds'] ?? 0));
-        $app->setProvisioningStrategy((string) $data['provisioningStrategy']);
 
         return $app;
     }
@@ -114,7 +102,6 @@ final class App implements ResponseModelInterface
             'lastRequestTimestamp' => $this->lastRequestTimestamp,
             'url' => $this->url,
             'autoSuspendAfterSeconds' => $this->autoSuspendAfterSeconds,
-            'provisioningStrategy' => $this->provisioningStrategy,
         ];
     }
 
@@ -261,26 +248,6 @@ final class App implements ResponseModelInterface
     public function setAutoSuspendAfterSeconds(int $autoSuspendAfterSeconds): self
     {
         $this->autoSuspendAfterSeconds = $autoSuspendAfterSeconds;
-        return $this;
-    }
-
-    public function getProvisioningStrategy(): string
-    {
-        return $this->provisioningStrategy;
-    }
-
-    public function setProvisioningStrategy(string $provisioningStrategy): self
-    {
-        if (!in_array($provisioningStrategy, self::VALID_PROVISIONING_STRATEGIES, true)) {
-            throw new ClientException(
-                sprintf(
-                    'Invalid provisioning strategy "%s". Valid strategies are: %s',
-                    $provisioningStrategy,
-                    implode(', ', self::VALID_PROVISIONING_STRATEGIES),
-                ),
-            );
-        }
-        $this->provisioningStrategy = $provisioningStrategy;
         return $this;
     }
 }

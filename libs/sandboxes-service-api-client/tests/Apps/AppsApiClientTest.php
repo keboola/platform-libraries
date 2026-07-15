@@ -39,7 +39,6 @@ class AppsApiClientTest extends TestCase
                 'lastRequestTimestamp' => '2024-02-01T08:00:00+01:00',
                 'url' => 'https://example.com',
                 'autoSuspendAfterSeconds' => 3600,
-                'provisioningStrategy' => 'operator',
             ],
             [
                 'id' => 'app-id-2',
@@ -53,7 +52,6 @@ class AppsApiClientTest extends TestCase
                 'lastRequestTimestamp' => null,
                 'url' => null,
                 'autoSuspendAfterSeconds' => 0,
-                'provisioningStrategy' => 'jobQueue',
             ],
         ];
 
@@ -103,7 +101,6 @@ class AppsApiClientTest extends TestCase
                 'lastRequestTimestamp' => '2024-02-01T08:00:00+01:00',
                 'url' => 'https://example.com',
                 'autoSuspendAfterSeconds' => 3600,
-                'provisioningStrategy' => 'operator',
             ],
         ];
 
@@ -149,7 +146,6 @@ class AppsApiClientTest extends TestCase
             'lastRequestTimestamp' => '2024-02-01T08:00:00+01:00',
             'url' => 'https://example.com',
             'autoSuspendAfterSeconds' => 3600,
-            'provisioningStrategy' => 'operator',
         ];
 
         $mock = new MockHandler([
@@ -285,7 +281,6 @@ class AppsApiClientTest extends TestCase
                 'lastRequestTimestamp' => '2024-02-01T08:00:00+01:00',
                 'url' => null,
                 'autoSuspendAfterSeconds' => 3600,
-                'provisioningStrategy' => 'operator',
             ],
         ];
 
@@ -330,7 +325,6 @@ class AppsApiClientTest extends TestCase
             'lastRequestTimestamp' => null,
             'url' => null,
             'autoSuspendAfterSeconds' => 3600,
-            'provisioningStrategy' => 'operator',
         ];
 
         $mock = new MockHandler([

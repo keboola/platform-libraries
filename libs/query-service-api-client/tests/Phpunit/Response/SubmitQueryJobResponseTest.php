@@ -5,37 +5,28 @@ declare(strict_types=1);
 namespace Keboola\QueryApi\Tests\Phpunit\Response;
 
 use Generator;
-use GuzzleHttp\Psr7\Response;
-use Keboola\QueryApi\Exception\ClientException;
 use Keboola\QueryApi\Response\SubmitQueryJobResponse;
 use PHPUnit\Framework\TestCase;
+use Webmozart\Assert\InvalidArgumentException;
 
 class SubmitQueryJobResponseTest extends TestCase
 {
     public function testSubmitQueryJobResponseCreation(): void
     {
-        $responseData = [
-            'queryJobId' => 'job-submit-456',
-        ];
+        $response = SubmitQueryJobResponse::fromResponseData(['queryJobId' => 'job-submit-456']);
 
-        $response = new Response(201, [], json_encode($responseData) ?: '');
-        $submitResponse = SubmitQueryJobResponse::fromResponse($response);
-
-        self::assertEquals('job-submit-456', $submitResponse->getQueryJobId());
+        self::assertSame('job-submit-456', $response->getQueryJobId());
     }
 
     /**
      * @param array<string, mixed> $responseData
      * @dataProvider invalidDataProvider
      */
-    public function testSubmitQueryJobResponseThrowsExceptionForInvalidData(array $responseData): void
+    public function testThrowsForInvalidData(array $responseData): void
     {
-        $response = new Response(201, [], json_encode($responseData) ?: '');
+        $this->expectException(InvalidArgumentException::class);
 
-        $this->expectException(ClientException::class);
-        $this->expectExceptionMessage('Invalid response: missing or invalid queryJobId');
-
-        SubmitQueryJobResponse::fromResponse($response);
+        SubmitQueryJobResponse::fromResponseData($responseData);
     }
 
     public static function invalidDataProvider(): Generator

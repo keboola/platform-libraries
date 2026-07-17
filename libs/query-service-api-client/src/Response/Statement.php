@@ -4,17 +4,13 @@ declare(strict_types=1);
 
 namespace Keboola\QueryApi\Response;
 
-use Keboola\QueryApi\Exception\ClientException;
+use Webmozart\Assert\Assert;
 
 /**
  * Represents a single statement within a query job.
  */
-class Statement
+final class Statement
 {
-    private const REQUIRED_FIELDS = [
-        'id', 'query', 'status',
-    ];
-
     private string $id;
     private ?string $queryId;
     private ?string $sessionId;
@@ -32,11 +28,12 @@ class Statement
      */
     public function __construct(array $data)
     {
-        foreach (self::REQUIRED_FIELDS as $field) {
-            if (!isset($data[$field])) {
-                throw new ClientException("Invalid statement response: missing $field");
-            }
-        }
+        Assert::keyExists($data, 'id');
+        Assert::string($data['id']);
+        Assert::keyExists($data, 'query');
+        Assert::string($data['query']);
+        Assert::keyExists($data, 'status');
+        Assert::string($data['status']);
 
         /** @var array{
          *     id: string,

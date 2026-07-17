@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace Keboola\QueryApi\Tests\Phpunit\Response;
 
 use Generator;
-use Keboola\QueryApi\Exception\ClientException;
 use Keboola\QueryApi\Response\Statement;
 use PHPUnit\Framework\TestCase;
+use Webmozart\Assert\InvalidArgumentException;
 
 class StatementTest extends TestCase
 {
@@ -86,10 +86,9 @@ class StatementTest extends TestCase
      * @param array<string, mixed> $data
      * @dataProvider missingFieldDataProvider
      */
-    public function testStatementThrowsExceptionForMissingField(array $data, string $expectedField): void
+    public function testStatementThrowsExceptionForMissingField(array $data): void
     {
-        $this->expectException(ClientException::class);
-        $this->expectExceptionMessage("Invalid statement response: missing $expectedField");
+        $this->expectException(InvalidArgumentException::class);
 
         new Statement($data);
     }
@@ -106,7 +105,7 @@ class StatementTest extends TestCase
         foreach (array_keys($requiredFields) as $fieldToRemove) {
             $incompleteData = $requiredFields;
             unset($incompleteData[$fieldToRemove]);
-            yield "missing $fieldToRemove" => [$incompleteData, $fieldToRemove];
+            yield "missing $fieldToRemove" => [$incompleteData];
         }
     }
 }

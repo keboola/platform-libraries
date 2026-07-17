@@ -4,26 +4,28 @@ declare(strict_types=1);
 
 namespace Keboola\QueryApi\Response;
 
-use Keboola\QueryApi\Exception\ClientException;
+use Keboola\ApiClientBase\ResponseModelInterface;
 use Psr\Http\Message\ResponseInterface;
+use Webmozart\Assert\Assert;
 
-class SubmitQueryJobResponse
+final class SubmitQueryJobResponse implements ResponseModelInterface
 {
-    private const REQUIRED_FIELDS = ['queryJobId'];
-
     public function __construct(readonly string $queryJobId)
     {
     }
 
-    public static function fromResponse(ResponseInterface $response): self
+    public static function fromResponse(ResponseInterface $response): static
     {
-        $data = ResponseParser::parseResponse($response);
+        return static::fromResponseData(ResponseParser::parseResponse($response));
+    }
 
-        foreach (self::REQUIRED_FIELDS as $field) {
-            if (!isset($data[$field]) || !is_string($data[$field])) {
-                throw new ClientException("Invalid response: missing or invalid $field");
-            }
-        }
+    /**
+     * @param array<string, mixed> $data
+     */
+    public static function fromResponseData(array $data): static
+    {
+        Assert::keyExists($data, 'queryJobId');
+        Assert::string($data['queryJobId']);
 
         return new self($data['queryJobId']);
     }

@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Keboola\QueryApi\Response;
 
 use Keboola\ApiClientBase\ResponseModelInterface;
-use Psr\Http\Message\ResponseInterface;
 use Webmozart\Assert\Assert;
 
 final class JobStatusResponse implements ResponseModelInterface
@@ -23,11 +22,6 @@ final class JobStatusResponse implements ResponseModelInterface
         readonly ?string $canceledAt = null,
         readonly ?string $cancellationReason = null,
     ) {
-    }
-
-    public static function fromResponse(ResponseInterface $response): static
-    {
-        return static::fromResponseData(ResponseParser::parseResponse($response));
     }
 
     /**

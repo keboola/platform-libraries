@@ -29,12 +29,10 @@
     },
     "require": {
         "php": "^8.4",
-        "ext-json": "*",
         "guzzlehttp/guzzle": "^7.8",
         "keboola/php-api-client-base": "*@dev",
         "psr/http-message": "^1.0|^2.0",
         "psr/log": "^1.0|^2.0|^3.0",
-        "symfony/validator": "^7.0",
         "webmozart/assert": "^1.11"
     },
     "require-dev": {

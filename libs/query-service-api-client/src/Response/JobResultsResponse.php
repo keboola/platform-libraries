@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Keboola\QueryApi\Response;
 
 use Keboola\ApiClientBase\ResponseModelInterface;
-use Psr\Http\Message\ResponseInterface;
 use Webmozart\Assert\Assert;
 
 final class JobResultsResponse implements ResponseModelInterface
@@ -22,11 +21,6 @@ final class JobResultsResponse implements ResponseModelInterface
         readonly array $columns = [],
         readonly ?string $message = null,
     ) {
-    }
-
-    public static function fromResponse(ResponseInterface $response): static
-    {
-        return static::fromResponseData(ResponseParser::parseResponse($response));
     }
 
     /**

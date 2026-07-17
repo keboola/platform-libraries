@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Keboola\QueryApi\Tests\Phpunit;
 
-use GuzzleHttp\Psr7\Response;
 use Keboola\QueryApi\Response\JobResultsResponse;
 use Keboola\QueryApi\Response\Statement;
 use Keboola\QueryApi\ResultHelper;
@@ -30,8 +29,7 @@ class ResultHelperTest extends TestCase
             'rowsAffected' => 3,
         ];
 
-        $response = new Response(200, [], json_encode($responseData) ?: '');
-        $input = JobResultsResponse::fromResponse($response);
+        $input = JobResultsResponse::fromResponseData($responseData);
 
         $actual = ResultHelper::mapColumnNamesIntoData($input);
 

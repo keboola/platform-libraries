@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Keboola\QueryApi\Tests\Phpunit\Response;
 
 use Generator;
-use Keboola\QueryApi\ClientException;
+use Keboola\QueryApi\Exception\ClientException;
 use Keboola\QueryApi\Response\Statement;
 use PHPUnit\Framework\TestCase;
 

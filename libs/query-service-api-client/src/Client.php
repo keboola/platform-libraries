@@ -12,6 +12,7 @@ use GuzzleHttp\MessageFormatter;
 use GuzzleHttp\Middleware;
 use InvalidArgumentException;
 use JsonException;
+use Keboola\QueryApi\Exception\ClientException;
 use Keboola\QueryApi\Response\CancelJobResponse;
 use Keboola\QueryApi\Response\JobResultsResponse;
 use Keboola\QueryApi\Response\JobStatusResponse;

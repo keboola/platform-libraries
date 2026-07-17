@@ -8,7 +8,7 @@ use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Psr7\Response;
 use Keboola\QueryApi\Client;
-use Keboola\QueryApi\ClientException;
+use Keboola\QueryApi\Exception\ClientException;
 use Keboola\QueryApi\PaginationHelper;
 use Keboola\QueryApi\Response\JobStatusResponse;
 use PHPUnit\Framework\TestCase;

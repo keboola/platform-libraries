@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\QueryApi;
 
+use Keboola\QueryApi\Exception\ClientException;
 use Keboola\QueryApi\Response\JobResultsResponse;
 use Keboola\QueryApi\Response\JobStatusResponse;
 

@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Keboola\QueryApi\Tests\Functional;
 
 use Keboola\QueryApi\Client;
-use Keboola\QueryApi\ClientException;
+use Keboola\QueryApi\Exception\ClientException;
 
 class QueryServiceFunctionalTest extends BaseFunctionalTestCase
 {

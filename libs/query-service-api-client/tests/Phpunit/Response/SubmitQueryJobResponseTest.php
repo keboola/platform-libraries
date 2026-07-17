@@ -6,7 +6,7 @@ namespace Keboola\QueryApi\Tests\Phpunit\Response;
 
 use Generator;
 use GuzzleHttp\Psr7\Response;
-use Keboola\QueryApi\ClientException;
+use Keboola\QueryApi\Exception\ClientException;
 use Keboola\QueryApi\Response\SubmitQueryJobResponse;
 use PHPUnit\Framework\TestCase;
 

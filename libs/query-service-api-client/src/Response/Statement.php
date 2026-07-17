@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\QueryApi\Response;
 
-use Keboola\QueryApi\ClientException;
+use Keboola\QueryApi\Exception\ClientException;
 
 /**
  * Represents a single statement within a query job.

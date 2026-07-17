@@ -56,11 +56,7 @@ abstract class BaseFunctionalTestCase extends TestCase
 
         $queryApiUrl = sprintf('https://query.%s', $hostnameSuffix);
 
-        $config = [
-            'url' => $queryApiUrl,
-            'token' => $storageApiToken,
-        ];
-        $this->queryClient = new Client($config);
+        $this->queryClient = new Client($queryApiUrl, $storageApiToken);
 
         // Create Storage API client directly for tests
         $this->storageApiClient = new StorageApiClient([

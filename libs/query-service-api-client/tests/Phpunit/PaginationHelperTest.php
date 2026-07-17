@@ -18,8 +18,9 @@ class PaginationHelperTest extends TestCase
     private function createClient(MockHandler $mockHandler): Client
     {
         return new Client(
-            ['url' => 'https://query.test.keboola.com', 'token' => 'test-token'],
-            ['handler' => HandlerStack::create($mockHandler)],
+            'https://query.test.keboola.com',
+            'test-token',
+            requestHandler: HandlerStack::create($mockHandler),
         );
     }
 
@@ -28,14 +29,14 @@ class PaginationHelperTest extends TestCase
      */
     private function createJobStatus(string $queryJobId, array $statements): JobStatusResponse
     {
-        return JobStatusResponse::fromResponse(new Response(200, [], (string) json_encode([
+        return JobStatusResponse::fromResponseData([
             'queryJobId' => $queryJobId,
             'status' => 'completed',
             'actorType' => 'user',
             'createdAt' => '2024-01-01T00:00:00Z',
             'changedAt' => '2024-01-01T00:00:00Z',
             'statements' => $statements,
-        ])));
+        ]);
     }
 
     /**

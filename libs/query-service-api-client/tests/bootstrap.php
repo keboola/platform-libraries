@@ -6,20 +6,7 @@ use Symfony\Component\Dotenv\Dotenv;
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
-$dotEnv = new Dotenv();
-$dotEnv->usePutenv();
-$dotEnv->bootEnv(dirname(__DIR__) . '/.env', 'dev', []);
-
-$requiredVars = [
-    'STORAGE_API_TOKEN',
-    'HOSTNAME_SUFFIX',
-    'STORAGE_API_URL',
-];
-
-foreach ($requiredVars as $var) {
-    if (empty($_ENV[$var])) {
-        throw new RuntimeException(
-            sprintf('Environment variable %s is required for functional tests', $var),
-        );
-    }
+$envFile = dirname(__DIR__) . '/.env';
+if (file_exists($envFile)) {
+    (new Dotenv())->usePutenv()->bootEnv($envFile, 'dev', []);
 }

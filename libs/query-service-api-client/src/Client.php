@@ -6,6 +6,7 @@ namespace Keboola\QueryApi;
 
 use Closure;
 use GuzzleHttp\HandlerStack;
+use GuzzleHttp\Middleware;
 use GuzzleHttp\Psr7\Request;
 use Keboola\ApiClientBase\ApiClient;
 use Keboola\ApiClientBase\ApiClientOptions;
@@ -16,6 +17,7 @@ use Keboola\QueryApi\Response\CancelJobResponse;
 use Keboola\QueryApi\Response\JobResultsResponse;
 use Keboola\QueryApi\Response\JobStatusResponse;
 use Keboola\QueryApi\Response\SubmitQueryJobResponse;
+use Psr\Http\Message\RequestInterface;
 use Psr\Log\LoggerInterface;
 use Webmozart\Assert\Assert;
 
@@ -27,7 +29,6 @@ class Client
     private const int DEFAULT_MAX_POLL_WAIT_MS = 1000;
 
     private ApiClient $apiClient;
-    private ?string $runId;
 
     /**
      * @param non-empty-string $baseUrl
@@ -46,7 +47,17 @@ class Client
         null|Closure|HandlerStack $requestHandler = null,
     ) {
         Assert::stringNotEmpty($baseUrl, 'Base URL must be a non-empty string');
-        $this->runId = $runId;
+
+        $handlerStack = $requestHandler instanceof HandlerStack
+            ? $requestHandler
+            : HandlerStack::create($requestHandler);
+        if ($runId !== null) {
+            $handlerStack->push(Middleware::mapRequest(
+                static fn(RequestInterface $request): RequestInterface
+                    => $request->withHeader('X-KBC-RunId', $runId),
+            ));
+        }
+
         $this->apiClient = new ApiClient(
             $baseUrl,
             new StorageApiTokenAuthenticator($storageToken),
@@ -55,7 +66,7 @@ class Client
                 backoffMaxTries: $backoffMaxTries,
                 connectTimeout: $connectTimeout,
                 requestTimeout: $requestTimeout,
-                requestHandler: $requestHandler,
+                requestHandler: $handlerStack,
                 logger: $logger,
             ),
             errorMessageResolver: new QueryApiErrorMessageResolver(),
@@ -162,9 +173,6 @@ class Client
         $headers = [];
         if ($withJsonBody) {
             $headers['Content-Type'] = 'application/json';
-        }
-        if ($this->runId !== null) {
-            $headers['X-KBC-RunId'] = $this->runId;
         }
 
         return $headers;

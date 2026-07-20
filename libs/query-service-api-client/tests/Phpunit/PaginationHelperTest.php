@@ -188,7 +188,7 @@ class PaginationHelperTest extends TestCase
 
     public function testClientExceptionPropagates(): void
     {
-        // Client retries 5xx responses up to DEFAULT_BACKOFF_RETRIES (3) times,
+        // Client retries 5xx responses up to DEFAULT_BACKOFF_MAX_TRIES (3) times,
         // so we need 4 responses total (1 original + 3 retries) to exhaust the retry logic.
         $errorResponse = new Response(500, [], (string) json_encode(['exception' => 'Internal Server Error']));
         $mockHandler = new MockHandler([

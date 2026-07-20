@@ -21,16 +21,10 @@
             "Keboola\\QueryApi\\Tests\\": "tests/"
         }
     },
-    "repositories": {
-        "libs": {
-            "type": "path",
-            "url": "../../libs/*"
-        }
-    },
     "require": {
         "php": "^8.4",
         "guzzlehttp/guzzle": "^7.8",
-        "keboola/php-api-client-base": "*@dev",
+        "keboola/php-api-client-base": "^1.1.1",
         "psr/http-message": "^1.0|^2.0",
         "psr/log": "^1.0|^2.0|^3.0",
         "webmozart/assert": "^1.11"

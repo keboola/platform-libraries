@@ -10,13 +10,13 @@ use Keboola\ApiBundle\Security\ApplicationToken\ApplicationTokenAuthenticator;
 use Keboola\ApiBundle\Security\ApplicationToken\ManageApiClientFactory;
 use Keboola\ApiBundle\Security\StorageApiToken\StorageApiTokenAuthenticator;
 use Keboola\ApiBundle\Security\StorageApiToken\StorageApiTokenFactory;
-use Keboola\ApiBundle\StorageApiClient\StorageClientApiFactory;
+use Keboola\ApiBundle\StorageApiClient\RequestStorageClientFactory;
 use Keboola\ApiBundle\StorageApiClient\StorageClientApiFactoryResolver;
 use Keboola\ManageApi\Client as ManageApiClient;
 use Keboola\ServiceClient\ServiceClient;
 use Keboola\ServiceClient\ServiceDnsType;
+use Keboola\StorageApiBranch\ClientWrapper;
 use Keboola\StorageApiBranch\Factory\ClientOptions;
-use Keboola\StorageApiBranch\Factory\StorageClientRequestFactory;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
@@ -32,6 +32,12 @@ class KeboolaApiExtension extends Extension
      * legacy Storage tokens. Exposed so functional tests can swap it for a mock.
      */
     public const STORAGE_TOKEN_RESOLVER_CLIENT_ID = 'keboola.api_bundle.storage_token_resolver_client';
+
+    /**
+     * Service id of the base Storage {@see ClientOptions} shared by token verification and the
+     * controller-facing Storage client, so both use identical Connection URL / logger / options.
+     */
+    private const STORAGE_CLIENT_BASE_OPTIONS_ID = 'keboola.api_bundle.storage_client_base_options';
 
     /**
      * Path to the projected Kubernetes ServiceAccount token (audience keboola-connection) the
@@ -75,30 +81,15 @@ class KeboolaApiExtension extends Extension
         array $config,
         array &$authenticators,
     ): void {
-        if (!class_exists(StorageClientRequestFactory::class)) {
+        if (!class_exists(ClientWrapper::class)) {
             return;
         }
 
-        // Manage API client that exchanges programmatic tokens for legacy Storage tokens. It
-        // authenticates with the service's projected Kubernetes ServiceAccount JWT (read per
-        // request) and calls Connection over the ServiceClient's default DNS.
-        $container->register(self::STORAGE_TOKEN_RESOLVER_CLIENT_ID, ManageApiClient::class)
-            ->setFactory([new Reference(ManageApiClientFactory::class), 'getClientForServiceAccountTokenPath'])
-            ->setArguments([self::SERVICE_ACCOUNT_TOKEN_PATH])
-        ;
-
-        $container->register(StorageApiTokenFactory::class)
-            ->setArgument('$clientRequestFactory', new Reference(StorageClientRequestFactory::class))
-            ->setArgument('$resolverClient', new Reference(self::STORAGE_TOKEN_RESOLVER_CLIENT_ID))
-            ->setArgument('$logger', new Reference('logger'))
-        ;
-
-        $container->register(StorageApiTokenAuthenticator::class)
-            ->setArgument('$tokenFactory', new Reference(StorageApiTokenFactory::class))
-        ;
-        $authenticators[StorageApiTokenAuth::class] = new Reference(StorageApiTokenAuthenticator::class);
-
-        // StorageClientApiFactory controller-argument value resolver
+        // Base Storage ClientOptions shared by token verification (RequestStorageClientFactory) and
+        // the controller-facing StorageClientApiFactory (via StorageClientApiFactoryResolver), so a
+        // request is verified with the same Connection URL / logger / user agent / tuned options the
+        // controller-facing client uses. Connection URL comes from the ServiceClient; consumers tune
+        // it through the storage_client_options node.
         $connectionUrl = (new Definition())
             ->setFactory([new Reference(ServiceClient::class), 'getConnectionServiceUrl']);
 
@@ -111,8 +102,34 @@ class KeboolaApiExtension extends Extension
         assert(is_array($storageClientOptions));
         $this->applyStorageClientOptions($baseClientOptions, $storageClientOptions);
 
+        $container->setDefinition(self::STORAGE_CLIENT_BASE_OPTIONS_ID, $baseClientOptions);
+
+        // Manage API client that exchanges programmatic tokens for legacy Storage tokens. It
+        // authenticates with the service's projected Kubernetes ServiceAccount JWT (read per
+        // request) and calls Connection over the ServiceClient's default DNS.
+        $container->register(self::STORAGE_TOKEN_RESOLVER_CLIENT_ID, ManageApiClient::class)
+            ->setFactory([new Reference(ManageApiClientFactory::class), 'getClientForServiceAccountTokenPath'])
+            ->setArguments([self::SERVICE_ACCOUNT_TOKEN_PATH])
+        ;
+
+        $container->register(RequestStorageClientFactory::class)
+            ->setArgument('$baseClientOptions', new Reference(self::STORAGE_CLIENT_BASE_OPTIONS_ID))
+        ;
+
+        $container->register(StorageApiTokenFactory::class)
+            ->setArgument('$clientFactory', new Reference(RequestStorageClientFactory::class))
+            ->setArgument('$resolverClient', new Reference(self::STORAGE_TOKEN_RESOLVER_CLIENT_ID))
+            ->setArgument('$logger', new Reference('logger'))
+        ;
+
+        $container->register(StorageApiTokenAuthenticator::class)
+            ->setArgument('$tokenFactory', new Reference(StorageApiTokenFactory::class))
+        ;
+        $authenticators[StorageApiTokenAuth::class] = new Reference(StorageApiTokenAuthenticator::class);
+
+        // StorageClientApiFactory controller-argument value resolver
         $container->register(StorageClientApiFactoryResolver::class)
-            ->setArgument('$baseClientOptions', $baseClientOptions)
+            ->setArgument('$baseClientOptions', new Reference(self::STORAGE_CLIENT_BASE_OPTIONS_ID))
             ->setArgument('$tokenStorage', new Reference(TokenStorageInterface::class))
             ->addTag('controller.argument_value_resolver')
         ;

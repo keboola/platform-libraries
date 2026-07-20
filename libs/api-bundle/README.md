@@ -149,9 +149,10 @@ which the bundle requires directly, so no extra installation is needed.
 
 When `#[StorageApiTokenAuth]` is enabled, type-hint
 `Keboola\ApiBundle\StorageApiClient\StorageClientApiFactory` on a controller argument; the bundle
-injects a factory already bound to the current request and the resolved `StorageApiToken`. Unlike the
-header-based `StorageClientRequestFactory`, it uses the token resolved by the authenticator, so it
-works for programmatic (`kbc_pat_*` / `kbc_at_*`) tokens too.
+injects a factory already bound to the current request and the resolved `StorageApiToken`. It uses
+the token resolved by the authenticator, so it works for programmatic (`kbc_pat_*` / `kbc_at_*`)
+tokens too, and shares the same base `ClientOptions` the bundle uses internally to verify the
+incoming token — no external Storage client factory needs to be registered by the consuming app.
 
 The base options are preconfigured by the bundle: the Connection (Storage API) URL from the
 `ServiceClient`, the shared logger, and the configured `app_name` as user agent. The run id comes
@@ -242,6 +243,12 @@ Storage/Manage APIs. It provides five helpers:
 | `setupFakeConnectionToken(projectId, features, tokenString?, adminId?)` | `#[StorageApiTokenAuth]` via a `kbc_at_`/`kbc_pat_` programmatic token (stubs the exchange resolver client) | `StorageApiToken` |
 | `setupFakeManageApiToken(tokenString, scopes, features)` | `#[ApplicationTokenAuth]` (both the `X-KBC-ManageApiToken` header and the Kubernetes ServiceAccount JWT) | `void` |
 | `bootCleanClient()` | — boots a fresh, reboot-disabled `KernelBrowser` on a clean container | `KernelBrowser` |
+
+> [!IMPORTANT]
+> `setupFakeStorageApiToken()` / `setupFakeOAuthToken()` only stub token *verification* — the
+> resolved `AuthType` is derived by the authenticator from the request headers, exactly as in
+> production. Send the matching scheme on the request under test: `X-StorageApi-Token: …` for
+> `setupFakeStorageApiToken()` and `Authorization: Bearer …` for `setupFakeOAuthToken()`.
 
 ### Why `bootCleanClient()`
 

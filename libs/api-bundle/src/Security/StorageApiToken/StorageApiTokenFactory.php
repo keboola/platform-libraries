@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Keboola\ApiBundle\Security\StorageApiToken;
 
+use Keboola\ApiBundle\StorageApiClient\RequestStorageClientFactory;
 use Keboola\ManageApi\Client as ManageApiClient;
 use Keboola\ManageApi\ClientException as ManageApiClientException;
 use Keboola\ManageApi\MaintenanceException;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApiBranch\Factory\AuthType;
-use Keboola\StorageApiBranch\Factory\StorageClientRequestFactory;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 use SensitiveParameter;
@@ -19,7 +19,8 @@ use Symfony\Component\Security\Core\Exception\CustomUserMessageAuthenticationExc
 
 /**
  * Builds a {@see StorageApiToken}. Legacy tokens carried by the request are verified directly
- * against Storage API ({@see self::createFromRequest()}). Connection programmatic tokens
+ * against Storage API ({@see self::createFromStorageToken()} / {@see self::createFromOAuthToken()}).
+ * Connection programmatic tokens
  * (kbc_at_* / kbc_pat_*) are exchanged through Manage API's auth-bridge resolver
  * ({@see ManageApiClient::resolveStorageToken()}), which returns the legacy Storage token
  * together with its full token detail (the same payload as GET /v2/storage/tokens/verify), so no
@@ -33,19 +34,55 @@ class StorageApiTokenFactory
     private const PROJECT_ID_HEADER = 'X-KBC-ProjectId';
 
     public function __construct(
-        private readonly StorageClientRequestFactory $clientRequestFactory,
+        private readonly RequestStorageClientFactory $clientFactory,
         private readonly ManageApiClient $resolverClient,
         private readonly LoggerInterface $logger,
     ) {
     }
 
     /**
-     * Verifies the token carried by the request (Authorization: Bearer or X-StorageApi-Token).
+     * Verifies a legacy Storage token (carried as `X-StorageApi-Token`) against Storage API; the
+     * resulting {@see StorageApiToken} is typed {@see AuthType::STORAGE_TOKEN}.
      */
-    public function createFromRequest(Request $request): StorageApiToken
-    {
+    public function createFromStorageToken(
+        Request $request,
+        #[SensitiveParameter]
+        string $token,
+    ): StorageApiToken {
+        return $this->verify($request, $token, AuthType::STORAGE_TOKEN);
+    }
+
+    /**
+     * Verifies an OAuth bearer token (carried as `Authorization: Bearer`) against Storage API; the
+     * resulting {@see StorageApiToken} is typed {@see AuthType::BEARER} so it is sent with the bearer
+     * scheme when a client is later built from it.
+     */
+    public function createFromOAuthToken(
+        Request $request,
+        #[SensitiveParameter]
+        string $token,
+    ): StorageApiToken {
+        return $this->verify($request, $token, AuthType::BEARER);
+    }
+
+    /**
+     * Shared Storage-API verification for the two request-carried token types. 4xx Storage errors
+     * are surfaced to the caller; other errors bubble up unchanged. Programmatic tokens never reach
+     * this — their detail comes from the resolver ({@see self::createFromProgrammaticToken()}).
+     */
+    private function verify(
+        Request $request,
+        #[SensitiveParameter]
+        string $token,
+        AuthType $authType,
+    ): StorageApiToken {
         try {
-            return $this->verifyRequestToken($request);
+            $storageApiClient = $this->clientFactory
+                ->createClientWrapper($token, $authType, $request)
+                ->getBasicClient();
+            $tokenInfo = $storageApiClient->verifyToken();
+
+            return new StorageApiToken($tokenInfo, $storageApiClient->getTokenString(), $authType);
         } catch (ClientException $e) {
             if ($e->getCode() >= 400 && $e->getCode() < 500) {
                 throw new CustomUserMessageAuthenticationException($e->getMessage(), [], $e->getCode(), $e);
@@ -136,23 +173,6 @@ class StorageApiTokenFactory
 
         // The exchange resolves the programmatic token to a legacy Storage token.
         return new StorageApiToken($tokenDetail, $storageToken, AuthType::STORAGE_TOKEN);
-    }
-
-    /**
-     * Raw verification against Storage API for legacy tokens carried by the request;
-     * {@see self::createFromRequest()} maps the exceptions (4xx messages are echoed to the
-     * caller). Programmatic tokens never reach this - their detail comes from the resolver.
-     */
-    private function verifyRequestToken(Request $request): StorageApiToken
-    {
-        $wrapper = $this->clientRequestFactory->createClientWrapper($request);
-        $storageApiClient = $wrapper->getBasicClient();
-        $tokenInfo = $storageApiClient->verifyToken();
-
-        // Reuse the auth type the request factory resolved from the request headers.
-        $authType = $wrapper->getClientOptionsReadOnly()->getAuthType() ?? AuthType::STORAGE_TOKEN;
-
-        return new StorageApiToken($tokenInfo, $storageApiClient->getTokenString(), $authType);
     }
 
     private function extractProjectId(Request $request): int

@@ -6,10 +6,10 @@ namespace Keboola\ApiBundle\Tests\Test;
 
 use Keboola\ApiBundle\DependencyInjection\KeboolaApiExtension;
 use Keboola\ApiBundle\Security\ApplicationToken\ManageApiClientFactory;
+use Keboola\ApiBundle\StorageApiClient\RequestStorageClientFactory;
 use Keboola\ApiBundle\Test\AuthenticatorTestTrait;
 use Keboola\ManageApi\Client as ManageApiClient;
 use Keboola\StorageApiBranch\Factory\AuthType;
-use Keboola\StorageApiBranch\Factory\StorageClientRequestFactory;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\DependencyInjection\Exception\InvalidArgumentException;
 
@@ -41,8 +41,8 @@ class AuthenticatorTestTraitTest extends WebTestCase
         self::assertSame(AuthType::STORAGE_TOKEN, $token->getTokenType());
 
         self::assertInstanceOf(
-            StorageClientRequestFactory::class,
-            self::getContainer()->get(StorageClientRequestFactory::class),
+            RequestStorageClientFactory::class,
+            self::getContainer()->get(RequestStorageClientFactory::class),
         );
     }
 
@@ -62,8 +62,8 @@ class AuthenticatorTestTraitTest extends WebTestCase
         self::assertSame(AuthType::BEARER, $token->getTokenType());
 
         self::assertInstanceOf(
-            StorageClientRequestFactory::class,
-            self::getContainer()->get(StorageClientRequestFactory::class),
+            RequestStorageClientFactory::class,
+            self::getContainer()->get(RequestStorageClientFactory::class),
         );
     }
 

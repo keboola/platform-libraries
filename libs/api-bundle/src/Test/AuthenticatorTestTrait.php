@@ -7,12 +7,11 @@ namespace Keboola\ApiBundle\Test;
 use Keboola\ApiBundle\DependencyInjection\KeboolaApiExtension;
 use Keboola\ApiBundle\Security\ApplicationToken\ManageApiClientFactory;
 use Keboola\ApiBundle\Security\StorageApiToken\StorageApiToken;
+use Keboola\ApiBundle\StorageApiClient\RequestStorageClientFactory;
 use Keboola\ManageApi\Client as ManageApiClient;
 use Keboola\StorageApi\Client as StorageApiClient;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Keboola\StorageApiBranch\Factory\AuthType;
-use Keboola\StorageApiBranch\Factory\ClientOptions;
-use Keboola\StorageApiBranch\Factory\StorageClientRequestFactory;
 use PHPUnit\Framework\MockObject\MockObject;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Component\BrowserKit\AbstractBrowser;
@@ -137,9 +136,12 @@ trait AuthenticatorTestTrait
     }
 
     /**
-     * Stubs the request-verification path ({@see StorageApiTokenFactory::createFromRequest()}) for a
-     * token carried directly by the request, tagging the fake wrapper with $authType so the resolved
-     * {@see StorageApiToken} carries the matching type.
+     * Stubs the request-verification path ({@see StorageApiTokenFactory::createFromStorageToken()} /
+     * {@see StorageApiTokenFactory::createFromOAuthToken()}) for a token carried directly by the
+     * request. The resolved {@see StorageApiToken} carries $authType;
+     * the request the test issues must use the matching scheme (`Authorization: Bearer …` for
+     * {@see AuthType::BEARER}, `X-StorageApi-Token` for {@see AuthType::STORAGE_TOKEN}), since the
+     * authenticator derives the auth type from the request headers exactly as it does in production.
      *
      * @param list<string> $features
      */
@@ -158,12 +160,11 @@ trait AuthenticatorTestTrait
 
         $clientWrapper = $this->createMock(ClientWrapper::class);
         $clientWrapper->method('getBasicClient')->willReturn($storageApiClient);
-        $clientWrapper->method('getClientOptionsReadOnly')->willReturn(new ClientOptions(authType: $authType));
 
-        $clientRequestFactory = $this->createMock(StorageClientRequestFactory::class);
-        $clientRequestFactory->method('createClientWrapper')->willReturn($clientWrapper);
+        $clientFactory = $this->createMock(RequestStorageClientFactory::class);
+        $clientFactory->method('createClientWrapper')->willReturn($clientWrapper);
 
-        self::getContainer()->set(StorageClientRequestFactory::class, $clientRequestFactory);
+        self::getContainer()->set(RequestStorageClientFactory::class, $clientFactory);
 
         return new StorageApiToken($tokenData, $tokenString, $authType);
     }

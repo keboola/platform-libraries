@@ -9,6 +9,7 @@ use Generator;
 use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Psr7\Request as GuzzleRequest;
 use Keboola\ApiBundle\Security\StorageApiToken\StorageApiTokenFactory;
+use Keboola\ApiBundle\StorageApiClient\RequestStorageClientFactory;
 use Keboola\ManageApi\Client as ManageApiClient;
 use Keboola\ManageApi\ClientException as ManageApiClientException;
 use Keboola\ManageApi\MaintenanceException as ManageApiMaintenanceException;
@@ -17,8 +18,6 @@ use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\MaintenanceException;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Keboola\StorageApiBranch\Factory\AuthType;
-use Keboola\StorageApiBranch\Factory\ClientOptions;
-use Keboola\StorageApiBranch\Factory\StorageClientRequestFactory;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
@@ -33,12 +32,12 @@ class StorageApiTokenFactoryTest extends TestCase
     private const PROJECT_ID_HEADER = 'X-KBC-ProjectId';
 
     private function createFactory(
-        ?StorageClientRequestFactory $clientRequestFactory = null,
+        ?RequestStorageClientFactory $clientFactory = null,
         ?ManageApiClient $resolverClient = null,
         ?LoggerInterface $logger = null,
     ): StorageApiTokenFactory {
         return new StorageApiTokenFactory(
-            $clientRequestFactory ?? $this->createMock(StorageClientRequestFactory::class),
+            $clientFactory ?? $this->createMock(RequestStorageClientFactory::class),
             $resolverClient ?? $this->createMock(ManageApiClient::class),
             $logger ?? new NullLogger(),
         );
@@ -54,96 +53,65 @@ class StorageApiTokenFactoryTest extends TestCase
     }
 
     // ---------------------------------------------------------------------------
-    // createFromRequest – happy path
+    // createFromStorageToken / createFromOAuthToken – happy path
     // ---------------------------------------------------------------------------
 
-    public function testCreateFromRequestSuccess(): void
+    public function testCreateFromStorageTokenVerifiesAsStorageToken(): void
     {
-        $clientMock = $this->createMock(Client::class);
-        $clientMock
-            ->expects(self::once())
-            ->method('verifyToken')
-            ->willReturn(['id' => '42', 'description' => 'test']);
-        $clientMock
-            ->expects(self::once())
-            ->method('getTokenString')
-            ->willReturn('tok');
+        $factoryMock = $this->mockClientFactoryReturningVerifiedToken('tok', AuthType::STORAGE_TOKEN);
 
-        $wrapperMock = $this->createMock(ClientWrapper::class);
-        $wrapperMock
-            ->expects(self::once())
-            ->method('getBasicClient')
-            ->willReturn($clientMock);
-
-        $factoryMock = $this->createMock(StorageClientRequestFactory::class);
-        $factoryMock
-            ->expects(self::once())
-            ->method('createClientWrapper')
-            ->willReturn($wrapperMock);
-
-        $request = Request::create('https://keboola.com');
-        $request->headers->set(StorageClientRequestFactory::TOKEN_HEADER, 'tok');
-
-        $token = $this->createFactory(clientRequestFactory: $factoryMock)->createFromRequest($request);
+        $token = $this->createFactory(clientFactory: $factoryMock)
+            ->createFromStorageToken(Request::create('https://keboola.com'), 'tok');
 
         self::assertSame('tok', $token->getTokenValue());
+        self::assertSame(AuthType::STORAGE_TOKEN, $token->getTokenType());
+    }
+
+    public function testCreateFromOAuthTokenVerifiesAsBearer(): void
+    {
+        $factoryMock = $this->mockClientFactoryReturningVerifiedToken('tok', AuthType::BEARER);
+
+        $token = $this->createFactory(clientFactory: $factoryMock)
+            ->createFromOAuthToken(Request::create('https://keboola.com'), 'tok');
+
+        self::assertSame('tok', $token->getTokenValue());
+        self::assertSame(AuthType::BEARER, $token->getTokenType());
     }
 
     /**
-     * The resulting token records the auth type the request was verified with.
+     * Builds a RequestStorageClientFactory mock whose wrapper verifies successfully, asserting it is
+     * asked to build the client for the expected token/auth type.
      */
-    #[DataProvider('provideRequestAuthTypes')]
-    public function testCreateFromRequestSetsTokenTypeFromResolvedAuthType(
-        ?AuthType $resolvedAuthType,
-        AuthType $expectedTokenType,
-    ): void {
+    private function mockClientFactoryReturningVerifiedToken(
+        string $expectedToken,
+        AuthType $expectedAuthType,
+    ): RequestStorageClientFactory {
         $clientMock = $this->createMock(Client::class);
-        $clientMock->method('verifyToken')->willReturn(['id' => '42', 'description' => 'test']);
-        $clientMock->method('getTokenString')->willReturn('tok');
+        $clientMock->expects(self::once())->method('verifyToken')->willReturn(['id' => '42', 'description' => 'test']);
+        $clientMock->expects(self::once())->method('getTokenString')->willReturn($expectedToken);
 
         $wrapperMock = $this->createMock(ClientWrapper::class);
-        $wrapperMock->method('getBasicClient')->willReturn($clientMock);
-        $wrapperMock
-            ->method('getClientOptionsReadOnly')
-            ->willReturn(new ClientOptions(authType: $resolvedAuthType));
+        $wrapperMock->expects(self::once())->method('getBasicClient')->willReturn($clientMock);
 
-        $factoryMock = $this->createMock(StorageClientRequestFactory::class);
+        $factoryMock = $this->createMock(RequestStorageClientFactory::class);
         $factoryMock
             ->expects(self::once())
             ->method('createClientWrapper')
+            ->with($expectedToken, $expectedAuthType, self::anything())
             ->willReturn($wrapperMock);
 
-        $token = $this->createFactory(clientRequestFactory: $factoryMock)
-            ->createFromRequest(Request::create('https://keboola.com'));
-
-        self::assertSame($expectedTokenType, $token->getTokenType());
-    }
-
-    public static function provideRequestAuthTypes(): Generator
-    {
-        yield 'oauth bearer token' => [
-            'resolvedAuthType' => AuthType::BEARER,
-            'expectedTokenType' => AuthType::BEARER,
-        ];
-        yield 'legacy storage token' => [
-            'resolvedAuthType' => AuthType::STORAGE_TOKEN,
-            'expectedTokenType' => AuthType::STORAGE_TOKEN,
-        ];
-        yield 'unknown auth type falls back to storage token' => [
-            'resolvedAuthType' => null,
-            'expectedTokenType' => AuthType::STORAGE_TOKEN,
-        ];
+        return $factoryMock;
     }
 
     // ---------------------------------------------------------------------------
-    // createFromRequest – exception mapping
+    // verify – exception mapping (via createFromStorageToken)
     // ---------------------------------------------------------------------------
 
     /**
      * @param class-string<Exception> $expectedExceptionClass
      */
     #[DataProvider('provideExceptionData')]
-    public function testCreateFromRequestFailure(
+    public function testVerifyFailure(
         ClientException $clientException,
         string $expectedExceptionClass,
         string $expectedExceptionMessage,
@@ -161,20 +129,18 @@ class StorageApiTokenFactoryTest extends TestCase
             ->method('getBasicClient')
             ->willReturn($clientMock);
 
-        $factoryMock = $this->createMock(StorageClientRequestFactory::class);
+        $factoryMock = $this->createMock(RequestStorageClientFactory::class);
         $factoryMock
             ->expects(self::once())
             ->method('createClientWrapper')
             ->willReturn($wrapperMock);
 
-        $request = Request::create('https://keboola.com');
-        $request->headers->set(StorageClientRequestFactory::TOKEN_HEADER, 'token');
-
         self::expectException($expectedExceptionClass);
         self::expectExceptionMessage($expectedExceptionMessage);
         self::expectExceptionCode($expectedExceptionCode);
 
-        $this->createFactory(clientRequestFactory: $factoryMock)->createFromRequest($request);
+        $this->createFactory(clientFactory: $factoryMock)
+            ->createFromStorageToken(Request::create('https://keboola.com'), 'token');
     }
 
     public static function provideExceptionData(): Generator
@@ -229,14 +195,14 @@ class StorageApiTokenFactoryTest extends TestCase
             ]);
 
         // The resolver response carries the full token detail, so Storage API must not be hit.
-        $factoryMock = $this->createMock(StorageClientRequestFactory::class);
+        $factoryMock = $this->createMock(RequestStorageClientFactory::class);
         $factoryMock
             ->expects(self::never())
             ->method('createClientWrapper');
 
         $originalRequest = $this->createProgrammaticTokenRequest();
 
-        $token = $this->createFactory(clientRequestFactory: $factoryMock, resolverClient: $resolverClient)
+        $token = $this->createFactory(clientFactory: $factoryMock, resolverClient: $resolverClient)
             ->createFromProgrammaticToken($originalRequest, self::SUBJECT_TOKEN);
 
         self::assertSame('legacy-token', $token->getTokenValue());
@@ -409,13 +375,13 @@ class StorageApiTokenFactoryTest extends TestCase
             ->method('resolveStorageToken')
             ->willReturn($response);
 
-        $clientRequestFactory = $this->createMock(StorageClientRequestFactory::class);
-        $clientRequestFactory
+        $clientFactory = $this->createMock(RequestStorageClientFactory::class);
+        $clientFactory
             ->expects(self::never())
             ->method('createClientWrapper');
 
         $factory = $this->createFactory(
-            clientRequestFactory: $clientRequestFactory,
+            clientFactory: $clientFactory,
             resolverClient: $resolverClient,
         );
 

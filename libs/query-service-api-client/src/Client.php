@@ -4,135 +4,74 @@ declare(strict_types=1);
 
 namespace Keboola\QueryApi;
 
-use GuzzleHttp\Client as GuzzleClient;
-use GuzzleHttp\Exception\GuzzleException;
-use GuzzleHttp\Exception\RequestException;
+use Closure;
 use GuzzleHttp\HandlerStack;
-use GuzzleHttp\MessageFormatter;
 use GuzzleHttp\Middleware;
-use InvalidArgumentException;
-use JsonException;
+use GuzzleHttp\Psr7\Request;
+use Keboola\ApiClientBase\ApiClient;
+use Keboola\ApiClientBase\ApiClientOptions;
+use Keboola\ApiClientBase\Auth\StorageApiTokenAuthenticator;
+use Keboola\ApiClientBase\Json;
+use Keboola\QueryApi\Exception\ClientException;
 use Keboola\QueryApi\Response\CancelJobResponse;
 use Keboola\QueryApi\Response\JobResultsResponse;
 use Keboola\QueryApi\Response\JobStatusResponse;
 use Keboola\QueryApi\Response\SubmitQueryJobResponse;
 use Psr\Http\Message\RequestInterface;
-use Psr\Http\Message\ResponseInterface;
 use Psr\Log\LoggerInterface;
-use Psr\Log\NullLogger;
-use Symfony\Component\Validator\Constraints\NotBlank;
-use Symfony\Component\Validator\Constraints\Range;
-use Symfony\Component\Validator\Constraints\Url;
-use Symfony\Component\Validator\ConstraintViolationInterface;
-use Symfony\Component\Validator\Validation;
-use Throwable;
+use Webmozart\Assert\Assert;
 
 class Client
 {
     private const string DEFAULT_USER_AGENT = 'Keboola Query API PHP Client';
-    private const int DEFAULT_BACKOFF_RETRIES = 3;
-    private const int GUZZLE_CONNECT_TIMEOUT_SECONDS = 10;
-    private const int GUZZLE_TIMEOUT_SECONDS = 120;
+    private const int DEFAULT_BACKOFF_MAX_TRIES = 3;
     private const int DEFAULT_MAX_WAIT_SECONDS = 30;
     private const int DEFAULT_MAX_POLL_WAIT_MS = 1000;
-    private GuzzleClient $client;
+
+    private ApiClient $apiClient;
 
     /**
-     * @param array{
-     *     url?: string,
-     *     token?: string,
-     *     backoffMaxTries?: int,
-     *     userAgent?: string,
-     *     runId?: string,
-     *     logger?: LoggerInterface,
-     *     handler?: HandlerStack,
-     * } $config
-     * @param array<string, mixed> $options
+     * @param non-empty-string $baseUrl
+     * @param non-empty-string $storageToken
+     * @param int<0, max> $backoffMaxTries
      */
-    public function __construct(array $config, array $options = [])
-    {
-        $validator = Validation::createValidator();
-        $errors = $validator->validate($config['url'] ?? '', [new NotBlank(), new Url()]);
-        $errors->addAll(
-            $validator->validate($config['token'] ?? '', [new NotBlank()]),
-        );
+    public function __construct(
+        string $baseUrl,
+        string $storageToken,
+        ?string $runId = null,
+        ?LoggerInterface $logger = null,
+        int $backoffMaxTries = self::DEFAULT_BACKOFF_MAX_TRIES,
+        int $connectTimeout = ApiClientOptions::DEFAULT_CONNECT_TIMEOUT,
+        int $requestTimeout = ApiClientOptions::DEFAULT_REQUEST_TIMEOUT,
+        string $userAgent = self::DEFAULT_USER_AGENT,
+        null|Closure|HandlerStack $requestHandler = null,
+    ) {
+        Assert::stringNotEmpty($baseUrl, 'Base URL must be a non-empty string');
 
-        if (!isset($options['backoffMaxTries']) || $options['backoffMaxTries'] === '') {
-            $options['backoffMaxTries'] = self::DEFAULT_BACKOFF_RETRIES;
+        $handlerStack = $requestHandler instanceof HandlerStack
+            ? $requestHandler
+            : HandlerStack::create($requestHandler);
+        if ($runId !== null) {
+            $handlerStack->push(Middleware::mapRequest(
+                static fn(RequestInterface $request): RequestInterface
+                    => $request->withHeader('X-KBC-RunId', $runId),
+            ));
         }
 
-        $errors->addAll($validator->validate($options['backoffMaxTries'], [new Range(['min' => 0, 'max' => 100])]));
-
-        if ($errors->count() !== 0) {
-            $messages = '';
-            /** @var ConstraintViolationInterface $error */
-            foreach ($errors as $error) {
-                $invalidValue = $error->getInvalidValue();
-                $valueStr = (is_scalar($invalidValue) ? (string) $invalidValue : '');
-                $messages .= 'Value "' . $valueStr . '" is invalid: ' . $error->getMessage() . "\n";
-            }
-            throw new ClientException('Invalid parameters when creating client: ' . $messages);
-        }
-
-        if (!isset($options['userAgent'])) {
-            $options['userAgent'] = self::DEFAULT_USER_AGENT;
-        }
-        if (!isset($options['logger'])) {
-            $options['logger'] = new NullLogger();
-        }
-
-        /** @var array{url: string, token: string} $config */
-        $this->client = $this->initClient($config['url'], $config['token'], $options);
-    }
-
-    /**
-     * @param array<string, mixed> $options
-     */
-    private function initClient(string $url, string $token, array $options = []): GuzzleClient
-    {
-        /** @var array{
-         *     handler?: HandlerStack,
-         *     backoffMaxTries: int,
-         *     logger: LoggerInterface,
-         *     runId?: string,
-         *     userAgent: string
-         * } $options
-         */
-
-        // Initialize handlers (start with those supplied in constructor)
-        $handlerStack = $options['handler'] ?? HandlerStack::create();
-
-        // Set exponential backoff
-        /** @var int<1, max> $backoffMaxTries */
-        $backoffMaxTries = $options['backoffMaxTries'];
-        $handlerStack->push(Middleware::retry(new RetryDecider($backoffMaxTries, $options['logger'])));
-        // Set handler to set default headers
-        $handlerStack->push(Middleware::mapRequest(
-            function (RequestInterface $request) use ($token, $options) {
-                if (isset($options['runId'])) {
-                    $request = $request->withHeader('X-KBC-RunId', $options['runId']);
-                }
-                return $request
-                    ->withHeader('User-Agent', $options['userAgent'])
-                    ->withHeader('X-StorageApi-Token', $token)
-                    ->withHeader('Content-type', 'application/json');
-            },
-        ));
-        // Set client logger
-        $handlerStack->push(Middleware::log(
-            $options['logger'],
-            new MessageFormatter(
-                '{hostname} {req_header_User-Agent} - [{ts}] "{method} {resource} {protocol}/{version}"' .
-                ' {code} {res_header_Content-Length}',
+        $this->apiClient = new ApiClient(
+            $baseUrl,
+            new StorageApiTokenAuthenticator($storageToken),
+            new ApiClientOptions(
+                userAgent: $userAgent,
+                backoffMaxTries: $backoffMaxTries,
+                connectTimeout: $connectTimeout,
+                requestTimeout: $requestTimeout,
+                requestHandler: $handlerStack,
+                logger: $logger,
             ),
-        ));
-        // finally create the instance
-        return new GuzzleClient([
-            'base_uri' => $url,
-            'handler' => $handlerStack,
-            'connect_timeout' => self::GUZZLE_CONNECT_TIMEOUT_SECONDS,
-            'timeout' => self::GUZZLE_TIMEOUT_SECONDS,
-        ]);
+            errorMessageResolver: new QueryApiErrorMessageResolver(),
+            exceptionClass: ClientException::class,
+        );
     }
 
     /**
@@ -140,19 +79,23 @@ class Client
      */
     public function submitQueryJob(string $branchId, string $workspaceId, array $requestBody): SubmitQueryJobResponse
     {
-        $url = sprintf('/api/v1/branches/%s/workspaces/%s/queries', $branchId, $workspaceId);
-        $response = $this->sendRequest('POST', $url, $requestBody);
-        return SubmitQueryJobResponse::fromResponse($response);
+        return $this->apiClient->sendRequestAndMapResponse(
+            new Request(
+                'POST',
+                sprintf('api/v1/branches/%s/workspaces/%s/queries', $branchId, $workspaceId),
+                ['Content-Type' => 'application/json'],
+                Json::encodeArray($requestBody),
+            ),
+            SubmitQueryJobResponse::class,
+        );
     }
 
-    /**
-     * Get job status
-     */
     public function getJobStatus(string $queryJobId): JobStatusResponse
     {
-        $url = sprintf('/api/v1/queries/%s', $queryJobId);
-        $response = $this->sendRequest('GET', $url);
-        return JobStatusResponse::fromResponse($response);
+        return $this->apiClient->sendRequestAndMapResponse(
+            new Request('GET', sprintf('api/v1/queries/%s', $queryJobId)),
+            JobStatusResponse::class,
+        );
     }
 
     /**
@@ -160,20 +103,25 @@ class Client
      */
     public function cancelJob(string $queryJobId, array $requestBody = []): CancelJobResponse
     {
-        $url = sprintf('/api/v1/queries/%s/cancel', $queryJobId);
-        return CancelJobResponse::fromResponse($this->sendRequest('POST', $url, $requestBody));
+        return $this->apiClient->sendRequestAndMapResponse(
+            new Request(
+                'POST',
+                sprintf('api/v1/queries/%s/cancel', $queryJobId),
+                ['Content-Type' => 'application/json'],
+                Json::encodeArray($requestBody),
+            ),
+            CancelJobResponse::class,
+        );
     }
 
-    /**
-     * Get job results
-     */
     public function getJobResults(
         string $queryJobId,
         string $statementId,
         ?int $pageSize = null,
         ?int $offset = null,
     ): JobResultsResponse {
-        $url = sprintf('/api/v1/queries/%s/%s/results', $queryJobId, $statementId);
+        $url = sprintf('api/v1/queries/%s/%s/results', $queryJobId, $statementId);
+
         $queryParams = [];
         if ($pageSize !== null) {
             $queryParams['pageSize'] = $pageSize;
@@ -181,65 +129,13 @@ class Client
         if ($offset !== null) {
             $queryParams['offset'] = $offset;
         }
-        return JobResultsResponse::fromResponse(
-            $this->sendRequest('GET', $url, null, $queryParams),
-        );
-    }
-
-    /**
-     * @param array<string, mixed>|null $requestBody
-     * @param array<string, int>|null $queryParams
-     */
-    private function sendRequest(
-        string $method,
-        string $url,
-        ?array $requestBody = null,
-        ?array $queryParams = null,
-    ): ResponseInterface {
-        $options = [];
-
-        if ($requestBody !== null) {
-            try {
-                $options['body'] = json_encode($requestBody, JSON_THROW_ON_ERROR);
-            } catch (JsonException $e) {
-                throw new ClientException('Failed to encode request body as JSON: ' . $e->getMessage(), 0, $e);
-            }
+        if ($queryParams !== []) {
+            $url .= '?' . http_build_query($queryParams);
         }
 
-        if ($queryParams !== null) {
-            $options['query'] = $queryParams;
-        }
-
-        try {
-            return $this->client->request($method, $url, $options);
-        } catch (RequestException $e) {
-            throw $this->processRequestException($e) ?? new ClientException($e->getMessage(), $e->getCode(), $e);
-        } catch (GuzzleException $e) {
-            throw new ClientException($e->getMessage(), $e->getCode(), $e);
-        }
-    }
-
-    private function processRequestException(RequestException $e): ?ClientException
-    {
-        $response = $e->getResponse();
-        if ($response === null) {
-            return null;
-        }
-
-        try {
-            $data = json_decode($response->getBody()->getContents(), true, 512, JSON_THROW_ON_ERROR);
-        } catch (JsonException) {
-            return new ClientException(trim($e->getMessage()), $response->getStatusCode(), $e);
-        }
-
-        if (!is_array($data) || empty($data['exception']) || !is_string($data['exception'])) {
-            return null;
-        }
-
-        return new ClientException(
-            trim($data['exception']),
-            $response->getStatusCode(),
-            $e,
+        return $this->apiClient->sendRequestAndMapResponse(
+            new Request('GET', $url),
+            JobResultsResponse::class,
         );
     }
 
@@ -259,7 +155,7 @@ class Client
             }
 
             // 60, 70, 90, 130, 210, 370, 690, 1000ms (default max)
-            $waitMilliseconds = min(50+pow(2, $tries)*10, $maxPollWaitMs);
+            $waitMilliseconds = min(50 + pow(2, $tries) * 10, $maxPollWaitMs);
             usleep($waitMilliseconds * 1000);
             $tries++;
         }

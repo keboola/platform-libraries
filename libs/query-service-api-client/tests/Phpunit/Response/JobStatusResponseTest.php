@@ -5,10 +5,9 @@ declare(strict_types=1);
 namespace Keboola\QueryApi\Tests\Phpunit\Response;
 
 use Generator;
-use GuzzleHttp\Psr7\Response;
-use Keboola\QueryApi\ClientException;
 use Keboola\QueryApi\Response\JobStatusResponse;
 use PHPUnit\Framework\TestCase;
+use Webmozart\Assert\InvalidArgumentException;
 
 class JobStatusResponseTest extends TestCase
 {
@@ -36,8 +35,7 @@ class JobStatusResponseTest extends TestCase
             ],
         ];
 
-        $response = new Response(200, [], json_encode($responseData) ?: '');
-        $jobStatus = JobStatusResponse::fromResponse($response);
+        $jobStatus = JobStatusResponse::fromResponseData($responseData);
 
         self::assertEquals('job-123', $jobStatus->getQueryJobId());
         self::assertSame('processing', $jobStatus->getStatus());
@@ -62,8 +60,7 @@ class JobStatusResponseTest extends TestCase
             'statements' => [],
         ];
 
-        $response = new Response(200, [], json_encode($responseData) ?: '');
-        $jobStatus = JobStatusResponse::fromResponse($response);
+        $jobStatus = JobStatusResponse::fromResponseData($responseData);
 
         self::assertEquals('job-456', $jobStatus->getQueryJobId());
         self::assertSame('canceled', $jobStatus->getStatus());
@@ -75,16 +72,11 @@ class JobStatusResponseTest extends TestCase
      * @param array<string, mixed> $responseData
      * @dataProvider missingFieldDataProvider
      */
-    public function testJobStatusResponseThrowsExceptionForMissingField(
-        array $responseData,
-        string $expectedField,
-    ): void {
-        $response = new Response(200, [], json_encode($responseData) ?: '');
+    public function testJobStatusResponseThrowsExceptionForMissingField(array $responseData): void
+    {
+        $this->expectException(InvalidArgumentException::class);
 
-        $this->expectException(ClientException::class);
-        $this->expectExceptionMessage("Invalid response: missing or invalid $expectedField");
-
-        JobStatusResponse::fromResponse($response);
+        JobStatusResponse::fromResponseData($responseData);
     }
 
     public static function missingFieldDataProvider(): Generator
@@ -101,7 +93,7 @@ class JobStatusResponseTest extends TestCase
         foreach (['queryJobId', 'status', 'actorType', 'changedAt', 'createdAt'] as $fieldToRemove) {
             $incompleteData = $requiredFields;
             unset($incompleteData[$fieldToRemove]);
-            yield "missing $fieldToRemove" => [$incompleteData, $fieldToRemove];
+            yield "missing $fieldToRemove" => [$incompleteData];
         }
     }
 }

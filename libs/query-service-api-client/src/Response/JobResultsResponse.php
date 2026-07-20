@@ -4,13 +4,11 @@ declare(strict_types=1);
 
 namespace Keboola\QueryApi\Response;
 
-use Keboola\QueryApi\ClientException;
-use Psr\Http\Message\ResponseInterface;
+use Keboola\ApiClientBase\ResponseModelInterface;
+use Webmozart\Assert\Assert;
 
-class JobResultsResponse
+final class JobResultsResponse implements ResponseModelInterface
 {
-    private const REQUIRED_FIELDS = ['data', 'status', 'numberOfRows', 'rowsAffected'];
-
     /**
      * @param array<array<string, mixed>> $columns
      * @param array<array<mixed>> $data
@@ -25,33 +23,36 @@ class JobResultsResponse
     ) {
     }
 
-    public static function fromResponse(ResponseInterface $response): self
+    /**
+     * @param array<string, mixed> $data
+     */
+    public static function fromResponseData(array $data): static
     {
-        $data = ResponseParser::parseResponse($response);
+        Assert::keyExists($data, 'status');
+        Assert::string($data['status']);
+        Assert::keyExists($data, 'numberOfRows');
+        Assert::integer($data['numberOfRows']);
+        Assert::keyExists($data, 'rowsAffected');
+        Assert::integer($data['rowsAffected']);
+        Assert::keyExists($data, 'data');
+        Assert::isArray($data['data']);
 
-        foreach (self::REQUIRED_FIELDS as $field) {
-            if (!isset($data[$field])) {
-                throw new ClientException("Invalid response: missing $field");
-            }
-        }
+        $columns = $data['columns'] ?? [];
+        Assert::isArray($columns);
+        $message = $data['message'] ?? null;
+        Assert::nullOrString($message);
 
-        /** @var array{
-         *     columns?: array<array<string, mixed>>,
-         *     message?: string,
-         *     numberOfRows: int,
-         *     rowsAffected: int,
-         *     status: string,
-         *     data: array<array<mixed>>
-         * } $data
-         */
+        /** @var array<array<mixed>> $rows */
+        $rows = $data['data'];
+        /** @var array<array<string, mixed>> $columns */
 
         return new self(
             $data['status'],
             $data['numberOfRows'],
             $data['rowsAffected'],
-            $data['data'],
-            $data['columns'] ?? [],
-            $data['message'] ?? null,
+            $rows,
+            $columns,
+            $message,
         );
     }
 

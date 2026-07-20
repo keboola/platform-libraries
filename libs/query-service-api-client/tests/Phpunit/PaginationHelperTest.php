@@ -8,7 +8,7 @@ use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Psr7\Response;
 use Keboola\QueryApi\Client;
-use Keboola\QueryApi\ClientException;
+use Keboola\QueryApi\Exception\ClientException;
 use Keboola\QueryApi\PaginationHelper;
 use Keboola\QueryApi\Response\JobStatusResponse;
 use PHPUnit\Framework\TestCase;
@@ -18,8 +18,9 @@ class PaginationHelperTest extends TestCase
     private function createClient(MockHandler $mockHandler): Client
     {
         return new Client(
-            ['url' => 'https://query.test.keboola.com', 'token' => 'test-token'],
-            ['handler' => HandlerStack::create($mockHandler)],
+            'https://query.test.keboola.com',
+            'test-token',
+            requestHandler: HandlerStack::create($mockHandler),
         );
     }
 
@@ -28,14 +29,14 @@ class PaginationHelperTest extends TestCase
      */
     private function createJobStatus(string $queryJobId, array $statements): JobStatusResponse
     {
-        return JobStatusResponse::fromResponse(new Response(200, [], (string) json_encode([
+        return JobStatusResponse::fromResponseData([
             'queryJobId' => $queryJobId,
             'status' => 'completed',
             'actorType' => 'user',
             'createdAt' => '2024-01-01T00:00:00Z',
             'changedAt' => '2024-01-01T00:00:00Z',
             'statements' => $statements,
-        ])));
+        ]);
     }
 
     /**
@@ -187,7 +188,7 @@ class PaginationHelperTest extends TestCase
 
     public function testClientExceptionPropagates(): void
     {
-        // Client retries 5xx responses up to DEFAULT_BACKOFF_RETRIES (3) times,
+        // Client retries 5xx responses up to DEFAULT_BACKOFF_MAX_TRIES (3) times,
         // so we need 4 responses total (1 original + 3 retries) to exhaust the retry logic.
         $errorResponse = new Response(500, [], (string) json_encode(['exception' => 'Internal Server Error']));
         $mockHandler = new MockHandler([

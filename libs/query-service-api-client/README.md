@@ -1,194 +1,80 @@
 # Keboola Query Service API PHP Client
 
-[![Build Status](https://dev.azure.com/keboola-dev/Platform%20Libraries/_apis/build/status%2Fkeboola.platform-libraries?repoName=keboola%2Fplatform-libraries&branchName=main)](https://dev.azure.com/keboola-dev/Platform%20Libraries/_build/latest?definitionId=120&repoName=keboola%2Fplatform-libraries&branchName=main)
-
-PHP client for Keboola Query Service API.
+PHP client for the Keboola Query Service API, built on [`keboola/php-api-client-base`](https://github.com/keboola/php-api-client-base).
 
 ## Installation
 
 ```shell
-composer require keboola/query-service-api-client
+composer require keboola/query-api-php-client
 ```
 
 ## Usage
 
-### Basic Usage - Submit and Wait for Results
-
 ```php
 <?php
 
 use Keboola\QueryApi\Client;
 
-$client = new Client([
-    'url' => 'https://query.keboola.com',
-    'token' => 'your-storage-api-token'
-]);
-
-// Execute query and wait for results (recommended)
-$response = $client->executeWorkspaceQuery('main', 'workspace-123', [
-    'statements' => ['SELECT * FROM table1'],
-    'transactional' => true
-]);
-
-// Get all results
-foreach ($response->getResults() as $statementResult) {
-    $data = $statementResult->getData();
-    $columns = $statementResult->getColumns();
-    echo "Fetched " . $statementResult->getNumberOfRows() . " rows\n";
-}
-```
-
-### Advanced Usage - Manual Control
-
-```php
-<?php
-
-use Keboola\QueryApi\Client;
-
-$client = new Client([
-    'url' => 'https://query.keboola.com',
-    'token' => 'your-storage-api-token'
-]);
+$client = new Client(
+    'https://query.keboola.com',   // base URL
+    'your-storage-api-token',      // X-StorageApi-Token
+);
 
 // Submit a query job
 $response = $client->submitQueryJob('main', 'workspace-123', [
     'statements' => ['SELECT * FROM table1'],
-    'transactional' => true
+    'transactional' => true,
 ]);
-
 $queryJobId = $response->getQueryJobId();
 
-// Get job status
-$statusResponse = $client->getJobStatus($queryJobId);
-$status = $statusResponse->getStatus();
+// Poll until it finishes
+$status = $client->waitForJobCompletion($queryJobId);
 
-// Get job results for first statement
-$statements = $statusResponse->getStatements();
-$statementId = $statements[0]->getId();
-$resultsResponse = $client->getJobResults($queryJobId, $statementId);
-$results = $resultsResponse->getData();
+// Read results for the first completed statement
+$statementId = $status->getStatements()[0]->getId();
+$results = $client->getJobResults($queryJobId, $statementId);
+foreach ($results->getData() as $row) {
+    // ...
+}
 
-// Cancel job if needed
-$cancelResponse = $client->cancelJob($queryJobId, ['reason' => 'User requested cancellation']);
-$cancelledJobId = $cancelResponse->getQueryJobId();
+// Cancel if needed
+$client->cancelJob($queryJobId, ['reason' => 'User requested cancellation']);
 ```
 
-## Configuration Options
+### Constructor options
 
-The client constructor accepts two parameters: `$config` array and `$options` array.
-
-### Config Array (required)
-- `url` (required): Query Service API URL (e.g., `https://query.keboola.com`)
-- `token` (required): Storage API token
-
-### Options Array (optional)
-- `backoffMaxTries` (optional): Number of retry attempts for failed requests (default: 3, range: 0-100)
-- `userAgent` (optional): Additional user agent string to append
-- `logger` (optional): PSR-3 logger instance for request/response logging
-- `runId` (optional): Run ID to include in request headers
-- `handler` (optional): Custom Guzzle handler stack
-
-Example with options:
 ```php
-$client = new Client(
-    ['url' => 'https://query.keboola.com', 'token' => 'your-token'],
-    ['backoffMaxTries' => 5]
+new Client(
+    string $baseUrl,
+    string $storageToken,
+    ?string $runId = null,                 // sent as X-KBC-RunId on every request
+    ?Psr\Log\LoggerInterface $logger = null,
+    int $backoffMaxTries = 3,              // retries on 5xx / transport errors, never 4xx
+    int $connectTimeout = 10,
+    int $requestTimeout = 120,
+    string $userAgent = 'Keboola Query API PHP Client',
+    null|Closure|GuzzleHttp\HandlerStack $requestHandler = null, // inject a mock handler in tests
 );
 ```
 
-## API Methods
+## Errors
 
-All public methods return dedicated Response objects with typed getters:
-
-- `submitQueryJob(string $branchId, string $workspaceId, array $requestBody): SubmitQueryJobResponse`
-  - `getQueryJobId(): string`
-- `getJobStatus(string $queryJobId): JobStatusResponse`
-  - `getQueryJobId(): string`
-  - `getStatus(): string` - Returns 'submitted', 'running', 'completed', 'failed', or 'canceled'
-  - `getStatements(): Statement[]`
-  - `getCreatedAt(): string`
-  - `getChangedAt(): string`
-  - `getCanceledAt(): ?string`
-  - `getCancellationReason(): ?string`
-  - `getActorType(): string`
-- `getJobResults(string $queryJobId, string $statementId): JobResultsResponse`
-  - `getData(): array` - Returns data rows as associative arrays (column names as keys)
-  - `getColumns(): array`
-  - `getStatus(): string`
-  - `getNumberOfRows(): int`
-  - `getRowsAffected(): int`
-  - `getMessage(): ?string`
-- `cancelJob(string $queryJobId, array $requestBody = []): CancelJobResponse`
-  - `getQueryJobId(): string`
-- `executeWorkspaceQuery(string $branchId, string $workspaceId, array $requestBody, int $maxWaitSeconds = 30): WorkspaceQueryResponse`
-  - `getQueryJobId(): string`
-  - `getStatus(): string`
-  - `getStatements(): Statement[]`
-  - `getResults(): JobResultsResponse[]` - Returns results for all completed statements
-- `waitForJobCompletion(string $queryJobId, int $maxWaitSeconds = 30): JobStatusResponse`
-  - Waits for job completion and returns the final status
-
-### Statement Object
-
-Each `Statement` object provides the following getters:
-- `getId(): string`
-- `getStatus(): string`
-- `getQuery(): string`
-- `getQueryId(): ?string`
-- `getSessionId(): ?string`
-- `getNumberOfRows(): ?int`
-- `getRowsAffected(): ?int`
-- `getError(): ?string`
-- `getCreatedAt(): ?string`
-- `getExecutedAt(): ?string`
-- `getCompletedAt(): ?string`
+All failures throw `Keboola\QueryApi\Exception\ClientException` (a subclass of the base client's
+exception). It exposes `getStatusCode(): ?int` and `getResponseBody(): ?string`; the message is
+taken from the API response's `exception` field when present.
 
 ## Development
 
-### Running Tests
+Run inside the library's docker service:
 
-#### Unit Tests
-Run unit tests:
 ```shell
-vendor/bin/phpunit tests/ClientTest.php
+composer install
+composer ci        # validate + phpcs + phpstan + phpunit
 ```
 
-#### Functional Tests
-Functional tests require environment variables to be set:
+Functional tests (`tests/Functional/`) require `STORAGE_API_TOKEN`, `HOSTNAME_SUFFIX`
+(the Query Service URL is `https://query.{HOSTNAME_SUFFIX}`) and `STORAGE_API_URL`.
 
-- `STORAGE_API_TOKEN` - Storage API authentication token
-- `HOSTNAME_SUFFIX` - Hostname suffix (e.g., `keboola.com`) - Query Service URL will be constructed as `https://query.{HOSTNAME_SUFFIX}`
-- `STORAGE_API_URL` - Storage API endpoint URL
+## License
 
-Run functional tests:
-```shell
-vendor/bin/phpunit tests/Functional/
-```
-
-#### All Tests
-Run all tests:
-```shell
-composer run tests
-```
-
-### Code Quality
-
-Run code style check:
-```shell
-composer run phpcs
-```
-
-Fix code style issues:
-```shell
-composer run phpcbf
-```
-
-Run static analysis:
-```shell
-composer run phpstan
-```
-
-Run all CI checks. Check [Github Workflows](./.github/workflows) for more details
-```shell
-composer run ci
-```
+MIT — see [LICENSE](./LICENSE).

@@ -5,10 +5,9 @@ declare(strict_types=1);
 namespace Keboola\QueryApi\Tests\Phpunit\Response;
 
 use Generator;
-use GuzzleHttp\Psr7\Response;
-use Keboola\QueryApi\ClientException;
 use Keboola\QueryApi\Response\JobResultsResponse;
 use PHPUnit\Framework\TestCase;
+use Webmozart\Assert\InvalidArgumentException;
 
 class JobResultsResponseTest extends TestCase
 {
@@ -29,8 +28,7 @@ class JobResultsResponseTest extends TestCase
             'status' => 'completed',
         ];
 
-        $response = new Response(200, [], json_encode($responseData) ?: '');
-        $results = JobResultsResponse::fromResponse($response);
+        $results = JobResultsResponse::fromResponseData($responseData);
 
         self::assertSame('completed', $results->getStatus());
         self::assertEquals(2, $results->getNumberOfRows());
@@ -48,8 +46,7 @@ class JobResultsResponseTest extends TestCase
             'status' => 'completed',
         ];
 
-        $response = new Response(200, [], json_encode($responseData) ?: '');
-        $results = JobResultsResponse::fromResponse($response);
+        $results = JobResultsResponse::fromResponseData($responseData);
 
         self::assertSame('completed', $results->getStatus());
         self::assertEquals(1, $results->getNumberOfRows());
@@ -64,12 +61,9 @@ class JobResultsResponseTest extends TestCase
      */
     public function testJobResultsResponseThrowsExceptionForMissingField(array $responseData): void
     {
-        $response = new Response(200, [], json_encode($responseData) ?: '');
+        $this->expectException(InvalidArgumentException::class);
 
-        $this->expectException(ClientException::class);
-        $this->expectExceptionMessage('Invalid response: missing');
-
-        JobResultsResponse::fromResponse($response);
+        JobResultsResponse::fromResponseData($responseData);
     }
 
     public static function missingFieldDataProvider(): Generator

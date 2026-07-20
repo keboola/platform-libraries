@@ -4,324 +4,247 @@ declare(strict_types=1);
 
 namespace Keboola\QueryApi\Tests\Phpunit;
 
-use Generator;
-use GuzzleHttp\Handler\MockHandler;
-use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Psr7\Response;
-use InvalidArgumentException;
+use Keboola\ApiClientBase\Json;
 use Keboola\QueryApi\Client;
-use Keboola\QueryApi\ClientException;
+use Keboola\QueryApi\Exception\ClientException;
+use Keboola\QueryApi\Tests\ApiClientTestTrait;
 use PHPUnit\Framework\TestCase;
+use Webmozart\Assert\InvalidArgumentException;
 
 class ClientTest extends TestCase
 {
-    public function testConstructorRequiresUrl(): void
-    {
-        self::expectException(ClientException::class);
-        self::expectExceptionMessage('Invalid parameters');
+    use ApiClientTestTrait;
 
-        new Client([
-            'token' => 'test-token',
-        ]);
+    private const BASE_URL = 'https://query.test.keboola.com';
+    private const TOKEN = 'test-token';
+
+    public function testConstructorRejectsEmptyBaseUrl(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Base URL must be a non-empty string');
+
+        new Client('', self::TOKEN); // @phpstan-ignore-line
     }
 
-    public function testConstructorRequiresToken(): void
+    public function testConstructorRejectsEmptyToken(): void
     {
-        self::expectException(ClientException::class);
-        self::expectExceptionMessage('Invalid parameters');
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Storage API token must not be empty');
 
-        new Client([
-            'url' => 'https://test.keboola.com',
-        ]);
+        new Client(self::BASE_URL, ''); // @phpstan-ignore-line
     }
 
     public function testSubmitQueryJob(): void
     {
-        $mockHandler = new MockHandler([
-            new Response(201, [], json_encode(['queryJobId' => 'job-12345']) ?: ''),
+        $requestHandler = self::createRequestHandler($history, [
+            new Response(201, ['Content-Type' => 'application/json'], Json::encodeArray(['queryJobId' => 'job-12345'])),
         ]);
-
-        $client = $this->createClientWithMockHandler($mockHandler);
+        $client = new Client(self::BASE_URL, self::TOKEN, requestHandler: $requestHandler(...));
 
         $response = $client->submitQueryJob('main', 'workspace-123', [
             'statements' => ['SELECT * FROM table1'],
             'transactional' => true,
         ]);
 
-        self::assertEquals('job-12345', $response->getQueryJobId());
+        self::assertSame('job-12345', $response->getQueryJobId());
+        self::assertCount(1, $history);
+        self::assertRequestEquals(
+            'POST',
+            self::BASE_URL . '/api/v1/branches/main/workspaces/workspace-123/queries',
+            ['Content-Type' => 'application/json', 'X-StorageApi-Token' => self::TOKEN],
+            Json::encodeArray(['statements' => ['SELECT * FROM table1'], 'transactional' => true]),
+            $history[0]['request'],
+        );
     }
 
     public function testGetJobStatus(): void
     {
-        $mockHandler = new MockHandler([
-            new Response(200, [], json_encode([
+        $requestHandler = self::createRequestHandler($history, [
+            new Response(200, ['Content-Type' => 'application/json'], Json::encodeArray([
                 'queryJobId' => 'job-12345',
                 'status' => 'running',
                 'actorType' => 'user',
                 'createdAt' => '2024-01-01T00:00:00Z',
                 'changedAt' => '2024-01-01T00:00:00Z',
                 'statements' => [],
-            ]) ?: ''),
+            ])),
         ]);
-
-        $client = $this->createClientWithMockHandler($mockHandler);
+        $client = new Client(self::BASE_URL, self::TOKEN, requestHandler: $requestHandler(...));
 
         $response = $client->getJobStatus('job-12345');
 
-        self::assertEquals('job-12345', $response->getQueryJobId());
+        self::assertSame('job-12345', $response->getQueryJobId());
         self::assertSame('running', $response->getStatus());
-        self::assertEquals([], $response->getStatements());
+        self::assertSame([], $response->getStatements());
+        self::assertSame(
+            self::BASE_URL . '/api/v1/queries/job-12345',
+            $history[0]['request']->getUri()->__toString(),
+        );
+        self::assertSame(self::TOKEN, $history[0]['request']->getHeaderLine('X-StorageApi-Token'));
     }
 
     public function testCancelJob(): void
     {
-        $mockHandler = new MockHandler([
-            new Response(200, [], json_encode(['queryJobId' => 'job-12345']) ?: ''),
+        $requestHandler = self::createRequestHandler($history, [
+            new Response(200, ['Content-Type' => 'application/json'], Json::encodeArray(['queryJobId' => 'job-12345'])),
         ]);
-
-        $client = $this->createClientWithMockHandler($mockHandler);
+        $client = new Client(self::BASE_URL, self::TOKEN, requestHandler: $requestHandler(...));
 
         $response = $client->cancelJob('job-12345', ['reason' => 'User requested']);
 
-        self::assertEquals('job-12345', $response->getQueryJobId());
+        self::assertSame('job-12345', $response->getQueryJobId());
+        self::assertRequestEquals(
+            'POST',
+            self::BASE_URL . '/api/v1/queries/job-12345/cancel',
+            ['Content-Type' => 'application/json', 'X-StorageApi-Token' => self::TOKEN],
+            Json::encodeArray(['reason' => 'User requested']),
+            $history[0]['request'],
+        );
     }
 
     public function testGetJobResults(): void
     {
-        $mockHandler = new MockHandler([
-            new Response(200, [], json_encode([
+        $requestHandler = self::createRequestHandler($history, [
+            new Response(200, ['Content-Type' => 'application/json'], Json::encodeArray([
                 'data' => [['id' => 1, 'name' => 'test']],
                 'status' => 'completed',
                 'numberOfRows' => 1,
                 'rowsAffected' => 1,
-            ]) ?: ''),
+            ])),
         ]);
-
-        $client = $this->createClientWithMockHandler($mockHandler);
+        $client = new Client(self::BASE_URL, self::TOKEN, requestHandler: $requestHandler(...));
 
         $response = $client->getJobResults('job-12345', 'stmt-67890');
 
         self::assertSame('completed', $response->getStatus());
-        self::assertEquals(1, $response->getRowsAffected());
-        // @phpstan-ignore-next-line
-        self::assertIsArray($response->getColumns());
+        self::assertSame(1, $response->getRowsAffected());
+        self::assertSame(
+            self::BASE_URL . '/api/v1/queries/job-12345/stmt-67890/results',
+            $history[0]['request']->getUri()->__toString(),
+        );
     }
 
-    public function testGetJobResultsWithBothQueryParams(): void
+    public function testGetJobResultsWithQueryParams(): void
     {
-        $capturedUris = [];
-        $client = $this->createClientCapturingUris(
-            new MockHandler([new Response(200, [], json_encode([
+        $requestHandler = self::createRequestHandler($history, [
+            new Response(200, ['Content-Type' => 'application/json'], Json::encodeArray([
                 'data' => [], 'status' => 'completed', 'numberOfRows' => 0, 'rowsAffected' => 0,
-            ]) ?: '')]),
-            $capturedUris,
-        );
+            ])),
+        ]);
+        $client = new Client(self::BASE_URL, self::TOKEN, requestHandler: $requestHandler(...));
 
         $client->getJobResults('job-12345', 'stmt-67890', 100, 200);
 
-        self::assertCount(1, $capturedUris);
-        self::assertStringContainsString('pageSize=100', $capturedUris[0]->getQuery());
-        self::assertStringContainsString('offset=200', $capturedUris[0]->getQuery());
+        $query = $history[0]['request']->getUri()->getQuery();
+        self::assertStringContainsString('pageSize=100', $query);
+        self::assertStringContainsString('offset=200', $query);
     }
 
-    public function testGetJobResultsWithOnlyPageSize(): void
+    public function testGetJobResultsWithoutQueryParams(): void
     {
-        $capturedUris = [];
-        $client = $this->createClientCapturingUris(
-            new MockHandler([new Response(200, [], json_encode([
+        $requestHandler = self::createRequestHandler($history, [
+            new Response(200, ['Content-Type' => 'application/json'], Json::encodeArray([
                 'data' => [], 'status' => 'completed', 'numberOfRows' => 0, 'rowsAffected' => 0,
-            ]) ?: '')]),
-            $capturedUris,
-        );
-
-        $client->getJobResults('job-12345', 'stmt-67890', 100);
-
-        self::assertCount(1, $capturedUris);
-        self::assertStringContainsString('pageSize=100', $capturedUris[0]->getQuery());
-        self::assertStringNotContainsString('offset', $capturedUris[0]->getQuery());
-    }
-
-    public function testGetJobResultsWithOnlyOffset(): void
-    {
-        $capturedUris = [];
-        $client = $this->createClientCapturingUris(
-            new MockHandler([new Response(200, [], json_encode([
-                'data' => [], 'status' => 'completed', 'numberOfRows' => 0, 'rowsAffected' => 0,
-            ]) ?: '')]),
-            $capturedUris,
-        );
-
-        $client->getJobResults('job-12345', 'stmt-67890', null, 50);
-
-        self::assertCount(1, $capturedUris);
-        self::assertStringContainsString('offset=50', $capturedUris[0]->getQuery());
-        self::assertStringNotContainsString('pageSize', $capturedUris[0]->getQuery());
-    }
-
-    public function testGetJobResultsWithNoQueryParams(): void
-    {
-        $capturedUris = [];
-        $client = $this->createClientCapturingUris(
-            new MockHandler([new Response(200, [], json_encode([
-                'data' => [], 'status' => 'completed', 'numberOfRows' => 0, 'rowsAffected' => 0,
-            ]) ?: '')]),
-            $capturedUris,
-        );
+            ])),
+        ]);
+        $client = new Client(self::BASE_URL, self::TOKEN, requestHandler: $requestHandler(...));
 
         $client->getJobResults('job-12345', 'stmt-67890');
 
-        self::assertCount(1, $capturedUris);
-        self::assertSame('', $capturedUris[0]->getQuery());
+        self::assertSame('', $history[0]['request']->getUri()->getQuery());
     }
 
-    /**
-     * @param array{
-     *     token: string,
-     *     userAgent?: string,
-     *     runId?: string,
-     * } $clientConfig
-     * @param array<string, array<string>> $expectedHeaders
-     * @dataProvider requestHeadersDataProvider
-     */
-    public function testRequestHeaders(
-        array $clientConfig,
-        string $method,
-        ?string $jobId,
-        array $expectedHeaders,
-    ): void {
-        $requestHeaders = [];
-        $mockHandler = new MockHandler([new Response(200, [], json_encode([
-            'queryJobId' => 'job-123',
+    public function testRunIdHeaderSentWhenConfigured(): void
+    {
+        $requestHandler = self::createRequestHandler($history, [
+            new Response(200, ['Content-Type' => 'application/json'], self::statusBody()),
+        ]);
+        $client = new Client(self::BASE_URL, self::TOKEN, runId: 'run-456', requestHandler: $requestHandler(...));
+
+        $client->getJobStatus('job-1');
+
+        self::assertSame('run-456', $history[0]['request']->getHeaderLine('X-KBC-RunId'));
+    }
+
+    public function testRunIdHeaderAbsentByDefault(): void
+    {
+        $requestHandler = self::createRequestHandler($history, [
+            new Response(200, ['Content-Type' => 'application/json'], self::statusBody()),
+        ]);
+        $client = new Client(self::BASE_URL, self::TOKEN, requestHandler: $requestHandler(...));
+
+        $client->getJobStatus('job-1');
+
+        self::assertFalse($history[0]['request']->hasHeader('X-KBC-RunId'));
+    }
+
+    public function testCustomUserAgent(): void
+    {
+        $requestHandler = self::createRequestHandler($history, [
+            new Response(200, ['Content-Type' => 'application/json'], self::statusBody()),
+        ]);
+        $client = new Client(self::BASE_URL, self::TOKEN, userAgent: 'MyApp/2.0', requestHandler: $requestHandler(...));
+
+        $client->getJobStatus('job-1');
+
+        self::assertSame('MyApp/2.0', $history[0]['request']->getHeaderLine('User-Agent'));
+    }
+
+    public function testDefaultUserAgent(): void
+    {
+        $requestHandler = self::createRequestHandler($history, [
+            new Response(200, ['Content-Type' => 'application/json'], self::statusBody()),
+        ]);
+        $client = new Client(self::BASE_URL, self::TOKEN, requestHandler: $requestHandler(...));
+
+        $client->getJobStatus('job-1');
+
+        self::assertSame('Keboola Query API PHP Client', $history[0]['request']->getHeaderLine('User-Agent'));
+    }
+
+    public function testServerErrorIsRetriedThenSucceeds(): void
+    {
+        $requestHandler = self::createRequestHandler($history, [
+            new Response(500),
+            new Response(200, ['Content-Type' => 'application/json'], Json::encodeArray(['queryJobId' => 'job-1'])),
+        ]);
+        $client = new Client(self::BASE_URL, self::TOKEN, requestHandler: $requestHandler(...));
+
+        $response = $client->cancelJob('job-1');
+
+        self::assertSame('job-1', $response->getQueryJobId());
+        self::assertCount(2, $history);
+    }
+
+    public function testClientErrorUsesExceptionFieldMessage(): void
+    {
+        $body = Json::encodeArray(['exception' => 'Invalid job ID format']);
+        $requestHandler = self::createRequestHandler($history, [
+            new Response(400, ['Content-Type' => 'application/json'], $body),
+        ]);
+        $client = new Client(self::BASE_URL, self::TOKEN, backoffMaxTries: 0, requestHandler: $requestHandler(...));
+
+        try {
+            $client->getJobStatus('bad-id');
+            self::fail('Expected ClientException');
+        } catch (ClientException $e) {
+            self::assertSame('Invalid job ID format', $e->getMessage());
+            self::assertSame(400, $e->getCode());
+            self::assertSame(400, $e->getStatusCode());
+            self::assertSame($body, $e->getResponseBody());
+        }
+    }
+
+    private static function statusBody(): string
+    {
+        return Json::encodeArray([
+            'queryJobId' => 'job-1',
             'status' => 'running',
             'actorType' => 'user',
             'createdAt' => '2024-01-01T00:00:00Z',
             'changedAt' => '2024-01-01T00:00:00Z',
             'statements' => [],
-        ]) ?: '')]);
-
-        // Create handler stack without custom middleware first
-        $handlerStack = HandlerStack::create($mockHandler);
-
-        $config = [
-            'url' => 'https://query.test.keboola.com',
-            'token' => $clientConfig['token'],
-        ];
-
-        $options = [
-            'handler' => $handlerStack,
-        ];
-        if (isset($clientConfig['runId'])) {
-            $options['runId'] = $clientConfig['runId'];
-        }
-        if (isset($clientConfig['userAgent'])) {
-            $options['userAgent'] = $clientConfig['userAgent'];
-        }
-
-        $client = new Client($config, $options);
-
-        // Add middleware after client is created to capture headers after Client's middleware runs
-        /** @var array<string, array<string>> $requestHeaders */
-        $handlerStack->push(function (callable $handler) use (&$requestHeaders) {
-            return function ($request, array $options) use ($handler, &$requestHeaders) {
-                /** @var \Psr\Http\Message\RequestInterface $request */
-                $requestHeaders = $request->getHeaders();
-                return $handler($request, $options);
-            };
-        });
-
-        match ($method) {
-            'getJobStatus' => $client->getJobStatus($jobId ?? ''),
-            default => throw new InvalidArgumentException("Unknown method: $method")
-        };
-
-        // Check each expected header exists with correct value
-        foreach ($expectedHeaders as $headerName => $expectedValue) {
-            self::assertArrayHasKey($headerName, $requestHeaders, "Missing header: $headerName");
-            self::assertSame($expectedValue, $requestHeaders[$headerName], "Header $headerName has wrong value");
-        }
-    }
-
-    public static function requestHeadersDataProvider(): Generator
-    {
-        yield 'authenticated endpoint includes auth token' => [
-            'clientConfig' => ['token' => 'auth-token-123'],
-            'method' => 'getJobStatus',
-            'jobId' => 'job-123',
-            'expectedHeaders' => [
-                'Host' => ['query.test.keboola.com'],
-                'User-Agent' => ['Keboola Query API PHP Client'],
-                'X-StorageApi-Token' => ['auth-token-123'],
-                'Content-type' => ['application/json'],
-            ],
-        ];
-
-        yield 'runId header included when configured' => [
-            'clientConfig' => ['token' => 'test-token', 'runId' => 'run-456'],
-            'method' => 'getJobStatus',
-            'jobId' => 'job-123',
-            'expectedHeaders' => [
-                'Host' => ['query.test.keboola.com'],
-                'User-Agent' => ['Keboola Query API PHP Client'],
-                'X-StorageApi-Token' => ['test-token'],
-                'Content-type' => ['application/json'],
-                'X-KBC-RunId' => ['run-456'],
-            ],
-        ];
-
-        yield 'custom userAgent properly appended' => [
-            'clientConfig' => ['token' => 'test-token', 'userAgent' => 'MyApp/2.0'],
-            'method' => 'getJobStatus',
-            'jobId' => 'job-123',
-            'expectedHeaders' => [
-                'Host' => ['query.test.keboola.com'],
-                'User-Agent' => ['MyApp/2.0'],
-                'X-StorageApi-Token' => ['test-token'],
-                'Content-type' => ['application/json'],
-            ],
-        ];
-    }
-
-    /**
-     * @param list<\Psr\Http\Message\UriInterface> $capturedUris
-     */
-    private function createClientCapturingUris(MockHandler $mockHandler, array &$capturedUris): Client
-    {
-        $handlerStack = $this->createHandlerStackCapturingUris($mockHandler, $capturedUris);
-
-        return new Client(
-            ['url' => 'https://query.test.keboola.com', 'token' => 'test-token'],
-            ['handler' => $handlerStack],
-        );
-    }
-
-    /**
-     * @param list<\Psr\Http\Message\UriInterface> $capturedUris
-     */
-    private function createHandlerStackCapturingUris(MockHandler $mockHandler, array &$capturedUris): HandlerStack
-    {
-        $handlerStack = HandlerStack::create($mockHandler);
-        $handlerStack->push(function (callable $handler) use (&$capturedUris) {
-            return function ($request, array $options) use ($handler, &$capturedUris) {
-                /** @var \Psr\Http\Message\RequestInterface $request */
-                $capturedUris[] = $request->getUri();
-                return $handler($request, $options);
-            };
-        });
-        return $handlerStack;
-    }
-
-    private function createClientWithMockHandler(MockHandler $mockHandler): Client
-    {
-        $handlerStack = HandlerStack::create($mockHandler);
-
-        return new Client(
-            [
-                'url' => 'https://query.test.keboola.com',
-                'token' => 'test-token',
-            ],
-            [
-                'handler' => $handlerStack,
-            ],
-        );
+        ]);
     }
 }

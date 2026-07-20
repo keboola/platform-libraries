@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Keboola\QueryApi\Tests\Functional;
 
 use Keboola\QueryApi\Client;
-use Keboola\QueryApi\ClientException;
+use Keboola\QueryApi\Exception\ClientException;
 
 class QueryServiceFunctionalTest extends BaseFunctionalTestCase
 {
@@ -225,10 +225,7 @@ class QueryServiceFunctionalTest extends BaseFunctionalTestCase
     {
         // Create a client with an invalid storage token
         $hostnameSuffix = is_string($_ENV['HOSTNAME_SUFFIX']) ? $_ENV['HOSTNAME_SUFFIX'] : '';
-        $invalidTokenClient = new Client([
-            'url' => sprintf('https://query.%s', $hostnameSuffix),
-            'token' => 'invalid-token-12345',
-        ]);
+        $invalidTokenClient = new Client(sprintf('https://query.%s', $hostnameSuffix), 'invalid-token-12345');
 
         $this->expectException(ClientException::class);
         $this->expectExceptionMessage('Authentication failed');

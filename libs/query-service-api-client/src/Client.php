@@ -83,7 +83,7 @@ class Client
             new Request(
                 'POST',
                 sprintf('api/v1/branches/%s/workspaces/%s/queries', $branchId, $workspaceId),
-                $this->requestHeaders(withJsonBody: true),
+                ['Content-Type' => 'application/json'],
                 Json::encodeArray($requestBody),
             ),
             SubmitQueryJobResponse::class,
@@ -93,7 +93,7 @@ class Client
     public function getJobStatus(string $queryJobId): JobStatusResponse
     {
         return $this->apiClient->sendRequestAndMapResponse(
-            new Request('GET', sprintf('api/v1/queries/%s', $queryJobId), $this->requestHeaders()),
+            new Request('GET', sprintf('api/v1/queries/%s', $queryJobId)),
             JobStatusResponse::class,
         );
     }
@@ -107,7 +107,7 @@ class Client
             new Request(
                 'POST',
                 sprintf('api/v1/queries/%s/cancel', $queryJobId),
-                $this->requestHeaders(withJsonBody: true),
+                ['Content-Type' => 'application/json'],
                 Json::encodeArray($requestBody),
             ),
             CancelJobResponse::class,
@@ -134,7 +134,7 @@ class Client
         }
 
         return $this->apiClient->sendRequestAndMapResponse(
-            new Request('GET', $url, $this->requestHeaders()),
+            new Request('GET', $url),
             JobResultsResponse::class,
         );
     }
@@ -163,18 +163,5 @@ class Client
         throw new ClientException(
             sprintf('Job %s did not complete within %d seconds', $queryJobId, $maxWaitSeconds),
         );
-    }
-
-    /**
-     * @return array<string, string>
-     */
-    private function requestHeaders(bool $withJsonBody = false): array
-    {
-        $headers = [];
-        if ($withJsonBody) {
-            $headers['Content-Type'] = 'application/json';
-        }
-
-        return $headers;
     }
 }

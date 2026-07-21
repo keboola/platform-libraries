@@ -14,7 +14,7 @@ use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 use Symfony\Component\Security\Core\Exception\CustomUserMessageAuthenticationException;
 
 /**
- * @implements TokenAuthenticatorInterface<ApplicationToken>
+ * @implements TokenAuthenticatorInterface<string, ApplicationToken>
  */
 class ApplicationTokenAuthenticator implements TokenAuthenticatorInterface
 {
@@ -26,7 +26,7 @@ class ApplicationTokenAuthenticator implements TokenAuthenticatorInterface
     ) {
     }
 
-    public function extractToken(Request $request): ?string
+    public function extractCredential(Request $request): ?string
     {
         // Returned verbatim (the ServiceAccount header keeps its "Bearer " scheme); the scheme is
         // validated and stripped in authenticateToken, right before the Manage API client call.
@@ -34,23 +34,26 @@ class ApplicationTokenAuthenticator implements TokenAuthenticatorInterface
             ?? $request->headers->get(self::SERVICE_ACCOUNT_HEADER);
     }
 
+    /**
+     * @param string $credential
+     */
     public function authenticateToken(
         AuthAttributeInterface $authAttribute,
-        string $token,
+        mixed $credential,
         Request $request,
     ): ApplicationToken {
         assert($authAttribute instanceof ApplicationTokenAuth);
 
         if ($request->headers->has(self::MANAGE_TOKEN_HEADER)) {
-            if ($token === '') {
+            if ($credential === '') {
                 throw new CustomUserMessageAuthenticationException(
                     sprintf('Invalid %s header: token must not be empty', self::MANAGE_TOKEN_HEADER),
                 );
             }
-            $manageApiClient = $this->manageApiClientFactory->getClientForManageToken($token);
+            $manageApiClient = $this->manageApiClientFactory->getClientForManageToken($credential);
         } else {
             $manageApiClient = $this->manageApiClientFactory->getClientForServiceAccountToken(
-                $this->stripBearerScheme($token),
+                $this->stripBearerScheme($credential),
             );
         }
 

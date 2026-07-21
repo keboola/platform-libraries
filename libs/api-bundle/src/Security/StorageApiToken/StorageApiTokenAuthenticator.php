@@ -17,9 +17,9 @@ use Symfony\Component\Security\Core\Exception\AccessDeniedException;
  * exchanged through Manage API's auth-bridge resolver, which returns the legacy Storage token
  * together with its full detail, so no Storage verification call follows. Both paths are
  * implemented by {@see StorageApiTokenFactory} and yield a {@see StorageApiToken}; this
- * authenticator only extracts the token, picks the path and checks the required features.
+ * authenticator only classifies the token, picks the path and checks the required features.
  *
- * @implements TokenAuthenticatorInterface<StorageApiToken>
+ * @implements TokenAuthenticatorInterface<RequestToken, StorageApiToken>
  */
 class StorageApiTokenAuthenticator implements TokenAuthenticatorInterface
 {
@@ -32,34 +32,6 @@ class StorageApiTokenAuthenticator implements TokenAuthenticatorInterface
     ) {
     }
 
-    public function extractToken(Request $request): ?string
-    {
-        return $this->extractCredential($request)?->token;
-    }
-
-    public function authenticateToken(
-        AuthAttributeInterface $authAttribute,
-        string $token,
-        Request $request,
-    ): StorageApiToken {
-        assert($authAttribute instanceof StorageApiTokenAuth);
-
-        // AttributeAuthenticator only calls authenticateToken() after extractToken() returned a
-        // non-null token, and passes back exactly that token - so re-extracting here yields a
-        // credential whose token matches $token. Each classified type maps to one factory method.
-        $credential = $this->extractCredential($request);
-        assert($credential !== null && $credential->token === $token);
-
-        return match ($credential->type) {
-            RequestTokenType::Programmatic => $this->tokenFactory
-                ->createFromProgrammaticToken($request, $credential->token),
-            RequestTokenType::OAuthToken => $this->tokenFactory
-                ->createFromOAuthToken($request, $credential->token),
-            RequestTokenType::StorageToken => $this->tokenFactory
-                ->createFromStorageToken($request, $credential->token),
-        };
-    }
-
     /**
      * Single source of truth for the token an incoming request carries and its {@see RequestTokenType}:
      * `Authorization: Bearer <kbc_at_*|kbc_pat_*>` is {@see RequestTokenType::Programmatic}, any other
@@ -67,7 +39,7 @@ class StorageApiTokenAuthenticator implements TokenAuthenticatorInterface
      * `Authorization` value (taken verbatim) or the `X-StorageApi-Token` header is
      * {@see RequestTokenType::StorageToken}. Returns null when no token is present.
      */
-    private function extractCredential(Request $request): ?RequestToken
+    public function extractCredential(Request $request): ?RequestToken
     {
         $authHeader = $request->headers->get(self::AUTHORIZATION_HEADER);
         if ($authHeader !== null) {
@@ -81,7 +53,7 @@ class StorageApiTokenAuthenticator implements TokenAuthenticatorInterface
             }
 
             // A non-Bearer Authorization value is taken verbatim and treated as a legacy token,
-            // preserving the historical extractToken() behaviour.
+            // preserving the pre-exchange behaviour for that (undocumented) carrier.
             return new RequestToken($authHeader, RequestTokenType::StorageToken);
         }
 
@@ -91,6 +63,31 @@ class StorageApiTokenAuthenticator implements TokenAuthenticatorInterface
         }
 
         return null;
+    }
+
+    /**
+     * Routes the already-classified credential to the matching {@see StorageApiTokenFactory} method:
+     * a programmatic token is exchanged, an OAuth bearer / legacy Storage token is verified. The
+     * credential comes straight from {@see self::extractCredential()} — the request is not parsed
+     * again here.
+     *
+     * @param RequestToken $credential
+     */
+    public function authenticateToken(
+        AuthAttributeInterface $authAttribute,
+        mixed $credential,
+        Request $request,
+    ): StorageApiToken {
+        assert($authAttribute instanceof StorageApiTokenAuth);
+
+        return match ($credential->type) {
+            RequestTokenType::Programmatic => $this->tokenFactory
+                ->createFromProgrammaticToken($request, $credential->token),
+            RequestTokenType::OAuthToken => $this->tokenFactory
+                ->createFromOAuthToken($request, $credential->token),
+            RequestTokenType::StorageToken => $this->tokenFactory
+                ->createFromStorageToken($request, $credential->token),
+        };
     }
 
     public function authorizeToken(AuthAttributeInterface $authAttribute, TokenInterface $token): void

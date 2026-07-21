@@ -6,6 +6,8 @@ namespace Keboola\ApiBundle\Tests\Security\StorageApiToken;
 
 use Generator;
 use Keboola\ApiBundle\Attribute\StorageApiTokenAuth;
+use Keboola\ApiBundle\Security\StorageApiToken\RequestToken;
+use Keboola\ApiBundle\Security\StorageApiToken\RequestTokenType;
 use Keboola\ApiBundle\Security\StorageApiToken\StorageApiToken;
 use Keboola\ApiBundle\Security\StorageApiToken\StorageApiTokenAuthenticator;
 use Keboola\ApiBundle\Security\StorageApiToken\StorageApiTokenFactory;
@@ -18,82 +20,99 @@ use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 class StorageApiTokenAuthenticatorTest extends TestCase
 {
     private const SUBJECT_TOKEN = 'kbc_at_secret';
-    private const PROJECT_ID_HEADER = 'X-KBC-ProjectId';
 
     // ---------------------------------------------------------------------------
-    // extractToken
+    // extractCredential – classification
     // ---------------------------------------------------------------------------
 
-    public function testExtractTokenFromPrimaryHeader(): void
-    {
+    /**
+     * @param array<string, string> $headers
+     */
+    #[DataProvider('provideCredentialClassifications')]
+    public function testExtractCredentialClassifiesRequest(
+        array $headers,
+        string $expectedToken,
+        RequestTokenType $expectedType,
+    ): void {
         $authenticator = new StorageApiTokenAuthenticator(
             $this->createMock(StorageApiTokenFactory::class),
         );
 
         $request = Request::create('https://keboola.com');
-        $request->headers->set('X-StorageApi-Token', 'my-token');
+        foreach ($headers as $name => $value) {
+            $request->headers->set($name, $value);
+        }
 
-        self::assertSame('my-token', $authenticator->extractToken($request));
+        $credential = $authenticator->extractCredential($request);
+
+        self::assertNotNull($credential);
+        self::assertSame($expectedToken, $credential->token);
+        self::assertSame($expectedType, $credential->type);
     }
 
-    public function testExtractTokenFromBearerHeader(): void
+    public static function provideCredentialClassifications(): Generator
     {
-        $authenticator = new StorageApiTokenAuthenticator(
-            $this->createMock(StorageApiTokenFactory::class),
-        );
-
-        $request = Request::create('https://keboola.com');
-        $request->headers->set('Authorization', 'Bearer my-bearer-token');
-
-        self::assertSame('my-bearer-token', $authenticator->extractToken($request));
+        yield 'legacy X-StorageApi-Token' => [
+            'headers' => ['X-StorageApi-Token' => 'my-token'],
+            'expectedToken' => 'my-token',
+            'expectedType' => RequestTokenType::StorageToken,
+        ];
+        yield 'OAuth Authorization: Bearer' => [
+            'headers' => ['Authorization' => 'Bearer my-bearer-token'],
+            'expectedToken' => 'my-bearer-token',
+            'expectedType' => RequestTokenType::OAuthToken,
+        ];
+        yield 'non-Bearer Authorization taken verbatim as legacy token' => [
+            'headers' => ['Authorization' => 'some-token-without-bearer'],
+            'expectedToken' => 'some-token-without-bearer',
+            'expectedType' => RequestTokenType::StorageToken,
+        ];
+        yield 'Authorization: Bearer wins over X-StorageApi-Token' => [
+            'headers' => ['X-StorageApi-Token' => 'storage-token', 'Authorization' => 'Bearer bearer-token'],
+            'expectedToken' => 'bearer-token',
+            'expectedType' => RequestTokenType::OAuthToken,
+        ];
+        yield 'programmatic access token via Bearer' => [
+            'headers' => ['Authorization' => 'Bearer ' . self::SUBJECT_TOKEN],
+            'expectedToken' => self::SUBJECT_TOKEN,
+            'expectedType' => RequestTokenType::Programmatic,
+        ];
+        yield 'programmatic personal access token via Bearer' => [
+            'headers' => ['Authorization' => 'Bearer kbc_pat_secret'],
+            'expectedToken' => 'kbc_pat_secret',
+            'expectedType' => RequestTokenType::Programmatic,
+        ];
+        // A programmatic-looking token that does not arrive as `Authorization: Bearer` is an
+        // undocumented shape and stays a legacy Storage token (never exchanged).
+        yield 'programmatic token via bare Authorization is legacy' => [
+            'headers' => ['Authorization' => self::SUBJECT_TOKEN],
+            'expectedToken' => self::SUBJECT_TOKEN,
+            'expectedType' => RequestTokenType::StorageToken,
+        ];
+        yield 'programmatic token via X-StorageApi-Token is legacy' => [
+            'headers' => ['X-StorageApi-Token' => self::SUBJECT_TOKEN],
+            'expectedToken' => self::SUBJECT_TOKEN,
+            'expectedType' => RequestTokenType::StorageToken,
+        ];
     }
 
-    public function testExtractTokenFromAuthorizationHeaderWithoutBearer(): void
+    public function testExtractCredentialReturnsNullWhenNoHeader(): void
     {
         $authenticator = new StorageApiTokenAuthenticator(
             $this->createMock(StorageApiTokenFactory::class),
         );
 
-        $request = Request::create('https://keboola.com');
-        $request->headers->set('Authorization', 'some-token-without-bearer');
-
-        self::assertSame('some-token-without-bearer', $authenticator->extractToken($request));
-    }
-
-    public function testExtractTokenPrefersAuthorizationHeader(): void
-    {
-        $authenticator = new StorageApiTokenAuthenticator(
-            $this->createMock(StorageApiTokenFactory::class),
-        );
-
-        $request = Request::create('https://keboola.com');
-        $request->headers->set('X-StorageApi-Token', 'storage-token');
-        $request->headers->set('Authorization', 'Bearer bearer-token');
-
-        self::assertSame('bearer-token', $authenticator->extractToken($request));
-    }
-
-    public function testExtractTokenReturnsNullWhenNoHeader(): void
-    {
-        $authenticator = new StorageApiTokenAuthenticator(
-            $this->createMock(StorageApiTokenFactory::class),
-        );
-
-        $request = Request::create('https://keboola.com');
-
-        self::assertNull($authenticator->extractToken($request));
+        self::assertNull($authenticator->extractCredential(Request::create('https://keboola.com')));
     }
 
     // ---------------------------------------------------------------------------
-    // authenticateToken – routing logic
+    // authenticateToken – dispatch by credential type
     // ---------------------------------------------------------------------------
 
-    public function testAuthenticateTokenRoutesLegacyTokenToLegacyVerification(): void
+    public function testAuthenticateTokenVerifiesStorageTokenCredential(): void
     {
         $expectedToken = $this->createMock(StorageApiToken::class);
-
         $request = Request::create('https://keboola.com');
-        $request->headers->set('X-StorageApi-Token', 'legacy-token');
 
         $tokenFactory = $this->createMock(StorageApiTokenFactory::class);
         $tokenFactory
@@ -106,17 +125,19 @@ class StorageApiTokenAuthenticatorTest extends TestCase
 
         $authenticator = new StorageApiTokenAuthenticator($tokenFactory);
 
-        $result = $authenticator->authenticateToken(new StorageApiTokenAuth(), 'legacy-token', $request);
+        $result = $authenticator->authenticateToken(
+            new StorageApiTokenAuth(),
+            new RequestToken('legacy-token', RequestTokenType::StorageToken),
+            $request,
+        );
 
         self::assertSame($expectedToken, $result);
     }
 
-    public function testAuthenticateTokenRoutesOAuthBearerTokenToOAuthVerification(): void
+    public function testAuthenticateTokenVerifiesOAuthTokenCredential(): void
     {
         $expectedToken = $this->createMock(StorageApiToken::class);
-
         $request = Request::create('https://keboola.com');
-        $request->headers->set('Authorization', 'Bearer oauth-access-token');
 
         $tokenFactory = $this->createMock(StorageApiTokenFactory::class);
         $tokenFactory
@@ -129,74 +150,38 @@ class StorageApiTokenAuthenticatorTest extends TestCase
 
         $authenticator = new StorageApiTokenAuthenticator($tokenFactory);
 
-        $result = $authenticator->authenticateToken(new StorageApiTokenAuth(), 'oauth-access-token', $request);
+        $result = $authenticator->authenticateToken(
+            new StorageApiTokenAuth(),
+            new RequestToken('oauth-access-token', RequestTokenType::OAuthToken),
+            $request,
+        );
 
         self::assertSame($expectedToken, $result);
     }
 
-    public function testAuthenticateTokenRoutesProgrammaticBearerTokenToExchange(): void
+    public function testAuthenticateTokenExchangesProgrammaticCredential(): void
     {
         $expectedToken = $this->createMock(StorageApiToken::class);
-
         $request = Request::create('https://keboola.com');
-        $request->headers->set('Authorization', 'Bearer ' . self::SUBJECT_TOKEN);
-        $request->headers->set(self::PROJECT_ID_HEADER, '123');
 
         $tokenFactory = $this->createMock(StorageApiTokenFactory::class);
-        $tokenFactory->expects(self::never())->method('createFromStorageToken');
-        $tokenFactory->expects(self::never())->method('createFromOAuthToken');
         $tokenFactory
             ->expects(self::once())
             ->method('createFromProgrammaticToken')
             ->with($request, self::SUBJECT_TOKEN)
             ->willReturn($expectedToken);
-
-        $authenticator = new StorageApiTokenAuthenticator($tokenFactory);
-
-        $result = $authenticator->authenticateToken(new StorageApiTokenAuth(), self::SUBJECT_TOKEN, $request);
-
-        self::assertSame($expectedToken, $result);
-    }
-
-    #[DataProvider('provideNonBearerProgrammaticTokenCarriers')]
-    public function testAuthenticateTokenDoesNotExchangeProgrammaticTokenFromNonBearerCarrier(
-        string $headerName,
-        string $headerValue,
-    ): void {
-        $expectedToken = $this->createMock(StorageApiToken::class);
-
-        // The programmatic token does not arrive as `Authorization: Bearer`, so it is classified as
-        // a legacy Storage token and verified as such; exchange must not be attempted.
-        $tokenFactory = $this->createMock(StorageApiTokenFactory::class);
-        $tokenFactory
-            ->expects(self::once())
-            ->method('createFromStorageToken')
-            ->with(self::anything(), self::SUBJECT_TOKEN)
-            ->willReturn($expectedToken);
+        $tokenFactory->expects(self::never())->method('createFromStorageToken');
         $tokenFactory->expects(self::never())->method('createFromOAuthToken');
-        $tokenFactory->expects(self::never())->method('createFromProgrammaticToken');
-
-        $request = Request::create('https://keboola.com');
-        $request->headers->set($headerName, $headerValue);
-        $request->headers->set(self::PROJECT_ID_HEADER, '123');
 
         $authenticator = new StorageApiTokenAuthenticator($tokenFactory);
 
-        $result = $authenticator->authenticateToken(new StorageApiTokenAuth(), self::SUBJECT_TOKEN, $request);
+        $result = $authenticator->authenticateToken(
+            new StorageApiTokenAuth(),
+            new RequestToken(self::SUBJECT_TOKEN, RequestTokenType::Programmatic),
+            $request,
+        );
 
         self::assertSame($expectedToken, $result);
-    }
-
-    public static function provideNonBearerProgrammaticTokenCarriers(): Generator
-    {
-        yield 'bare Authorization header' => [
-            'headerName' => 'Authorization',
-            'headerValue' => self::SUBJECT_TOKEN,
-        ];
-        yield 'X-StorageApi-Token header' => [
-            'headerName' => 'X-StorageApi-Token',
-            'headerValue' => self::SUBJECT_TOKEN,
-        ];
     }
 
     // ---------------------------------------------------------------------------

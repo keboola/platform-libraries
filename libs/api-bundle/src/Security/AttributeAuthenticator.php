@@ -41,9 +41,9 @@ class AttributeAuthenticator extends AbstractAuthenticator
             $authenticator = $this->authenticators->get($authAttribute->getName());
             assert($authenticator instanceof TokenAuthenticatorInterface);
 
-            $token = $authenticator->extractToken($request);
+            $credential = $authenticator->extractCredential($request);
 
-            if ($token === null) {
+            if ($credential === null) {
                 $error = new CustomUserMessageAuthenticationException('Authentication token is missing');
                 continue;
             }
@@ -51,7 +51,7 @@ class AttributeAuthenticator extends AbstractAuthenticator
             $authAttributeInstance = $authAttribute->newInstance();
 
             try {
-                $authorizedToken = $authenticator->authenticateToken($authAttributeInstance, $token, $request);
+                $authorizedToken = $authenticator->authenticateToken($authAttributeInstance, $credential, $request);
             } catch (AuthenticationException $error) {
                 continue;
             }

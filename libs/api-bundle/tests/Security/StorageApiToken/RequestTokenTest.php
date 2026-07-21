@@ -68,6 +68,21 @@ class RequestTokenTest extends TestCase
             'expectedToken' => 'kbc_pat_secret',
             'expectedType' => RequestTokenType::Programmatic,
         ];
+        yield 'bare programmatic prefix via Bearer is still programmatic' => [
+            'headers' => ['Authorization' => 'Bearer kbc_at_'],
+            'expectedToken' => 'kbc_at_',
+            'expectedType' => RequestTokenType::Programmatic,
+        ];
+        yield 'Bearer token merely containing a programmatic prefix is OAuth' => [
+            'headers' => ['Authorization' => 'Bearer x-kbc_at_abc'],
+            'expectedToken' => 'x-kbc_at_abc',
+            'expectedType' => RequestTokenType::OAuthToken,
+        ];
+        yield 'Bearer token with a near-miss prefix is OAuth' => [
+            'headers' => ['Authorization' => 'Bearer kbc_a_abc'],
+            'expectedToken' => 'kbc_a_abc',
+            'expectedType' => RequestTokenType::OAuthToken,
+        ];
         // A programmatic-looking token that does not arrive as `Authorization: Bearer` is an
         // undocumented shape and stays a legacy Storage token (never exchanged).
         yield 'programmatic token via bare Authorization is legacy' => [

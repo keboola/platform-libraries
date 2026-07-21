@@ -17,6 +17,9 @@ final class RequestToken
     private const AUTHORIZATION_HEADER = 'Authorization';
     private const TOKEN_HEADER = 'X-StorageApi-Token';
 
+    /** Prefixes of Connection programmatic bearer tokens: kbc_at_* access, kbc_pat_* personal. */
+    private const PROGRAMMATIC_TOKEN_PREFIXES = ['kbc_at_', 'kbc_pat_'];
+
     public function __construct(
         #[SensitiveParameter]
         public readonly string $token,
@@ -39,7 +42,7 @@ final class RequestToken
         if ($authHeader !== null) {
             if (preg_match(self::BEARER_PATTERN, $authHeader, $matches) === 1) {
                 $bearerToken = $matches[1];
-                $type = ProgrammaticToken::matches($bearerToken)
+                $type = self::isProgrammatic($bearerToken)
                     ? RequestTokenType::Programmatic
                     : RequestTokenType::OAuthToken;
 
@@ -57,5 +60,16 @@ final class RequestToken
         }
 
         return null;
+    }
+
+    private static function isProgrammatic(string $token): bool
+    {
+        foreach (self::PROGRAMMATIC_TOKEN_PREFIXES as $prefix) {
+            if (str_starts_with($token, $prefix)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

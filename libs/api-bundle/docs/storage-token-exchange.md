@@ -187,7 +187,7 @@ could be added later, per the RFC guidance.
 
 | Class | Responsibility |
 | --- | --- |
-| `ProgrammaticToken` | `kbc_at_` / `kbc_pat_` prefix detection. |
+| `RequestToken` | Classifies the token an incoming request carries (`RequestTokenType`: legacy Storage / OAuth / programmatic) via `tryFromRequest()`, incl. `kbc_at_` / `kbc_pat_` prefix detection. |
 | `StorageApiTokenFactory` | Builds `StorageApiToken`: verifies legacy tokens against Storage API; for programmatic tokens, calls `Client::resolveStorageToken()`, maps resolver errors and builds the token directly from the returned `tokenDetail` + `storageToken`. |
 | `StorageApiTokenAuthenticator` | Extracts the token, routes `Authorization: Bearer kbc_at_/kbc_pat_` to the exchange and everything else to legacy verification, checks required features. |
 

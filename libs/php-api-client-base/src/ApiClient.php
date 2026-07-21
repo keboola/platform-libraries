@@ -98,9 +98,6 @@ class ApiClient
             'auth',
         );
 
-        // Log every request at DEBUG: this is per-request diagnostic noise, so it must stay
-        // below the default INFO threshold consumers ship in production (otherwise every API
-        // call shows up in their logs). It surfaces only when debug logging is turned on.
         $stack->push(Middleware::log(
             $logger,
             new MessageFormatter('{method} {uri} : {code} {res_header_Content-Length}'),

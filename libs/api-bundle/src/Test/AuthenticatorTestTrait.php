@@ -136,9 +136,8 @@ trait AuthenticatorTestTrait
     }
 
     /**
-     * Stubs the request-verification path ({@see StorageApiTokenFactory::createFromStorageToken()} /
-     * {@see StorageApiTokenFactory::createFromOAuthToken()}) for a token carried directly by the
-     * request. The resolved {@see StorageApiToken} carries $authType;
+     * Stubs the request-verification path ({@see StorageApiTokenFactory::createFromValue()}) for a
+     * token carried directly by the request. The resolved {@see StorageApiToken} carries $authType;
      * the request the test issues must use the matching scheme (`Authorization: Bearer …` for
      * {@see AuthType::BEARER}, `X-StorageApi-Token` for {@see AuthType::STORAGE_TOKEN}), since the
      * authenticator derives the auth type from the request headers exactly as it does in production.

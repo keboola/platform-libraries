@@ -53,29 +53,25 @@ class StorageApiTokenFactoryTest extends TestCase
     }
 
     // ---------------------------------------------------------------------------
-    // createFromStorageToken / createFromOAuthToken – happy path
+    // createFromValue – happy path
     // ---------------------------------------------------------------------------
 
-    public function testCreateFromStorageTokenVerifiesAsStorageToken(): void
+    #[DataProvider('provideValueAuthTypes')]
+    public function testCreateFromValueVerifiesWithGivenAuthType(AuthType $authType): void
     {
-        $factoryMock = $this->mockClientFactoryReturningVerifiedToken('tok', AuthType::STORAGE_TOKEN);
+        $factoryMock = $this->mockClientFactoryReturningVerifiedToken('tok', $authType);
 
         $token = $this->createFactory(clientFactory: $factoryMock)
-            ->createFromStorageToken(Request::create('https://keboola.com'), 'tok');
+            ->createFromValue(Request::create('https://keboola.com'), 'tok', $authType);
 
         self::assertSame('tok', $token->getTokenValue());
-        self::assertSame(AuthType::STORAGE_TOKEN, $token->getTokenType());
+        self::assertSame($authType, $token->getTokenType());
     }
 
-    public function testCreateFromOAuthTokenVerifiesAsBearer(): void
+    public static function provideValueAuthTypes(): Generator
     {
-        $factoryMock = $this->mockClientFactoryReturningVerifiedToken('tok', AuthType::BEARER);
-
-        $token = $this->createFactory(clientFactory: $factoryMock)
-            ->createFromOAuthToken(Request::create('https://keboola.com'), 'tok');
-
-        self::assertSame('tok', $token->getTokenValue());
-        self::assertSame(AuthType::BEARER, $token->getTokenType());
+        yield 'legacy storage token' => ['authType' => AuthType::STORAGE_TOKEN];
+        yield 'oauth bearer token' => ['authType' => AuthType::BEARER];
     }
 
     /**
@@ -104,7 +100,7 @@ class StorageApiTokenFactoryTest extends TestCase
     }
 
     // ---------------------------------------------------------------------------
-    // verify – exception mapping (via createFromStorageToken)
+    // createFromValue – exception mapping
     // ---------------------------------------------------------------------------
 
     /**
@@ -140,7 +136,7 @@ class StorageApiTokenFactoryTest extends TestCase
         self::expectExceptionCode($expectedExceptionCode);
 
         $this->createFactory(clientFactory: $factoryMock)
-            ->createFromStorageToken(Request::create('https://keboola.com'), 'token');
+            ->createFromValue(Request::create('https://keboola.com'), 'token', AuthType::STORAGE_TOKEN);
     }
 
     public static function provideExceptionData(): Generator
@@ -166,10 +162,10 @@ class StorageApiTokenFactoryTest extends TestCase
     }
 
     // ---------------------------------------------------------------------------
-    // createFromProgrammaticToken – exchange success, no Storage API call
+    // exchangeFromProgrammaticToken – exchange success, no Storage API call
     // ---------------------------------------------------------------------------
 
-    public function testCreateFromProgrammaticTokenBuildsTokenFromResolverDetailWithoutStorageCall(): void
+    public function testExchangeFromProgrammaticTokenBuildsTokenFromResolverDetailWithoutStorageCall(): void
     {
         $tokenDetail = [
             'id' => '42',
@@ -203,7 +199,7 @@ class StorageApiTokenFactoryTest extends TestCase
         $originalRequest = $this->createProgrammaticTokenRequest();
 
         $token = $this->createFactory(clientFactory: $factoryMock, resolverClient: $resolverClient)
-            ->createFromProgrammaticToken($originalRequest, self::SUBJECT_TOKEN);
+            ->exchangeFromProgrammaticToken($originalRequest, self::SUBJECT_TOKEN);
 
         self::assertSame('legacy-token', $token->getTokenValue());
         self::assertSame($tokenDetail, $token->getTokenInfo());
@@ -221,11 +217,11 @@ class StorageApiTokenFactoryTest extends TestCase
     }
 
     // ---------------------------------------------------------------------------
-    // createFromProgrammaticToken – project id header validation
+    // exchangeFromProgrammaticToken – project id header validation
     // ---------------------------------------------------------------------------
 
     #[DataProvider('provideInvalidProjectIdHeaders')]
-    public function testCreateFromProgrammaticTokenThrowsWith400ForInvalidProjectIdHeader(?string $headerValue): void
+    public function testExchangeFromProgrammaticTokenThrowsWith400ForInvalidProjectIdHeader(?string $headerValue): void
     {
         $resolverClient = $this->createMock(ManageApiClient::class);
         $resolverClient
@@ -241,7 +237,7 @@ class StorageApiTokenFactoryTest extends TestCase
         $factory = $this->createFactory(resolverClient: $resolverClient);
 
         $exception = $this->captureAuthException(
-            fn() => $factory->createFromProgrammaticToken($request, self::SUBJECT_TOKEN),
+            fn() => $factory->exchangeFromProgrammaticToken($request, self::SUBJECT_TOKEN),
         );
 
         self::assertSame(400, $exception->getCode());
@@ -261,7 +257,7 @@ class StorageApiTokenFactoryTest extends TestCase
     }
 
     // ---------------------------------------------------------------------------
-    // createFromProgrammaticToken – resolver error mapping
+    // exchangeFromProgrammaticToken – resolver error mapping
     // ---------------------------------------------------------------------------
 
     #[DataProvider('provideResolverClientErrorMapping')]
@@ -276,7 +272,7 @@ class StorageApiTokenFactoryTest extends TestCase
         $factory = $this->createFactory(resolverClient: $resolverClient);
 
         $exception = $this->captureAuthException(
-            fn() => $factory->createFromProgrammaticToken(
+            fn() => $factory->exchangeFromProgrammaticToken(
                 $this->createProgrammaticTokenRequest(),
                 self::SUBJECT_TOKEN,
             ),
@@ -315,7 +311,7 @@ class StorageApiTokenFactoryTest extends TestCase
         $factory = $this->createFactory(resolverClient: $resolverClient, logger: $logger);
 
         $exception = $this->captureAuthException(
-            fn() => $factory->createFromProgrammaticToken(
+            fn() => $factory->exchangeFromProgrammaticToken(
                 $this->createProgrammaticTokenRequest(),
                 self::SUBJECT_TOKEN,
             ),
@@ -335,7 +331,7 @@ class StorageApiTokenFactoryTest extends TestCase
         $factory = $this->createFactory(resolverClient: $resolverClient);
 
         $exception = $this->captureAuthException(
-            fn() => $factory->createFromProgrammaticToken(
+            fn() => $factory->exchangeFromProgrammaticToken(
                 $this->createProgrammaticTokenRequest(),
                 self::SUBJECT_TOKEN,
             ),
@@ -357,7 +353,7 @@ class StorageApiTokenFactoryTest extends TestCase
         $factory = $this->createFactory(resolverClient: $resolverClient);
 
         $exception = $this->captureAuthException(
-            fn() => $factory->createFromProgrammaticToken(
+            fn() => $factory->exchangeFromProgrammaticToken(
                 $this->createProgrammaticTokenRequest(),
                 self::SUBJECT_TOKEN,
             ),
@@ -386,7 +382,7 @@ class StorageApiTokenFactoryTest extends TestCase
         );
 
         $exception = $this->captureAuthException(
-            fn() => $factory->createFromProgrammaticToken(
+            fn() => $factory->exchangeFromProgrammaticToken(
                 $this->createProgrammaticTokenRequest(),
                 self::SUBJECT_TOKEN,
             ),
@@ -410,7 +406,7 @@ class StorageApiTokenFactoryTest extends TestCase
     }
 
     // ---------------------------------------------------------------------------
-    // createFromProgrammaticToken – failure logging
+    // exchangeFromProgrammaticToken – failure logging
     // ---------------------------------------------------------------------------
 
     public function testExchangeLogsUnexpectedResolverStatusWithoutTokenMaterial(): void
@@ -435,7 +431,7 @@ class StorageApiTokenFactoryTest extends TestCase
         $factory = $this->createFactory(resolverClient: $resolverClient, logger: $logger);
 
         $exception = $this->captureAuthException(
-            fn() => $factory->createFromProgrammaticToken(
+            fn() => $factory->exchangeFromProgrammaticToken(
                 $this->createProgrammaticTokenRequest(),
                 self::SUBJECT_TOKEN,
             ),
@@ -467,7 +463,7 @@ class StorageApiTokenFactoryTest extends TestCase
         $factory = $this->createFactory(resolverClient: $resolverClient, logger: $logger);
 
         $exception = $this->captureAuthException(
-            fn() => $factory->createFromProgrammaticToken(
+            fn() => $factory->exchangeFromProgrammaticToken(
                 $this->createProgrammaticTokenRequest(),
                 self::SUBJECT_TOKEN,
             ),
@@ -499,7 +495,7 @@ class StorageApiTokenFactoryTest extends TestCase
         $factory = $this->createFactory(resolverClient: $resolverClient, logger: $logger);
 
         $exception = $this->captureAuthException(
-            fn() => $factory->createFromProgrammaticToken(
+            fn() => $factory->exchangeFromProgrammaticToken(
                 $this->createProgrammaticTokenRequest(),
                 self::SUBJECT_TOKEN,
             ),

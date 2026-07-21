@@ -18,13 +18,13 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Security\Core\Exception\CustomUserMessageAuthenticationException;
 
 /**
- * Builds a {@see StorageApiToken}. Legacy tokens carried by the request are verified directly
- * against Storage API ({@see self::createFromStorageToken()} / {@see self::createFromOAuthToken()}).
- * Connection programmatic tokens
- * (kbc_at_* / kbc_pat_*) are exchanged through Manage API's auth-bridge resolver
- * ({@see ManageApiClient::resolveStorageToken()}), which returns the legacy Storage token
- * together with its full token detail (the same payload as GET /v2/storage/tokens/verify), so no
- * follow-up Storage verification call is needed ({@see self::createFromProgrammaticToken()}).
+ * Builds a {@see StorageApiToken}. Tokens whose value is a Storage credential (legacy
+ * `X-StorageApi-Token` or an OAuth bearer token) are verified directly against Storage API
+ * ({@see self::createFromValue()}). Connection programmatic tokens (kbc_at_* / kbc_pat_*) are
+ * exchanged through Manage API's auth-bridge resolver ({@see ManageApiClient::resolveStorageToken()}),
+ * which returns the legacy Storage token together with its full token detail (the same payload as
+ * GET /v2/storage/tokens/verify), so no follow-up Storage verification call is needed
+ * ({@see self::exchangeFromProgrammaticToken()}).
  *
  * The resolver client authenticates with the service's projected Kubernetes ServiceAccount JWT
  * (read per request, so kubelet-rotated tokens are picked up).
@@ -41,36 +41,14 @@ class StorageApiTokenFactory
     }
 
     /**
-     * Verifies a legacy Storage token (carried as `X-StorageApi-Token`) against Storage API; the
-     * resulting {@see StorageApiToken} is typed {@see AuthType::STORAGE_TOKEN}.
+     * Verifies a token whose value is itself a Storage credential against Storage API and types the
+     * resulting {@see StorageApiToken} with $authType ({@see AuthType::STORAGE_TOKEN} for a legacy
+     * `X-StorageApi-Token`, {@see AuthType::BEARER} for an OAuth bearer token, so it is later sent
+     * with the matching scheme). 4xx Storage errors are surfaced to the caller; other errors bubble
+     * up unchanged. Programmatic tokens never reach this — their detail comes from the resolver
+     * ({@see self::exchangeFromProgrammaticToken()}).
      */
-    public function createFromStorageToken(
-        Request $request,
-        #[SensitiveParameter]
-        string $token,
-    ): StorageApiToken {
-        return $this->verify($request, $token, AuthType::STORAGE_TOKEN);
-    }
-
-    /**
-     * Verifies an OAuth bearer token (carried as `Authorization: Bearer`) against Storage API; the
-     * resulting {@see StorageApiToken} is typed {@see AuthType::BEARER} so it is sent with the bearer
-     * scheme when a client is later built from it.
-     */
-    public function createFromOAuthToken(
-        Request $request,
-        #[SensitiveParameter]
-        string $token,
-    ): StorageApiToken {
-        return $this->verify($request, $token, AuthType::BEARER);
-    }
-
-    /**
-     * Shared Storage-API verification for the two request-carried token types. 4xx Storage errors
-     * are surfaced to the caller; other errors bubble up unchanged. Programmatic tokens never reach
-     * this — their detail comes from the resolver ({@see self::createFromProgrammaticToken()}).
-     */
-    private function verify(
+    public function createFromValue(
         Request $request,
         #[SensitiveParameter]
         string $token,
@@ -99,7 +77,7 @@ class StorageApiTokenFactory
      * the client; error messages are fixed and never echo the Connection/Manage response body,
      * which could otherwise leak subject-token or storage-token material.
      */
-    public function createFromProgrammaticToken(
+    public function exchangeFromProgrammaticToken(
         Request $request,
         #[SensitiveParameter]
         string $subjectToken,

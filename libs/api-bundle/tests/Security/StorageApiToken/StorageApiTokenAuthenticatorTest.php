@@ -55,11 +55,10 @@ class StorageApiTokenAuthenticatorTest extends TestCase
         $tokenFactory = $this->createMock(StorageApiTokenFactory::class);
         $tokenFactory
             ->expects(self::once())
-            ->method('createFromStorageToken')
-            ->with($request, 'legacy-token')
+            ->method('createFromValue')
+            ->with($request, 'legacy-token', AuthType::STORAGE_TOKEN)
             ->willReturn($expectedToken);
-        $tokenFactory->expects(self::never())->method('createFromOAuthToken');
-        $tokenFactory->expects(self::never())->method('createFromProgrammaticToken');
+        $tokenFactory->expects(self::never())->method('exchangeFromProgrammaticToken');
 
         $authenticator = new StorageApiTokenAuthenticator($tokenFactory);
 
@@ -80,11 +79,10 @@ class StorageApiTokenAuthenticatorTest extends TestCase
         $tokenFactory = $this->createMock(StorageApiTokenFactory::class);
         $tokenFactory
             ->expects(self::once())
-            ->method('createFromOAuthToken')
-            ->with($request, 'oauth-access-token')
+            ->method('createFromValue')
+            ->with($request, 'oauth-access-token', AuthType::BEARER)
             ->willReturn($expectedToken);
-        $tokenFactory->expects(self::never())->method('createFromStorageToken');
-        $tokenFactory->expects(self::never())->method('createFromProgrammaticToken');
+        $tokenFactory->expects(self::never())->method('exchangeFromProgrammaticToken');
 
         $authenticator = new StorageApiTokenAuthenticator($tokenFactory);
 
@@ -105,11 +103,10 @@ class StorageApiTokenAuthenticatorTest extends TestCase
         $tokenFactory = $this->createMock(StorageApiTokenFactory::class);
         $tokenFactory
             ->expects(self::once())
-            ->method('createFromProgrammaticToken')
+            ->method('exchangeFromProgrammaticToken')
             ->with($request, self::SUBJECT_TOKEN)
             ->willReturn($expectedToken);
-        $tokenFactory->expects(self::never())->method('createFromStorageToken');
-        $tokenFactory->expects(self::never())->method('createFromOAuthToken');
+        $tokenFactory->expects(self::never())->method('createFromValue');
 
         $authenticator = new StorageApiTokenAuthenticator($tokenFactory);
 

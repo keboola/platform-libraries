@@ -8,6 +8,7 @@ use Keboola\ApiBundle\Attribute\AuthAttributeInterface;
 use Keboola\ApiBundle\Attribute\StorageApiTokenAuth;
 use Keboola\ApiBundle\Security\TokenAuthenticatorInterface;
 use Keboola\ApiBundle\Security\TokenInterface;
+use Keboola\StorageApiBranch\Factory\AuthType;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 
@@ -50,11 +51,11 @@ class StorageApiTokenAuthenticator implements TokenAuthenticatorInterface
 
         return match ($credential->type) {
             RequestTokenType::Programmatic => $this->tokenFactory
-                ->createFromProgrammaticToken($request, $credential->token),
+                ->exchangeFromProgrammaticToken($request, $credential->token),
             RequestTokenType::OAuthToken => $this->tokenFactory
-                ->createFromOAuthToken($request, $credential->token),
+                ->createFromValue($request, $credential->token, AuthType::BEARER),
             RequestTokenType::StorageToken => $this->tokenFactory
-                ->createFromStorageToken($request, $credential->token),
+                ->createFromValue($request, $credential->token, AuthType::STORAGE_TOKEN),
         };
     }
 

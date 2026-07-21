@@ -84,7 +84,7 @@ Manage token holding the scope `internal:auth-bridge:resolve-storage-token`.
 ```
 Client ──Authorization: Bearer kbc_at_*, X-KBC-ProjectId: 123──► Service (api-bundle)
                                                                     │
-  StorageApiTokenFactory::createFromProgrammaticToken               │
+  StorageApiTokenFactory::exchangeFromProgrammaticToken               │
     → Client::resolveStorageToken():                                │
     Manage API client reads SA JWT from                             │
     /var/run/secrets/.../token (re-read per call)                   │

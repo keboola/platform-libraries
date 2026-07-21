@@ -17,6 +17,7 @@ use Keboola\ApiClientBase\Auth\RequestAuthenticatorInterface;
 use Keboola\ApiClientBase\Exception\ClientException;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
+use Psr\Log\LogLevel;
 use Psr\Log\NullLogger;
 use Throwable;
 
@@ -100,6 +101,7 @@ class ApiClient
         $stack->push(Middleware::log(
             $logger,
             new MessageFormatter('{method} {uri} : {code} {res_header_Content-Length}'),
+            LogLevel::DEBUG,
         ));
 
         $this->httpClient = new GuzzleClient([

@@ -733,6 +733,6 @@ class AppsApiClientTest extends TestCase
         );
         $client->listApps();
 
-        self::assertTrue($handler->hasRecords('INFO'), 'Passed logger should receive log entries');
+        self::assertTrue($handler->hasRecords('DEBUG'), 'Passed logger should receive log entries');
     }
 }

@@ -23,46 +23,14 @@ use Symfony\Component\Security\Core\Exception\AccessDeniedException;
  */
 class StorageApiTokenAuthenticator implements TokenAuthenticatorInterface
 {
-    private const BEARER_PATTERN = '/^Bearer\s+(.+)$/i';
-    private const AUTHORIZATION_HEADER = 'Authorization';
-    private const TOKEN_HEADER = 'X-StorageApi-Token';
-
     public function __construct(
         private readonly StorageApiTokenFactory $tokenFactory,
     ) {
     }
 
-    /**
-     * Single source of truth for the token an incoming request carries and its {@see RequestTokenType}:
-     * `Authorization: Bearer <kbc_at_*|kbc_pat_*>` is {@see RequestTokenType::Programmatic}, any other
-     * `Authorization: Bearer <t>` is {@see RequestTokenType::OAuthToken}, and any non-Bearer
-     * `Authorization` value (taken verbatim) or the `X-StorageApi-Token` header is
-     * {@see RequestTokenType::StorageToken}. Returns null when no token is present.
-     */
     public function extractCredential(Request $request): ?RequestToken
     {
-        $authHeader = $request->headers->get(self::AUTHORIZATION_HEADER);
-        if ($authHeader !== null) {
-            if (preg_match(self::BEARER_PATTERN, $authHeader, $matches) === 1) {
-                $bearerToken = $matches[1];
-                $type = ProgrammaticToken::matches($bearerToken)
-                    ? RequestTokenType::Programmatic
-                    : RequestTokenType::OAuthToken;
-
-                return new RequestToken($bearerToken, $type);
-            }
-
-            // A non-Bearer Authorization value is taken verbatim and treated as a legacy token,
-            // preserving the pre-exchange behaviour for that (undocumented) carrier.
-            return new RequestToken($authHeader, RequestTokenType::StorageToken);
-        }
-
-        $storageToken = $request->headers->get(self::TOKEN_HEADER);
-        if ($storageToken !== null && $storageToken !== '') {
-            return new RequestToken($storageToken, RequestTokenType::StorageToken);
-        }
-
-        return null;
+        return RequestToken::tryFromRequest($request);
     }
 
     /**

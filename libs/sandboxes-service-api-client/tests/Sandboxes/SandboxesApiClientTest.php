@@ -616,6 +616,6 @@ class SandboxesApiClientTest extends TestCase
         );
         $client->getCurrentProject();
 
-        self::assertTrue($handler->hasRecords('INFO'), 'Passed logger should receive log entries');
+        self::assertTrue($handler->hasRecords('DEBUG'), 'Passed logger should receive log entries');
     }
 }

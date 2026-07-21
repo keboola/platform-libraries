@@ -11,8 +11,6 @@ use Symfony\Component\HttpFoundation\Request;
 
 class StorageClientApiFactory
 {
-    public const RUN_ID_HEADER = StorageClientRequestFactory::RUN_ID_HEADER;
-
     public function __construct(
         private readonly StorageClientRequestFactory $storageClientRequestFactory,
         private readonly Request $request,

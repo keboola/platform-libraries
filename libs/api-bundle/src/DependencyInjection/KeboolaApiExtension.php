@@ -85,11 +85,11 @@ class KeboolaApiExtension extends Extension
             return;
         }
 
-        // Base Storage ClientOptions shared by token verification (RequestStorageClientFactory) and
-        // the controller-facing StorageClientApiFactory (via StorageClientApiFactoryResolver), so a
-        // request is verified with the same Connection URL / logger / user agent / tuned options the
-        // controller-facing client uses. Connection URL comes from the ServiceClient; consumers tune
-        // it through the storage_client_options node.
+        // Base Storage ClientOptions used by RequestStorageClientFactory, which is the single Storage
+        // ClientWrapper builder — shared by token verification and, via StorageClientApiFactory, the
+        // controller-facing client — so both use the same Connection URL / logger / user agent / tuned
+        // options. Connection URL comes from the ServiceClient; consumers tune it through the
+        // storage_client_options node.
         $connectionUrl = (new Definition())
             ->setFactory([new Reference(ServiceClient::class), 'getConnectionServiceUrl']);
 
@@ -127,9 +127,11 @@ class KeboolaApiExtension extends Extension
         ;
         $authenticators[StorageApiTokenAuth::class] = new Reference(StorageApiTokenAuthenticator::class);
 
-        // StorageClientApiFactory controller-argument value resolver
+        // StorageClientApiFactory controller-argument value resolver. It builds each per-request
+        // factory around the shared RequestStorageClientFactory, so controllers get the same base
+        // options as token verification.
         $container->register(StorageClientApiFactoryResolver::class)
-            ->setArgument('$baseClientOptions', new Reference(self::STORAGE_CLIENT_BASE_OPTIONS_ID))
+            ->setArgument('$requestStorageClientFactory', new Reference(RequestStorageClientFactory::class))
             ->setArgument('$tokenStorage', new Reference(TokenStorageInterface::class))
             ->addTag('controller.argument_value_resolver')
         ;

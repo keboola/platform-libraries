@@ -38,6 +38,49 @@ class RequestStorageClientFactoryTest extends TestCase
         self::assertSame('42', $wrapper->getClientOptionsReadOnly()->getRunId());
     }
 
+    public function testRunIdFallsBackToGeneratedValueWhenHeaderMissing(): void
+    {
+        $factory = new RequestStorageClientFactory(new ClientOptions('https://connection.test'));
+
+        $runId = $factory
+            ->createClientWrapper('my-token', AuthType::STORAGE_TOKEN, new Request())
+            ->getClientOptionsReadOnly()
+            ->getRunId();
+
+        self::assertStringStartsWith('run-', (string) $runId);
+    }
+
+    public function testRunIdGeneratorUsedWhenHeaderMissing(): void
+    {
+        $base = new ClientOptions('https://connection.test');
+        $base->setRunIdGenerator(fn (ClientOptions $o): string => 'gen-' . $o->getUrl());
+        $factory = new RequestStorageClientFactory($base);
+
+        $runId = $factory
+            ->createClientWrapper('my-token', AuthType::STORAGE_TOKEN, new Request())
+            ->getClientOptionsReadOnly()
+            ->getRunId();
+
+        self::assertSame('gen-https://connection.test', $runId);
+    }
+
+    public function testPerCallOverridesAreMergedButResolvedTokenAndAuthTypeWin(): void
+    {
+        $factory = new RequestStorageClientFactory(new ClientOptions('https://connection.test'));
+
+        $options = $factory->createClientWrapper(
+            'my-token',
+            AuthType::STORAGE_TOKEN,
+            new Request(),
+            new ClientOptions(token: 'override-token', branchId: '777', authType: AuthType::BEARER),
+        )->getClientOptionsReadOnly();
+
+        self::assertSame('777', $options->getBranchId());
+        // token/authType are pinned after the overrides are merged, so the resolved values win
+        self::assertSame('my-token', $options->getToken());
+        self::assertSame(AuthType::STORAGE_TOKEN, $options->getAuthType());
+    }
+
     public function testBaseOptionsAreNotMutatedBetweenCalls(): void
     {
         $base = new ClientOptions('https://connection.test');

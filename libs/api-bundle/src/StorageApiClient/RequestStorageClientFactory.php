@@ -11,18 +11,19 @@ use SensitiveParameter;
 use Symfony\Component\HttpFoundation\Request;
 
 /**
- * Builds the Storage {@see ClientWrapper} used to verify a token carried by an incoming request.
+ * The single place a Storage {@see ClientWrapper} is built in the bundle: it clones the base
+ * {@see ClientOptions} (so the base is never mutated), merges optional per-call overrides, pins the
+ * given token/authType (which therefore win over overrides) and resolves the run id from the request.
  *
- * Bundle-owned successor to keboola/storage-api-php-client-branch-wrapper's
- * {@see \Keboola\StorageApiBranch\Factory\StorageClientRequestFactory}: the request's token and
- * auth type are resolved once by
- * {@see \Keboola\ApiBundle\Security\StorageApiToken\StorageApiTokenAuthenticator} and passed in,
- * so this factory only binds them onto the bundle's base {@see ClientOptions} (the same base the
- * controller-facing {@see StorageClientApiFactory} uses). Kept injectable (non-final) so functional
- * tests can replace it via {@see \Keboola\ApiBundle\Test\AuthenticatorTestTrait}.
+ * The controller-facing {@see StorageClientApiFactory} delegates here with its bound token, and token
+ * verification ({@see \Keboola\ApiBundle\Security\StorageApiToken\StorageApiTokenFactory}) uses it
+ * with the raw request token. Kept injectable (non-final) so functional tests can replace it via
+ * {@see \Keboola\ApiBundle\Test\AuthenticatorTestTrait}.
  */
 class RequestStorageClientFactory
 {
+    public const RUN_ID_HEADER = 'X-KBC-RunId';
+
     public function __construct(
         private readonly ClientOptions $baseClientOptions,
     ) {
@@ -35,12 +36,32 @@ class RequestStorageClientFactory
         Request $request,
         ?ClientOptions $overrides = null,
     ): ClientWrapper {
-        return StorageClientWrapperFactory::create(
-            $this->baseClientOptions,
-            $token,
-            $authType,
-            $request,
-            $overrides,
-        );
+        $options = clone $this->baseClientOptions;
+        if ($overrides !== null) {
+            $options->addValuesFrom($overrides);
+        }
+
+        $options->setToken($token);
+        $options->setAuthType($authType);
+        $options->setRunId($this->resolveRunId($request, $options));
+
+        return new ClientWrapper($options);
+    }
+
+    private function resolveRunId(Request $request, ClientOptions $options): string
+    {
+        $runId = (string) $request->headers->get(self::RUN_ID_HEADER);
+        if ($runId !== '') {
+            return $runId;
+        }
+
+        $runIdGenerator = $options->getRunIdGenerator();
+        if ($runIdGenerator !== null) {
+            $runId = $runIdGenerator($options);
+            assert(is_string($runId));
+            return $runId;
+        }
+
+        return uniqid('run-');
     }
 }

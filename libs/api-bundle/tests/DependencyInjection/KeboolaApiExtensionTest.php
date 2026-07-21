@@ -37,25 +37,26 @@ class KeboolaApiExtensionTest extends TestCase
     }
 
     /**
-     * The base Storage ClientOptions is a shared service both token verification
-     * ({@see RequestStorageClientFactory}) and the controller-facing resolver reference. Resolve
-     * that reference from the given service argument and return the underlying definition, asserting
-     * both consumers point at the very same service id.
+     * RequestStorageClientFactory is the single Storage ClientWrapper builder: both token
+     * verification ({@see StorageApiTokenFactory}) and the controller-facing resolver reference the
+     * very same service. Assert that, then return its base ClientOptions definition.
      */
     private function resolveSharedBaseClientOptions(ContainerBuilder $container): Definition
     {
-        $resolverRef = $container->getDefinition(StorageClientApiFactoryResolver::class)
-            ->getArgument('$baseClientOptions');
-        self::assertInstanceOf(Reference::class, $resolverRef);
-
-        $verificationRef = $container->getDefinition(RequestStorageClientFactory::class)
-            ->getArgument('$baseClientOptions');
+        $verificationRef = $container->getDefinition(StorageApiTokenFactory::class)
+            ->getArgument('$clientFactory');
         self::assertInstanceOf(Reference::class, $verificationRef);
+        self::assertSame(RequestStorageClientFactory::class, (string) $verificationRef);
 
-        // token verification and the controller-facing client must share one base-options service
-        self::assertSame((string) $resolverRef, (string) $verificationRef);
+        $resolverRef = $container->getDefinition(StorageClientApiFactoryResolver::class)
+            ->getArgument('$requestStorageClientFactory');
+        self::assertInstanceOf(Reference::class, $resolverRef);
+        self::assertSame((string) $verificationRef, (string) $resolverRef);
 
-        return $container->getDefinition((string) $resolverRef);
+        $baseOptionsRef = $container->getDefinition((string) $resolverRef)->getArgument('$baseClientOptions');
+        self::assertInstanceOf(Reference::class, $baseOptionsRef);
+
+        return $container->getDefinition((string) $baseOptionsRef);
     }
 
     // -------------------------------------------------------------------------

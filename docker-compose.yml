@@ -60,6 +60,8 @@ services:
     <<: *dev81
     image: keboola/azure-api-client
     working_dir: /code/libs/azure-api-client
+    volumes:
+      - .:/code
     depends_on:
       - mockserver
 

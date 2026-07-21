@@ -19,8 +19,10 @@ use Symfony\Component\HttpFoundation\Request;
  * verification ({@see \Keboola\ApiBundle\Security\StorageApiToken\StorageApiTokenFactory}) uses it
  * with the raw request token. Kept injectable (non-final) so functional tests can replace it via
  * {@see \Keboola\ApiBundle\Test\AuthenticatorTestTrait}.
+ *
+ * @internal Bundle-internal wiring; consumers use {@see StorageClientApiFactory} (or #[StorageApiTokenAuth]).
  */
-class RequestStorageClientFactory
+class StorageClientRequestFactory
 {
     public const RUN_ID_HEADER = 'X-KBC-RunId';
 

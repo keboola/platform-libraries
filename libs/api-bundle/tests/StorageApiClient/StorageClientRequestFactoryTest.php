@@ -4,17 +4,17 @@ declare(strict_types=1);
 
 namespace Keboola\ApiBundle\Tests\StorageApiClient;
 
-use Keboola\ApiBundle\StorageApiClient\RequestStorageClientFactory;
+use Keboola\ApiBundle\StorageApiClient\StorageClientRequestFactory;
 use Keboola\StorageApiBranch\Factory\AuthType;
 use Keboola\StorageApiBranch\Factory\ClientOptions;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpFoundation\Request;
 
-class RequestStorageClientFactoryTest extends TestCase
+class StorageClientRequestFactoryTest extends TestCase
 {
     public function testBuildsWrapperBoundToGivenTokenAndAuthType(): void
     {
-        $factory = new RequestStorageClientFactory(new ClientOptions('https://connection.test'));
+        $factory = new StorageClientRequestFactory(new ClientOptions('https://connection.test'));
 
         $options = $factory
             ->createClientWrapper('my-token', AuthType::BEARER, new Request())
@@ -27,7 +27,7 @@ class RequestStorageClientFactoryTest extends TestCase
 
     public function testRunIdTakenFromRequestHeader(): void
     {
-        $factory = new RequestStorageClientFactory(new ClientOptions('https://connection.test'));
+        $factory = new StorageClientRequestFactory(new ClientOptions('https://connection.test'));
 
         $wrapper = $factory->createClientWrapper(
             'my-token',
@@ -40,7 +40,7 @@ class RequestStorageClientFactoryTest extends TestCase
 
     public function testRunIdFallsBackToGeneratedValueWhenHeaderMissing(): void
     {
-        $factory = new RequestStorageClientFactory(new ClientOptions('https://connection.test'));
+        $factory = new StorageClientRequestFactory(new ClientOptions('https://connection.test'));
 
         $runId = $factory
             ->createClientWrapper('my-token', AuthType::STORAGE_TOKEN, new Request())
@@ -54,7 +54,7 @@ class RequestStorageClientFactoryTest extends TestCase
     {
         $base = new ClientOptions('https://connection.test');
         $base->setRunIdGenerator(fn (ClientOptions $o): string => 'gen-' . $o->getUrl());
-        $factory = new RequestStorageClientFactory($base);
+        $factory = new StorageClientRequestFactory($base);
 
         $runId = $factory
             ->createClientWrapper('my-token', AuthType::STORAGE_TOKEN, new Request())
@@ -66,7 +66,7 @@ class RequestStorageClientFactoryTest extends TestCase
 
     public function testPerCallOverridesAreMergedButResolvedTokenAndAuthTypeWin(): void
     {
-        $factory = new RequestStorageClientFactory(new ClientOptions('https://connection.test'));
+        $factory = new StorageClientRequestFactory(new ClientOptions('https://connection.test'));
 
         $options = $factory->createClientWrapper(
             'my-token',
@@ -84,7 +84,7 @@ class RequestStorageClientFactoryTest extends TestCase
     public function testBaseOptionsAreNotMutatedBetweenCalls(): void
     {
         $base = new ClientOptions('https://connection.test');
-        $factory = new RequestStorageClientFactory($base);
+        $factory = new StorageClientRequestFactory($base);
 
         $factory->createClientWrapper('token-a', AuthType::STORAGE_TOKEN, new Request());
         $second = $factory

@@ -9,7 +9,7 @@ use Generator;
 use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Psr7\Request as GuzzleRequest;
 use Keboola\ApiBundle\Security\StorageApiToken\StorageApiTokenFactory;
-use Keboola\ApiBundle\StorageApiClient\RequestStorageClientFactory;
+use Keboola\ApiBundle\StorageApiClient\StorageClientRequestFactory;
 use Keboola\ManageApi\Client as ManageApiClient;
 use Keboola\ManageApi\ClientException as ManageApiClientException;
 use Keboola\ManageApi\MaintenanceException as ManageApiMaintenanceException;
@@ -32,12 +32,12 @@ class StorageApiTokenFactoryTest extends TestCase
     private const PROJECT_ID_HEADER = 'X-KBC-ProjectId';
 
     private function createFactory(
-        ?RequestStorageClientFactory $clientFactory = null,
+        ?StorageClientRequestFactory $clientFactory = null,
         ?ManageApiClient $resolverClient = null,
         ?LoggerInterface $logger = null,
     ): StorageApiTokenFactory {
         return new StorageApiTokenFactory(
-            $clientFactory ?? $this->createMock(RequestStorageClientFactory::class),
+            $clientFactory ?? $this->createMock(StorageClientRequestFactory::class),
             $resolverClient ?? $this->createMock(ManageApiClient::class),
             $logger ?? new NullLogger(),
         );
@@ -75,13 +75,13 @@ class StorageApiTokenFactoryTest extends TestCase
     }
 
     /**
-     * Builds a RequestStorageClientFactory mock whose wrapper verifies successfully, asserting it is
+     * Builds a StorageClientRequestFactory mock whose wrapper verifies successfully, asserting it is
      * asked to build the client for the expected token/auth type.
      */
     private function mockClientFactoryReturningVerifiedToken(
         string $expectedToken,
         AuthType $expectedAuthType,
-    ): RequestStorageClientFactory {
+    ): StorageClientRequestFactory {
         $clientMock = $this->createMock(Client::class);
         $clientMock->expects(self::once())->method('verifyToken')->willReturn(['id' => '42', 'description' => 'test']);
         $clientMock->expects(self::once())->method('getTokenString')->willReturn($expectedToken);
@@ -89,7 +89,7 @@ class StorageApiTokenFactoryTest extends TestCase
         $wrapperMock = $this->createMock(ClientWrapper::class);
         $wrapperMock->expects(self::once())->method('getBasicClient')->willReturn($clientMock);
 
-        $factoryMock = $this->createMock(RequestStorageClientFactory::class);
+        $factoryMock = $this->createMock(StorageClientRequestFactory::class);
         $factoryMock
             ->expects(self::once())
             ->method('createClientWrapper')
@@ -125,7 +125,7 @@ class StorageApiTokenFactoryTest extends TestCase
             ->method('getBasicClient')
             ->willReturn($clientMock);
 
-        $factoryMock = $this->createMock(RequestStorageClientFactory::class);
+        $factoryMock = $this->createMock(StorageClientRequestFactory::class);
         $factoryMock
             ->expects(self::once())
             ->method('createClientWrapper')
@@ -191,7 +191,7 @@ class StorageApiTokenFactoryTest extends TestCase
             ]);
 
         // The resolver response carries the full token detail, so Storage API must not be hit.
-        $factoryMock = $this->createMock(RequestStorageClientFactory::class);
+        $factoryMock = $this->createMock(StorageClientRequestFactory::class);
         $factoryMock
             ->expects(self::never())
             ->method('createClientWrapper');
@@ -371,7 +371,7 @@ class StorageApiTokenFactoryTest extends TestCase
             ->method('resolveStorageToken')
             ->willReturn($response);
 
-        $clientFactory = $this->createMock(RequestStorageClientFactory::class);
+        $clientFactory = $this->createMock(StorageClientRequestFactory::class);
         $clientFactory
             ->expects(self::never())
             ->method('createClientWrapper');

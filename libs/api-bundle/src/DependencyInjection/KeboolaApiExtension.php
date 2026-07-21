@@ -10,8 +10,8 @@ use Keboola\ApiBundle\Security\ApplicationToken\ApplicationTokenAuthenticator;
 use Keboola\ApiBundle\Security\ApplicationToken\ManageApiClientFactory;
 use Keboola\ApiBundle\Security\StorageApiToken\StorageApiTokenAuthenticator;
 use Keboola\ApiBundle\Security\StorageApiToken\StorageApiTokenFactory;
-use Keboola\ApiBundle\StorageApiClient\RequestStorageClientFactory;
 use Keboola\ApiBundle\StorageApiClient\StorageClientApiFactoryResolver;
+use Keboola\ApiBundle\StorageApiClient\StorageClientRequestFactory;
 use Keboola\ManageApi\Client as ManageApiClient;
 use Keboola\ServiceClient\ServiceClient;
 use Keboola\ServiceClient\ServiceDnsType;
@@ -85,7 +85,7 @@ class KeboolaApiExtension extends Extension
             return;
         }
 
-        // Base Storage ClientOptions used by RequestStorageClientFactory, which is the single Storage
+        // Base Storage ClientOptions used by StorageClientRequestFactory, which is the single Storage
         // ClientWrapper builder — shared by token verification and, via StorageClientApiFactory, the
         // controller-facing client — so both use the same Connection URL / logger / user agent / tuned
         // options. Connection URL comes from the ServiceClient; consumers tune it through the
@@ -112,12 +112,12 @@ class KeboolaApiExtension extends Extension
             ->setArguments([self::SERVICE_ACCOUNT_TOKEN_PATH])
         ;
 
-        $container->register(RequestStorageClientFactory::class)
+        $container->register(StorageClientRequestFactory::class)
             ->setArgument('$baseClientOptions', new Reference(self::STORAGE_CLIENT_BASE_OPTIONS_ID))
         ;
 
         $container->register(StorageApiTokenFactory::class)
-            ->setArgument('$clientFactory', new Reference(RequestStorageClientFactory::class))
+            ->setArgument('$clientFactory', new Reference(StorageClientRequestFactory::class))
             ->setArgument('$resolverClient', new Reference(self::STORAGE_TOKEN_RESOLVER_CLIENT_ID))
             ->setArgument('$logger', new Reference('logger'))
         ;
@@ -128,10 +128,10 @@ class KeboolaApiExtension extends Extension
         $authenticators[StorageApiTokenAuth::class] = new Reference(StorageApiTokenAuthenticator::class);
 
         // StorageClientApiFactory controller-argument value resolver. It builds each per-request
-        // factory around the shared RequestStorageClientFactory, so controllers get the same base
+        // factory around the shared StorageClientRequestFactory, so controllers get the same base
         // options as token verification.
         $container->register(StorageClientApiFactoryResolver::class)
-            ->setArgument('$requestStorageClientFactory', new Reference(RequestStorageClientFactory::class))
+            ->setArgument('$storageClientRequestFactory', new Reference(StorageClientRequestFactory::class))
             ->setArgument('$tokenStorage', new Reference(TokenStorageInterface::class))
             ->addTag('controller.argument_value_resolver')
         ;

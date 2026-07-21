@@ -7,7 +7,7 @@ namespace Keboola\ApiBundle\Test;
 use Keboola\ApiBundle\DependencyInjection\KeboolaApiExtension;
 use Keboola\ApiBundle\Security\ApplicationToken\ManageApiClientFactory;
 use Keboola\ApiBundle\Security\StorageApiToken\StorageApiToken;
-use Keboola\ApiBundle\StorageApiClient\RequestStorageClientFactory;
+use Keboola\ApiBundle\StorageApiClient\StorageClientRequestFactory;
 use Keboola\ManageApi\Client as ManageApiClient;
 use Keboola\StorageApi\Client as StorageApiClient;
 use Keboola\StorageApiBranch\ClientWrapper;
@@ -160,10 +160,10 @@ trait AuthenticatorTestTrait
         $clientWrapper = $this->createMock(ClientWrapper::class);
         $clientWrapper->method('getBasicClient')->willReturn($storageApiClient);
 
-        $clientFactory = $this->createMock(RequestStorageClientFactory::class);
+        $clientFactory = $this->createMock(StorageClientRequestFactory::class);
         $clientFactory->method('createClientWrapper')->willReturn($clientWrapper);
 
-        self::getContainer()->set(RequestStorageClientFactory::class, $clientFactory);
+        self::getContainer()->set(StorageClientRequestFactory::class, $clientFactory);
 
         return new StorageApiToken($tokenData, $tokenString, $authType);
     }

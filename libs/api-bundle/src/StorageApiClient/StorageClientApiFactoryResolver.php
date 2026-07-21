@@ -14,7 +14,7 @@ use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInt
 class StorageClientApiFactoryResolver implements ValueResolverInterface
 {
     public function __construct(
-        private readonly RequestStorageClientFactory $requestStorageClientFactory,
+        private readonly StorageClientRequestFactory $storageClientRequestFactory,
         private readonly TokenStorageInterface $tokenStorage,
     ) {
     }
@@ -27,7 +27,7 @@ class StorageClientApiFactoryResolver implements ValueResolverInterface
 
         $user = $this->tokenStorage->getToken()?->getUser();
         if ($user instanceof StorageApiToken) {
-            return [new StorageClientApiFactory($this->requestStorageClientFactory, $request, $user)];
+            return [new StorageClientApiFactory($this->storageClientRequestFactory, $request, $user)];
         }
 
         if ($argument->isNullable()) {

@@ -11,10 +11,10 @@ use Symfony\Component\HttpFoundation\Request;
 
 class StorageClientApiFactory
 {
-    public const RUN_ID_HEADER = RequestStorageClientFactory::RUN_ID_HEADER;
+    public const RUN_ID_HEADER = StorageClientRequestFactory::RUN_ID_HEADER;
 
     public function __construct(
-        private readonly RequestStorageClientFactory $requestStorageClientFactory,
+        private readonly StorageClientRequestFactory $storageClientRequestFactory,
         private readonly Request $request,
         private readonly StorageApiToken $token,
     ) {
@@ -22,7 +22,7 @@ class StorageClientApiFactory
 
     public function createClientWrapper(?ClientOptions $clientOptions = null): ClientWrapper
     {
-        return $this->requestStorageClientFactory->createClientWrapper(
+        return $this->storageClientRequestFactory->createClientWrapper(
             $this->token->getTokenValue(),
             $this->token->getTokenType(),
             $this->request,

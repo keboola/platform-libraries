@@ -6,7 +6,7 @@ namespace Keboola\ApiBundle\Tests\Test;
 
 use Keboola\ApiBundle\DependencyInjection\KeboolaApiExtension;
 use Keboola\ApiBundle\Security\ApplicationToken\ManageApiClientFactory;
-use Keboola\ApiBundle\StorageApiClient\RequestStorageClientFactory;
+use Keboola\ApiBundle\StorageApiClient\StorageClientRequestFactory;
 use Keboola\ApiBundle\Test\AuthenticatorTestTrait;
 use Keboola\ManageApi\Client as ManageApiClient;
 use Keboola\StorageApiBranch\Factory\AuthType;
@@ -41,8 +41,8 @@ class AuthenticatorTestTraitTest extends WebTestCase
         self::assertSame(AuthType::STORAGE_TOKEN, $token->getTokenType());
 
         self::assertInstanceOf(
-            RequestStorageClientFactory::class,
-            self::getContainer()->get(RequestStorageClientFactory::class),
+            StorageClientRequestFactory::class,
+            self::getContainer()->get(StorageClientRequestFactory::class),
         );
     }
 
@@ -62,8 +62,8 @@ class AuthenticatorTestTraitTest extends WebTestCase
         self::assertSame(AuthType::BEARER, $token->getTokenType());
 
         self::assertInstanceOf(
-            RequestStorageClientFactory::class,
-            self::getContainer()->get(RequestStorageClientFactory::class),
+            StorageClientRequestFactory::class,
+            self::getContainer()->get(StorageClientRequestFactory::class),
         );
     }
 

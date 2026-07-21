@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\ApiBundle\Security\StorageApiToken;
 
-use Keboola\ApiBundle\StorageApiClient\RequestStorageClientFactory;
+use Keboola\ApiBundle\StorageApiClient\StorageClientRequestFactory;
 use Keboola\ManageApi\Client as ManageApiClient;
 use Keboola\ManageApi\ClientException as ManageApiClientException;
 use Keboola\ManageApi\MaintenanceException;
@@ -34,7 +34,7 @@ class StorageApiTokenFactory
     private const PROJECT_ID_HEADER = 'X-KBC-ProjectId';
 
     public function __construct(
-        private readonly RequestStorageClientFactory $clientFactory,
+        private readonly StorageClientRequestFactory $clientFactory,
         private readonly ManageApiClient $resolverClient,
         private readonly LoggerInterface $logger,
     ) {

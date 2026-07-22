@@ -33,13 +33,15 @@ final class RequestToken
      * `Authorization: Bearer <kbc_at_*|kbc_pat_*>` is {@see RequestTokenType::Programmatic}, any other
      * `Authorization: Bearer <t>` is {@see RequestTokenType::OAuthToken}, and any non-Bearer
      * `Authorization` value (taken verbatim) or the `X-StorageApi-Token` header is
-     * {@see RequestTokenType::StorageToken}. The `Authorization` header takes precedence over
-     * `X-StorageApi-Token`.
+     * {@see RequestTokenType::StorageToken}. A present-but-empty header value counts as absent (so
+     * an empty `Authorization` does not shadow a non-empty `X-StorageApi-Token`), and an empty token
+     * yields null rather than a doomed empty-token verification call. The `Authorization` header
+     * takes precedence over `X-StorageApi-Token`.
      */
     public static function tryFromRequest(Request $request): ?self
     {
         $authHeader = $request->headers->get(self::AUTHORIZATION_HEADER);
-        if ($authHeader !== null) {
+        if ($authHeader !== null && $authHeader !== '') {
             if (preg_match(self::BEARER_PATTERN, $authHeader, $matches) === 1) {
                 $bearerToken = $matches[1];
                 $type = self::isProgrammatic($bearerToken)

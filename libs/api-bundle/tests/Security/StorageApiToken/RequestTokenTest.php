@@ -101,4 +101,42 @@ class RequestTokenTest extends TestCase
     {
         self::assertNull(RequestToken::tryFromRequest(Request::create('https://keboola.com')));
     }
+
+    /**
+     * A present-but-empty header carries no token: it yields null (→ "Authentication token is
+     * missing", no Storage API call) rather than a doomed empty-token verification, and this holds
+     * for both carriers.
+     *
+     * @param array<string, string> $headers
+     */
+    #[DataProvider('provideEmptyTokenHeaders')]
+    public function testTryFromRequestTreatsEmptyHeaderAsNoToken(array $headers): void
+    {
+        $request = Request::create('https://keboola.com');
+        foreach ($headers as $name => $value) {
+            $request->headers->set($name, $value);
+        }
+
+        self::assertNull(RequestToken::tryFromRequest($request));
+    }
+
+    public static function provideEmptyTokenHeaders(): Generator
+    {
+        yield 'empty X-StorageApi-Token' => ['headers' => ['X-StorageApi-Token' => '']];
+        yield 'empty Authorization' => ['headers' => ['Authorization' => '']];
+        yield 'both empty' => ['headers' => ['Authorization' => '', 'X-StorageApi-Token' => '']];
+    }
+
+    public function testTryFromRequestIgnoresEmptyAuthorizationAndFallsBackToStorageApiToken(): void
+    {
+        $request = Request::create('https://keboola.com');
+        $request->headers->set('Authorization', '');
+        $request->headers->set('X-StorageApi-Token', 'legacy-token');
+
+        $credential = RequestToken::tryFromRequest($request);
+
+        self::assertNotNull($credential);
+        self::assertSame('legacy-token', $credential->token);
+        self::assertSame(RequestTokenType::StorageToken, $credential->type);
+    }
 }

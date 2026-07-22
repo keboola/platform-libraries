@@ -9,22 +9,28 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Security\Core\Exception\AuthenticationException;
 
 /**
+ * @template TCredential
  * @template TokenType of TokenInterface
  */
 interface TokenAuthenticatorInterface
 {
     /**
-     * Extract token from request. Returns null if no valid token header found.
+     * Extract the credential the request carries (the shape is authenticator-specific), or null if
+     * none is present. Called once per request; its result is handed straight to
+     * {@see self::authenticateToken()}.
+     *
+     * @return TCredential|null
      */
-    public function extractToken(Request $request): ?string;
+    public function extractCredential(Request $request): mixed;
 
     /**
+     * @param TCredential $credential
      * @return TokenType
      * @throws AuthenticationException
      */
     public function authenticateToken(
         AuthAttributeInterface $authAttribute,
-        string $token,
+        mixed $credential,
         Request $request,
     ): TokenInterface;
 

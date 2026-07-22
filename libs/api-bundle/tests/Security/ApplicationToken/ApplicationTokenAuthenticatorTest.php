@@ -330,7 +330,7 @@ class ApplicationTokenAuthenticatorTest extends TestCase
         $request = Request::create('https://keboola.com');
         $request->headers->set('X-KBC-ManageApiToken', 'my-manage-token');
 
-        self::assertSame('my-manage-token', $authenticator->extractToken($request));
+        self::assertSame('my-manage-token', $authenticator->extractCredential($request));
     }
 
     public function testExtractTokenReturnsNullWhenNoHeader(): void
@@ -341,7 +341,7 @@ class ApplicationTokenAuthenticatorTest extends TestCase
 
         $request = Request::create('https://keboola.com');
 
-        self::assertNull($authenticator->extractToken($request));
+        self::assertNull($authenticator->extractCredential($request));
     }
 
     public function testExtractTokenReturnsServiceAccountHeaderVerbatim(): void
@@ -354,7 +354,7 @@ class ApplicationTokenAuthenticatorTest extends TestCase
         $request->headers->set('X-Kubernetes-Authorization', 'Bearer my-jwt-token');
 
         // The Bearer scheme is kept here; it is stripped in authenticateToken.
-        self::assertSame('Bearer my-jwt-token', $authenticator->extractToken($request));
+        self::assertSame('Bearer my-jwt-token', $authenticator->extractCredential($request));
     }
 
     public function testExtractTokenPrefersManageHeaderOverServiceAccountHeader(): void
@@ -367,7 +367,7 @@ class ApplicationTokenAuthenticatorTest extends TestCase
         $request->headers->set('X-KBC-ManageApiToken', 'my-manage-token');
         $request->headers->set('X-Kubernetes-Authorization', 'Bearer my-jwt-token');
 
-        self::assertSame('my-manage-token', $authenticator->extractToken($request));
+        self::assertSame('my-manage-token', $authenticator->extractCredential($request));
     }
 
     public function testAuthenticateTokenUsesManageClientForManageHeader(): void
@@ -462,9 +462,9 @@ class ApplicationTokenAuthenticatorTest extends TestCase
         $request = Request::create('https://keboola.com');
         $request->headers->set('X-KBC-ManageApiToken', '');
 
-        // An empty Manage header is still a present-but-invalid value; extractToken returns it
+        // An empty Manage header is still a present-but-invalid value; extractCredential returns it
         // verbatim and the emptiness is rejected later in authenticateToken.
-        self::assertSame('', $authenticator->extractToken($request));
+        self::assertSame('', $authenticator->extractCredential($request));
     }
 
     public function testEmptyManageHeaderTakesPrecedenceOverServiceAccountHeader(): void
@@ -479,7 +479,7 @@ class ApplicationTokenAuthenticatorTest extends TestCase
 
         // Whichever header the caller chose to send wins, even when empty — sending both is a
         // caller error, but we don't try to "fix it up" by silently falling back.
-        self::assertSame('', $authenticator->extractToken($request));
+        self::assertSame('', $authenticator->extractCredential($request));
     }
 
     public function testAuthenticateTokenRejectsEmptyManageHeader(): void

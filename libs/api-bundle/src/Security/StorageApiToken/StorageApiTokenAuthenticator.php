@@ -8,6 +8,7 @@ use Keboola\ApiBundle\Attribute\AuthAttributeInterface;
 use Keboola\ApiBundle\Attribute\StorageApiTokenAuth;
 use Keboola\ApiBundle\Security\TokenAuthenticatorInterface;
 use Keboola\ApiBundle\Security\TokenInterface;
+use Keboola\StorageApiBranch\Factory\AuthType;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 
@@ -17,70 +18,45 @@ use Symfony\Component\Security\Core\Exception\AccessDeniedException;
  * exchanged through Manage API's auth-bridge resolver, which returns the legacy Storage token
  * together with its full detail, so no Storage verification call follows. Both paths are
  * implemented by {@see StorageApiTokenFactory} and yield a {@see StorageApiToken}; this
- * authenticator only extracts the token, picks the path and checks the required features.
+ * authenticator only classifies the token, picks the path and checks the required features.
  *
- * @implements TokenAuthenticatorInterface<StorageApiToken>
+ * @implements TokenAuthenticatorInterface<RequestToken, StorageApiToken>
  */
 class StorageApiTokenAuthenticator implements TokenAuthenticatorInterface
 {
-    private const BEARER_PATTERN = '/^Bearer\s+(.+)$/i';
-
     public function __construct(
         private readonly StorageApiTokenFactory $tokenFactory,
     ) {
     }
 
-    public function extractToken(Request $request): ?string
+    public function extractCredential(Request $request): ?RequestToken
     {
-        // Check Authorization header first
-        $authHeader = $request->headers->get('Authorization');
-        if ($authHeader !== null) {
-            // Validate it's a Bearer token and strip prefix
-            if (preg_match(self::BEARER_PATTERN, $authHeader, $matches)) {
-                return $matches[1];
-            }
-            return $authHeader;
-        }
-
-        // Check X-StorageApi-Token header
-        return $request->headers->get('X-StorageApi-Token');
+        return RequestToken::tryFromRequest($request);
     }
 
+    /**
+     * Routes the already-classified credential to the matching {@see StorageApiTokenFactory} method:
+     * a programmatic token is exchanged, an OAuth bearer / legacy Storage token is verified. The
+     * credential comes straight from {@see self::extractCredential()} — the request is not parsed
+     * again here.
+     *
+     * @param RequestToken $credential
+     */
     public function authenticateToken(
         AuthAttributeInterface $authAttribute,
-        string $token,
+        mixed $credential,
         Request $request,
     ): StorageApiToken {
         assert($authAttribute instanceof StorageApiTokenAuth);
 
-        // Exchange is restricted to programmatic tokens that explicitly arrive as
-        // `Authorization: Bearer <kbc_at|kbc_pat>`. A bare `Authorization: <kbc_...>` or
-        // `X-StorageApi-Token: kbc_...` is an undocumented shape and stays on the legacy
-        // verification path, preserving pre-exchange behaviour.
-        if ($this->isProgrammaticBearerToken($request, $token)) {
-            return $this->tokenFactory->createFromProgrammaticToken($request, $token);
-        }
-
-        return $this->tokenFactory->createFromRequest($request);
-    }
-
-    /**
-     * True only when $token is a programmatic token and is exactly the value presented as
-     * `Authorization: Bearer <kbc_...>`. Other carriers (bare Authorization value,
-     * X-StorageApi-Token) are not eligible for exchange. Comparing against $token guarantees
-     * the exchanged token is the one {@see self::extractToken()} returned.
-     */
-    private function isProgrammaticBearerToken(Request $request, string $token): bool
-    {
-        if (!ProgrammaticToken::matches($token)) {
-            return false;
-        }
-
-        $authHeader = $request->headers->get('Authorization');
-
-        return $authHeader !== null
-            && preg_match(self::BEARER_PATTERN, $authHeader, $matches) === 1
-            && $matches[1] === $token;
+        return match ($credential->type) {
+            RequestTokenType::Programmatic => $this->tokenFactory
+                ->exchangeFromProgrammaticToken($request, $credential->token),
+            RequestTokenType::OAuthToken => $this->tokenFactory
+                ->createFromValue($request, $credential->token, AuthType::BEARER),
+            RequestTokenType::StorageToken => $this->tokenFactory
+                ->createFromValue($request, $credential->token, AuthType::STORAGE_TOKEN),
+        };
     }
 
     public function authorizeToken(AuthAttributeInterface $authAttribute, TokenInterface $token): void

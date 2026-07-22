@@ -9,6 +9,7 @@ use Keboola\ApiBundle\Security\ApplicationToken\ManageApiClientFactory;
 use Keboola\ApiBundle\Security\StorageApiToken\StorageApiTokenAuthenticator;
 use Keboola\ApiBundle\Security\StorageApiToken\StorageApiTokenFactory;
 use Keboola\ApiBundle\StorageApiClient\StorageClientApiFactoryResolver;
+use Keboola\ApiBundle\StorageApiClient\StorageClientRequestFactory;
 use Keboola\ManageApi\Client as ManageApiClient;
 use Keboola\ServiceClient\ServiceClient;
 use Keboola\StorageApiBranch\Factory\ClientOptions;
@@ -35,6 +36,29 @@ class KeboolaApiExtensionTest extends TestCase
         return $container;
     }
 
+    /**
+     * StorageClientRequestFactory is the single Storage ClientWrapper builder: both token
+     * verification ({@see StorageApiTokenFactory}) and the controller-facing resolver reference the
+     * very same service. Assert that, then return its base ClientOptions definition.
+     */
+    private function resolveSharedBaseClientOptions(ContainerBuilder $container): Definition
+    {
+        $verificationRef = $container->getDefinition(StorageApiTokenFactory::class)
+            ->getArgument('$clientFactory');
+        self::assertInstanceOf(Reference::class, $verificationRef);
+        self::assertSame(StorageClientRequestFactory::class, (string) $verificationRef);
+
+        $resolverRef = $container->getDefinition(StorageClientApiFactoryResolver::class)
+            ->getArgument('$storageClientRequestFactory');
+        self::assertInstanceOf(Reference::class, $resolverRef);
+        self::assertSame((string) $verificationRef, (string) $resolverRef);
+
+        $baseOptionsRef = $container->getDefinition((string) $resolverRef)->getArgument('$baseClientOptions');
+        self::assertInstanceOf(Reference::class, $baseOptionsRef);
+
+        return $container->getDefinition((string) $baseOptionsRef);
+    }
+
     // -------------------------------------------------------------------------
     // Service registration
     // -------------------------------------------------------------------------
@@ -50,6 +74,10 @@ class KeboolaApiExtensionTest extends TestCase
         self::assertTrue(
             $container->hasDefinition(KeboolaApiExtension::STORAGE_TOKEN_RESOLVER_CLIENT_ID),
             'Storage token resolver client must be registered',
+        );
+        self::assertTrue(
+            $container->hasDefinition(StorageClientRequestFactory::class),
+            'StorageClientRequestFactory must be registered',
         );
         self::assertTrue(
             $container->hasDefinition(StorageApiTokenAuthenticator::class),
@@ -69,8 +97,7 @@ class KeboolaApiExtensionTest extends TestCase
         $definition = $container->getDefinition(StorageClientApiFactoryResolver::class);
         self::assertArrayHasKey('controller.argument_value_resolver', $definition->getTags());
 
-        $baseClientOptions = $definition->getArgument('$baseClientOptions');
-        self::assertInstanceOf(Definition::class, $baseClientOptions);
+        $baseClientOptions = $this->resolveSharedBaseClientOptions($container);
         self::assertSame(ClientOptions::class, $baseClientOptions->getClass());
 
         // userAgent is the configured app name
@@ -121,11 +148,15 @@ class KeboolaApiExtensionTest extends TestCase
         );
     }
 
-    public function testTokenFactoryReceivesResolverClientAndLogger(): void
+    public function testTokenFactoryReceivesClientFactoryResolverClientAndLogger(): void
     {
         $container = $this->buildContainer([[]]);
 
         $definition = $container->getDefinition(StorageApiTokenFactory::class);
+
+        $clientFactory = $definition->getArgument('$clientFactory');
+        self::assertInstanceOf(Reference::class, $clientFactory);
+        self::assertSame(StorageClientRequestFactory::class, (string) $clientFactory);
 
         $resolverClient = $definition->getArgument('$resolverClient');
         self::assertInstanceOf(Reference::class, $resolverClient);
@@ -164,8 +195,7 @@ class KeboolaApiExtensionTest extends TestCase
             ],
         ]]);
 
-        $base = $container->getDefinition(StorageClientApiFactoryResolver::class)->getArgument('$baseClientOptions');
-        self::assertInstanceOf(Definition::class, $base);
+        $base = $this->resolveSharedBaseClientOptions($container);
 
         self::assertSame(10, $base->getArgument('$backoffMaxTries'));
         self::assertSame(5, $base->getArgument('$awsRetries'));
@@ -186,8 +216,7 @@ class KeboolaApiExtensionTest extends TestCase
             ],
         ]]);
 
-        $base = $container->getDefinition(StorageClientApiFactoryResolver::class)->getArgument('$baseClientOptions');
-        self::assertInstanceOf(Definition::class, $base);
+        $base = $this->resolveSharedBaseClientOptions($container);
 
         $logger = $base->getArgument('$logger');
         self::assertInstanceOf(Reference::class, $logger);
@@ -200,8 +229,7 @@ class KeboolaApiExtensionTest extends TestCase
             'storage_client_options' => 'app.storage_options',
         ]]);
 
-        $base = $container->getDefinition(StorageClientApiFactoryResolver::class)->getArgument('$baseClientOptions');
-        self::assertInstanceOf(Definition::class, $base);
+        $base = $this->resolveSharedBaseClientOptions($container);
 
         $calls = $base->getMethodCalls();
         self::assertCount(1, $calls);
@@ -224,8 +252,7 @@ class KeboolaApiExtensionTest extends TestCase
     {
         $container = $this->buildContainer([[]]);
 
-        $base = $container->getDefinition(StorageClientApiFactoryResolver::class)->getArgument('$baseClientOptions');
-        self::assertInstanceOf(Definition::class, $base);
+        $base = $this->resolveSharedBaseClientOptions($container);
 
         self::assertSame([], $base->getMethodCalls());
         self::assertSame(

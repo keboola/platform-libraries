@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Keboola\ApiBundle\StorageApiClient;
 
 use Keboola\ApiBundle\Security\StorageApiToken\StorageApiToken;
-use Keboola\StorageApiBranch\Factory\ClientOptions;
 use RuntimeException;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Controller\ValueResolverInterface;
@@ -15,7 +14,7 @@ use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInt
 class StorageClientApiFactoryResolver implements ValueResolverInterface
 {
     public function __construct(
-        private readonly ClientOptions $baseClientOptions,
+        private readonly StorageClientRequestFactory $storageClientRequestFactory,
         private readonly TokenStorageInterface $tokenStorage,
     ) {
     }
@@ -28,7 +27,7 @@ class StorageClientApiFactoryResolver implements ValueResolverInterface
 
         $user = $this->tokenStorage->getToken()?->getUser();
         if ($user instanceof StorageApiToken) {
-            return [new StorageClientApiFactory($this->baseClientOptions, $request, $user)];
+            return [new StorageClientApiFactory($this->storageClientRequestFactory, $request, $user)];
         }
 
         if ($argument->isNullable()) {

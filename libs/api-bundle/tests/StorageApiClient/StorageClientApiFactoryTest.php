@@ -6,6 +6,7 @@ namespace Keboola\ApiBundle\Tests\StorageApiClient;
 
 use Keboola\ApiBundle\Security\StorageApiToken\StorageApiToken;
 use Keboola\ApiBundle\StorageApiClient\StorageClientApiFactory;
+use Keboola\ApiBundle\StorageApiClient\StorageClientRequestFactory;
 use Keboola\StorageApiBranch\Factory\AuthType;
 use Keboola\StorageApiBranch\Factory\ClientOptions;
 use PHPUnit\Framework\TestCase;
@@ -19,7 +20,7 @@ class StorageClientApiFactoryTest extends TestCase
         ?StorageApiToken $token = null,
     ): StorageClientApiFactory {
         return new StorageClientApiFactory(
-            $baseClientOptions,
+            new StorageClientRequestFactory($baseClientOptions),
             $request,
             $token ?? new StorageApiToken([], 'bound-token', AuthType::STORAGE_TOKEN),
         );

@@ -102,7 +102,7 @@ class AttributeAuthenticatorTest extends TestCase
 
         $tokenAuthenticator = $this->createMock(TokenAuthenticatorInterface::class);
         $tokenAuthenticator->expects(self::once())
-            ->method('extractToken')
+            ->method('extractCredential')
             ->with($request)
             ->willReturn(null)
         ;
@@ -192,7 +192,7 @@ class AttributeAuthenticatorTest extends TestCase
 
         $failingAuthenticator = $this->createMock(TokenAuthenticatorInterface::class);
         $failingAuthenticator->expects(self::once())
-            ->method('extractToken')
+            ->method('extractCredential')
             ->with($request)
             ->willReturn(null)
         ;
@@ -304,7 +304,7 @@ class AttributeAuthenticatorTest extends TestCase
     }
 
     /**
-     * @return TokenAuthenticatorInterface<TokenInterface>
+     * @return TokenAuthenticatorInterface<mixed, TokenInterface>
      */
     private function createSuccessAuthenticator(
         TokenInterface $token,
@@ -312,7 +312,7 @@ class AttributeAuthenticatorTest extends TestCase
     ): TokenAuthenticatorInterface {
         $authenticator = $this->createMock(TokenAuthenticatorInterface::class);
         $authenticator->expects(self::once())
-            ->method('extractToken')
+            ->method('extractCredential')
             ->with($request ?? $this->anything())
             ->willReturn('token')
         ;
@@ -339,13 +339,13 @@ class AttributeAuthenticatorTest extends TestCase
     }
 
     /**
-     * @return TokenAuthenticatorInterface<TokenInterface>
+     * @return TokenAuthenticatorInterface<mixed, TokenInterface>
      */
     private function createAuthenticatorWithFailingAuthentication(Request $request): TokenAuthenticatorInterface
     {
         $authenticator = $this->createMock(TokenAuthenticatorInterface::class);
         $authenticator->expects(self::once())
-            ->method('extractToken')
+            ->method('extractCredential')
             ->with($request)
             ->willReturn('token')
         ;
@@ -359,7 +359,7 @@ class AttributeAuthenticatorTest extends TestCase
     }
 
     /**
-     * @return TokenAuthenticatorInterface<TokenInterface>
+     * @return TokenAuthenticatorInterface<mixed, TokenInterface>
      */
     private function createAuthenticatorWithFailingAuthorization(
         Request $request,
@@ -367,7 +367,7 @@ class AttributeAuthenticatorTest extends TestCase
     ): TokenAuthenticatorInterface {
         $authenticator = $this->createMock(TokenAuthenticatorInterface::class);
         $authenticator->expects(self::once())
-            ->method('extractToken')
+            ->method('extractCredential')
             ->with($request)
             ->willReturn('token')
         ;

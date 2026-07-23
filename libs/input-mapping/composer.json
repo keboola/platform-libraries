@@ -22,7 +22,7 @@
         "keboola/key-generator": "*@dev",
         "keboola/staging-provider": "*@dev",
         "keboola/storage-api-client": "^18.9.0",
-        "keboola/storage-api-php-client-branch-wrapper": "^6.0",
+        "keboola/storage-api-php-client-branch-wrapper": "^7.0",
         "symfony/config": "^5.4|^6.0|^7.0",
         "symfony/finder": "^5.4|^6.0|^7.0",
         "symfony/serializer": "^5.4|^6.0|^7.0",

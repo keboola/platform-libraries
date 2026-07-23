@@ -93,7 +93,7 @@ class DownloadTablesWorkspaceBigQueryTest extends AbstractTestCase
         self::assertNotEmpty($jobParams);
         self::assertCount(1, $jobParams['input']);
         self::assertEquals('test1', $jobParams['input'][0]['destination']);
-        self::assertEquals('VIEW', $jobParams['input'][0]['loadType']);
+        self::assertEquals('CLONE', $jobParams['input'][0]['loadType']);
 
         $workspaceCreateJob = array_shift($jobs);
         self::assertArrayHasKey('operationName', $workspaceCreateJob);

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\ApiBundle\Tests\StorageApiClient;
 
+use Closure;
 use Keboola\ApiBundle\Security\StorageApiToken\StorageApiToken;
 use Keboola\ApiBundle\StorageApiClient\StorageClientApiFactory;
 use Keboola\ApiBundle\StorageApiClient\StorageClientRequestFactory;
@@ -18,9 +19,10 @@ class StorageClientApiFactoryTest extends TestCase
         ClientOptions $baseClientOptions,
         Request $request,
         ?StorageApiToken $token = null,
+        ?Closure $runIdGenerator = null,
     ): StorageClientApiFactory {
         return new StorageClientApiFactory(
-            new StorageClientRequestFactory($baseClientOptions),
+            new StorageClientRequestFactory($baseClientOptions, $runIdGenerator),
             $request,
             $token ?? new StorageApiToken([], 'bound-token', AuthType::STORAGE_TOKEN),
         );
@@ -70,9 +72,11 @@ class StorageClientApiFactoryTest extends TestCase
 
     public function testRunIdGeneratorUsedWhenHeaderMissing(): void
     {
-        $baseOptions = new ClientOptions('https://connection.test');
-        $baseOptions->setRunIdGenerator(fn (ClientOptions $o): string => 'gen-' . $o->getUrl());
-        $factory = self::factory($baseOptions, new Request());
+        $factory = self::factory(
+            new ClientOptions('https://connection.test'),
+            new Request(),
+            runIdGenerator: fn (ClientOptions $o): string => 'gen-' . $o->getUrl(),
+        );
 
         self::assertSame(
             'gen-https://connection.test',

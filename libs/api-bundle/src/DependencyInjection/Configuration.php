@@ -52,9 +52,22 @@ class Configuration implements ConfigurationInterface
                             ->cannotBeEmpty()
                             ->info('Service id of a PSR LoggerInterface to use instead of the default @logger.')
                         ->end()
+                        ->scalarNode('run_id_generator')
+                            ->cannotBeEmpty()
+                            ->info(
+                                'Service id of a Closure(ClientOptions): string that generates the Storage '
+                                . 'run id when the request carries no X-KBC-RunId header (unset falls back to '
+                                . 'uniqid("run-")). Not merged into ClientOptions - it is passed to the Storage '
+                                . 'client factory - so it may accompany either the service or individual-options '
+                                . 'form.',
+                            )
+                        ->end()
                     ->end()
                     ->validate()
-                        ->ifTrue(fn(array $v) => isset($v['service']) && count($v) > 1)
+                        // run_id_generator is not a ClientOptions value, so exclude it from the
+                        // service-vs-individual-options exclusivity check.
+                        ->ifTrue(fn(array $v) => isset($v['service'])
+                            && count(array_diff_key($v, ['run_id_generator' => null])) > 1)
                         ->thenInvalid(
                             'storage_client_options: use either a service reference (string) '
                             . 'or individual options, not both.',

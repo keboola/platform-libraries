@@ -156,8 +156,9 @@ incoming token — no external Storage client factory needs to be registered by 
 
 The base options are preconfigured by the bundle: the Connection (Storage API) URL from the
 `ServiceClient`, the shared logger, and the configured `app_name` as user agent. The run id comes
-from the request's `X-KBC-RunId` header; branch / backend come from an optional per-call
-`ClientOptions`.
+from the request's `X-KBC-RunId` header, then an optional configured generator (see
+[Customizing the run id](#customizing-the-run-id)), then a generated `run-*` value; branch / backend
+come from an optional per-call `ClientOptions`.
 
 The client uses the auth type the request was authenticated with: a legacy or exchanged Storage
 token is sent as `X-StorageApi-Token`, while an OAuth token (`Authorization: Bearer …`) is sent with
@@ -211,7 +212,7 @@ keboola_api:
 ```
 
 Or reference a fully-custom `ClientOptions` service — the only way to set options that cannot be
-expressed in YAML (`jobPollRetryDelay` / `runIdGenerator` closures, `BackendConfiguration`):
+expressed in YAML (`jobPollRetryDelay` closure, `BackendConfiguration`):
 
 ```yaml
 keboola_api:
@@ -229,6 +230,40 @@ $services->set('app.storage_client_options', ClientOptions::class)
 
 The service's non-null values are merged over the bundle base via `ClientOptions::addValuesFrom()`.
 The `service` (string) form and the individual options are mutually exclusive.
+
+### Customizing the run id
+
+By default the Storage run id is the request's `X-KBC-RunId` header, falling back to a generated
+`run-*` value. To generate it yourself when the header is absent, register a
+`Closure(ClientOptions): string` service and point the `storage_client_options.run_id_generator`
+knob at it:
+
+```yaml
+keboola_api:
+  storage_client_options:
+    run_id_generator: app.storage_run_id_generator   # service id
+```
+
+```php
+// services.php — a Closure isn't directly constructible, so expose it from a factory.
+$services->set('app.storage_run_id_generator', Closure::class)
+    ->factory([RunIdGeneratorFactory::class, 'create']);   // returns fn(ClientOptions $o): string
+```
+
+The closure receives the resolved per-call `ClientOptions` and must return the run id; the
+`X-KBC-RunId` header still wins when present. This replaces setting a `runIdGenerator` on a custom
+`ClientOptions` service, which the Storage client wrapper no longer supports.
+
+`run_id_generator` is grouped under `storage_client_options` for cohesion but is passed to the
+client factory rather than merged into `ClientOptions`, so — unlike the other keys — it may be
+combined with the `service` form:
+
+```yaml
+keboola_api:
+  storage_client_options:
+    service: app.storage_client_options       # custom ClientOptions (jobPollRetryDelay, …)
+    run_id_generator: app.storage_run_id_generator
+```
 
 ## Testing controllers
 

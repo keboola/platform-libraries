@@ -52,9 +52,10 @@ class StorageClientRequestFactoryTest extends TestCase
 
     public function testRunIdGeneratorUsedWhenHeaderMissing(): void
     {
-        $base = new ClientOptions('https://connection.test');
-        $base->setRunIdGenerator(fn (ClientOptions $o): string => 'gen-' . $o->getUrl());
-        $factory = new StorageClientRequestFactory($base);
+        $factory = new StorageClientRequestFactory(
+            new ClientOptions('https://connection.test'),
+            fn (ClientOptions $o): string => 'gen-' . $o->getUrl(),
+        );
 
         $runId = $factory
             ->createClientWrapper('my-token', AuthType::STORAGE_TOKEN, new Request())
@@ -62,6 +63,27 @@ class StorageClientRequestFactoryTest extends TestCase
             ->getRunId();
 
         self::assertSame('gen-https://connection.test', $runId);
+    }
+
+    public function testRunIdGeneratorNotCalledWhenHeaderPresent(): void
+    {
+        $factory = new StorageClientRequestFactory(
+            new ClientOptions('https://connection.test'),
+            static function (ClientOptions $o): string {
+                self::fail('run id generator must not be called when the X-KBC-RunId header is present');
+            },
+        );
+
+        $runId = $factory
+            ->createClientWrapper(
+                'my-token',
+                AuthType::STORAGE_TOKEN,
+                new Request([], [], [], [], [], ['HTTP_X_KBC_RUNID' => '42']),
+            )
+            ->getClientOptionsReadOnly()
+            ->getRunId();
+
+        self::assertSame('42', $runId);
     }
 
     public function testPerCallOverridesAreMergedButResolvedTokenAndAuthTypeWin(): void

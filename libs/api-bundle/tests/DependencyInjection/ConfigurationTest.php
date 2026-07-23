@@ -79,6 +79,38 @@ class ConfigurationTest extends TestCase
         ]);
     }
 
+    public function testStorageClientOptionsRunIdGeneratorAllowedWithIndividualOptions(): void
+    {
+        $config = $this->process([
+            'storage_client_options' => [
+                'backoff_max_tries' => 10,
+                'run_id_generator' => 'app.run_id_generator',
+            ],
+        ]);
+
+        self::assertSame(
+            ['backoff_max_tries' => 10, 'run_id_generator' => 'app.run_id_generator'],
+            $config['storage_client_options'],
+        );
+    }
+
+    public function testStorageClientOptionsRunIdGeneratorAllowedAlongsideServiceForm(): void
+    {
+        // run_id_generator is not a ClientOptions value, so it is exempt from the
+        // service-vs-individual-options exclusivity and may accompany the service form.
+        $config = $this->process([
+            'storage_client_options' => [
+                'service' => 'app.storage_options',
+                'run_id_generator' => 'app.run_id_generator',
+            ],
+        ]);
+
+        self::assertSame(
+            ['service' => 'app.storage_options', 'run_id_generator' => 'app.run_id_generator'],
+            $config['storage_client_options'],
+        );
+    }
+
     public function testStorageClientOptionsRejectsNonIntegerBackoff(): void
     {
         $this->expectException(InvalidConfigurationException::class);

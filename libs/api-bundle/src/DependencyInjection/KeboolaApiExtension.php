@@ -112,9 +112,17 @@ class KeboolaApiExtension extends Extension
             ->setArguments([self::SERVICE_ACCOUNT_TOKEN_PATH])
         ;
 
-        $container->register(StorageClientRequestFactory::class)
-            ->setArgument('$baseClientOptions', new Reference(self::STORAGE_CLIENT_BASE_OPTIONS_ID))
-        ;
+        $requestFactory = $container->register(StorageClientRequestFactory::class)
+            ->setArgument('$baseClientOptions', new Reference(self::STORAGE_CLIENT_BASE_OPTIONS_ID));
+
+        // Optional run id generator: a consumer-registered Closure(ClientOptions): string service.
+        // Grouped under storage_client_options for config cohesion but wired to the factory (not
+        // merged into ClientOptions, which no longer carries a generator in branch-wrapper 7.0).
+        if (isset($storageClientOptions['run_id_generator'])) {
+            $runIdGenerator = $storageClientOptions['run_id_generator'];
+            assert(is_string($runIdGenerator));
+            $requestFactory->setArgument('$runIdGenerator', new Reference($runIdGenerator));
+        }
 
         $container->register(StorageApiTokenFactory::class)
             ->setArgument('$clientFactory', new Reference(StorageClientRequestFactory::class))

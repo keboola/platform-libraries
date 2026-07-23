@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\ApiBundle\Tests\DependencyInjection;
 
+use Closure;
 use Keboola\ApiBundle\DependencyInjection\KeboolaApiExtension;
 use Keboola\ApiBundle\Security\ApplicationToken\ManageApiClientFactory;
 use Keboola\ApiBundle\Security\StorageApiToken\StorageApiTokenAuthenticator;
@@ -12,11 +13,13 @@ use Keboola\ApiBundle\StorageApiClient\StorageClientApiFactoryResolver;
 use Keboola\ApiBundle\StorageApiClient\StorageClientRequestFactory;
 use Keboola\ManageApi\Client as ManageApiClient;
 use Keboola\ServiceClient\ServiceClient;
+use Keboola\StorageApiBranch\Factory\AuthType;
 use Keboola\StorageApiBranch\Factory\ClientOptions;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\Reference;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 
 class KeboolaApiExtensionTest extends TestCase
@@ -259,5 +262,103 @@ class KeboolaApiExtensionTest extends TestCase
             ['$url', '$logger', '$userAgent'],
             array_keys($base->getArguments()),
         );
+    }
+
+    // -------------------------------------------------------------------------
+    // run_id_generator
+    // -------------------------------------------------------------------------
+
+    public function testRunIdGeneratorServiceIsWiredIntoRequestFactory(): void
+    {
+        $container = $this->buildContainer([[
+            'storage_client_options' => [
+                'run_id_generator' => 'app.run_id_generator',
+            ],
+        ]]);
+
+        $generator = $container->getDefinition(StorageClientRequestFactory::class)
+            ->getArgument('$runIdGenerator');
+
+        self::assertInstanceOf(Reference::class, $generator);
+        self::assertSame('app.run_id_generator', (string) $generator);
+    }
+
+    public function testRunIdGeneratorCoexistsWithCustomClientOptionsService(): void
+    {
+        $container = $this->buildContainer([[
+            'storage_client_options' => [
+                'service' => 'app.storage_options',
+                'run_id_generator' => 'app.run_id_generator',
+            ],
+        ]]);
+
+        // The custom ClientOptions service is still merged onto the base options,
+        $base = $this->resolveSharedBaseClientOptions($container);
+        $calls = $base->getMethodCalls();
+        self::assertCount(1, $calls);
+
+        $call = $calls[0];
+        self::assertIsArray($call);
+        self::assertSame('addValuesFrom', $call[0]);
+        self::assertIsArray($call[1]);
+        self::assertInstanceOf(Reference::class, $call[1][0]);
+        self::assertSame('app.storage_options', (string) $call[1][0]);
+
+        // ...and the generator is still wired into the factory, since it is not a ClientOptions value.
+        $generator = $container->getDefinition(StorageClientRequestFactory::class)
+            ->getArgument('$runIdGenerator');
+        self::assertInstanceOf(Reference::class, $generator);
+        self::assertSame('app.run_id_generator', (string) $generator);
+    }
+
+    public function testRunIdGeneratorAbsentLeavesRequestFactoryWithoutGeneratorArg(): void
+    {
+        $container = $this->buildContainer([[]]);
+
+        // No $runIdGenerator argument means the factory's constructor default (null) applies,
+        // preserving the uniqid('run-') fallback.
+        self::assertArrayNotHasKey(
+            '$runIdGenerator',
+            $container->getDefinition(StorageClientRequestFactory::class)->getArguments(),
+        );
+    }
+
+    /**
+     * The knob passes a service Reference into the factory's {@see Closure} run id generator
+     * argument, so the referenced service must resolve to an actual Closure. This compiles a
+     * container built exactly like the extension wires it (base options + generator Reference) and
+     * instantiates the factory, proving a Closure-typed service is injectable and gets called.
+     */
+    public function testRunIdGeneratorClosureServiceIsInjectedAndUsedOnceCompiled(): void
+    {
+        $container = new ContainerBuilder();
+
+        // A Closure cannot be constructed directly, so a consumer exposes it through a factory;
+        // here a static test factory stands in for that service.
+        $container->register('app.run_id_generator', Closure::class)
+            ->setPublic(true)
+            ->setFactory([self::class, 'createRunIdGenerator']);
+
+        $container->register(StorageClientRequestFactory::class)
+            ->setPublic(true)
+            ->setArgument('$baseClientOptions', new Definition(ClientOptions::class, ['https://connection.test']))
+            ->setArgument('$runIdGenerator', new Reference('app.run_id_generator'));
+
+        $container->compile();
+
+        $factory = $container->get(StorageClientRequestFactory::class);
+        self::assertInstanceOf(StorageClientRequestFactory::class, $factory);
+
+        $runId = $factory
+            ->createClientWrapper('my-token', AuthType::STORAGE_TOKEN, new Request())
+            ->getClientOptionsReadOnly()
+            ->getRunId();
+
+        self::assertSame('generated-run-id', $runId);
+    }
+
+    public static function createRunIdGenerator(): Closure
+    {
+        return static fn (ClientOptions $options): string => 'generated-run-id';
     }
 }

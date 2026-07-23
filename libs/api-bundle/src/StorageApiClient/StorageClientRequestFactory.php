@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\ApiBundle\StorageApiClient;
 
+use Closure;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Keboola\StorageApiBranch\Factory\AuthType;
 use Keboola\StorageApiBranch\Factory\ClientOptions;
@@ -26,8 +27,15 @@ class StorageClientRequestFactory
 {
     public const RUN_ID_HEADER = 'X-KBC-RunId';
 
+    /**
+     * @param ?Closure(ClientOptions): string $runIdGenerator Optional run id generator, called with the
+     *     resolved per-call options when the request carries no {@see self::RUN_ID_HEADER}. Injected by
+     *     the bundle from the `keboola_api.storage_client_options.run_id_generator` service id; owned
+     *     here because 7.0's {@see ClientOptions} no longer carries a generator.
+     */
     public function __construct(
         private readonly ClientOptions $baseClientOptions,
+        private readonly ?Closure $runIdGenerator = null,
     ) {
     }
 
@@ -57,9 +65,8 @@ class StorageClientRequestFactory
             return $runId;
         }
 
-        $runIdGenerator = $options->getRunIdGenerator();
-        if ($runIdGenerator !== null) {
-            $runId = $runIdGenerator($options);
+        if ($this->runIdGenerator !== null) {
+            $runId = ($this->runIdGenerator)($options);
             assert(is_string($runId));
             return $runId;
         }

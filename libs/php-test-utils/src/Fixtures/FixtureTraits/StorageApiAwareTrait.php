@@ -6,6 +6,7 @@ namespace Keboola\PhpTestUtils\Fixtures\FixtureTraits;
 
 use Keboola\ServiceClient\ServiceClient;
 use Keboola\StorageApiBranch\ClientWrapper;
+use Keboola\StorageApiBranch\Factory\AuthType;
 use Keboola\StorageApiBranch\Factory\ClientOptions;
 
 trait StorageApiAwareTrait
@@ -20,6 +21,7 @@ trait StorageApiAwareTrait
         $storageClientOptions = new ClientOptions(
             url: (new ServiceClient($hostnameSuffix))->getConnectionServiceUrl(),
             token: $token,
+            authType: AuthType::STORAGE_TOKEN,
         );
         $this->clientWrapper = (new ClientWrapper($storageClientOptions));
     }

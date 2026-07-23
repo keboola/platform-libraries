@@ -30,7 +30,7 @@
         "ext-json": "*",
         "doctrine/orm": "^3.5",
         "keboola/service-client": "^1.4",
-        "keboola/storage-api-php-client-branch-wrapper": "^6.4",
+        "keboola/storage-api-php-client-branch-wrapper": "^7.0",
         "psr/log": "^3.0",
         "symfony/framework-bundle": "^7.3",
         "symfony/uid": "^v7.3"

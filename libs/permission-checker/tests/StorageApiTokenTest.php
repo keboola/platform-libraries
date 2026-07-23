@@ -8,6 +8,7 @@ use Keboola\PermissionChecker\Feature;
 use Keboola\PermissionChecker\Role;
 use Keboola\PermissionChecker\StorageApiToken;
 use Keboola\PermissionChecker\TokenPermission;
+use Keboola\StorageApiBranch\Factory\AuthType;
 use Keboola\StorageApiBranch\StorageApiToken as BaseStorageApiToken;
 use PHPUnit\Framework\TestCase;
 use ValueError;
@@ -79,7 +80,7 @@ class StorageApiTokenTest extends TestCase
         $token = StorageApiToken::fromTokenInterface(new class extends BaseStorageApiToken {
             public function __construct()
             {
-                parent::__construct([], '');
+                parent::__construct([], '', AuthType::STORAGE_TOKEN);
             }
 
             public function getFeatures(): array

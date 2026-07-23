@@ -356,10 +356,12 @@ class LoadTableTaskCreatorTest extends AbstractTestCase
         // (default-branch) table already exists and is NON-typed, typed creation must be
         // suppressed and a plain non-typed table created instead (AJDA-3014).
         $settings = self::createMock(OutputMappingSettings::class);
-        // Both typed-creation branches are gated on $canCreateTypedTable first, which is false
-        // here and short-circuits, so the feature flags are never even queried.
+        // The typed-creation branches are gated on $canCreateTypedTable first, which is false here
+        // and short-circuits, so hasNativeTypesFeature() is never queried. hasNewNativeTypesFeature()
+        // is queried in buildLoadOptions and again in the suppressed-schema branch (returns false
+        // here since this is the metadata path, so a plain non-typed table is created via columns).
         $settings->expects(self::never())->method('hasNativeTypesFeature');
-        $settings->expects(self::once())->method('hasNewNativeTypesFeature')->willReturn(false);
+        $settings->expects(self::exactly(2))->method('hasNewNativeTypesFeature')->willReturn(false);
 
         $strategy = self::createMock(LocalTableStrategy::class);
         $strategy->expects(self::once())

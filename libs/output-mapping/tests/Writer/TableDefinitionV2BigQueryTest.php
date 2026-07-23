@@ -11,6 +11,7 @@ use Keboola\OutputMapping\SystemMetadata;
 use Keboola\OutputMapping\Tests\AbstractTestCase;
 use Keboola\OutputMapping\Tests\Needs\NeedsEmptyBigqueryOutputBucket;
 use Keboola\StorageApiBranch\ClientWrapper;
+use Keboola\StorageApiBranch\Factory\AuthType;
 use Keboola\StorageApiBranch\Factory\ClientOptions;
 use PHPUnit\Util\Test;
 
@@ -363,6 +364,7 @@ class TableDefinitionV2BigQueryTest extends AbstractTestCase
         $clientOptions = (new ClientOptions())
             ->setUrl((string) getenv('BIGQUERY_STORAGE_API_URL'))
             ->setToken((string) getenv('BIGQUERY_STORAGE_API_TOKEN'))
+            ->setAuthType(AuthType::STORAGE_TOKEN)
             ->setBranchId($branchId)
             ->setBackoffMaxTries(1)
             ->setJobPollRetryDelay(function () {

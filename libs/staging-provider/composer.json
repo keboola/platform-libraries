@@ -31,7 +31,7 @@
         "ext-json": "*",
         "keboola/key-generator": "*@dev",
         "keboola/storage-api-client": "^18.1",
-        "keboola/storage-api-php-client-branch-wrapper": "^6.0"
+        "keboola/storage-api-php-client-branch-wrapper": "^7.0"
     },
     "require-dev": {
         "keboola/coding-standard": ">=14.0",

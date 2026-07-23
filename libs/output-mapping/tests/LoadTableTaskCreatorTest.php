@@ -14,6 +14,7 @@ use Keboola\OutputMapping\Mapping\MappingFromProcessedConfiguration;
 use Keboola\OutputMapping\Mapping\MappingFromRawConfigurationAndPhysicalDataWithManifest;
 use Keboola\OutputMapping\Mapping\MappingStorageSources;
 use Keboola\OutputMapping\Storage\BucketInfo;
+use Keboola\OutputMapping\Storage\TableInfo;
 use Keboola\OutputMapping\Tests\AbstractTestCase;
 use Keboola\OutputMapping\Tests\Needs\NeedsEmptyOutputBucket;
 use Keboola\OutputMapping\Tests\Needs\NeedsTestTables;
@@ -345,6 +346,140 @@ class LoadTableTaskCreatorTest extends AbstractTestCase
             $this->emptyOutputBucketId . '.test0',
             $loadTask->getDestinationTableName(),
         );
+    }
+
+    #[NeedsEmptyOutputBucket]
+    public function testNativeTypeCreationSuppressedWhenDefaultBranchTableNonTyped(): void
+    {
+        // The source has native types enabled and column metadata, so it would normally create a
+        // typed table (see testNativeTypeLoadTaskTableNotExists). Because the production
+        // (default-branch) table already exists and is NON-typed, typed creation must be
+        // suppressed and a plain non-typed table created instead (AJDA-3014).
+        $settings = self::createMock(OutputMappingSettings::class);
+        // Both typed-creation branches are gated on $canCreateTypedTable first, which is false
+        // here and short-circuits, so the feature flags are never even queried.
+        $settings->expects(self::never())->method('hasNativeTypesFeature');
+        $settings->expects(self::once())->method('hasNewNativeTypesFeature')->willReturn(false);
+
+        $strategy = self::createMock(LocalTableStrategy::class);
+        $strategy->expects(self::once())
+            ->method('prepareLoadTaskOptions')
+            ->willReturn([]);
+
+        $source = self::createMock(MappingFromProcessedConfiguration::class);
+        $source->expects(self::once())->method('hasColumns')->willReturn(true);
+        $source->expects(self::exactly(3))->method('getDestination')->willReturn(
+            new MappingDestination($this->emptyOutputBucketId . '.destinationTable'),
+        );
+        $source->expects(self::once())->method('getPrimaryKey')->willReturn([]);
+        $source->expects(self::exactly(2))->method('getColumns')->willReturn(['Id', 'Name']);
+
+        $storageSources = self::createMock(MappingStorageSources::class);
+        $storageSources->expects(self::exactly(2))->method('didTableExistBefore')->willReturn(false);
+        $storageSources->expects(self::once())->method('getDefaultBranchTable')->willReturn(
+            new TableInfo([
+                'id' => $this->emptyOutputBucketId . '.destinationTable',
+                'columns' => ['Id', 'Name'],
+                'primaryKey' => [],
+                'isTyped' => false,
+            ]),
+        );
+
+        $loadTableTaskCreator = new LoadTableTaskCreator(
+            $this->clientWrapper,
+            $this->testLogger,
+        );
+        $loadTask = $loadTableTaskCreator->create(
+            strategy: $strategy,
+            source: $source,
+            storageSources: $storageSources,
+            settings: $settings,
+        );
+
+        self::assertInstanceOf(LoadTableTask::class, $loadTask);
+        self::assertTrue($loadTask->isUsingFreshlyCreatedTable());
+        $storageTable = $this->clientWrapper->getTableAndFileStorageClient()->getTable(
+            $this->emptyOutputBucketId . '.destinationTable',
+        );
+
+        self::assertFalse($storageTable['isTyped']);
+        self::assertSame(['Id', 'Name'], $storageTable['columns']);
+    }
+
+    #[NeedsEmptyOutputBucket]
+    public function testNativeTypeCreationAllowedWhenDefaultBranchTableTyped(): void
+    {
+        // Same setup as testNativeTypeLoadTaskTableNotExists, but with a TYPED production
+        // (default-branch) table present. The fix must not over-suppress: typed creation stays
+        // allowed when the production table is already typed (AJDA-3014).
+        $settings = self::createMock(OutputMappingSettings::class);
+        $settings->expects(self::once())->method('hasNativeTypesFeature')->willReturn(true);
+        $settings->expects(self::once())->method('hasBigqueryNativeTypesFeature')->willReturn(false);
+
+        $strategy = self::createMock(LocalTableStrategy::class);
+        $strategy->expects(self::once())
+            ->method('prepareLoadTaskOptions')
+            ->willReturn([]);
+
+        $source = self::createMock(MappingFromProcessedConfiguration::class);
+        $source->expects(self::once())->method('hasColumns')->willReturn(true);
+        $source->expects(self::once())->method('hasColumnMetadata')->willReturn(true);
+        $source->expects(self::once())->method('hasMetadata')->willReturn(false);
+        $source->expects(self::exactly(3))->method('getDestination')->willReturn(
+            new MappingDestination($this->emptyOutputBucketId . '.destinationTable'),
+        );
+        $source->expects(self::exactly(2))->method('getPrimaryKey')->willReturn([]);
+        $source->expects(self::once())->method('getColumnMetadata')->willReturn([
+            new MappingColumnMetadata('col1', [
+                [
+                    'key' => 'KBC.datatype.basetype',
+                    'value' => 'STRING',
+                ],
+            ]),
+            new MappingColumnMetadata('col2', [
+                [
+                    'key' => 'KBC.datatype.basetype',
+                    'value' => 'INTEGER',
+                ],
+            ]),
+        ]);
+
+        $storageSources = self::createMock(MappingStorageSources::class);
+        $storageSources->expects(self::exactly(2))->method('didTableExistBefore')->willReturn(false);
+        $storageSources->expects(self::once())->method('getDefaultBranchTable')->willReturn(
+            new TableInfo([
+                'id' => $this->emptyOutputBucketId . '.destinationTable',
+                'columns' => ['col1', 'col2'],
+                'primaryKey' => [],
+                'isTyped' => true,
+            ]),
+        );
+        $storageSources->expects(self::once())->method('getBucket')->willReturn(
+            new BucketInfo([
+                'id' => $this->emptyOutputBucketId,
+                'backend' => 'Snowflake',
+                'metadata' => [],
+            ]),
+        );
+
+        $loadTableTaskCreator = new LoadTableTaskCreator(
+            $this->clientWrapper,
+            $this->testLogger,
+        );
+        $loadTask = $loadTableTaskCreator->create(
+            strategy: $strategy,
+            source: $source,
+            storageSources: $storageSources,
+            settings: $settings,
+        );
+
+        self::assertInstanceOf(LoadTableTask::class, $loadTask);
+        self::assertTrue($loadTask->isUsingFreshlyCreatedTable());
+        $storageTable = $this->clientWrapper->getTableAndFileStorageClient()->getTable(
+            $this->emptyOutputBucketId . '.destinationTable',
+        );
+
+        self::assertTrue($storageTable['isTyped']);
     }
 
     /**

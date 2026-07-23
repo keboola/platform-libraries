@@ -7,6 +7,7 @@ namespace Keboola\PersmissionChecker\Tests;
 use Keboola\PermissionChecker\PermissionChecker;
 use Keboola\PermissionChecker\PermissionCheckInterface;
 use Keboola\PermissionChecker\StorageApiToken;
+use Keboola\StorageApiBranch\Factory\AuthType;
 use Keboola\StorageApiBranch\StorageApiToken as BaseStorageApiToken;
 use PHPUnit\Framework\TestCase;
 
@@ -17,7 +18,7 @@ class PermissionCheckerTest extends TestCase
         $token = new class extends BaseStorageApiToken {
             public function __construct()
             {
-                parent::__construct([], '');
+                parent::__construct([], '', AuthType::STORAGE_TOKEN);
             }
 
             public function getFeatures(): array

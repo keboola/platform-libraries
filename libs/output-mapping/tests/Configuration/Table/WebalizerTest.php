@@ -8,6 +8,7 @@ use Generator;
 use Keboola\OutputMapping\Configuration\Table\Webalizer;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApiBranch\ClientWrapper;
+use Keboola\StorageApiBranch\Factory\AuthType;
 use Keboola\StorageApiBranch\Factory\ClientOptions;
 use Monolog\Handler\TestHandler;
 use Monolog\Level;
@@ -243,6 +244,7 @@ class WebalizerTest extends TestCase
         $clientOptions = (new ClientOptions())
             ->setUrl((string) getenv('STORAGE_API_URL'))
             ->setToken((string) getenv('STORAGE_API_TOKEN'))
+            ->setAuthType(AuthType::STORAGE_TOKEN)
             ->setBranchId($branchId)
             ->setBackoffMaxTries(1)
             ->setJobPollRetryDelay(function () {

@@ -14,6 +14,7 @@ use Keboola\StorageApi\DevBranches;
 use Keboola\StorageApi\Options\Components\Configuration as StorageConfiguration;
 use Keboola\StorageApi\Options\Components\ConfigurationRow;
 use Keboola\StorageApiBranch\ClientWrapper;
+use Keboola\StorageApiBranch\Factory\AuthType;
 use Keboola\StorageApiBranch\Factory\ClientOptions;
 use Monolog\Handler\TestHandler;
 use Monolog\Logger;
@@ -42,6 +43,7 @@ class ConfigurationVariablesResolverTest extends TestCase
             new ClientOptions(
                 (string) getenv('STORAGE_API_URL'),
                 (string) getenv('STORAGE_API_TOKEN'),
+                authType: AuthType::STORAGE_TOKEN,
             ),
         );
     }
@@ -507,6 +509,7 @@ class ConfigurationVariablesResolverTest extends TestCase
             new ClientOptions(
                 (string) getenv('STORAGE_API_URL'),
                 (string) getenv('STORAGE_API_TOKEN_MASTER'),
+                authType: AuthType::STORAGE_TOKEN,
             ),
         );
 
@@ -516,6 +519,7 @@ class ConfigurationVariablesResolverTest extends TestCase
                 (string) getenv('STORAGE_API_URL'),
                 (string) getenv('STORAGE_API_TOKEN_MASTER'),
                 (string) $branchId,
+                authType: AuthType::STORAGE_TOKEN,
             ),
         );
 

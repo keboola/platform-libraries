@@ -133,8 +133,9 @@ class DownloadTablesAdaptiveTest extends AbstractTestCase
         ]);
 
         $this->expectException(ClientException::class);
-        $this->expectExceptionMessage('Invalid parameters - changedSince: changedSince has to be '
-            . 'compatible with strtotime() or to be a unix timestamp.');
+        $this->expectExceptionMessage(
+            'changedSince has to be compatible with strtotime() or to be a unix timestamp.',
+        );
         $reader->downloadTables(
             $configuration,
             $inputTablesState,

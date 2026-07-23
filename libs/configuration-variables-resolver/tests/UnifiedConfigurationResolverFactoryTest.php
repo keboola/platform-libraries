@@ -9,6 +9,7 @@ use Keboola\ConfigurationVariablesResolver\VaultVariablesApiClientConfiguration;
 use Keboola\ServiceClient\ServiceClient;
 use Keboola\StorageApi\BranchAwareClient;
 use Keboola\StorageApiBranch\ClientWrapper;
+use Keboola\StorageApiBranch\Factory\AuthType;
 use Keboola\StorageApiBranch\StorageApiToken;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
@@ -79,7 +80,7 @@ class UnifiedConfigurationResolverFactoryTest extends TestCase
         $clientWrapperMock->method('getBranchClient')
             ->willReturn($branchAwareClientMock);
         $clientWrapperMock->method('getToken')
-            ->willReturn(new StorageApiToken([], 'token'));
+            ->willReturn(new StorageApiToken([], 'token', AuthType::STORAGE_TOKEN));
 
         $unifiedVariablesResolver = $this->getFactory()->createResolver($clientWrapperMock);
 
@@ -154,7 +155,7 @@ class UnifiedConfigurationResolverFactoryTest extends TestCase
         $clientWrapperMock->method('getBranchClient')
             ->willReturn($branchAwareClientMock);
         $clientWrapperMock->method('getToken')
-            ->willReturn(new StorageApiToken([], 'token'));
+            ->willReturn(new StorageApiToken([], 'token', AuthType::STORAGE_TOKEN));
 
         $unifiedVariablesResolver = $this->getFactory()->createResolver(
             $clientWrapperMock,
@@ -195,7 +196,7 @@ class UnifiedConfigurationResolverFactoryTest extends TestCase
         $clientWrapperMock->method('getBranchClient')
             ->willReturn($branchAwareClientMock);
         $clientWrapperMock->method('getToken')
-            ->willReturn(new StorageApiToken([], 'token'));
+            ->willReturn(new StorageApiToken([], 'token', AuthType::STORAGE_TOKEN));
 
         $unifiedVariablesResolver = $this->getFactory()->createResolver(
             $clientWrapperMock,

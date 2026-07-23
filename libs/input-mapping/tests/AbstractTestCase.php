@@ -19,6 +19,7 @@ use Keboola\StorageApi\Options\ListFilesOptions;
 use Keboola\StorageApi\WorkspaceLoginType;
 use Keboola\StorageApi\Workspaces;
 use Keboola\StorageApiBranch\ClientWrapper;
+use Keboola\StorageApiBranch\Factory\AuthType;
 use Keboola\StorageApiBranch\Factory\ClientOptions;
 use Keboola\Temp\Temp;
 use Monolog\Handler\TestHandler;
@@ -84,6 +85,7 @@ abstract class AbstractTestCase extends TestCase
         $clientOptions = (new ClientOptions())
             ->setUrl((string) getenv('STORAGE_API_URL'))
             ->setToken((string) getenv('STORAGE_API_TOKEN'))
+            ->setAuthType(AuthType::STORAGE_TOKEN)
             ->setBranchId($branchId)
             ->setBackoffMaxTries(1)
             ->setJobPollRetryDelay(function () {

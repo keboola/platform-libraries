@@ -8,6 +8,7 @@ use Keboola\Csv\CsvFile;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\DevBranches;
 use Keboola\StorageApiBranch\ClientWrapper;
+use Keboola\StorageApiBranch\Factory\AuthType;
 use Keboola\StorageApiBranch\Factory\ClientOptions;
 use Keboola\Temp\Temp;
 use ReflectionAttribute;
@@ -204,6 +205,7 @@ class TestSatisfyer
             new ClientOptions(
                 $clientWrapper->getClientOptionsReadOnly()->getUrl(),
                 (string) getenv('STORAGE_API_TOKEN_MASTER'),
+                authType: AuthType::STORAGE_TOKEN,
             ),
         );
 

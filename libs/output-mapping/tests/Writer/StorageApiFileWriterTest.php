@@ -12,6 +12,7 @@ use Keboola\OutputMapping\Writer\FileWriter;
 use Keboola\StorageApi\Options\FileUploadOptions;
 use Keboola\StorageApi\Options\ListFilesOptions;
 use Keboola\StorageApiBranch\ClientWrapper;
+use Keboola\StorageApiBranch\Factory\AuthType;
 use Keboola\StorageApiBranch\Factory\ClientOptions;
 
 class StorageApiFileWriterTest extends AbstractTestCase
@@ -277,6 +278,7 @@ class StorageApiFileWriterTest extends AbstractTestCase
             new ClientOptions(
                 url: (string) getenv('STORAGE_API_URL'),
                 token: (string) getenv('STORAGE_API_TOKEN'),
+                authType: AuthType::STORAGE_TOKEN,
                 branchId: $this->devBranchId,
                 useBranchStorage: true, // This is the important setting
             ),

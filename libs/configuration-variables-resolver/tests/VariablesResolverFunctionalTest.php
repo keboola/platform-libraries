@@ -14,6 +14,7 @@ use Keboola\StorageApi\Options\Components\Configuration as StorageConfiguration;
 use Keboola\StorageApi\Options\Components\ConfigurationRow;
 use Keboola\StorageApi\Options\Components\ListComponentConfigurationsOptions;
 use Keboola\StorageApiBranch\ClientWrapper;
+use Keboola\StorageApiBranch\Factory\AuthType;
 use Keboola\StorageApiBranch\Factory\ClientOptions;
 use Keboola\VaultApiClient\Variables\Model\ListOptions;
 use Keboola\VaultApiClient\Variables\VariablesApiClient;
@@ -48,6 +49,7 @@ class VariablesResolverFunctionalTest extends TestCase
             new ClientOptions(
                 self::getRequiredEnv('STORAGE_API_URL'),
                 self::getRequiredEnv('STORAGE_API_TOKEN'),
+                authType: AuthType::STORAGE_TOKEN,
             ),
         );
 
@@ -189,6 +191,7 @@ class VariablesResolverFunctionalTest extends TestCase
             new ClientOptions(
                 (string) getenv('STORAGE_API_URL'),
                 (string) getenv('STORAGE_API_TOKEN_MASTER'),
+                authType: AuthType::STORAGE_TOKEN,
             ),
         );
         $branchesApiClient = new DevBranches($masterClientWrapper->getBasicClient());
@@ -205,6 +208,7 @@ class VariablesResolverFunctionalTest extends TestCase
                 (string) getenv('STORAGE_API_URL'),
                 (string) getenv('STORAGE_API_TOKEN_MASTER'),
                 (string) $devBranch['id'],
+                authType: AuthType::STORAGE_TOKEN,
             ),
         );
 

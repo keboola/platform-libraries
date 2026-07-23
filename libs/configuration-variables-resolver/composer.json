@@ -41,7 +41,7 @@
         "keboola/php-api-client-base": "*@dev",
         "keboola/service-client": "*@dev",
         "keboola/storage-api-client": "^17.0|^18.0",
-        "keboola/storage-api-php-client-branch-wrapper": "^6.0",
+        "keboola/storage-api-php-client-branch-wrapper": "^7.0",
         "keboola/vault-api-client": "*@dev",
         "mustache/mustache": "^2.13",
         "psr/log": "^1.1|^2.0|^3.0",

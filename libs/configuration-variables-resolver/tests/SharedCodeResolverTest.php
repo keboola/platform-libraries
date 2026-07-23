@@ -14,6 +14,7 @@ use Keboola\StorageApi\Options\Components\Configuration as StorageConfiguration;
 use Keboola\StorageApi\Options\Components\ConfigurationRow;
 use Keboola\StorageApi\Options\Components\ListComponentConfigurationsOptions;
 use Keboola\StorageApiBranch\ClientWrapper;
+use Keboola\StorageApiBranch\Factory\AuthType;
 use Keboola\StorageApiBranch\Factory\ClientOptions;
 use Monolog\Handler\TestHandler;
 use Monolog\Logger;
@@ -35,6 +36,7 @@ class SharedCodeResolverTest extends TestCase
             new ClientOptions(
                 (string) getenv('STORAGE_API_URL'),
                 (string) getenv('STORAGE_API_TOKEN'),
+                authType: AuthType::STORAGE_TOKEN,
             ),
         );
         $components = new Components($this->clientWrapper->getBasicClient());
@@ -315,6 +317,7 @@ class SharedCodeResolverTest extends TestCase
             new ClientOptions(
                 (string) getenv('STORAGE_API_URL'),
                 (string) getenv('STORAGE_API_TOKEN_MASTER'),
+                authType: AuthType::STORAGE_TOKEN,
             ),
         );
         $branchId = $this->createBranch('my-dev-branch', $clientWrapper);
@@ -323,6 +326,7 @@ class SharedCodeResolverTest extends TestCase
                 (string) getenv('STORAGE_API_URL'),
                 (string) getenv('STORAGE_API_TOKEN'),
                 (string) $branchId,
+                authType: AuthType::STORAGE_TOKEN,
             ),
         );
 

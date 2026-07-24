@@ -8,24 +8,31 @@ it in many ways:
 * high-level operations like `create` multiple resources at once, `waitWhileExists` to wait while given resource exists etc.
 
 ## Usage
-To create a client, use one of provided client factories:
-* `GenericClientFacadeFactory` if you have cluster credentials
-* `InClusterClientFacadeFactory` if you run inside a Pod which has access to K8S API
+To create a client, first pick a `Keboola\K8sClient\ClientFactory\KubernetesApiClientFactory` implementation that
+matches how you obtain credentials, then use it together with the universal `KubernetesApiClientFacadeFactory` to
+build the high-level facade:
+* `StaticKubernetesApiClientFactory` if you have explicit cluster credentials
+* `InClusterKubernetesApiClientFactory` if you run inside a Pod which has access to K8S API
+* `EnvVariablesKubernetesApiClientFactory` if credentials are provided via `K8S_HOST`/`K8S_TOKEN`/`K8S_CA_CERT_PATH`/`K8S_NAMESPACE` env variables
+* `AutoDetectKubernetesApiClientFactory` to try env variables first, falling back to in-cluster credentials
 
 ```php
 <?php
 
-use Keboola\K8sClient\ClientFacadeFactory\GenericClientFacadeFactory;
+use Keboola\K8sClient\ClientFactory\KubernetesApiClientFacadeFactory;
+use Keboola\K8sClient\ClientFactory\StaticKubernetesApiClientFactory;
 use Kubernetes\Model\Io\K8s\Api\Core\V1\Container;
 use Kubernetes\Model\Io\K8s\Api\Core\V1\Pod;
 
-$clientFactory = new GenericClientFacadeFactory($retryProxy, $logger);
-$client = $clientFactory->createClusterClient(
+$clientFactory = new StaticKubernetesApiClientFactory(
+    $retryProxy,
     'https://api.k8s-cluster.example.com',
     'secret-token',
     'var/k8s/caCert.pem',
-    'default'
+    'default',
 );
+$apiClient = $clientFactory->createApiClient();
+$client = (new KubernetesApiClientFacadeFactory($logger))->create($apiClient);
 
 $pod = new Pod([
     'metadata' => [
@@ -90,31 +97,6 @@ docker compose run --rm dev composer install
 docker compose run --rm dev composer ci
 ```
 
-### Installing AppRun CRD on Dev/CI Clusters
-The functional tests require App and AppRun Custom Resource Definitions (CRDs) to be installed on the Kubernetes cluster. For manually maintained CI clusters, install CRDs manually on **all three clusters** (GCP, AWS, Azure):
-
-```bash
-# Download App and AppRun CRD definitions from keboola-operator repository:
-# - https://github.com/keboola/keboola-operator/blob/canary-operator/config/crd/bases/apps.keboola.com_apps.yaml
-# - https://github.com/keboola/keboola-operator/blob/canary-operator/config/crd/bases/apps.keboola.com_appruns.yaml
-# Save files locally as apps.keboola.com_appruns.yaml
-
-# Install on GCP CI cluster
-kubectl --context="gke_kbc-ci-platform-services_us-central1_gcp-ci-ps" apply -f apps.keboola.com_apps.yaml
-kubectl --context="gke_kbc-ci-platform-services_us-central1_gcp-ci-ps" apply -f apps.keboola.com_appruns.yaml
-
-# Install on AWS CI cluster
-kubectl --context="arn:aws:eks:eu-central-1:480319613404:cluster/ci-ps-eu-central-1" apply -f apps.keboola.com_apps.yaml
-kubectl --context="arn:aws:eks:eu-central-1:480319613404:cluster/ci-ps-eu-central-1" apply -f apps.keboola.com_appruns.yaml
-
-# Install on Azure CI cluster
-kubectl --context="sandboxes-ci-2021-aks" apply -f apps.keboola.com_apps.yaml
-kubectl --context="sandboxes-ci-2021-aks" apply -f apps.keboola.com_appruns.yaml
-```
-
-This is a one-time setup per cluster. The CRD defines the schema for AppRun resources used for billing and cost tracking.
-
-
 ## Implementing new API
 Only few K8S APIs we needed are implement so far. To implement new API, do following:
 * create API client wrapper in `Keboola\K8sClient\ApiClient`
@@ -122,7 +104,7 @@ Only few K8S APIs we needed are implement so far. To implement new API, do follo
 * add the wrapper to `KubernetesApiClientFacade`
   * inject the `kubernetes/php-client` client through constructor
   * add support for the new resource to methods signatures
-* update `GenericClientFacadeFactory` to provide new API class to `KubernetesApiClientFacade`
+* update `KubernetesApiClientFacadeFactory::create()` to provide new API class to `KubernetesApiClientFacade`
 
 ## License
 

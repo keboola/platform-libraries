@@ -6,7 +6,7 @@ namespace Keboola\K8sClient\Tests\Guzzle;
 
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
-use Keboola\K8sClient\ClientFacadeFactory\Token\StaticToken;
+use Keboola\K8sClient\ClientFactory\Token\StaticToken;
 use Keboola\K8sClient\Guzzle\AuthMiddleware;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\RequestInterface;

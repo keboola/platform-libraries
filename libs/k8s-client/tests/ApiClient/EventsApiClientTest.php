@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Keboola\K8sClient\Tests\ApiClient;
 
 use Keboola\K8sClient\ApiClient\EventsApiClient;
-use Keboola\K8sClient\ClientFacadeFactory\ClientConfigurator;
+use Keboola\K8sClient\ClientFactory\ClientConfigurator;
 use Keboola\K8sClient\KubernetesApiClient;
 use Kubernetes\API\Event as EventsApi;
 use Kubernetes\Model\Io\K8s\Api\Core\V1\EventList;

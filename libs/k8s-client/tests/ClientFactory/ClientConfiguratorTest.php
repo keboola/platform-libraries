@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Keboola\K8sClient\Tests\ClientFacadeFactory;
+namespace Keboola\K8sClient\Tests\ClientFactory;
 
-use Keboola\K8sClient\ClientFacadeFactory\ClientConfigurator;
+use Keboola\K8sClient\ClientFactory\ClientConfigurator;
 use Keboola\K8sClient\Exception\ConfigurationException;
 use KubernetesRuntime\Client;
 use PHPUnit\Framework\TestCase;

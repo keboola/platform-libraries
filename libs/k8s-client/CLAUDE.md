@@ -47,11 +47,17 @@ docker compose run --rm dev-k8s-client bash -c "vendor/bin/phpunit --filter test
 
 ### Three-Layer Structure
 
-1. **ClientFacadeFactory** - Creates configured client instances
-   - `GenericClientFacadeFactory` - For explicit cluster credentials
-   - `InClusterClientFacadeFactory` - For Pods running inside K8s (uses service account)
-   - `AutoDetectClientFacadeFactory` - Auto-detects environment
-   - `EnvVariablesClientFacadeFactory` - Loads config from environment variables
+1. **ClientFactory** - Two separate concerns, both under `Keboola\K8sClient\ClientFactory\`:
+   - Client factories (`KubernetesApiClientFactory` implementations) resolve credentials and produce a single
+     configured `KubernetesApiClient`:
+     - `StaticKubernetesApiClientFactory` - For explicit cluster credentials
+     - `InClusterKubernetesApiClientFactory` - For Pods running inside K8s (uses service account)
+     - `EnvVariablesKubernetesApiClientFactory` - Loads config from environment variables
+     - `AutoDetectKubernetesApiClientFactory` - Tries env variables first, falls back to in-cluster
+   - `KubernetesApiClientFacadeFactory` - Universal factory that assembles a `KubernetesApiClientFacade` from any
+     already-configured `KubernetesApiClient` (regardless of which client factory produced it), via `create()`
+   - `ClientConfigurator` / `Token\{TokenInterface,StaticToken,InClusterToken}` - shared low-level helpers used by
+     the client factories to configure the underlying `kubernetes/php-client` `Client` singleton
 
 2. **KubernetesApiClientFacade** - High-level facade providing:
    - Type-safe resource operations (`createModels`, `deleteModels`, `mergePatch`, etc.)
@@ -105,8 +111,8 @@ To add support for a new Kubernetes API:
    - Add resource class to `$resourceTypeClientMap` array
    - Update type annotations for generic methods (`createModels`, `deleteModels`, etc.)
 
-3. **Update factories** in `ClientFacadeFactory/`:
-   - `GenericClientFacadeFactory` - Instantiate new API client and inject into facade
+3. **Update `KubernetesApiClientFacadeFactory::create()`** in `ClientFactory/`:
+   - Instantiate new API client and inject into facade
 
 ## Code Quality Standards
 

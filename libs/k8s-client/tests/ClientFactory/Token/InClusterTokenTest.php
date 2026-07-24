@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Keboola\K8sClient\Tests\ClientFacadeFactory\Token;
+namespace Keboola\K8sClient\Tests\ClientFactory\Token;
 
-use Keboola\K8sClient\ClientFacadeFactory\Token\InClusterToken;
+use Keboola\K8sClient\ClientFactory\Token\InClusterToken;
 use PHPUnit\Framework\TestCase;
 
 class InClusterTokenTest extends TestCase

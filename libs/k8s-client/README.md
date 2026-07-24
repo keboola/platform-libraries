@@ -8,24 +8,31 @@ it in many ways:
 * high-level operations like `create` multiple resources at once, `waitWhileExists` to wait while given resource exists etc.
 
 ## Usage
-To create a client, use one of provided client factories:
-* `GenericClientFacadeFactory` if you have cluster credentials
-* `InClusterClientFacadeFactory` if you run inside a Pod which has access to K8S API
+To create a client, first pick a `Keboola\K8sClient\ClientFactory\KubernetesApiClientFactory` implementation that
+matches how you obtain credentials, then use it together with the universal `KubernetesApiClientFacadeFactory` to
+build the high-level facade:
+* `StaticKubernetesApiClientFactory` if you have explicit cluster credentials
+* `InClusterKubernetesApiClientFactory` if you run inside a Pod which has access to K8S API
+* `EnvVariablesKubernetesApiClientFactory` if credentials are provided via `K8S_HOST`/`K8S_TOKEN`/`K8S_CA_CERT_PATH`/`K8S_NAMESPACE` env variables
+* `AutoDetectKubernetesApiClientFactory` to try env variables first, falling back to in-cluster credentials
 
 ```php
 <?php
 
-use Keboola\K8sClient\ClientFacadeFactory\GenericClientFacadeFactory;
+use Keboola\K8sClient\ClientFactory\KubernetesApiClientFacadeFactory;
+use Keboola\K8sClient\ClientFactory\StaticKubernetesApiClientFactory;
 use Kubernetes\Model\Io\K8s\Api\Core\V1\Container;
 use Kubernetes\Model\Io\K8s\Api\Core\V1\Pod;
 
-$clientFactory = new GenericClientFacadeFactory($retryProxy, $logger);
-$client = $clientFactory->createClusterClient(
+$clientFactory = new StaticKubernetesApiClientFactory(
+    $retryProxy,
     'https://api.k8s-cluster.example.com',
     'secret-token',
     'var/k8s/caCert.pem',
-    'default'
+    'default',
 );
+$apiClient = $clientFactory->createApiClient();
+$client = (new KubernetesApiClientFacadeFactory($logger))->create($apiClient);
 
 $pod = new Pod([
     'metadata' => [
@@ -97,7 +104,7 @@ Only few K8S APIs we needed are implement so far. To implement new API, do follo
 * add the wrapper to `KubernetesApiClientFacade`
   * inject the `kubernetes/php-client` client through constructor
   * add support for the new resource to methods signatures
-* update `GenericClientFacadeFactory` to provide new API class to `KubernetesApiClientFacade`
+* update `KubernetesApiClientFacadeFactory::create()` to provide new API class to `KubernetesApiClientFacade`
 
 ## License
 

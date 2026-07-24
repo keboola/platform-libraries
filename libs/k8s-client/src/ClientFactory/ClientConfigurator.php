@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Keboola\K8sClient\ClientFacadeFactory;
+namespace Keboola\K8sClient\ClientFactory;
 
 use GuzzleHttp\HandlerStack;
-use Keboola\K8sClient\ClientFacadeFactory\Token\TokenInterface;
+use Keboola\K8sClient\ClientFactory\Token\TokenInterface;
 use Keboola\K8sClient\Exception\ConfigurationException;
 use Keboola\K8sClient\Guzzle\AuthMiddleware;
 use KubernetesRuntime\Client;

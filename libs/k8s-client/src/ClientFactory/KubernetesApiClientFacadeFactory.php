@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Keboola\K8sClient\ClientFacadeFactory;
+namespace Keboola\K8sClient\ClientFactory;
 
 use Keboola\K8sClient\ApiClient\ApiClientInterface;
 use Keboola\K8sClient\ApiClient\ConfigMapsApiClient;
@@ -14,47 +14,31 @@ use Keboola\K8sClient\ApiClient\PodsApiClient;
 use Keboola\K8sClient\ApiClient\SecretsApiClient;
 use Keboola\K8sClient\ApiClient\ServicesApiClient;
 use Keboola\K8sClient\BaseApi\PodWithLogStream;
-use Keboola\K8sClient\ClientFacadeFactory\Token\TokenInterface;
 use Keboola\K8sClient\KubernetesApiClient;
 use Keboola\K8sClient\KubernetesApiClientFacade;
 use KubernetesRuntime\AbstractModel;
 use Psr\Log\LoggerInterface;
-use Retry\RetryProxy;
 
-class GenericClientFacadeFactory
+/**
+ * Assembles a KubernetesApiClientFacade from a single, already-configured KubernetesApiClient.
+ *
+ * Unlike the client factories (which differ in how they resolve credentials), this factory is universal: it is
+ * used the same way regardless of which KubernetesApiClientFactory produced the underlying client.
+ */
+class KubernetesApiClientFacadeFactory
 {
-    private RetryProxy $retryProxy;
-    private LoggerInterface $logger;
-
-    public function __construct(RetryProxy $retryProxy, LoggerInterface $logger)
-    {
-        $this->retryProxy = $retryProxy;
-        $this->logger = $logger;
-    }
-
-    public function createApiClient(
-        string $apiUrl,
-        TokenInterface|string $token,
-        string $caCertFile,
-        string $namespace,
-    ): KubernetesApiClient {
-        ClientConfigurator::configureBaseClient($apiUrl, $caCertFile, $token);
-        return new KubernetesApiClient($this->retryProxy, $namespace);
+    public function __construct(
+        private readonly LoggerInterface $logger,
+    ) {
     }
 
     /**
      * @param array<class-string<AbstractModel>, ApiClientInterface<AbstractModel, AbstractModel>> $extraClients
      */
-    public function createClusterClient(
-        string $apiUrl,
-        TokenInterface|string $token,
-        string $caCertFile,
-        string $namespace,
-        array $extraClients = [],
-    ): KubernetesApiClientFacade {
-        $apiClient = $this->createApiClient($apiUrl, $token, $caCertFile, $namespace);
-
-        // all K8S API clients created here will use the configuration above, even if the Client is reconfigured later
+    public function create(KubernetesApiClient $apiClient, array $extraClients = []): KubernetesApiClientFacade
+    {
+        // all K8S API clients created here will use the configuration active at the time $apiClient was built,
+        // even if the underlying Client is reconfigured later
         return new KubernetesApiClientFacade(
             $this->logger,
             new ConfigMapsApiClient($apiClient),

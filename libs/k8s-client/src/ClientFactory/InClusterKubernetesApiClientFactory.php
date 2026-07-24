@@ -2,29 +2,22 @@
 
 declare(strict_types=1);
 
-namespace Keboola\K8sClient\ClientFacadeFactory;
+namespace Keboola\K8sClient\ClientFactory;
 
-use Keboola\K8sClient\ApiClient\ApiClientInterface;
-use Keboola\K8sClient\ClientFacadeFactory\Token\InClusterToken;
+use Keboola\K8sClient\ClientFactory\Token\InClusterToken;
 use Keboola\K8sClient\Exception\ConfigurationException;
 use Keboola\K8sClient\KubernetesApiClient;
-use Keboola\K8sClient\KubernetesApiClientFacade;
-use KubernetesRuntime\AbstractModel;
+use Retry\RetryProxy;
 
-class InClusterClientFacadeFactory
+class InClusterKubernetesApiClientFactory implements KubernetesApiClientFactory
 {
     private const IN_CLUSTER_AUTH_PATH = '/var/run/secrets/kubernetes.io/serviceaccount';
     private const IN_CLUSTER_API_URL = 'https://kubernetes.default.svc';
 
-    private GenericClientFacadeFactory $genericFactory;
-    private string $credentialsPath;
-
     public function __construct(
-        GenericClientFacadeFactory $genericFactory,
-        string $credentialsPath = self::IN_CLUSTER_AUTH_PATH,
+        private readonly RetryProxy $retryProxy,
+        private readonly string $credentialsPath = self::IN_CLUSTER_AUTH_PATH,
     ) {
-        $this->genericFactory = $genericFactory;
-        $this->credentialsPath = $credentialsPath;
     }
 
     public function isAvailable(?string $namespace = null): bool
@@ -42,25 +35,15 @@ class InClusterClientFacadeFactory
 
     public function createApiClient(?string $namespace = null): KubernetesApiClient
     {
-        return $this->genericFactory->createApiClient(
+        ClientConfigurator::configureBaseClient(
             self::IN_CLUSTER_API_URL,
-            new InClusterToken($this->findInClusterConfigFile('token')),
             $this->findInClusterConfigFile('ca.crt'),
-            $namespace ?? $this->readInClusterConfigFile('namespace'),
+            new InClusterToken($this->findInClusterConfigFile('token')),
         );
-    }
 
-    /**
-     * @param array<class-string<AbstractModel>, ApiClientInterface<AbstractModel, AbstractModel>> $extraClients
-     */
-    public function createClusterClient(?string $namespace = null, array $extraClients = []): KubernetesApiClientFacade
-    {
-        return $this->genericFactory->createClusterClient(
-            self::IN_CLUSTER_API_URL,
-            new InClusterToken($this->findInClusterConfigFile('token')),
-            $this->findInClusterConfigFile('ca.crt'),
+        return new KubernetesApiClient(
+            $this->retryProxy,
             $namespace ?? $this->readInClusterConfigFile('namespace'),
-            $extraClients,
         );
     }
 

@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 namespace Keboola\K8sClient\Tests;
 
-use Keboola\K8sClient\ClientFacadeFactory\GenericClientFacadeFactory;
+use Keboola\K8sClient\ClientFactory\KubernetesApiClientFacadeFactory;
+use Keboola\K8sClient\ClientFactory\StaticKubernetesApiClientFactory;
 use Keboola\K8sClient\KubernetesApiClientFacade;
 use Keboola\K8sClient\RetryProxyFactory;
 use Kubernetes\Model\Io\K8s\Api\Core\V1\Pod;
@@ -22,15 +23,15 @@ class KubernetesApiClientFacadeFunctionalTest extends TestCase
 
         $logger = new Logger('test');
 
-        $this->apiClient = (new GenericClientFacadeFactory(
+        $apiClient = (new StaticKubernetesApiClientFactory(
             (new RetryProxyFactory($logger))->createRetryProxy(),
-            $logger,
-        ))->createClusterClient(
             (string) getenv('K8S_HOST'),
             (string) getenv('K8S_TOKEN'),
             (string) getenv('K8S_CA_CERT_PATH'),
             (string) getenv('K8S_NAMESPACE'),
-        );
+        ))->createApiClient();
+
+        $this->apiClient = (new KubernetesApiClientFacadeFactory($logger))->create($apiClient);
 
         $this->cleanupCluster();
     }

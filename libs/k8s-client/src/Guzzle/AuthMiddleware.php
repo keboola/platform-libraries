@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\K8sClient\Guzzle;
 
-use Keboola\K8sClient\ClientFacadeFactory\Token\TokenInterface;
+use Keboola\K8sClient\ClientFactory\Token\TokenInterface;
 use Psr\Http\Message\RequestInterface;
 
 readonly class AuthMiddleware

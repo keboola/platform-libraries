@@ -2,18 +2,17 @@
 
 declare(strict_types=1);
 
-namespace Keboola\K8sClient\ClientFacadeFactory;
+namespace Keboola\K8sClient\ClientFactory;
 
-use Keboola\K8sClient\ApiClient\ApiClientInterface;
-use Keboola\K8sClient\ClientFacadeFactory\Token\StaticToken;
-use Keboola\K8sClient\KubernetesApiClientFacade;
-use KubernetesRuntime\AbstractModel;
+use Keboola\K8sClient\ClientFactory\Token\StaticToken;
+use Keboola\K8sClient\KubernetesApiClient;
+use Retry\RetryProxy;
 use RuntimeException;
 
-class EnvVariablesClientFacadeFactory
+class EnvVariablesKubernetesApiClientFactory implements KubernetesApiClientFactory
 {
     public function __construct(
-        private readonly GenericClientFacadeFactory $genericFactory,
+        private readonly RetryProxy $retryProxy,
     ) {
     }
 
@@ -24,10 +23,7 @@ class EnvVariablesClientFacadeFactory
         return $k8sHost !== null && $k8sToken !== null && $k8sCaCertPath !== null && $k8sNamespace !== null;
     }
 
-    /**
-     * @param array<class-string<AbstractModel>, ApiClientInterface<AbstractModel, AbstractModel>> $extraClients
-     */
-    public function createClusterClient(?string $namespace = null, array $extraClients = []): KubernetesApiClientFacade
+    public function createApiClient(?string $namespace = null): KubernetesApiClient
     {
         [$k8sHost, $k8sToken, $k8sCaCertPath, $k8sNamespace] = $this->loadEnvValues($namespace);
         if ($k8sHost === null || $k8sToken === null || $k8sCaCertPath === null || $k8sNamespace === null) {
@@ -36,13 +32,9 @@ class EnvVariablesClientFacadeFactory
             );
         }
 
-        return $this->genericFactory->createClusterClient(
-            $k8sHost,
-            new StaticToken($k8sToken),
-            $k8sCaCertPath,
-            $namespace ?? $k8sNamespace,
-            $extraClients,
-        );
+        ClientConfigurator::configureBaseClient($k8sHost, $k8sCaCertPath, new StaticToken($k8sToken));
+
+        return new KubernetesApiClient($this->retryProxy, $namespace ?? $k8sNamespace);
     }
 
     /**

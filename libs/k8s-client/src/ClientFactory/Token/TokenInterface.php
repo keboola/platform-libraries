@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Keboola\K8sClient\ClientFacadeFactory\Token;
+namespace Keboola\K8sClient\ClientFactory\Token;
 
 interface TokenInterface
 {

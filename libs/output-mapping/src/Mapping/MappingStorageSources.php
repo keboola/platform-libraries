@@ -9,8 +9,11 @@ use Keboola\OutputMapping\Storage\TableInfo;
 
 class MappingStorageSources
 {
-    public function __construct(readonly private BucketInfo $bucket, readonly private ?TableInfo $table)
-    {
+    public function __construct(
+        readonly private BucketInfo $bucket,
+        readonly private ?TableInfo $table,
+        readonly private ?TableInfo $defaultBranchTable = null,
+    ) {
     }
 
     public function getBucket(): BucketInfo
@@ -26,5 +29,10 @@ class MappingStorageSources
     public function getTable(): ?TableInfo
     {
         return $this->table;
+    }
+
+    public function getDefaultBranchTable(): ?TableInfo
+    {
+        return $this->defaultBranchTable;
     }
 }

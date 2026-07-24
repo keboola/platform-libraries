@@ -40,11 +40,14 @@ class LoadTableTaskCreator
             $settings->hasNewNativeTypesFeature(),
             $settings->getTreatValuesAsNull(),
         );
+        $defaultBranchTable = $storageSources->getDefaultBranchTable();
+        $canCreateTypedTable = $defaultBranchTable === null || $defaultBranchTable->isTyped();
 
         // some scenarios are not supported by the SAPI, so we need to take care of them manually here
         // - columns in config + headless CSV (SAPI always expect to have a header in CSV)
         // - sliced files
-        if ($settings->hasNativeTypesFeature() &&
+        if ($canCreateTypedTable &&
+            $settings->hasNativeTypesFeature() &&
             !$storageSources->didTableExistBefore() &&
             $source->hasColumns() && $source->hasColumnMetadata()
         ) {
@@ -67,7 +70,8 @@ class LoadTableTaskCreator
             );
             $this->tableCreator->createTableDefinition($source->getDestination()->getBucketId(), $tableDefinition);
             $loadTask = new LoadTableTask($source->getDestination(), $loadOptions, true);
-        } elseif ($settings->hasNewNativeTypesFeature() &&
+        } elseif ($canCreateTypedTable &&
+            $settings->hasNewNativeTypesFeature() &&
             !$storageSources->didTableExistBefore() &&
             $source->getSchema()
         ) {
@@ -77,6 +81,25 @@ class LoadTableTaskCreator
                 $storageSources->getBucket()->backend,
             );
             $this->tableCreator->createTableDefinition($source->getDestination()->getBucketId(), $tableDefinition);
+            $loadTask = new LoadTableTask($source->getDestination(), $loadOptions, true);
+        } elseif (!$canCreateTypedTable &&
+            $settings->hasNewNativeTypesFeature() &&
+            !$storageSources->didTableExistBefore() &&
+            $source->getSchema()
+        ) {
+            // Typed-table creation was suppressed because the production (default-branch) table is
+            // non-typed (AJDA-3014). The columns are still known from the schema, so create a plain
+            // non-typed table with those columns; otherwise the headless CSV would be imported with
+            // its first data row taken as the header (via the CreateAndLoadTableTask fallback).
+            $this->tableCreator->createTable(
+                $source->getDestination()->getBucketId(),
+                $source->getDestination()->getTableName(),
+                array_map(
+                    fn (MappingFromConfigurationSchemaColumn $column) => $column->getName(),
+                    $source->getSchema(),
+                ),
+                $loadOptions,
+            );
             $loadTask = new LoadTableTask($source->getDestination(), $loadOptions, true);
         } elseif (!$storageSources->didTableExistBefore() && $source->hasColumns()) {
             // tabulka neexistuje a známe sloupce z manifestu

@@ -35,6 +35,15 @@ class StoragePreparer
         $destinationTableInfo = $this->getDestinationTableInfoIfExists(
             $processedSource->getDestination()->getTableId(),
         );
+        $defaultBranchTableInfo = null;
+        if ($destinationTableInfo === null &&
+            $this->clientWrapper->getClientOptionsReadOnly()->useBranchStorage() &&
+            $this->clientWrapper->isDevelopmentBranch()
+        ) {
+            $defaultBranchTableInfo = $this->getDefaultBranchTableInfoIfExists(
+                $processedSource->getDestination()->getTableId(),
+            );
+        }
 
         if ($destinationTableInfo !== null) {
             if ($this->hasNewNativeTypeFeature && $processedSource->getSchema()) {
@@ -69,13 +78,26 @@ class StoragePreparer
             );
         }
 
-        return new MappingStorageSources($destinationBucket, $destinationTableInfo);
+        return new MappingStorageSources($destinationBucket, $destinationTableInfo, $defaultBranchTableInfo);
     }
 
     private function getDestinationTableInfoIfExists(string $tableId): ?TableInfo
     {
         try {
             return new TableInfo($this->clientWrapper->getTableAndFileStorageClient()->getTable($tableId));
+        } catch (ClientException $e) {
+            if ($e->getCode() !== 404) {
+                throw $e;
+            }
+        }
+
+        return null;
+    }
+
+    private function getDefaultBranchTableInfoIfExists(string $tableId): ?TableInfo
+    {
+        try {
+            return new TableInfo($this->clientWrapper->getClientForDefaultBranch()->getTable($tableId));
         } catch (ClientException $e) {
             if ($e->getCode() !== 404) {
                 throw $e;

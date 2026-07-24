@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Keboola\K8sClient;
 
 use InvalidArgumentException;
+use Keboola\K8sClient\ApiClient\ApiClientInterface;
 use Keboola\K8sClient\ApiClient\AppRunsApiClient;
 use Keboola\K8sClient\ApiClient\AppsApiClient;
 use Keboola\K8sClient\ApiClient\ConfigMapsApiClient;
@@ -54,6 +55,7 @@ class KubernetesApiClientFacade
         private readonly ServicesApiClient $servicesApiClient,
         private readonly AppsApiClient $appsApiClient,
         private readonly AppRunsApiClient $appRunsApiClient,
+        array $extraClients = [],
     ) {
         $this->resourceTypeClientMap = [
             ConfigMap::class => $this->configMapApiClient,
@@ -66,6 +68,7 @@ class KubernetesApiClientFacade
             PersistentVolume::class => $this->persistentVolumesApiClient,
             App::class => $this->appsApiClient,
             AppRun::class => $this->appRunsApiClient,
+            ...$extraClients,
         ];
     }
 
@@ -117,6 +120,20 @@ class KubernetesApiClientFacade
     public function appRuns(): AppRunsApiClient
     {
         return $this->appRunsApiClient;
+    }
+
+    /**
+     * @template TItem of AbstractModel
+     * @param class-string<TItem> $modelClass
+     * @return ApiClientInterface<AbstractModel, TItem>
+     */
+    public function client(string $modelClass): ApiClientInterface
+    {
+        if (!array_key_exists($modelClass, $this->resourceTypeClientMap)) {
+            throw new RuntimeException(sprintf('Unknown K8S resource type "%s"', $modelClass));
+        }
+
+        return $this->resourceTypeClientMap[$modelClass];
     }
 
     // phpcs:disable Generic.Files.LineLength.MaxExceeded
@@ -207,7 +224,7 @@ class KubernetesApiClientFacade
      *     $app = new App(['metadata' => ['name' => 'my-app'], 'spec' => ['replicas' => 3]]);
      *     $updatedApp = $apiFacade->mergePatch($app);
      *
-     * @template T of ConfigMap|Event|PersistentVolumeClaim|Pod|Secret|Service|Ingress|PersistentVolume|App|AppRun
+     * @template T of AbstractModel
      * @param T $resource The resource to patch (name extracted from metadata)
      * @return T The patched resource
      */
@@ -390,8 +407,7 @@ class KubernetesApiClientFacade
      *         ($resourceType is class-string<AppRun> ? AppRunsApiClient :
      *         never))))))))))
      */
-    // phpcs:ignore Generic.Files.LineLength.MaxExceeded
-    private function getApiForResource(string $resourceType): ConfigMapsApiClient|EventsApiClient|PersistentVolumeClaimsApiClient|PodsApiClient|SecretsApiClient|ServicesApiClient|IngressesApiClient|PersistentVolumesApiClient|AppsApiClient|AppRunsApiClient
+    private function getApiForResource(string $resourceType): ApiClientInterface
     {
         if (!array_key_exists($resourceType, $this->resourceTypeClientMap)) {
             throw new RuntimeException(sprintf(

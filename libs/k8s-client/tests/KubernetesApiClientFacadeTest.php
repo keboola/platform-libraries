@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\K8sClient\Tests;
 
+use Keboola\K8sClient\ApiClient\ApiClientInterface;
 use Keboola\K8sClient\ApiClient\AppRunsApiClient;
 use Keboola\K8sClient\ApiClient\AppsApiClient;
 use Keboola\K8sClient\ApiClient\ConfigMapsApiClient;
@@ -28,6 +29,7 @@ use Kubernetes\Model\Io\K8s\Api\Networking\V1\Ingress;
 use Kubernetes\Model\Io\K8s\Apimachinery\Pkg\Apis\Meta\V1\DeleteOptions;
 use Kubernetes\Model\Io\K8s\Apimachinery\Pkg\Apis\Meta\V1\Patch;
 use Kubernetes\Model\Io\K8s\Apimachinery\Pkg\Apis\Meta\V1\Status;
+use KubernetesRuntime\AbstractModel;
 use Monolog\Handler\TestHandler;
 use Monolog\Logger;
 use PHPUnit\Framework\TestCase;
@@ -1088,4 +1090,103 @@ class KubernetesApiClientFacadeTest extends TestCase
 
         self::assertSame($app, $result);
     }
+
+    public function testClientReturnsRegisteredExtraClient(): void
+    {
+        $extraClient = $this->createMock(ApiClientInterface::class);
+
+        $facade = new KubernetesApiClientFacade(
+            $this->logger,
+            $this->createMock(ConfigMapsApiClient::class),
+            $this->createMock(EventsApiClient::class),
+            $this->createMock(IngressesApiClient::class),
+            $this->createMock(PersistentVolumeClaimsApiClient::class),
+            $this->createMock(PersistentVolumesApiClient::class),
+            $this->createMock(PodsApiClient::class),
+            $this->createMock(SecretsApiClient::class),
+            $this->createMock(ServicesApiClient::class),
+            $this->createMock(AppsApiClient::class),
+            $this->createMock(AppRunsApiClient::class),
+            [FakeCrdModel::class => $extraClient],
+        );
+
+        self::assertSame($extraClient, $facade->client(FakeCrdModel::class));
+    }
+
+    public function testMergePatchRoutesToRegisteredExtraClient(): void
+    {
+        $model = new FakeCrdModel(['metadata' => ['name' => 'thing-1'], 'spec' => ['size' => 2]]);
+
+        $extraClient = $this->createMock(ApiClientInterface::class);
+        $extraClient->expects(self::once())
+            ->method('patch')
+            ->willReturnCallback(function (string $name, Patch $patch) use ($model) {
+                self::assertSame('thing-1', $name);
+                $data = $patch->getArrayCopy();
+                self::assertSame('merge-patch', $data['patchOperation']);
+                self::assertSame(2, $data['spec']['size']);
+                return $model;
+            });
+
+        $facade = new KubernetesApiClientFacade(
+            $this->logger,
+            $this->createMock(ConfigMapsApiClient::class),
+            $this->createMock(EventsApiClient::class),
+            $this->createMock(IngressesApiClient::class),
+            $this->createMock(PersistentVolumeClaimsApiClient::class),
+            $this->createMock(PersistentVolumesApiClient::class),
+            $this->createMock(PodsApiClient::class),
+            $this->createMock(SecretsApiClient::class),
+            $this->createMock(ServicesApiClient::class),
+            $this->createMock(AppsApiClient::class),
+            $this->createMock(AppRunsApiClient::class),
+            [FakeCrdModel::class => $extraClient],
+        );
+
+        self::assertSame($model, $facade->mergePatch($model));
+    }
+
+    public function testClientThrowsOnUnknownType(): void
+    {
+        $facade = new KubernetesApiClientFacade(
+            $this->logger,
+            $this->createMock(ConfigMapsApiClient::class),
+            $this->createMock(EventsApiClient::class),
+            $this->createMock(IngressesApiClient::class),
+            $this->createMock(PersistentVolumeClaimsApiClient::class),
+            $this->createMock(PersistentVolumesApiClient::class),
+            $this->createMock(PodsApiClient::class),
+            $this->createMock(SecretsApiClient::class),
+            $this->createMock(ServicesApiClient::class),
+            $this->createMock(AppsApiClient::class),
+            $this->createMock(AppRunsApiClient::class),
+        );
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Unknown K8S resource type');
+        $facade->client(FakeCrdModel::class);
+    }
+}
+
+/**
+ * Throwaway CRD model used to exercise the extra-client registry without the
+ * library owning any real CRD.
+ */
+// phpcs:ignore PSR1.Classes.ClassDeclaration.MultipleClasses
+class FakeCrdModel extends AbstractModel
+{
+    /** @var string */
+    public $apiVersion = 'example.keboola.com/v1';
+
+    /** @var string */
+    public $kind = 'FakeCrd';
+
+    /** @var \Kubernetes\Model\Io\K8s\Apimachinery\Pkg\Apis\Meta\V1\ObjectMeta|null */
+    public $metadata = null;
+
+    /** @var array<string, mixed>|null */
+    public $spec = null;
+
+    /** @var array<string, mixed>|null */
+    public $status = null;
 }

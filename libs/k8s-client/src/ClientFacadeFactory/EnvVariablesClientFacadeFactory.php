@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace Keboola\K8sClient\ClientFacadeFactory;
 
+use Keboola\K8sClient\ApiClient\ApiClientInterface;
 use Keboola\K8sClient\ClientFacadeFactory\Token\StaticToken;
 use Keboola\K8sClient\KubernetesApiClientFacade;
+use KubernetesRuntime\AbstractModel;
 use RuntimeException;
 
 class EnvVariablesClientFacadeFactory
@@ -22,7 +24,10 @@ class EnvVariablesClientFacadeFactory
         return $k8sHost !== null && $k8sToken !== null && $k8sCaCertPath !== null && $k8sNamespace !== null;
     }
 
-    public function createClusterClient(?string $namespace = null): KubernetesApiClientFacade
+    /**
+     * @param array<class-string<AbstractModel>, ApiClientInterface<AbstractModel, AbstractModel>> $extraClients
+     */
+    public function createClusterClient(?string $namespace = null, array $extraClients = []): KubernetesApiClientFacade
     {
         [$k8sHost, $k8sToken, $k8sCaCertPath, $k8sNamespace] = $this->loadEnvValues($namespace);
         if ($k8sHost === null || $k8sToken === null || $k8sCaCertPath === null || $k8sNamespace === null) {
@@ -36,6 +41,7 @@ class EnvVariablesClientFacadeFactory
             new StaticToken($k8sToken),
             $k8sCaCertPath,
             $namespace ?? $k8sNamespace,
+            $extraClients,
         );
     }
 

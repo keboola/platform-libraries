@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\K8sClient\ClientFacadeFactory;
 
+use Keboola\K8sClient\ApiClient\ApiClientInterface;
 use Keboola\K8sClient\ApiClient\AppRunsApiClient;
 use Keboola\K8sClient\ApiClient\AppsApiClient;
 use Keboola\K8sClient\ApiClient\ConfigMapsApiClient;
@@ -18,6 +19,7 @@ use Keboola\K8sClient\BaseApi\PodWithLogStream;
 use Keboola\K8sClient\ClientFacadeFactory\Token\TokenInterface;
 use Keboola\K8sClient\KubernetesApiClient;
 use Keboola\K8sClient\KubernetesApiClientFacade;
+use KubernetesRuntime\AbstractModel;
 use Psr\Log\LoggerInterface;
 use Retry\RetryProxy;
 
@@ -32,14 +34,27 @@ class GenericClientFacadeFactory
         $this->logger = $logger;
     }
 
+    public function createApiClient(
+        string $apiUrl,
+        TokenInterface|string $token,
+        string $caCertFile,
+        string $namespace,
+    ): KubernetesApiClient {
+        ClientConfigurator::configureBaseClient($apiUrl, $caCertFile, $token);
+        return new KubernetesApiClient($this->retryProxy, $namespace);
+    }
+
+    /**
+     * @param array<class-string<AbstractModel>, ApiClientInterface<AbstractModel, AbstractModel>> $extraClients
+     */
     public function createClusterClient(
         string $apiUrl,
         TokenInterface|string $token,
         string $caCertFile,
         string $namespace,
+        array $extraClients = [],
     ): KubernetesApiClientFacade {
-        ClientConfigurator::configureBaseClient($apiUrl, $caCertFile, $token);
-        $apiClient = new KubernetesApiClient($this->retryProxy, $namespace);
+        $apiClient = $this->createApiClient($apiUrl, $token, $caCertFile, $namespace);
 
         // all K8S API clients created here will use the configuration above, even if the Client is reconfigured later
         return new KubernetesApiClientFacade(
@@ -54,6 +69,7 @@ class GenericClientFacadeFactory
             new ServicesApiClient($apiClient),
             new AppsApiClient($apiClient),
             new AppRunsApiClient($apiClient),
+            $extraClients,
         );
     }
 }

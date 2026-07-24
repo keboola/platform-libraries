@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace Keboola\K8sClient\ClientFacadeFactory;
 
+use Keboola\K8sClient\ApiClient\ApiClientInterface;
 use Keboola\K8sClient\ClientFacadeFactory\Token\InClusterToken;
 use Keboola\K8sClient\Exception\ConfigurationException;
+use Keboola\K8sClient\KubernetesApiClient;
 use Keboola\K8sClient\KubernetesApiClientFacade;
+use KubernetesRuntime\AbstractModel;
 
 class InClusterClientFacadeFactory
 {
@@ -37,13 +40,27 @@ class InClusterClientFacadeFactory
         }
     }
 
-    public function createClusterClient(?string $namespace = null): KubernetesApiClientFacade
+    public function createApiClient(?string $namespace = null): KubernetesApiClient
+    {
+        return $this->genericFactory->createApiClient(
+            self::IN_CLUSTER_API_URL,
+            new InClusterToken($this->findInClusterConfigFile('token')),
+            $this->findInClusterConfigFile('ca.crt'),
+            $namespace ?? $this->readInClusterConfigFile('namespace'),
+        );
+    }
+
+    /**
+     * @param array<class-string<AbstractModel>, ApiClientInterface<AbstractModel, AbstractModel>> $extraClients
+     */
+    public function createClusterClient(?string $namespace = null, array $extraClients = []): KubernetesApiClientFacade
     {
         return $this->genericFactory->createClusterClient(
             self::IN_CLUSTER_API_URL,
             new InClusterToken($this->findInClusterConfigFile('token')),
             $this->findInClusterConfigFile('ca.crt'),
             $namespace ?? $this->readInClusterConfigFile('namespace'),
+            $extraClients,
         );
     }
 

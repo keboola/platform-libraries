@@ -59,6 +59,9 @@ docker compose run --rm dev-k8s-client bash -c "vendor/bin/phpunit --filter test
    - Waiting operations (`waitWhileExists`)
    - Resource listing with pagination (`listMatching`)
    - Access to specific API clients via getters
+   - `client(string $modelClass)` - generic accessor resolving any registered resource type (core or extra)
+   - `$extraClients` constructor param - lets consumers register their own CRD API clients (e.g. custom
+     Keboola CRDs) without the library needing to own the model/BaseApi/typed-client classes for them
 
 3. **ApiClient Wrappers** - Namespace/cluster-scoped API wrappers
    - Wrap `kubernetes/php-client` API classes
@@ -76,18 +79,16 @@ docker compose run --rm dev-k8s-client bash -c "vendor/bin/phpunit --filter test
 - `PodsApiClient` - Pods (includes log streaming)
 - `SecretsApiClient` - Secrets
 - `ServicesApiClient` - Services
-- `AppsApiClient` - Custom App CRD (Keboola-specific)
-- `AppRunsApiClient` - Custom AppRun CRD (Keboola-specific)
 
 **Cluster-scoped:**
 - `PersistentVolumesApiClient` - PVs
 
 ### Custom Resources (CRDs)
 
-The library includes custom Keboola CRDs for App and AppRun resources:
-- Models: `src/Model/Io/Keboola/Apps/V1/`
-- Used for billing and cost tracking
-- CRD definitions must be installed on K8s clusters for functional tests (see README.md)
+The library does not own any custom Keboola CRD (model/BaseApi/typed-client) classes itself. Consumers that
+need a custom CRD (e.g. the `App`/`AppRun` CRDs used by sandboxes-service for billing) implement their own
+model/BaseApi/typed-client classes and register the typed client via `KubernetesApiClientFacade`'s
+`$extraClients` constructor param; it is then accessed through `client(SomeModel::class)`.
 
 ## Implementing New API Support
 
@@ -111,8 +112,7 @@ To add support for a new Kubernetes API:
 
 ### PHPStan Configuration
 - Level: `max`
-- Custom ignoreErrors for external library issues:
-  - `src/BaseApi/*` - Guzzle and kubernetes-runtime return type mismatches
+- Custom ignoreErrors: `missingType.iterableValue` (broad, library-wide)
 - Stub file: `tests/stubs/K8s.stub` for external type definitions
 
 ### PHP_CodeSniffer

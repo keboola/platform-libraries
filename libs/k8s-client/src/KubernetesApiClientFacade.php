@@ -147,7 +147,6 @@ class KubernetesApiClientFacade
      */
     public function createModels(array $resources, array $queries = []): array
     {
-        // @phpstan-ignore-next-line
         return array_map(
             fn($resource) => $this->getApiForResource($resource::class)->create($resource, $queries),
             $resources,
@@ -334,7 +333,6 @@ class KubernetesApiClientFacade
 
         foreach ($resourceTypes as $resourceType) {
             try {
-                // @phpstan-ignore-next-line
                 $this->getApiForResource($resourceType)->deleteCollection($deleteOptions, $queries);
             } catch (Throwable $exception) {
                 $this->logger->error('DeleteCollection request has failed', [
@@ -378,6 +376,9 @@ class KubernetesApiClientFacade
         return $this->resourceTypeClientMap[$resourceType];
     }
 
+    /**
+     * @return array<int, class-string<AbstractModel>>
+     */
     private function getDefaultResourceTypesForDeleteAll(): array
     {
         $resourceTypeClientMap = $this->resourceTypeClientMap;

@@ -83,9 +83,11 @@ class AutoDetectKubernetesApiClientFactoryTest extends TestCase
         $envVariablesFactory->expects(self::never())->method('createApiClient');
 
         $inClusterFactory = $this->createMock(InClusterKubernetesApiClientFactory::class);
+        // in-cluster availability is probed WITHOUT the caller namespace (preserves original AutoDetect
+        // semantics: the in-cluster branch also requires the namespace file to exist)
         $inClusterFactory->expects(self::once())
             ->method('isAvailable')
-            ->with($customNamespace)
+            ->with()
             ->willReturn(true);
         $inClusterFactory->expects(self::once())
             ->method('createApiClient')

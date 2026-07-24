@@ -24,7 +24,9 @@ class AutoDetectKubernetesApiClientFactory implements KubernetesApiClientFactory
             return $this->envVariablesFactory->createApiClient($namespace);
         }
 
-        if ($this->inClusterFactory->isAvailable($namespace)) {
+        // preserve original AutoDetect semantics: the in-cluster branch checks the namespace file too
+        // (unlike the env branch), so it is called without the caller-supplied namespace
+        if ($this->inClusterFactory->isAvailable()) {
             $this->logger->debug('Using in-cluster configuration for K8S client.');
             return $this->inClusterFactory->createApiClient($namespace);
         }

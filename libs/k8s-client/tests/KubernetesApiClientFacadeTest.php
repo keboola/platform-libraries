@@ -1057,26 +1057,3 @@ class KubernetesApiClientFacadeTest extends TestCase
         $facade->client(FakeCrdModel::class);
     }
 }
-
-/**
- * Throwaway CRD model used to exercise the extra-client registry without the
- * library owning any real CRD.
- */
-// phpcs:ignore PSR1.Classes.ClassDeclaration.MultipleClasses
-class FakeCrdModel extends AbstractModel
-{
-    /** @var string */
-    public $apiVersion = 'example.keboola.com/v1';
-
-    /** @var string */
-    public $kind = 'FakeCrd';
-
-    /** @var \Kubernetes\Model\Io\K8s\Apimachinery\Pkg\Apis\Meta\V1\ObjectMeta|null */
-    public $metadata = null;
-
-    /** @var array<string, mixed>|null */
-    public $spec = null;
-
-    /** @var array<string, mixed>|null */
-    public $status = null;
-}

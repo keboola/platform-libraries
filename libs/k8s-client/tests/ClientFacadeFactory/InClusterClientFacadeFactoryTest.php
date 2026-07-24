@@ -126,6 +126,7 @@ class InClusterClientFacadeFactoryTest extends TestCase
                 new InClusterToken($this->credentialsPath . '/token'),
                 $this->credentialsPath . '/ca.crt',
                 'test-namespace',
+                [],
             )
             ->willReturn($createdClient)
         ;
@@ -156,6 +157,7 @@ class InClusterClientFacadeFactoryTest extends TestCase
                 new InClusterToken($this->credentialsPath . '/token'),
                 $this->credentialsPath . '/ca.crt',
                 'custom-namespace',
+                [],
             )
             ->willReturn($createdClient)
         ;
@@ -187,6 +189,7 @@ class InClusterClientFacadeFactoryTest extends TestCase
                 new InClusterToken($this->credentialsPath . '/token'),
                 $this->credentialsPath . '/ca.crt',
                 'custom-namespace',
+                [],
             )
             ->willReturn($createdClient)
         ;

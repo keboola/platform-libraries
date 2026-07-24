@@ -121,6 +121,7 @@ class EnvVariablesClientFacadeFactoryTest extends TestCase
                 new StaticToken(self::ENV_VARS['K8S_TOKEN']),
                 self::ENV_VARS['K8S_CA_CERT_PATH'],
                 self::ENV_VARS['K8S_NAMESPACE'],
+                [],
             )
             ->willReturn($createdClient)
         ;
@@ -147,6 +148,7 @@ class EnvVariablesClientFacadeFactoryTest extends TestCase
                 new StaticToken(self::ENV_VARS['K8S_TOKEN']),
                 self::ENV_VARS['K8S_CA_CERT_PATH'],
                 'custom-namespace',
+                [],
             )
             ->willReturn($createdClient)
         ;

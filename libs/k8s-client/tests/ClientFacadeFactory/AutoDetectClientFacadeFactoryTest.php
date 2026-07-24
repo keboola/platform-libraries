@@ -47,7 +47,7 @@ class AutoDetectClientFacadeFactoryTest extends TestCase
         $envVariablesFactory->expects(self::once())->method('isAvailable')->willReturn(true);
         $envVariablesFactory->expects(self::once())
             ->method('createClusterClient')
-            ->with($customNamespace)
+            ->with($customNamespace, [])
             ->willReturn($createdClient);
 
         $inClusterFactory = $this->createMock(InClusterClientFacadeFactory::class);
@@ -78,7 +78,7 @@ class AutoDetectClientFacadeFactoryTest extends TestCase
         $inClusterFactory->expects(self::once())->method('isAvailable')->willReturn(true);
         $inClusterFactory->expects(self::once())
             ->method('createClusterClient')
-            ->with($customNamespace)
+            ->with($customNamespace, [])
             ->willReturn($createdClient);
 
         $factory = new AutoDetectClientFacadeFactory(

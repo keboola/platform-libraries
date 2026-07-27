@@ -94,9 +94,8 @@ class TableDescriptionModifierTest extends TestCase
 
     public static function unsupportedBackendProvider(): Generator
     {
-        yield 'synapse' => ['backend' => 'synapse'];
-        yield 'exasol' => ['backend' => 'exasol'];
-        yield 'teradata' => ['backend' => 'teradata'];
+        // postgres is a bucket backend Storage allows (Model_Buckets::availableBackends()) but the
+        // table-definition update endpoint does not support it
         yield 'postgres' => ['backend' => 'postgres'];
         yield 'backend missing in the response' => ['backend' => null];
     }

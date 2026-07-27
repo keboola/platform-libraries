@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Keboola\K8sClient\Tests;
 
-use Keboola\K8sClient\ClientFactory\KubernetesApiClientFacadeFactory;
 use Keboola\K8sClient\ClientFactory\StaticKubernetesApiClientFactory;
 use Keboola\K8sClient\KubernetesApiClientFacade;
 use Keboola\K8sClient\RetryProxyFactory;
@@ -31,7 +30,7 @@ class KubernetesApiClientFacadeFunctionalTest extends TestCase
             (string) getenv('K8S_NAMESPACE'),
         ))->createApiClient();
 
-        $this->apiClient = (new KubernetesApiClientFacadeFactory($logger))->create($apiClient);
+        $this->apiClient = KubernetesApiClientFacade::create($apiClient, $logger);
 
         $this->cleanupCluster();
     }

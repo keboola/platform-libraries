@@ -19,8 +19,8 @@ build the high-level facade:
 ```php
 <?php
 
-use Keboola\K8sClient\ClientFactory\KubernetesApiClientFacadeFactory;
 use Keboola\K8sClient\ClientFactory\StaticKubernetesApiClientFactory;
+use Keboola\K8sClient\KubernetesApiClientFacade;
 use Kubernetes\Model\Io\K8s\Api\Core\V1\Container;
 use Kubernetes\Model\Io\K8s\Api\Core\V1\Pod;
 
@@ -32,7 +32,7 @@ $clientFactory = new StaticKubernetesApiClientFactory(
     'default',
 );
 $apiClient = $clientFactory->createApiClient();
-$client = (new KubernetesApiClientFacadeFactory($logger))->create($apiClient);
+$client = KubernetesApiClientFacade::create($apiClient, $logger);
 
 $pod = new Pod([
     'metadata' => [
@@ -75,6 +75,54 @@ $client->deleteModels([
 ]);
 ```
 
+## Custom resources (CRDs)
+The facade also serves resources it doesn't ship. Implement an API client for your CRD by extending
+`Keboola\K8sClient\ApiClient\BaseNamespaceApiClient` (or `BaseClusterApiClient`), then register it via the
+`$extraClients` map — keyed by the CRD model class — when building the facade:
+
+```php
+$facade = KubernetesApiClientFacade::create($apiClient, $logger, [
+    My\Crd\Model::class => new My\Crd\ApiClient($apiClient),
+]);
+
+$facade->client(My\Crd\Model::class)->get('my-resource'); // typed access
+$facade->mergePatch($myCrdModel);                          // generic methods route via the map too
+```
+
+## Symfony integration
+The library ships no bundle, so wire the pieces as services. Minimal setup with auto-detected credentials
+(env vars in dev, in-cluster ServiceAccount token in prod) using the shared-client + `create()` split:
+
+```yaml
+services:
+    # credential strategy — AutoDetect needs its two sub-factories defined (RetryProxy is not autowirable)
+    Keboola\K8sClient\ClientFactory\EnvVariablesKubernetesApiClientFactory:
+        arguments:
+            $retryProxy: !service { class: Retry\RetryProxy }
+    Keboola\K8sClient\ClientFactory\InClusterKubernetesApiClientFactory:
+        arguments:
+            $retryProxy: !service { class: Retry\RetryProxy }
+    Keboola\K8sClient\ClientFactory\AutoDetectKubernetesApiClientFactory: ~
+
+    # the shared low-level client
+    app.k8s.api_client:
+        class: Keboola\K8sClient\KubernetesApiClient
+        factory: ['@Keboola\K8sClient\ClientFactory\AutoDetectKubernetesApiClientFactory', 'createApiClient']
+        arguments:
+            $namespace: '%env(K8S_NAMESPACE)%'
+
+    # the high-level facade (static factory called as a class-string); register CRD clients via $extraClients
+    Keboola\K8sClient\KubernetesApiClientFacade:
+        factory: ['Keboola\K8sClient\KubernetesApiClientFacade', 'create']
+        arguments:
+            $apiClient: '@app.k8s.api_client'
+            $logger: '@logger'
+            $extraClients: {}   # e.g. 'App\Crd\Model': '@App\Crd\ApiClient'
+```
+
+For a single credential source you can skip `AutoDetect` and point the client at
+`StaticKubernetesApiClientFactory` (explicit values) or `InClusterKubernetesApiClientFactory` directly.
+
 ## Development
 Prerequisites:
 * configured `az` and `aws` CLI tools (run `az login` and `aws configure --profile keboola-dev-platform-services`)
@@ -104,7 +152,7 @@ Only few K8S APIs we needed are implement so far. To implement new API, do follo
 * add the wrapper to `KubernetesApiClientFacade`
   * inject the `kubernetes/php-client` client through constructor
   * add support for the new resource to methods signatures
-* update `KubernetesApiClientFacadeFactory::create()` to provide new API class to `KubernetesApiClientFacade`
+* update `KubernetesApiClientFacade::create()` to provide the new API class to the facade
 
 ## License
 

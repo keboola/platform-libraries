@@ -14,6 +14,7 @@ use Keboola\K8sClient\ApiClient\PersistentVolumesApiClient;
 use Keboola\K8sClient\ApiClient\PodsApiClient;
 use Keboola\K8sClient\ApiClient\SecretsApiClient;
 use Keboola\K8sClient\ApiClient\ServicesApiClient;
+use Keboola\K8sClient\BaseApi\PodWithLogStream;
 use Keboola\K8sClient\Exception\ResourceNotFoundException;
 use Keboola\K8sClient\Exception\TimeoutException;
 use Kubernetes\Model\Io\K8s\Api\Core\V1\ConfigMap;
@@ -63,6 +64,31 @@ class KubernetesApiClientFacade
             PersistentVolume::class => $this->persistentVolumesApiClient,
             ...$extraClients,
         ];
+    }
+
+    /**
+     * Named constructor: assemble the facade from a single configured {@see KubernetesApiClient}
+     * (build one with a {@see \Keboola\K8sClient\ClientFactory\KubernetesApiClientFactory}).
+     *
+     * @param array<class-string<AbstractModel>, ApiClientInterface<AbstractModel, AbstractModel>> $extraClients
+     */
+    public static function create(
+        KubernetesApiClient $apiClient,
+        LoggerInterface $logger,
+        array $extraClients = [],
+    ): self {
+        return new self(
+            $logger,
+            new ConfigMapsApiClient($apiClient),
+            new EventsApiClient($apiClient),
+            new IngressesApiClient($apiClient),
+            new PersistentVolumeClaimsApiClient($apiClient),
+            new PersistentVolumesApiClient($apiClient),
+            new PodsApiClient($apiClient, new PodWithLogStream()),
+            new SecretsApiClient($apiClient),
+            new ServicesApiClient($apiClient),
+            $extraClients,
+        );
     }
 
     public function ingresses(): IngressesApiClient

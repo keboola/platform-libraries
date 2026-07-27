@@ -42,13 +42,6 @@ class TableInfo
         return $this->tableInfo['primaryKey'];
     }
 
-    public function getBucketBackend(): ?string
-    {
-        $backend = $this->tableInfo['bucket']['backend'] ?? null;
-
-        return is_string($backend) ? $backend : null;
-    }
-
     /**
      * Description stored in the native Storage description field, or null when the table has none. Read from
      * the table definition, the same source input mapping reads.

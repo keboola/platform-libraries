@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping\Tests\Storage;
 
-use Generator;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Storage\TableDescription;
 use Keboola\OutputMapping\Storage\TableDescriptionModifier;
@@ -72,52 +71,6 @@ class TableDescriptionModifierTest extends TestCase
             'Description of table "%s" is managed by the user, keeping the current value.',
             self::TABLE_ID,
         )));
-    }
-
-    /** @dataProvider unsupportedBackendProvider */
-    public function testStoringIsSkippedOnBackendWithoutDefinitionUpdate(?string $backend): void
-    {
-        $client = $this->createMock(Client::class);
-        $client->expects(self::never())
-            ->method('updateTableDefinition');
-
-        $this->createModifier($client)->updateDescriptions(
-            $this->createTableInfo(columns: ['col1'], backend: $backend),
-            new TableDescription(self::TABLE_ID, 'table desc', ['col1' => 'col1 desc']),
-        );
-
-        self::assertTrue($this->logHandler->hasInfoThatContains(sprintf(
-            'Storing description of table "%s" is not supported on the',
-            self::TABLE_ID,
-        )));
-    }
-
-    public static function unsupportedBackendProvider(): Generator
-    {
-        // postgres is a bucket backend Storage allows (Model_Buckets::availableBackends()) but the
-        // table-definition update endpoint does not support it
-        yield 'postgres' => ['backend' => 'postgres'];
-        yield 'backend missing in the response' => ['backend' => null];
-    }
-
-    /** @dataProvider supportedBackendProvider */
-    public function testStoringIsPerformedOnSupportedBackend(string $backend): void
-    {
-        $client = $this->createMock(Client::class);
-        $client->expects(self::once())
-            ->method('updateTableDefinition')
-            ->willReturn([]);
-
-        $this->createModifier($client)->updateDescriptions(
-            $this->createTableInfo(columns: [], backend: $backend),
-            new TableDescription(self::TABLE_ID, 'table desc', []),
-        );
-    }
-
-    public static function supportedBackendProvider(): Generator
-    {
-        yield 'snowflake' => ['backend' => 'snowflake'];
-        yield 'bigquery' => ['backend' => 'bigquery'];
     }
 
     /**
@@ -267,7 +220,6 @@ class TableDescriptionModifierTest extends TestCase
     private function createTableInfo(
         array $columns = [],
         bool $isDescriptionSystemManaged = true,
-        ?string $backend = 'snowflake',
         ?string $storedTableDescription = null,
         array $storedColumnDescriptions = [],
     ): TableInfo {
@@ -286,7 +238,6 @@ class TableDescriptionModifierTest extends TestCase
             'isTyped' => true,
             'primaryKey' => [],
             'isDescriptionSystemManaged' => $isDescriptionSystemManaged,
-            'bucket' => ['backend' => $backend],
             'definition' => [
                 'description' => $storedTableDescription,
                 'columns' => $definitionColumns,

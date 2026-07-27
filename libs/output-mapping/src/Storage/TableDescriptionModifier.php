@@ -21,16 +21,6 @@ use Psr\Log\LoggerInterface;
  */
 class TableDescriptionModifier
 {
-    /**
-     * Backends where Storage implements the table-definition update endpoint. On any other backend the
-     * description cannot be stored in the native field at all, so it is skipped instead of failing the job.
-     * Mirrors Keboola\Storage\TablesColumns\DefinitionUpdate\DefinitionUpdate::SUPPORTED_BACKENDS.
-     */
-    private const BACKENDS_SUPPORTING_DEFINITION_UPDATE = [
-        'snowflake',
-        'bigquery',
-    ];
-
     public function __construct(
         private readonly ClientWrapper $clientWrapper,
         private readonly LoggerInterface $logger,
@@ -39,15 +29,6 @@ class TableDescriptionModifier
 
     public function updateDescriptions(TableInfo $tableInfo, TableDescription $descriptions): void
     {
-        if (!in_array($tableInfo->getBucketBackend(), self::BACKENDS_SUPPORTING_DEFINITION_UPDATE, true)) {
-            $this->logger->info(sprintf(
-                'Storing description of table "%s" is not supported on the "%s" backend, skipping it.',
-                $tableInfo->getId(),
-                (string) $tableInfo->getBucketBackend(),
-            ));
-            return;
-        }
-
         if (!$tableInfo->isDescriptionSystemManaged()) {
             $this->logger->info(sprintf(
                 'Description of table "%s" is managed by the user, keeping the current value.',

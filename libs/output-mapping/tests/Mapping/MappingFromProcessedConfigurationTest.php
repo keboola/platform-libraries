@@ -219,12 +219,62 @@ class MappingFromProcessedConfigurationTest extends TestCase
         $physicalDataWithManifest = $this->createMock(MappingFromRawConfigurationAndPhysicalDataWithManifest::class);
         $mapping = new MappingFromProcessedConfiguration($mapping, $physicalDataWithManifest);
 
+        // the description is stored in the native Storage description field, not as KBC.description metadata
         self::assertEquals([
             'key1' => 'val1',
             'key2' => 'val2',
-            'KBC.description' => 'table desc',
         ], $mapping->getTableMetadata());
         self::assertTrue($mapping->hasTableMetadata());
+        self::assertSame('table desc', $mapping->getTableDescription());
+    }
+
+    public function testDescriptionIsNotReportedAsMetadata(): void
+    {
+        $physicalDataWithManifest = $this->createMock(MappingFromRawConfigurationAndPhysicalDataWithManifest::class);
+        $mapping = new MappingFromProcessedConfiguration([
+            'destination' => 'in.c-main.table',
+            'table_metadata' => ['KBC.description' => 'table desc'],
+            'metadata' => [
+                ['key' => 'KBC.description', 'value' => 'table desc'],
+                ['key' => 'KBC.name', 'value' => 'whatever'],
+            ],
+            'column_metadata' => [
+                'col1' => [
+                    ['key' => 'KBC.description', 'value' => 'col1 desc'],
+                    ['key' => 'KBC.datatype.type', 'value' => 'STRING'],
+                ],
+                // a column whose only metadata is the description must stay in the list, the column list of a
+                // table is derived from these keys as well
+                'col2' => [['key' => 'KBC.description', 'value' => 'col2 desc']],
+            ],
+        ], $physicalDataWithManifest);
+
+        self::assertSame([], $mapping->getTableMetadata());
+        self::assertFalse($mapping->hasTableMetadata());
+        self::assertSame([['key' => 'KBC.name', 'value' => 'whatever']], $mapping->getMetadata());
+        self::assertTrue($mapping->hasMetadata());
+
+        $columnMetadata = $mapping->getColumnMetadata();
+        self::assertCount(2, $columnMetadata);
+        self::assertSame('col1', $columnMetadata[0]->getColumnName());
+        self::assertSame([['key' => 'KBC.datatype.type', 'value' => 'STRING']], $columnMetadata[0]->getMetadata());
+        self::assertSame('col2', $columnMetadata[1]->getColumnName());
+        self::assertSame([], $columnMetadata[1]->getMetadata());
+
+        self::assertSame('table desc', $mapping->getTableDescription());
+        self::assertSame(['col1' => 'col1 desc', 'col2' => 'col2 desc'], $mapping->getColumnDescriptions());
+    }
+
+    public function testHasMetadataIsFalseWhenOnlyDescriptionIsSet(): void
+    {
+        $physicalDataWithManifest = $this->createMock(MappingFromRawConfigurationAndPhysicalDataWithManifest::class);
+        $mapping = new MappingFromProcessedConfiguration([
+            'destination' => 'in.c-main.table',
+            'metadata' => [['key' => 'KBC.description', 'value' => 'table desc']],
+        ], $physicalDataWithManifest);
+
+        self::assertSame([], $mapping->getMetadata());
+        self::assertFalse($mapping->hasMetadata());
     }
 
     public function testHasSchemaConfiguration(): void

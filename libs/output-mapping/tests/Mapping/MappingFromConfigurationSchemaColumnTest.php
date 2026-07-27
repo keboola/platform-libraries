@@ -52,13 +52,8 @@ class MappingFromConfigurationSchemaColumnTest extends TestCase
         self::assertTrue($schemColumn->isPrimaryKey());
         self::assertTrue($schemColumn->isDistributionKey());
         self::assertTrue($schemColumn->hasMetadata());
-        self::assertSame(
-            [
-                'KBC.datatype.type' => 'STRING',
-                'KBC.description' => 'Some description of the newColumn.',
-            ],
-            $schemColumn->getMetadata(),
-        );
+        // the description is stored in the native Storage description field, not as KBC.description metadata
+        self::assertSame(['KBC.datatype.type' => 'STRING'], $schemColumn->getMetadata());
         self::assertSame('Some description of the newColumn.', $schemColumn->getDescription());
     }
 
@@ -72,6 +67,9 @@ class MappingFromConfigurationSchemaColumnTest extends TestCase
         ]);
 
         self::assertSame('Description from metadata.', $schemColumn->getDescription());
+        // the key is consumed as the description, so it must not be reported as metadata as well
+        self::assertSame([], $schemColumn->getMetadata());
+        self::assertFalse($schemColumn->hasMetadata());
     }
 
     public function testGetDescriptionIgnoresNonArrayMetadata(): void

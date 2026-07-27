@@ -6,14 +6,13 @@ namespace Keboola\OutputMapping\Mapping;
 
 use Keboola\OutputMapping\Configuration\Table\Configuration;
 use Keboola\OutputMapping\Configuration\Table\DeduplicationStrategy;
+use Keboola\OutputMapping\Writer\Helper\DescriptionHelper;
 use Keboola\OutputMapping\Writer\Helper\RestrictedColumnsHelper;
 use Keboola\OutputMapping\Writer\Table\MappingDestination;
 use Keboola\OutputMapping\Writer\Table\Source\SourceType;
 
 class MappingFromProcessedConfiguration
 {
-    private const DESCRIPTION_METADATA_KEY = 'KBC.description';
-
     private MappingDestination $destination;
     private MappingFromRawConfigurationAndPhysicalDataWithManifest $source;
     private array $mapping;
@@ -131,6 +130,11 @@ class MappingFromProcessedConfiguration
     }
 
     /**
+     * Column metadata without the description, which is stored in the native Storage description field
+     * instead - see getColumnDescriptions(). A column whose only metadata was the description is kept with an
+     * empty metadata list, because the column list of a table is also derived from these keys
+     * (TableStructureModifier).
+     *
      * @return MappingColumnMetadata[]
      */
     public function getColumnMetadata(): array
@@ -142,7 +146,10 @@ class MappingFromProcessedConfiguration
 
         $return = [];
         foreach ($columnMetadataFromConfiguration as $columnName => $metadata) {
-            $return[] = new MappingColumnMetadata((string) $columnName, $metadata);
+            $return[] = new MappingColumnMetadata(
+                (string) $columnName,
+                DescriptionHelper::removeDescriptionFromMetadataList($metadata),
+            );
         }
 
         return $return;
@@ -170,12 +177,16 @@ class MappingFromProcessedConfiguration
 
     public function hasMetadata(): bool
     {
-        return !empty($this->mapping['metadata']);
+        return !empty($this->getMetadata());
     }
 
+    /**
+     * Table metadata without the description, which is stored in the native Storage description field instead
+     * - see getTableDescription().
+     */
     public function getMetadata(): array
     {
-        return $this->mapping['metadata'] ?? [];
+        return DescriptionHelper::removeDescriptionFromMetadataList($this->mapping['metadata'] ?? []);
     }
 
     public function hasTableMetadata(): bool
@@ -183,13 +194,13 @@ class MappingFromProcessedConfiguration
         return !empty($this->getTableMetadata());
     }
 
+    /**
+     * Table metadata without the description, which is stored in the native Storage description field instead
+     * - see getTableDescription().
+     */
     public function getTableMetadata(): array
     {
-        $metadata = $this->mapping['table_metadata'] ?? [];
-        if (isset($this->mapping['description'])) {
-            $metadata[self::DESCRIPTION_METADATA_KEY] = $this->mapping['description'];
-        }
-        return $metadata;
+        return DescriptionHelper::removeDescriptionFromMetadataMap($this->mapping['table_metadata'] ?? []);
     }
 
     /**
@@ -203,33 +214,24 @@ class MappingFromProcessedConfiguration
     public function getTableDescription(): ?string
     {
         if (isset($this->mapping['description'])) {
-            return self::normalizeDescription($this->mapping['description']);
+            return DescriptionHelper::normalizeDescription($this->mapping['description']);
         }
 
         // table_metadata is a variableNode in the configuration, so it is not guaranteed to be an array
         $tableMetadata = $this->mapping['table_metadata'] ?? [];
-        if (is_array($tableMetadata) && isset($tableMetadata[self::DESCRIPTION_METADATA_KEY])) {
-            return self::normalizeDescription($tableMetadata[self::DESCRIPTION_METADATA_KEY]);
+        if (is_array($tableMetadata) && isset($tableMetadata[DescriptionHelper::DESCRIPTION_METADATA_KEY])) {
+            return DescriptionHelper::normalizeDescription(
+                $tableMetadata[DescriptionHelper::DESCRIPTION_METADATA_KEY],
+            );
         }
 
-        foreach ($this->getMetadata() as $item) {
-            if (($item['key'] ?? null) === self::DESCRIPTION_METADATA_KEY) {
-                return self::normalizeDescription($item['value']);
+        foreach ($this->mapping['metadata'] ?? [] as $item) {
+            if (is_array($item) && ($item['key'] ?? null) === DescriptionHelper::DESCRIPTION_METADATA_KEY) {
+                return DescriptionHelper::normalizeDescription($item['value'] ?? null);
             }
         }
 
         return null;
-    }
-
-    private static function normalizeDescription(mixed $description): ?string
-    {
-        if (!is_scalar($description)) {
-            return null;
-        }
-
-        $description = (string) $description;
-
-        return $description !== '' ? $description : null;
     }
 
     /**
@@ -255,14 +257,19 @@ class MappingFromProcessedConfiguration
             return $descriptions;
         }
 
-        foreach ($this->getColumnMetadata() as $columnMetadata) {
-            foreach ($columnMetadata->getMetadata() as $item) {
-                if (($item['key'] ?? null) !== self::DESCRIPTION_METADATA_KEY) {
+        // read from the raw configuration - getColumnMetadata() has the description stripped out
+        $columnMetadataFromConfiguration = $this->mapping['column_metadata'] ?
+            RestrictedColumnsHelper::removeRestrictedColumnsFromColumnMetadata($this->mapping['column_metadata']) :
+            [];
+
+        foreach ($columnMetadataFromConfiguration as $columnName => $metadata) {
+            foreach ($metadata as $item) {
+                if (!is_array($item) || ($item['key'] ?? null) !== DescriptionHelper::DESCRIPTION_METADATA_KEY) {
                     continue;
                 }
-                $description = self::normalizeDescription($item['value']);
+                $description = DescriptionHelper::normalizeDescription($item['value'] ?? null);
                 if ($description !== null) {
-                    $descriptions[$columnMetadata->getColumnName()] = $description;
+                    $descriptions[(string) $columnName] = $description;
                 }
             }
         }

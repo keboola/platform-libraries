@@ -74,7 +74,7 @@ class StoragePreparer
                 $descriptions = TableDescription::createFromMapping($processedSource);
                 if (!$descriptions->isEmpty()) {
                     $descriptionModifier = new TableDescriptionModifier($this->clientWrapper, $this->logger);
-                    $descriptionModifier->updateExistingTableDescriptions($destinationTableInfo, $descriptions);
+                    $descriptionModifier->updateDescriptions($destinationTableInfo, $descriptions);
                 }
             }
         }

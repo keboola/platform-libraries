@@ -38,8 +38,8 @@ class SchemaColumnsMetadataTest extends TestCase
                     'col2' => [
                         [
                             'columnName' => 'col2',
-                            'key' => 'KBC.description',
-                            'value' => 'col2 description',
+                            'key' => 'key3',
+                            'value' => 'val3',
                         ],
                     ],
                 ],
@@ -68,8 +68,8 @@ class SchemaColumnsMetadataTest extends TestCase
                     'col2' => [
                         [
                             'columnName' => 'col2',
-                            'key' => 'KBC.description',
-                            'value' => 'col2 description',
+                            'key' => 'key3',
+                            'value' => 'val3',
                         ],
                     ],
                 ],
@@ -109,9 +109,13 @@ class SchemaColumnsMetadataTest extends TestCase
                     'key2' => 'val2',
                 ],
             ]),
+            // the description is stored in the native Storage description field, so only key3 is written here
             new MappingFromConfigurationSchemaColumn([
                 'name' => 'col2',
                 'description' => 'col2 description',
+                'metadata' => [
+                    'key3' => 'val3',
+                ],
             ]),
             new MappingFromConfigurationSchemaColumn([
                 'name' => 'col3',

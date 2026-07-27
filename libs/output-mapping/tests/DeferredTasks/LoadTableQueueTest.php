@@ -658,6 +658,7 @@ class LoadTableQueueTest extends TestCase
                 'displayName' => 'my-name',
                 'name' => 'my-name',
                 'columns' => ['col1'],
+                'bucket' => ['backend' => 'snowflake'],
                 'lastImportDate' => null,
                 'lastChangeDate' => null,
             ])
@@ -729,6 +730,7 @@ class LoadTableQueueTest extends TestCase
                 'displayName' => 'my-name',
                 'name' => 'my-name',
                 'columns' => ['col1'],
+                'bucket' => ['backend' => 'snowflake'],
                 'lastImportDate' => null,
                 'lastChangeDate' => null,
             ])

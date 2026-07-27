@@ -18,24 +18,36 @@ use Psr\Log\LoggerInterface;
  * - system-managed - output mapping stores/updates the table and column description,
  * - user-managed - output mapping discards the description it produced so that the value set by the user
  *   is never overwritten.
- *
- * Tables created by the current run are always system-managed (that is the Storage default), so their
- * description is stored without asking.
  */
 class TableDescriptionModifier
 {
+    /**
+     * Backends where Storage implements the table-definition update endpoint. On any other backend the
+     * description cannot be stored in the native field at all, so it is skipped instead of failing the job.
+     * Mirrors Keboola\Storage\TablesColumns\DefinitionUpdate\DefinitionUpdate::SUPPORTED_BACKENDS.
+     */
+    private const BACKENDS_SUPPORTING_DEFINITION_UPDATE = [
+        'snowflake',
+        'bigquery',
+    ];
+
     public function __construct(
         private readonly ClientWrapper $clientWrapper,
         private readonly LoggerInterface $logger,
     ) {
     }
 
-    /**
-     * Stores descriptions on a table which already existed before this run, unless its description is
-     * managed by the user.
-     */
-    public function updateExistingTableDescriptions(TableInfo $tableInfo, TableDescription $descriptions): void
+    public function updateDescriptions(TableInfo $tableInfo, TableDescription $descriptions): void
     {
+        if (!in_array($tableInfo->getBucketBackend(), self::BACKENDS_SUPPORTING_DEFINITION_UPDATE, true)) {
+            $this->logger->info(sprintf(
+                'Storing description of table "%s" is not supported on the "%s" backend, skipping it.',
+                $tableInfo->getId(),
+                (string) $tableInfo->getBucketBackend(),
+            ));
+            return;
+        }
+
         if (!$tableInfo->isDescriptionSystemManaged()) {
             $this->logger->info(sprintf(
                 'Description of table "%s" is managed by the user, keeping the current value.',
@@ -44,35 +56,60 @@ class TableDescriptionModifier
             return;
         }
 
-        $this->applyDescriptions($descriptions, $tableInfo->getColumns());
+        $tableDefinitionUpdate = $this->buildTableDefinitionUpdate($tableInfo, $descriptions);
+        if (!$tableDefinitionUpdate) {
+            // Nothing changed since the last run. Storage rejects a patch without any effective change with
+            // "No table definition changes were provided." (400), so the call must be skipped entirely.
+            return;
+        }
+
+        try {
+            $this->clientWrapper->getTableAndFileStorageClient()->updateTableDefinition(
+                $tableInfo->getId(),
+                $tableDefinitionUpdate,
+            );
+        } catch (ClientException $e) {
+            if ($e->getCode() >= 500) {
+                // Let a Storage outage surface as a retryable application error, consistently with the
+                // metadata path in LoadTableQueue.
+                throw $e;
+            }
+
+            throw new InvalidOutputException(
+                sprintf(
+                    'Cannot update description of table "%s": %s',
+                    $tableInfo->getId(),
+                    $e->getMessage(),
+                ),
+                $e->getCode(),
+                $e,
+            );
+        }
     }
 
     /**
-     * Stores descriptions on a table created by the current run.
-     *
-     * @param string[]|null $tableColumns columns of the created table, null when the column list is unknown
+     * @return array{description?: string, columns?: list<array{name: string, description: string}>}
      */
-    public function setCreatedTableDescriptions(TableDescription $descriptions, ?array $tableColumns): void
-    {
-        $this->applyDescriptions($descriptions, $tableColumns);
-    }
-
-    /**
-     * @param string[]|null $tableColumns columns existing in the table, null disables the check
-     */
-    private function applyDescriptions(TableDescription $descriptions, ?array $tableColumns): void
+    private function buildTableDefinitionUpdate(TableInfo $tableInfo, TableDescription $descriptions): array
     {
         $tableDefinitionUpdate = [];
 
-        if ($descriptions->getTableDescription() !== null) {
-            $tableDefinitionUpdate['description'] = $descriptions->getTableDescription();
+        $tableDescription = $descriptions->getTableDescription();
+        if ($tableDescription !== null && $tableDescription !== $tableInfo->getDescription()) {
+            $tableDefinitionUpdate['description'] = $tableDescription;
         }
+
+        $tableColumns = $tableInfo->getColumns();
+        $storedColumnDescriptions = $tableInfo->getColumnDescriptions();
 
         $columns = [];
         $missingColumns = [];
         foreach ($descriptions->getColumnDescriptions() as $columnName => $columnDescription) {
-            if ($tableColumns !== null && !in_array($columnName, $tableColumns, true)) {
+            if (!in_array($columnName, $tableColumns, true)) {
                 $missingColumns[] = $columnName;
+                continue;
+            }
+            if ($columnDescription === ($storedColumnDescriptions[$columnName] ?? null)) {
                 continue;
             }
             $columns[] = [
@@ -85,7 +122,7 @@ class TableDescriptionModifier
             $this->logger->warning(sprintf(
                 'Cannot store description of column(s) "%s" of table "%s", the column(s) do not exist.',
                 implode('", "', $missingColumns),
-                $descriptions->getTableId(),
+                $tableInfo->getId(),
             ));
         }
 
@@ -93,25 +130,6 @@ class TableDescriptionModifier
             $tableDefinitionUpdate['columns'] = $columns;
         }
 
-        if (!$tableDefinitionUpdate) {
-            return;
-        }
-
-        try {
-            $this->clientWrapper->getTableAndFileStorageClient()->updateTableDefinition(
-                $descriptions->getTableId(),
-                $tableDefinitionUpdate,
-            );
-        } catch (ClientException $e) {
-            throw new InvalidOutputException(
-                sprintf(
-                    'Cannot update description of table "%s": %s',
-                    $descriptions->getTableId(),
-                    $e->getMessage(),
-                ),
-                $e->getCode(),
-                $e,
-            );
-        }
+        return $tableDefinitionUpdate;
     }
 }

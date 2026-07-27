@@ -9,7 +9,7 @@ use Keboola\OutputMapping\SystemMetadata;
 use Keboola\OutputMapping\Tests\AbstractTestCase;
 use Keboola\OutputMapping\Tests\Needs\NeedsEmptyOutputBucket;
 
-class TableDescriptionTest extends AbstractTestCase
+class TableDescriptionWriterTest extends AbstractTestCase
 {
     #[NeedsEmptyOutputBucket]
     public function testDescriptionIsStoredOnCreatedTable(): void
@@ -35,6 +35,23 @@ class TableDescriptionTest extends AbstractTestCase
         self::assertTrue($tableDetail['isDescriptionSystemManaged']);
         self::assertSame('updated table description', $tableDetail['definition']['description'] ?? null);
         self::assertSame('updated Id description', $this->getColumnDescription($tableDetail, 'Id'));
+    }
+
+    /**
+     * Storage rejects a table-definition patch without any effective change with 400 "No table definition
+     * changes were provided.", so a repeated run with an unchanged description must not send the patch at all.
+     */
+    #[NeedsEmptyOutputBucket]
+    public function testRepeatedRunWithUnchangedDescriptionSucceeds(): void
+    {
+        $tableId = $this->emptyOutputBucketId . '.tableDescription';
+
+        $this->uploadTable($tableId, 'table description', 'Id description');
+        $this->uploadTable($tableId, 'table description', 'Id description');
+
+        $tableDetail = $this->clientWrapper->getTableAndFileStorageClient()->getTable($tableId);
+        self::assertSame('table description', $tableDetail['definition']['description'] ?? null);
+        self::assertSame('Id description', $this->getColumnDescription($tableDetail, 'Id'));
     }
 
     #[NeedsEmptyOutputBucket]

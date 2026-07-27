@@ -8,6 +8,7 @@ use Keboola\InputMapping\Table\Result\TableInfo;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Storage\TableDescription;
 use Keboola\OutputMapping\Storage\TableDescriptionModifier;
+use Keboola\OutputMapping\Storage\TableInfo as StorageTableInfo;
 use Keboola\OutputMapping\Table\Result;
 use Keboola\OutputMapping\Table\Result\Metrics;
 use Keboola\StorageApi\ClientException;
@@ -105,13 +106,12 @@ class LoadTableQueue
                     );
                 }
 
-                $tableColumns = null;
+                $tableData = null;
                 switch ($jobResult['operationName']) {
                     case 'tableImport':
                         $tableData = $this->clientWrapper->getTableAndFileStorageClient()->getTable(
                             $jobResult['tableId'],
                         );
-                        $tableColumns = self::extractTableColumns($tableData);
                         $this->tableResult->addTable(new TableInfo($tableData));
                         $this->tableResult->addGenericVariable(
                             $jobResult['tableId'],
@@ -124,14 +124,13 @@ class LoadTableQueue
                         $tableData = $this->clientWrapper->getTableAndFileStorageClient()->getTable(
                             $jobResult['results']['id'],
                         );
-                        $tableColumns = self::extractTableColumns($tableData);
                         $this->tableResult->addTable(new TableInfo($tableData));
                         $jobResults[] = $jobResult;
                         break;
                 }
 
                 try {
-                    $this->applyCreatedTableDescriptions($task, $tableColumns);
+                    $this->applyCreatedTableDescriptions($task, $tableData);
                 } catch (InvalidOutputException $e) {
                     $errors[] = $e->getMessage();
                 }
@@ -147,20 +146,9 @@ class LoadTableQueue
     }
 
     /**
-     * @param array<mixed> $tableData table detail as returned by Storage
-     * @return string[]|null
+     * @param array<mixed>|null $tableData table detail as returned by Storage after a successful load
      */
-    private static function extractTableColumns(array $tableData): ?array
-    {
-        $columns = $tableData['columns'] ?? null;
-
-        return is_array($columns) ? array_map('strval', $columns) : null;
-    }
-
-    /**
-     * @param string[]|null $tableColumns
-     */
-    private function applyCreatedTableDescriptions(LoadTableTaskInterface $task, ?array $tableColumns): void
+    private function applyCreatedTableDescriptions(LoadTableTaskInterface $task, ?array $tableData): void
     {
         if ($this->createdTableDescriptions === []) {
             return;
@@ -168,7 +156,7 @@ class LoadTableQueue
 
         $tableId = $task->getDestinationTableName();
         $descriptions = $this->createdTableDescriptions[$tableId] ?? null;
-        if ($descriptions === null) {
+        if ($descriptions === null || $tableData === null) {
             return;
         }
 
@@ -177,7 +165,7 @@ class LoadTableQueue
         unset($this->createdTableDescriptions[$tableId]);
 
         $descriptionModifier = new TableDescriptionModifier($this->clientWrapper, $this->logger);
-        $descriptionModifier->setCreatedTableDescriptions($descriptions, $tableColumns);
+        $descriptionModifier->updateDescriptions(new StorageTableInfo($tableData), $descriptions);
     }
 
     public function getTaskCount(): int

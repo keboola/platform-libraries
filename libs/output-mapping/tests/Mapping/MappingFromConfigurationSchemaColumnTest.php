@@ -22,6 +22,7 @@ class MappingFromConfigurationSchemaColumnTest extends TestCase
         self::assertFalse($schemColumn->isDistributionKey());
         self::assertFalse($schemColumn->hasMetadata());
         self::assertSame([], $schemColumn->getMetadata());
+        self::assertNull($schemColumn->getDescription());
     }
 
     public function testGetters(): void
@@ -58,5 +59,28 @@ class MappingFromConfigurationSchemaColumnTest extends TestCase
             ],
             $schemColumn->getMetadata(),
         );
+        self::assertSame('Some description of the newColumn.', $schemColumn->getDescription());
+    }
+
+    public function testGetDescriptionFromMetadata(): void
+    {
+        $schemColumn = new MappingFromConfigurationSchemaColumn([
+            'name' => 'newColumn',
+            'metadata' => [
+                'KBC.description' => 'Description from metadata.',
+            ],
+        ]);
+
+        self::assertSame('Description from metadata.', $schemColumn->getDescription());
+    }
+
+    public function testGetDescriptionIgnoresNonArrayMetadata(): void
+    {
+        $schemColumn = new MappingFromConfigurationSchemaColumn([
+            'name' => 'newColumn',
+            'metadata' => 'this is a variableNode, so it may be anything',
+        ]);
+
+        self::assertNull($schemColumn->getDescription());
     }
 }

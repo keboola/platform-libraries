@@ -71,6 +71,136 @@ class MappingFromProcessedConfigurationTest extends TestCase
         self::assertEquals(SourceType::WORKSPACE, $mapping->getItemSourceType());
         self::assertInstanceOf(MappingDestination::class, $mapping->getDestination());
         self::assertNull($mapping->getDeleteWhere());
+        self::assertNull($mapping->getTableDescription());
+        self::assertSame([], $mapping->getColumnDescriptions());
+    }
+
+    /** @dataProvider tableDescriptionProvider */
+    public function testGetTableDescription(array $mappingConfiguration, ?string $expectedDescription): void
+    {
+        $physicalDataWithManifest = $this->createMock(MappingFromRawConfigurationAndPhysicalDataWithManifest::class);
+        $mapping = new MappingFromProcessedConfiguration(
+            array_merge(['destination' => 'in.c-main.table'], $mappingConfiguration),
+            $physicalDataWithManifest,
+        );
+
+        self::assertSame($expectedDescription, $mapping->getTableDescription());
+    }
+
+    public static function tableDescriptionProvider(): Generator
+    {
+        yield 'from description field' => [
+            'mappingConfiguration' => ['description' => 'table desc'],
+            'expectedDescription' => 'table desc',
+        ];
+        yield 'from table_metadata' => [
+            'mappingConfiguration' => ['table_metadata' => ['KBC.description' => 'table desc']],
+            'expectedDescription' => 'table desc',
+        ];
+        yield 'from metadata list' => [
+            'mappingConfiguration' => [
+                'metadata' => [
+                    ['key' => 'KBC.name', 'value' => 'whatever'],
+                    ['key' => 'KBC.description', 'value' => 'table desc'],
+                ],
+            ],
+            'expectedDescription' => 'table desc',
+        ];
+        yield 'description field wins over metadata' => [
+            'mappingConfiguration' => [
+                'description' => 'table desc',
+                'metadata' => [['key' => 'KBC.description', 'value' => 'metadata desc']],
+            ],
+            'expectedDescription' => 'table desc',
+        ];
+        yield 'no description' => [
+            'mappingConfiguration' => ['table_metadata' => ['key1' => 'val1']],
+            'expectedDescription' => null,
+        ];
+        yield 'table_metadata is a variableNode, so it may be anything' => [
+            'mappingConfiguration' => ['table_metadata' => 'not an array'],
+            'expectedDescription' => null,
+        ];
+        yield 'empty description is not stored' => [
+            'mappingConfiguration' => ['description' => ''],
+            'expectedDescription' => null,
+        ];
+    }
+
+    public function testGetColumnDescriptionsSkipsEmptyDescriptions(): void
+    {
+        $physicalDataWithManifest = $this->createMock(MappingFromRawConfigurationAndPhysicalDataWithManifest::class);
+        $mapping = new MappingFromProcessedConfiguration([
+            'destination' => 'in.c-main.table',
+            'column_metadata' => [
+                'col1' => [['key' => 'KBC.description', 'value' => '']],
+                'col2' => [['key' => 'KBC.description', 'value' => 'col2 desc']],
+            ],
+        ], $physicalDataWithManifest);
+
+        self::assertSame(['col2' => 'col2 desc'], $mapping->getColumnDescriptions());
+    }
+
+    public function testGetColumnDescriptionsFromSchema(): void
+    {
+        $physicalDataWithManifest = $this->createMock(MappingFromRawConfigurationAndPhysicalDataWithManifest::class);
+        $mapping = new MappingFromProcessedConfiguration([
+            'destination' => 'in.c-main.table',
+            'schema' => [
+                [
+                    'name' => 'col1',
+                    'description' => 'col1 desc',
+                ],
+                [
+                    'name' => 'col2',
+                    'metadata' => ['KBC.description' => 'col2 desc'],
+                ],
+                [
+                    'name' => 'col3',
+                ],
+            ],
+        ], $physicalDataWithManifest);
+
+        self::assertSame(
+            [
+                'col1' => 'col1 desc',
+                'col2' => 'col2 desc',
+            ],
+            $mapping->getColumnDescriptions(),
+        );
+    }
+
+    public function testGetColumnDescriptionsFromColumnMetadata(): void
+    {
+        $physicalDataWithManifest = $this->createMock(MappingFromRawConfigurationAndPhysicalDataWithManifest::class);
+        $mapping = new MappingFromProcessedConfiguration([
+            'destination' => 'in.c-main.table',
+            'column_metadata' => [
+                'col1' => [
+                    ['key' => 'KBC.datatype.type', 'value' => 'STRING'],
+                    ['key' => 'KBC.description', 'value' => 'col1 desc'],
+                ],
+                'col2' => [
+                    ['key' => 'KBC.datatype.type', 'value' => 'STRING'],
+                ],
+            ],
+        ], $physicalDataWithManifest);
+
+        self::assertSame(['col1' => 'col1 desc'], $mapping->getColumnDescriptions());
+    }
+
+    public function testGetColumnDescriptionsSkipsRestrictedColumns(): void
+    {
+        $physicalDataWithManifest = $this->createMock(MappingFromRawConfigurationAndPhysicalDataWithManifest::class);
+        $mapping = new MappingFromProcessedConfiguration([
+            'destination' => 'in.c-main.table',
+            'column_metadata' => [
+                'col1' => [['key' => 'KBC.description', 'value' => 'col1 desc']],
+                '_timestamp' => [['key' => 'KBC.description', 'value' => 'timestamp desc']],
+            ],
+        ], $physicalDataWithManifest);
+
+        self::assertSame(['col1' => 'col1 desc'], $mapping->getColumnDescriptions());
     }
 
     public function testTableMetadata(): void

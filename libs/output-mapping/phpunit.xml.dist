@@ -39,6 +39,7 @@
             <exclude>tests/Writer/StorageApiHeadlessWriterTest.php</exclude>
             <exclude>tests/Writer/StorageApiLocalTableWriterTest.php</exclude>
             <exclude>tests/Writer/StorageApiSlicedWriterTest.php</exclude>
+            <exclude>tests/Writer/TableDescriptionTest.php</exclude>
         </testsuite>
         <testsuite name="workspace-writer-tests">
             <directory>tests/Writer/Workspace</directory>

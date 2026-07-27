@@ -6,6 +6,8 @@ namespace Keboola\OutputMapping\DeferredTasks;
 
 use Keboola\InputMapping\Table\Result\TableInfo;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
+use Keboola\OutputMapping\Storage\TableDescription;
+use Keboola\OutputMapping\Storage\TableDescriptionModifier;
 use Keboola\OutputMapping\Table\Result;
 use Keboola\OutputMapping\Table\Result\Metrics;
 use Keboola\StorageApi\ClientException;
@@ -20,16 +22,26 @@ class LoadTableQueue
 
     /** @var LoadTableTaskInterface[] */
     private array $loadTableTasks;
+
+    /** @var array<string, TableDescription> table id => descriptions of a table created by this run */
+    private array $createdTableDescriptions;
+
     private Result $tableResult;
 
     /**
      * @param LoadTableTaskInterface[] $loadTableTasks
+     * @param array<string, TableDescription> $createdTableDescriptions
      */
-    public function __construct(ClientWrapper $clientWrapper, LoggerInterface $logger, array $loadTableTasks)
-    {
+    public function __construct(
+        ClientWrapper $clientWrapper,
+        LoggerInterface $logger,
+        array $loadTableTasks,
+        array $createdTableDescriptions = [],
+    ) {
         $this->clientWrapper = $clientWrapper;
         $this->logger = $logger;
         $this->loadTableTasks = $loadTableTasks;
+        $this->createdTableDescriptions = $createdTableDescriptions;
         $this->tableResult = new Result();
     }
 
@@ -93,11 +105,13 @@ class LoadTableQueue
                     );
                 }
 
+                $tableColumns = null;
                 switch ($jobResult['operationName']) {
                     case 'tableImport':
                         $tableData = $this->clientWrapper->getTableAndFileStorageClient()->getTable(
                             $jobResult['tableId'],
                         );
+                        $tableColumns = self::extractTableColumns($tableData);
                         $this->tableResult->addTable(new TableInfo($tableData));
                         $this->tableResult->addGenericVariable(
                             $jobResult['tableId'],
@@ -107,13 +121,19 @@ class LoadTableQueue
                         $jobResults[] = $jobResult;
                         break;
                     case 'tableCreate':
-                        $this->tableResult->addTable(
-                            new TableInfo($this->clientWrapper->getTableAndFileStorageClient()->getTable(
-                                $jobResult['results']['id'],
-                            )),
+                        $tableData = $this->clientWrapper->getTableAndFileStorageClient()->getTable(
+                            $jobResult['results']['id'],
                         );
+                        $tableColumns = self::extractTableColumns($tableData);
+                        $this->tableResult->addTable(new TableInfo($tableData));
                         $jobResults[] = $jobResult;
                         break;
+                }
+
+                try {
+                    $this->applyCreatedTableDescriptions($task, $tableColumns);
+                } catch (InvalidOutputException $e) {
+                    $errors[] = $e->getMessage();
                 }
             }
         }
@@ -124,6 +144,40 @@ class LoadTableQueue
             throw new InvalidOutputException(implode("\n", $errors));
         }
         return $jobIds;
+    }
+
+    /**
+     * @param array<mixed> $tableData table detail as returned by Storage
+     * @return string[]|null
+     */
+    private static function extractTableColumns(array $tableData): ?array
+    {
+        $columns = $tableData['columns'] ?? null;
+
+        return is_array($columns) ? array_map('strval', $columns) : null;
+    }
+
+    /**
+     * @param string[]|null $tableColumns
+     */
+    private function applyCreatedTableDescriptions(LoadTableTaskInterface $task, ?array $tableColumns): void
+    {
+        if ($this->createdTableDescriptions === []) {
+            return;
+        }
+
+        $tableId = $task->getDestinationTableName();
+        $descriptions = $this->createdTableDescriptions[$tableId] ?? null;
+        if ($descriptions === null) {
+            return;
+        }
+
+        // Several sources may be mapped to the same destination table, but the descriptions of a table only
+        // need to be stored once.
+        unset($this->createdTableDescriptions[$tableId]);
+
+        $descriptionModifier = new TableDescriptionModifier($this->clientWrapper, $this->logger);
+        $descriptionModifier->setCreatedTableDescriptions($descriptions, $tableColumns);
     }
 
     public function getTaskCount(): int

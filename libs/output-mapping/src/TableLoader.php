@@ -14,6 +14,7 @@ use Keboola\OutputMapping\Mapping\MappingFromRawConfigurationAndPhysicalDataWith
 use Keboola\OutputMapping\Staging\StrategyFactory;
 use Keboola\OutputMapping\Storage\StoragePreparer;
 use Keboola\OutputMapping\Storage\TableChangesStore;
+use Keboola\OutputMapping\Storage\TableDescription;
 use Keboola\OutputMapping\Storage\TableStructureValidatorFactory;
 use Keboola\OutputMapping\Writer\Helper\Path;
 use Keboola\OutputMapping\Writer\Table\BranchResolver;
@@ -59,6 +60,8 @@ class TableLoader
         }
 
         $loadTableTasks = [];
+        /** @var array<string, TableDescription> $createdTableDescriptions */
+        $createdTableDescriptions = [];
         $tableConfigurationResolver = new TableConfigurationResolver($this->logger);
         $tableConfigurationValidator = new TableConfigurationValidator($strategy, $configuration);
         $tableColumnsConfigurationHintsResolver = new TableHintsConfigurationSchemaResolver();
@@ -153,6 +156,17 @@ class TableLoader
                 $systemMetadata,
             );
 
+            if (!$storageSources->didTableExistBefore()) {
+                // The table is created by this run - either by the table definition created above or by the
+                // load job itself. Its description is always system-managed (Storage default), so it is stored
+                // as soon as the load finishes and the table surely exists. Descriptions of tables which
+                // already existed are handled by StoragePreparer, where the system-managed flag is known.
+                $descriptions = TableDescription::createFromMapping($processedSource);
+                if (!$descriptions->isEmpty()) {
+                    $createdTableDescriptions[$descriptions->getTableId()] = $descriptions;
+                }
+            }
+
             $loadTableTasks[] = $loadTableTask;
         }
 
@@ -168,7 +182,12 @@ class TableLoader
             $this->callWorkspaceUnload($strategy);
         }
 
-        $tableQueue = new LoadTableQueue($this->clientWrapper, $this->logger, $loadTableTasks);
+        $tableQueue = new LoadTableQueue(
+            $this->clientWrapper,
+            $this->logger,
+            $loadTableTasks,
+            $createdTableDescriptions,
+        );
         $tableQueue->start();
         $tableQueue->loadCustomVariables(Path::join(
             $strategy->getMetadataStorage()->getPath(),

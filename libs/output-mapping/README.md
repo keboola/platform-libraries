@@ -8,6 +8,7 @@ Output mapping library for Keboola Runner and Workspaces. Processes component ou
     - Requires: `output-mapping-slice` feature flag, default CSV format (`,` delimiter, `"` enclosure), no custom `columns` mapping
     - Sliced files must have `columns` or `schema` specified in configuration
 - Workspace staging (Snowflake/BigQuery): Loads tables directly from workspace database objects (no file upload, no slicing)
+- Descriptions: Table and column descriptions (`description`, `schema[].description` or `KBC.description` metadata) are stored in the native Storage description field. A table created by the run always gets its description; on an existing table the description is only stored when the table's `isDescriptionSystemManaged` flag is set, so a description managed by the user is never overwritten.
 
 **Files:**
 - Uploads files as-is to Storage API File Storage (works with all staging types)

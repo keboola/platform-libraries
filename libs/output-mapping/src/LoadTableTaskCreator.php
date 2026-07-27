@@ -14,6 +14,7 @@ use Keboola\OutputMapping\Storage\NativeTypeDecisionHelper;
 use Keboola\OutputMapping\Storage\TableCreator;
 use Keboola\OutputMapping\Writer\Table\StrategyInterface;
 use Keboola\OutputMapping\Writer\Table\TableDefinition\TableDefinitionFactory;
+use Keboola\OutputMapping\Writer\Table\TableDefinition\TableDefinitionFromColumns;
 use Keboola\OutputMapping\Writer\Table\TableDefinitionFromSchema\TableDefinitionFromSchema;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Psr\Log\LoggerInterface;
@@ -79,13 +80,14 @@ class LoadTableTaskCreator
             $this->tableCreator->createTableDefinition($source->getDestination()->getBucketId(), $tableDefinition);
             $loadTask = new LoadTableTask($source->getDestination(), $loadOptions, true);
         } elseif (!$storageSources->didTableExistBefore() && $source->hasColumns()) {
-            // tabulka neexistuje a známe sloupce z manifestu
-            $this->tableCreator->createTable(
-                $source->getDestination()->getBucketId(),
+            // tabulka neexistuje a známe sloupce z manifestu - vytvoříme ji přes table definition bez typů,
+            // takže vznikne netypovaná tabulka stejně jako dřív, ale bez uploadu hlavičkového CSV souboru
+            $tableDefinition = new TableDefinitionFromColumns(
                 $source->getDestination()->getTableName(),
                 $source->getColumns(),
-                $loadOptions,
+                $source->getPrimaryKey(),
             );
+            $this->tableCreator->createTableDefinition($source->getDestination()->getBucketId(), $tableDefinition);
             $loadTask = new LoadTableTask($source->getDestination(), $loadOptions, true);
         } elseif ($storageSources->didTableExistBefore()) {
             // tabulka existuje takže nahráváme data

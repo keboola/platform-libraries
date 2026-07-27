@@ -11,6 +11,7 @@ use Keboola\OutputMapping\Tests\AbstractTestCase;
 use Keboola\OutputMapping\Tests\Needs\NeedsEmptyOutputBucket;
 use Keboola\OutputMapping\Writer\Table\TableDefinition\TableDefinition;
 use Keboola\OutputMapping\Writer\Table\TableDefinition\TableDefinitionColumnFactory;
+use Keboola\OutputMapping\Writer\Table\TableDefinition\TableDefinitionFromColumns;
 use Keboola\StorageApi\ClientException;
 
 class TableCreatorTest extends AbstractTestCase
@@ -91,54 +92,38 @@ class TableCreatorTest extends AbstractTestCase
     }
 
     #[NeedsEmptyOutputBucket]
-    public function testCreateTable(): void
+    public function testCreateNonTypedTableFromColumns(): void
     {
         $tableCreator = new TableCreator($this->clientWrapper);
 
-        $tableId = $tableCreator->createTable(
+        $tableId = $tableCreator->createTableDefinition(
             $this->emptyOutputBucketId,
-            'testTable',
-            ['id'],
-            [
-                'primaryKey' => 'id',
-            ],
+            new TableDefinitionFromColumns('testTable', ['id', 'name'], ['id']),
         );
 
         $table = $this->clientWrapper->getTableAndFileStorageClient()->getTable($tableId);
 
-        self::assertIsArray($table);
-        self::assertArrayHasKey('isTyped', $table);
+        // no column carries a type, so Storage creates the table as non-typed
         self::assertFalse($table['isTyped']);
-        self::assertArrayHasKey('name', $table);
         self::assertSame('testTable', $table['name']);
-        self::assertArrayHasKey('columns', $table);
-        self::assertSame(['id'], $table['columns']);
-        self::assertArrayHasKey('primaryKey', $table);
+        self::assertSame(['id', 'name'], $table['columns']);
         self::assertSame(['id'], $table['primaryKey']);
     }
 
     #[NeedsEmptyOutputBucket]
-    public function testCreateTableErrorHandling(): void
+    public function testCreateNonTypedTableFromColumnsErrorHandling(): void
     {
         $tableCreator = new TableCreator($this->clientWrapper);
 
         try {
-            $tableCreator->createTable(
+            $tableCreator->createTableDefinition(
                 $this->emptyOutputBucketId,
-                'testTable',
-                ['id'],
-                [
-                    'primaryKey' => 'name',
-                ],
+                new TableDefinitionFromColumns('testTable', ['id'], ['name']),
             );
-            self::fail('CreateTable should fail with InvalidOutputException');
+            self::fail('CreateTableDefinition should fail with InvalidOutputException');
         } catch (InvalidOutputException $e) {
             self::assertStringContainsString(
-                'Cannot create table "testTable" in Storage API:',
-                $e->getMessage(),
-            );
-            self::assertStringContainsString(
-                'storage.tables.validation.invalidPrimaryKeyColumns',
+                'Cannot create table "testTable" definition in Storage API:',
                 $e->getMessage(),
             );
             self::assertNotNull($e->getPrevious());

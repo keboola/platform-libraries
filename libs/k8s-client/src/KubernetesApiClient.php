@@ -12,7 +12,9 @@ use KubernetesRuntime\AbstractAPI;
 use Retry\RetryProxy;
 
 /**
- * @internal
+ * Low-level, namespaced K8S API client with integrated retries. Produced by a
+ * {@see \Keboola\K8sClient\ClientFactory\KubernetesApiClientFactory} and handed to
+ * {@see KubernetesApiClientFacade::create()} (and to any consumer-defined CRD clients).
  */
 class KubernetesApiClient
 {

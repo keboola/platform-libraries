@@ -27,6 +27,7 @@ interface ApiClientInterface
 
     /**
      * @param TItem $model
+     * @return TItem
      */
     public function create(AbstractModel $model, array $queries = []): AbstractModel;
 

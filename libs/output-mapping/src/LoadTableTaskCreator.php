@@ -80,8 +80,7 @@ class LoadTableTaskCreator
             $this->tableCreator->createTableDefinition($source->getDestination()->getBucketId(), $tableDefinition);
             $loadTask = new LoadTableTask($source->getDestination(), $loadOptions, true);
         } elseif (!$storageSources->didTableExistBefore() && $source->hasColumns()) {
-            // tabulka neexistuje a známe sloupce z manifestu - vytvoříme ji přes table definition bez typů,
-            // takže vznikne netypovaná tabulka stejně jako dřív, ale bez uploadu hlavičkového CSV souboru
+            // tabulka neexistuje a známe sloupce z manifestu - vytváříme ji přes table definition bez typů
             $tableDefinition = new TableDefinitionFromColumns(
                 $source->getDestination()->getTableName(),
                 $source->getColumns(),

@@ -79,14 +79,20 @@ class LoadTableQueue
             $jobResult = $this->clientWrapper->getBranchClient()->waitForJob($jobId);
 
             if ($jobResult['status'] === 'error') {
+                $destinationTableName = $task->getDestinationTableName();
                 $errors[] = sprintf(
                     'Failed to load table "%s": %s',
-                    $task->getDestinationTableName(),
+                    $destinationTableName,
                     $jobResult['error']['message'],
                 );
+                // The load failed, so there is no table to describe - it is about to be dropped below or it
+                // keeps the description it already had. Dropping the pending description here keeps it out of
+                // the "was not stored" warning, which is meant for descriptions lost by mistake.
+                unset($this->createdTableDescriptions[$destinationTableName]);
+
                 if (FailedLoadTableDecider::decideTableDelete($this->logger, $this->clientWrapper, $task)) {
                     $this->clientWrapper->getTableAndFileStorageClient()->dropTable(
-                        $task->getDestinationTableName(),
+                        $destinationTableName,
                         ['force' => true],
                     );
                 }
@@ -106,7 +112,6 @@ class LoadTableQueue
                     );
                 }
 
-                $tableData = null;
                 switch ($jobResult['operationName']) {
                     case 'tableImport':
                         $tableData = $this->clientWrapper->getTableAndFileStorageClient()->getTable(
@@ -125,16 +130,26 @@ class LoadTableQueue
                             $jobResult['results']['id'],
                         );
                         $this->tableResult->addTable(new TableInfo($tableData));
+                        // Only a table created by the load job itself (CreateAndLoadTableTask) can have a
+                        // pending description - every other table is created through a table definition,
+                        // which carries the description in its create payload.
+                        try {
+                            $this->applyCreatedTableDescriptions($task, $tableData);
+                        } catch (InvalidOutputException $e) {
+                            $errors[] = $e->getMessage();
+                        }
                         $jobResults[] = $jobResult;
                         break;
                 }
-
-                try {
-                    $this->applyCreatedTableDescriptions($task, $tableData);
-                } catch (InvalidOutputException $e) {
-                    $errors[] = $e->getMessage();
-                }
             }
+        }
+
+        if ($this->createdTableDescriptions !== []) {
+            // Must never happen - a description left here would be silently thrown away.
+            $this->logger->warning(sprintf(
+                'Description of table(s) "%s" was not stored.',
+                implode('", "', array_keys($this->createdTableDescriptions)),
+            ));
         }
 
         $this->tableResult->setMetrics(new Metrics($jobResults));
@@ -146,9 +161,9 @@ class LoadTableQueue
     }
 
     /**
-     * @param array<mixed>|null $tableData table detail as returned by Storage after a successful load
+     * @param array<mixed> $tableData table detail as returned by Storage after a successful load
      */
-    private function applyCreatedTableDescriptions(LoadTableTaskInterface $task, ?array $tableData): void
+    private function applyCreatedTableDescriptions(LoadTableTaskInterface $task, array $tableData): void
     {
         if ($this->createdTableDescriptions === []) {
             return;
@@ -156,7 +171,7 @@ class LoadTableQueue
 
         $tableId = $task->getDestinationTableName();
         $descriptions = $this->createdTableDescriptions[$tableId] ?? null;
-        if ($descriptions === null || $tableData === null) {
+        if ($descriptions === null) {
             return;
         }
 

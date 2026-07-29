@@ -19,7 +19,7 @@ class TableCreatorTest extends AbstractTestCase
     #[NeedsEmptyOutputBucket]
     public function testCreateTableDefinition(): void
     {
-        $tableCreator = new TableCreator($this->clientWrapper);
+        $tableCreator = new TableCreator($this->clientWrapper, $this->testLogger);
 
         $tableDefinition = new TableDefinition(
             new TableDefinitionColumnFactory([], 'snowflake', true),
@@ -60,7 +60,7 @@ class TableCreatorTest extends AbstractTestCase
     #[NeedsEmptyOutputBucket]
     public function testCreateTableDefinitionErrorHandling(): void
     {
-        $tableCreator = new TableCreator($this->clientWrapper);
+        $tableCreator = new TableCreator($this->clientWrapper, $this->testLogger);
 
         $tableDefinition = new TableDefinition(
             new TableDefinitionColumnFactory([], 'snowflake', true),
@@ -94,7 +94,7 @@ class TableCreatorTest extends AbstractTestCase
     #[NeedsEmptyOutputBucket]
     public function testCreateNonTypedTableFromColumns(): void
     {
-        $tableCreator = new TableCreator($this->clientWrapper);
+        $tableCreator = new TableCreator($this->clientWrapper, $this->testLogger);
 
         $tableId = $tableCreator->createTableDefinition(
             $this->emptyOutputBucketId,
@@ -113,7 +113,7 @@ class TableCreatorTest extends AbstractTestCase
     #[NeedsEmptyOutputBucket]
     public function testCreateNonTypedTableFromColumnsErrorHandling(): void
     {
-        $tableCreator = new TableCreator($this->clientWrapper);
+        $tableCreator = new TableCreator($this->clientWrapper, $this->testLogger);
 
         try {
             $tableCreator->createTableDefinition(

@@ -141,30 +141,30 @@ class TableLoader
             );
 
             $loadTableTaskCreator = new LoadTableTaskCreator($this->clientWrapper, $this->logger);
-            $loadTableTask = $loadTableTaskCreator->create(
+            $loadTableTaskResult = $loadTableTaskCreator->create(
                 $strategy,
                 $processedSource,
                 $storageSources,
                 $configuration,
+                TableDescription::createFromMapping($processedSource),
             );
 
             $metadataSetter = new MetadataSetter();
             $loadTableTask = $metadataSetter->setTableMetadata(
-                $loadTableTask,
+                $loadTableTaskResult->getLoadTableTask(),
                 $processedSource,
                 $storageSources,
                 $systemMetadata,
             );
 
-            if (!$storageSources->didTableExistBefore()) {
-                // The table is created by this run - either by the table definition created above or by the
-                // load job itself. Its description is always system-managed (Storage default), so it is stored
-                // as soon as the load finishes and the table surely exists. Descriptions of tables which
-                // already existed are handled by StoragePreparer, where the system-managed flag is known.
-                $descriptions = TableDescription::createFromMapping($processedSource);
-                if (!$descriptions->isEmpty()) {
-                    $createdTableDescriptions[$descriptions->getTableId()] = $descriptions;
-                }
+            // Descriptions of a table created through a table definition are already part of the create
+            // payload and descriptions of a table which existed before were applied by StoragePreparer. What
+            // is left here is the table created by the load job itself, which has no create payload - such a
+            // description can only be stored once the load finishes and the table surely exists.
+            $descriptionsToStoreAfterLoad = $loadTableTaskResult->getDescriptionsNotEmbeddedInCreatePayload();
+            if ($descriptionsToStoreAfterLoad !== null) {
+                $createdTableDescriptions[$descriptionsToStoreAfterLoad->getTableId()] =
+                    $descriptionsToStoreAfterLoad;
             }
 
             $loadTableTasks[] = $loadTableTask;

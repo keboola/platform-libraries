@@ -2275,9 +2275,11 @@ CSV;
             );
             $this->fail('Must throw exception');
         } catch (InvalidOutputException $e) {
+            // the table is created through the table-definition endpoint, which reports an invalid column
+            // name without spelling out the length limit
             $this->assertStringContainsString(
-                '\'LongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongName\' '.
-                'is more than 64 characters long',
+                'Invalid column name: '.
+                '\\"LongLongLongLongLongLongLongLongLongLongLongLongLongLongLongLongName\\"',
                 $e->getMessage(),
             );
         }

@@ -231,7 +231,8 @@ class LoadTableTaskCreatorTest extends AbstractTestCase
         $source->expects(self::exactly(3))->method('getDestination')->willReturn(
             new MappingDestination($this->emptyOutputBucketId . '.destinationTable'),
         );
-        $source->expects(self::once())->method('getPrimaryKey')->willReturn([]);
+        // getPrimaryKey/getColumns are read twice - once for the load options, once for the table definition
+        $source->expects(self::exactly(2))->method('getPrimaryKey')->willReturn([]);
         $source->expects(self::exactly(2))->method('getColumns')->willReturn(['col1', 'col2']);
 
         $storageSources = self::createMock(MappingStorageSources::class);

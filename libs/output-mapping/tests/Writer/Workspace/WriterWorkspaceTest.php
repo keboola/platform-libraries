@@ -99,6 +99,64 @@ class WriterWorkspaceTest extends AbstractTestCase
         );
     }
 
+    /**
+     * The descriptions are stored through the table-definition API regardless of the staging the data came
+     * from, but workspace unload reaches LoadTableTaskCreator through a different strategy.
+     */
+    #[NeedsTestTables(2), NeedsEmptyOutputBucket]
+    public function testSnowflakeTableOutputMappingStoresDescription(): void
+    {
+        $this->initWorkspace();
+        $factory = $this->getWorkspaceStagingFactory();
+
+        $this->prepareWorkspaceWithTablesClone($this->testBucketId);
+
+        $tableId = $this->emptyOutputBucketId . '.table1a';
+
+        $config = [
+            'source' => 'table1a',
+            'destination' => $tableId,
+            'columns' => ['Id', 'Name'],
+            'description' => 'table description',
+            'column_metadata' => [
+                'Id' => [
+                    ['key' => 'KBC.description', 'value' => 'Id description'],
+                ],
+            ],
+        ];
+
+        file_put_contents(
+            $this->temp->getTmpFolder() . '/table1a.manifest',
+            (string) json_encode(['columns' => ['Id', 'Name']]),
+        );
+
+        $tableQueue = $this->getTableLoader(
+            logger: $this->testLogger,
+            strategyFactory: $factory,
+        )->uploadTables(
+            configuration: new OutputMappingSettings(
+                configuration: ['mapping' => [$config]],
+                sourcePathPrefix: '/',
+                storageApiToken: $this->clientWrapper->getToken(),
+                isFailedJob: false,
+                dataTypeSupport: OutputMappingSettings::DATA_TYPES_SUPPORT_NONE,
+            ),
+            systemMetadata: new SystemMetadata(['componentId' => 'foo']),
+        );
+
+        self::assertCount(1, $tableQueue->waitForAll());
+
+        $tableDetail = $this->clientWrapper->getTableAndFileStorageClient()->getTable($tableId);
+        self::assertSame('table description', $tableDetail['definition']['description'] ?? null);
+
+        $idColumn = array_values(array_filter(
+            $tableDetail['definition']['columns'],
+            fn($column) => $column['name'] === 'Id',
+        ));
+        self::assertCount(1, $idColumn);
+        self::assertSame('Id description', $idColumn[0]['definition']['description'] ?? null);
+    }
+
     #[NeedsEmptyOutputBucket]
     public function testTableOutputMappingMissing(): void
     {

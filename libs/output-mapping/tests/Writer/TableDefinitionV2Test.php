@@ -752,6 +752,190 @@ class TableDefinitionV2Test extends AbstractTestCase
             ],
             $this->getMetadataValues($filteredColumnFooMetadata),
         );
+
+        // The metadata rows asserted above are Storage's mirror of the native description field, which is
+        // where output mapping actually stores it - assert the source, not only the mirror.
+        $tableDetails = $this->clientWrapper->getTableAndFileStorageClient()->getTable($tableId);
+        self::assertSame('table description', $tableDetails['definition']['description'] ?? null);
+        self::assertSame(
+            [
+                'Id' => null,
+                'Name' => 'name description',
+                'foo' => 'foo description',
+            ],
+            $this->getColumnDescriptions($tableDetails['definition']['columns']),
+        );
+        self::assertSame('storage', array_values($filteredTableMetadata)[0]['provider']);
+        self::assertSame('storage', array_values($filteredColumnNameMetadata)[0]['provider']);
+    }
+
+    /**
+     * On the second run the table already exists, so the description goes through StoragePreparer, which diffs
+     * it against the value stored in the table definition. A typed table exposes it in the same place a
+     * non-typed one does, otherwise the diff would keep re-sending an unchanged patch.
+     */
+    #[NeedsEmptyOutputBucket]
+    public function testDescriptionIsUpdatedOnExistingTypedTable(): void
+    {
+        $tableId = $this->emptyOutputBucketId . '.test1';
+
+        $this->uploadTableWithSchema($tableId, 'table description', 'Id description');
+        $this->uploadTableWithSchema($tableId, 'updated table description', 'updated Id description');
+
+        $tableDetails = $this->clientWrapper->getTableAndFileStorageClient()->getTable($tableId);
+        self::assertTrue($tableDetails['isTyped']);
+        self::assertTrue($tableDetails['isDescriptionSystemManaged']);
+        self::assertSame('updated table description', $tableDetails['definition']['description'] ?? null);
+        self::assertSame(
+            ['Id' => 'updated Id description', 'Name' => null],
+            $this->getColumnDescriptions($tableDetails['definition']['columns']),
+        );
+
+        // Storage rejects a patch without any effective change with 400, so an unchanged third run must not
+        // send one at all
+        $this->uploadTableWithSchema($tableId, 'updated table description', 'updated Id description');
+    }
+
+    #[NeedsEmptyOutputBucket]
+    public function testDescriptionIsNotOverwrittenOnUserManagedTypedTable(): void
+    {
+        $tableId = $this->emptyOutputBucketId . '.test1';
+
+        $this->uploadTableWithSchema($tableId, 'table description', 'Id description');
+
+        // the user takes over the description
+        $this->clientWrapper->getTableAndFileStorageClient()->updateTableDefinition($tableId, [
+            'description' => 'description set by the user',
+            'isDescriptionSystemManaged' => false,
+            'columns' => [
+                ['name' => 'Id', 'description' => 'Id description set by the user'],
+            ],
+        ]);
+
+        $this->uploadTableWithSchema($tableId, 'description from component', 'Id description from component');
+
+        $tableDetails = $this->clientWrapper->getTableAndFileStorageClient()->getTable($tableId);
+        self::assertFalse($tableDetails['isDescriptionSystemManaged']);
+        self::assertSame('description set by the user', $tableDetails['definition']['description'] ?? null);
+        self::assertSame(
+            ['Id' => 'Id description set by the user', 'Name' => null],
+            $this->getColumnDescriptions($tableDetails['definition']['columns']),
+        );
+
+        self::assertTrue($this->testHandler->hasInfoThatContains(sprintf(
+            'Description of table "%s" is managed by the user, keeping the current value.',
+            $tableId,
+        )));
+    }
+
+    /**
+     * A column added by the same run must already be part of the table when the descriptions are stored,
+     * otherwise its description is reported as belonging to a non-existent column and dropped.
+     */
+    #[NeedsEmptyOutputBucket]
+    public function testDescriptionOfColumnAddedInSecondRun(): void
+    {
+        $tableId = $this->emptyOutputBucketId . '.test1';
+
+        $this->uploadTableWithSchema($tableId, 'table description', 'Id description');
+        $this->uploadTableWithSchema($tableId, 'table description', 'Id description', 'foo description');
+
+        $tableDetails = $this->clientWrapper->getTableAndFileStorageClient()->getTable($tableId);
+        self::assertSame(
+            ['Id' => 'Id description', 'Name' => null, 'foo' => 'foo description'],
+            $this->getColumnDescriptions($tableDetails['definition']['columns']),
+        );
+
+        self::assertFalse($this->testHandler->hasWarningThatContains(
+            'Cannot store description of column(s)',
+        ));
+    }
+
+    /**
+     * Writes Id/Name, plus a third `foo` column when its description is given.
+     */
+    private function uploadTableWithSchema(
+        string $tableId,
+        ?string $tableDescription,
+        ?string $idDescription,
+        ?string $fooDescription = null,
+    ): void {
+        $schema = [
+            $this->schemaColumn('Id', $idDescription),
+            $this->schemaColumn('Name'),
+        ];
+        $csv = "\"1\",\"bob\"\n\"2\",\"alice\"\n";
+
+        if ($fooDescription !== null) {
+            $schema[] = $this->schemaColumn('foo', $fooDescription);
+            $csv = "\"1\",\"bob\",\"firstFoo\"\n\"2\",\"alice\",\"secondFoo\"\n";
+        }
+
+        $config = [
+            'source' => 'table.csv',
+            'destination' => $tableId,
+            'schema' => $schema,
+        ];
+        if ($tableDescription !== null) {
+            $config['description'] = $tableDescription;
+        }
+
+        file_put_contents($this->temp->getTmpFolder() . '/upload/table.csv', $csv);
+
+        $tableQueue = $this->getTableLoader(logger: $this->testLogger)->uploadTables(
+            configuration: new OutputMappingSettings(
+                configuration: ['mapping' => [$config]],
+                sourcePathPrefix: 'upload',
+                storageApiToken: $this->clientWrapper->getToken(),
+                isFailedJob: false,
+                dataTypeSupport: OutputMappingSettings::DATA_TYPES_SUPPORT_AUTHORITATIVE,
+            ),
+            systemMetadata: new SystemMetadata(['componentId' => 'foo']),
+        );
+
+        self::assertCount(1, $tableQueue->waitForAll());
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function schemaColumn(string $name, ?string $description = null): array
+    {
+        $column = [
+            'name' => $name,
+            'data_type' => [
+                'base' => [
+                    'type' => 'STRING',
+                ],
+            ],
+        ];
+        if ($description !== null) {
+            $column['description'] = $description;
+        }
+
+        return $column;
+    }
+
+    /**
+     * @param array<mixed> $columns
+     * @return array<string, string|null> column name => description
+     */
+    private function getColumnDescriptions(array $columns): array
+    {
+        $descriptions = [];
+        foreach ($columns as $column) {
+            self::assertIsArray($column);
+            $columnName = $column['name'];
+            self::assertIsString($columnName);
+
+            $definition = $column['definition'] ?? [];
+            self::assertIsArray($definition);
+            $description = $definition['description'] ?? null;
+
+            $descriptions[$columnName] = is_string($description) ? $description : null;
+        }
+
+        return $descriptions;
     }
 
     #[NeedsEmptyOutputBucket]

@@ -688,4 +688,111 @@ class TableDefinitionTest extends AbstractTestCase
         self::assertSame('success', $jobData['status']);
         self::assertSame($expectedPk, $jobData['operationParams']['columns']);
     }
+
+    /**
+     * The legacy native-types path builds the table definition from `column_metadata`, and the descriptions
+     * ride along in the create payload. A following run finds the table there and goes through the
+     * table-definition update instead.
+     */
+    #[NeedsEmptyOutputBucket]
+    public function testDescriptionIsStoredAndUpdatedOnTypedTable(): void
+    {
+        $tableId = $this->emptyOutputBucketId . '.tableDefinition';
+
+        $this->uploadTableWithColumnMetadata($tableId, 'table description', 'Id description');
+
+        $tableDetails = $this->clientWrapper->getTableAndFileStorageClient()->getTable($tableId);
+        self::assertTrue($tableDetails['isTyped']);
+        self::assertSame('table description', $tableDetails['definition']['description'] ?? null);
+        self::assertSame(
+            ['Id' => 'Id description', 'Name' => null],
+            $this->getColumnDescriptions($tableDetails['definition']['columns']),
+        );
+
+        $this->uploadTableWithColumnMetadata($tableId, 'updated table description', 'updated Id description');
+
+        $tableDetails = $this->clientWrapper->getTableAndFileStorageClient()->getTable($tableId);
+        self::assertTrue($tableDetails['isDescriptionSystemManaged']);
+        self::assertSame('updated table description', $tableDetails['definition']['description'] ?? null);
+        self::assertSame(
+            ['Id' => 'updated Id description', 'Name' => null],
+            $this->getColumnDescriptions($tableDetails['definition']['columns']),
+        );
+
+        // Storage rejects a patch without any effective change with 400, so an unchanged run must not send one
+        $this->uploadTableWithColumnMetadata($tableId, 'updated table description', 'updated Id description');
+    }
+
+    private function uploadTableWithColumnMetadata(
+        string $tableId,
+        string $tableDescription,
+        string $idDescription,
+    ): void {
+        $config = [
+            'source' => 'tableDefinition.csv',
+            'destination' => $tableId,
+            'columns' => ['Id', 'Name'],
+            'description' => $tableDescription,
+            'metadata' => [
+                [
+                    'key' => 'KBC.datatype.backend',
+                    'value' => 'snowflake',
+                ],
+            ],
+            'column_metadata' => [
+                'Id' => [
+                    ['key' => 'KBC.datatype.type', 'value' => Snowflake::TYPE_INTEGER],
+                    ['key' => 'KBC.datatype.basetype', 'value' => 'INTEGER'],
+                    ['key' => 'KBC.description', 'value' => $idDescription],
+                ],
+                'Name' => [
+                    ['key' => 'KBC.datatype.type', 'value' => Snowflake::TYPE_TEXT],
+                    ['key' => 'KBC.datatype.basetype', 'value' => 'STRING'],
+                ],
+            ],
+        ];
+
+        file_put_contents(
+            $this->temp->getTmpFolder() . '/upload/tableDefinition.csv',
+            "\"1\",\"bob\"\n\"2\",\"alice\"\n",
+        );
+
+        $tableQueue = $this->getTableLoader(
+            logger: $this->testLogger,
+            strategyFactory: $this->getLocalStagingFactory(logger: $this->testLogger),
+        )->uploadTables(
+            configuration: new OutputMappingSettings(
+                configuration: ['mapping' => [$config]],
+                sourcePathPrefix: 'upload',
+                storageApiToken: $this->clientWrapper->getToken(),
+                isFailedJob: false,
+                dataTypeSupport: OutputMappingSettings::DATA_TYPES_SUPPORT_AUTHORITATIVE,
+            ),
+            systemMetadata: new SystemMetadata(['componentId' => 'foo']),
+        );
+
+        self::assertCount(1, $tableQueue->waitForAll());
+    }
+
+    /**
+     * @param array<mixed> $columns
+     * @return array<string, string|null> column name => description
+     */
+    private function getColumnDescriptions(array $columns): array
+    {
+        $descriptions = [];
+        foreach ($columns as $column) {
+            self::assertIsArray($column);
+            $columnName = $column['name'];
+            self::assertIsString($columnName);
+
+            $definition = $column['definition'] ?? [];
+            self::assertIsArray($definition);
+            $description = $definition['description'] ?? null;
+
+            $descriptions[$columnName] = is_string($description) ? $description : null;
+        }
+
+        return $descriptions;
+    }
 }

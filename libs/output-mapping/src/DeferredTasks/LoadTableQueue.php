@@ -27,22 +27,27 @@ class LoadTableQueue
     /** @var array<string, TableDescription> table id => descriptions of a table created by this run */
     private array $createdTableDescriptions;
 
+    /** @var int[] */
+    private array $unloadJobIds;
     private Result $tableResult;
 
     /**
      * @param LoadTableTaskInterface[] $loadTableTasks
      * @param array<string, TableDescription> $createdTableDescriptions
+     * @param int[] $unloadJobIds Storage metadata refresh jobs enqueued for direct-grant tables
      */
     public function __construct(
         ClientWrapper $clientWrapper,
         LoggerInterface $logger,
         array $loadTableTasks,
         array $createdTableDescriptions = [],
+        array $unloadJobIds = [],
     ) {
         $this->clientWrapper = $clientWrapper;
         $this->logger = $logger;
         $this->loadTableTasks = $loadTableTasks;
         $this->createdTableDescriptions = $createdTableDescriptions;
+        $this->unloadJobIds = $unloadJobIds;
         $this->tableResult = new Result();
     }
 
@@ -65,6 +70,9 @@ class LoadTableQueue
         }
     }
 
+    /**
+     * @return string[] ids of the table load jobs
+     */
     public function waitForAll(): array
     {
         $metadataApiClient = new Metadata($this->clientWrapper->getTableAndFileStorageClient());
@@ -154,6 +162,20 @@ class LoadTableQueue
 
         $this->tableResult->setMetrics(new Metrics($jobResults));
 
+        // the metadata refresh dispatches trigger events; it must finish before the workspace is dropped
+        foreach ($this->unloadJobIds as $unloadJobId) {
+            /** @var array $unloadJobResult */
+            $unloadJobResult = $this->clientWrapper->getBranchClient()->waitForJob($unloadJobId);
+
+            if ($unloadJobResult['status'] === 'error') {
+                $errors[] = sprintf(
+                    'Failed to refresh metadata of direct-grant tables (Storage job "%s"): %s',
+                    $unloadJobId,
+                    $unloadJobResult['error']['message'],
+                );
+            }
+        }
+
         if ($errors) {
             throw new InvalidOutputException(implode("\n", $errors));
         }
@@ -179,9 +201,12 @@ class LoadTableQueue
         $descriptionModifier->updateDescriptions(new StorageTableInfo($tableData), $descriptions);
     }
 
+    /**
+     * Number of Storage jobs waitForAll() waits for.
+     */
     public function getTaskCount(): int
     {
-        return count($this->loadTableTasks);
+        return count($this->loadTableTasks) + count($this->unloadJobIds);
     }
 
     public function getTableResult(): Result

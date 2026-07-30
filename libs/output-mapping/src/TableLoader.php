@@ -25,6 +25,7 @@ use Keboola\OutputMapping\Writer\Table\StrategyInterface;
 use Keboola\OutputMapping\Writer\Table\TableConfigurationResolver;
 use Keboola\OutputMapping\Writer\Table\TableConfigurationValidator;
 use Keboola\OutputMapping\Writer\Table\TableHintsConfigurationSchemaResolver;
+use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Workspaces;
 use Keboola\StorageApiBranch\ClientWrapper;
 use LogicException;
@@ -170,6 +171,7 @@ class TableLoader
             $loadTableTasks[] = $loadTableTask;
         }
 
+        $unloadJobIds = [];
         if ($strategy->hasDirectGrantUnloadStrategy()) {
             if (!$strategy instanceof SqlWorkspaceTableStrategy) {
                 throw new LogicException(sprintf(
@@ -179,7 +181,7 @@ class TableLoader
                 ));
             }
             // enqueue unload for direct-grant tables
-            $this->callWorkspaceUnload($strategy);
+            $unloadJobIds = $this->callWorkspaceUnload($strategy);
         }
 
         $tableQueue = new LoadTableQueue(
@@ -187,6 +189,7 @@ class TableLoader
             $this->logger,
             $loadTableTasks,
             $createdTableDescriptions,
+            $unloadJobIds,
         );
         $tableQueue->start();
         $tableQueue->loadCustomVariables(Path::join(
@@ -233,18 +236,30 @@ class TableLoader
         );
     }
 
-    private function callWorkspaceUnload(SqlWorkspaceTableStrategy $strategy): void
+    /**
+     * @return int[] ids of the enqueued Storage metadata refresh jobs
+     */
+    private function callWorkspaceUnload(SqlWorkspaceTableStrategy $strategy): array
     {
+        $workspaces = new Workspaces(
+            $this->clientWrapper->getBranchClient(),
+        );
+
         try {
-            $workspaces = new Workspaces(
-                $this->clientWrapper->getBranchClient(),
-            );
-            $workspaces->queueUnload(
+            return $workspaces->queueUnload(
                 (int) $strategy->getDataStorage()->getWorkspaceId(),
                 ['only-direct-grants' => true],
             );
-        } catch (Throwable $e) {
-            $this->logger->warning('Workspace unload failed: ' . $e->getMessage());
+        } catch (ClientException $e) {
+            if ($e->getCode() < 500) {
+                throw new InvalidOutputException(
+                    sprintf('Failed to refresh metadata of direct-grant tables: %s', $e->getMessage()),
+                    $e->getCode(),
+                    $e,
+                );
+            }
+
+            throw $e;
         }
     }
 }

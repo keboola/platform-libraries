@@ -1124,7 +1124,7 @@ class TableDefinitionV2Test extends AbstractTestCase
             systemMetadata: new SystemMetadata(['componentId' => 'foo']),
         );
         $jobIds = $tableQueue->waitForAll();
-        self::assertCount(0, $jobIds, 'No jobs should be created when unload_strategy is direct-grant');
+        self::assertCount(0, $jobIds, 'No table load job should be created when unload_strategy is direct-grant');
 
         $tables = $this->clientWrapper->getTableAndFileStorageClient()->listTables($this->emptyOutputBucketId);
         self::assertCount(0, $tables, 'No tables should be imported when unload_strategy is direct-grant');

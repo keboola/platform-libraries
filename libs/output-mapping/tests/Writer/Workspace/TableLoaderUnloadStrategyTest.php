@@ -174,18 +174,12 @@ class TableLoaderUnloadStrategyTest extends AbstractTestCase
         );
 
         $result = $tableLoader->uploadTables($configuration, $systemMetadata);
+        self::assertSame(1, $result->getTaskCount(), 'Only the table load job is queued, no metadata refresh');
         $result->waitForAll();
 
         $tables = $this->clientWrapper->getTableAndFileStorageClient()->listTables($this->emptyOutputBucketId);
         self::assertCount(1, $tables, 'Table should be imported when unload_strategy is not set');
         self::assertEquals($this->emptyOutputBucketId . '.table1', $tables[0]['id']);
-
-        $logRecords = $this->testHandler->getRecords();
-        $unloadWarnings = array_filter(
-            $logRecords,
-            fn($record) => is_string($record['message']) && str_contains($record['message'], 'Workspace unload failed'),
-        );
-        self::assertCount(0, $unloadWarnings, 'Should not attempt workspace unload when no direct-grant mappings');
     }
 
     #[NeedsEmptyOutputBucket]

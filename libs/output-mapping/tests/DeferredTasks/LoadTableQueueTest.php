@@ -64,6 +64,127 @@ class LoadTableQueueTest extends TestCase
         self::assertSame(2, $loadQueue->getTaskCount());
     }
 
+    public function testTaskCountIncludesUnloadJobs(): void
+    {
+        $clientWrapperMock = $this->createMock(ClientWrapper::class);
+        $clientWrapperMock->method('getTableAndFileStorageClient')
+            ->willReturn($this->createMock(Client::class));
+
+        $loadQueue = new LoadTableQueue(
+            $clientWrapperMock,
+            new NullLogger(),
+            [
+                $this->createMock(LoadTableTask::class),
+            ],
+            [],
+            [456, 789],
+        );
+
+        self::assertSame(3, $loadQueue->getTaskCount());
+    }
+
+    public function testWaitForAllWaitsForUnloadJobsAfterLoadTasks(): void
+    {
+        $expectedTableId = 'in.c-myBucket.myTable';
+        $awaitedJobIds = [];
+
+        $branchClientMock = $this->createMock(BranchAwareClient::class);
+        $branchClientMock->expects(self::exactly(2))
+            ->method('waitForJob')
+            ->willReturnCallback(
+                function ($jobId) use (&$awaitedJobIds, $expectedTableId): array {
+                    $awaitedJobIds[] = $jobId;
+
+                    if ($jobId === 456) {
+                        return [
+                            'operationName' => 'refreshStorageBuckets',
+                            'status' => 'success',
+                        ];
+                    }
+
+                    return [
+                        'operationName' => 'tableImport',
+                        'status' => 'success',
+                        'tableId' => $expectedTableId,
+                        'metrics' => [
+                            'inBytes' => 123,
+                            'inBytesUncompressed' => 456,
+                        ],
+                    ];
+                },
+            )
+        ;
+
+        $clientMock = $this->createMock(Client::class);
+        $clientMock->expects(self::once())
+            ->method('getTable')
+            ->with($expectedTableId)
+            ->willReturn([
+                'id' => $expectedTableId,
+                'displayName' => 'my-name',
+                'name' => 'my-name',
+                'columns' => [],
+                'lastImportDate' => null,
+                'lastChangeDate' => null,
+            ])
+        ;
+
+        $loadTask = $this->createMock(LoadTableTask::class);
+        $loadTask->expects(self::once())
+            ->method('getStorageJobId')
+            ->willReturn('123')
+        ;
+        $loadTask->expects(self::once())
+            ->method('applyMetadata')
+        ;
+
+        $clientWrapperMock = $this->createMock(ClientWrapper::class);
+        $clientWrapperMock->method('getTableAndFileStorageClient')
+            ->willReturn($clientMock);
+        $clientWrapperMock->method('getBranchClient')
+            ->willReturn($branchClientMock);
+
+        $loadQueue = new LoadTableQueue($clientWrapperMock, new NullLogger(), [$loadTask], [], [456]);
+        $jobIds = $loadQueue->waitForAll();
+
+        self::assertSame(['123', 456], $awaitedJobIds);
+        self::assertSame(['123'], $jobIds);
+
+        $tablesMetrics = $loadQueue->getTableResult()->getMetrics()?->getTableMetrics();
+        self::assertNotNull($tablesMetrics);
+        self::assertCount(1, $tablesMetrics);
+    }
+
+    public function testWaitForAllWithFailedUnloadJobThrowsInvalidOutputException(): void
+    {
+        $branchClientMock = $this->createMock(BranchAwareClient::class);
+        $branchClientMock->expects(self::once())
+            ->method('waitForJob')
+            ->with(456)
+            ->willReturn([
+                'operationName' => 'refreshStorageBuckets',
+                'status' => 'error',
+                'error' => [
+                    'message' => 'Workspace "1234" not found.',
+                ],
+            ])
+        ;
+
+        $clientWrapperMock = $this->createMock(ClientWrapper::class);
+        $clientWrapperMock->method('getTableAndFileStorageClient')
+            ->willReturn($this->createMock(Client::class));
+        $clientWrapperMock->method('getBranchClient')
+            ->willReturn($branchClientMock);
+
+        $loadQueue = new LoadTableQueue($clientWrapperMock, new NullLogger(), [], [], [456]);
+
+        $this->expectException(InvalidOutputException::class);
+        $this->expectExceptionMessage(
+            'Failed to refresh metadata of direct-grant tables (Storage job "456"): Workspace "1234" not found.',
+        );
+        $loadQueue->waitForAll();
+    }
+
     public function testStart(): void
     {
         $loadTask = $this->createMock(LoadTableTask::class);

@@ -271,6 +271,8 @@ class MappingFromProcessedConfiguration
                 if ($description !== null) {
                     $descriptions[(string) $columnName] = $description;
                 }
+                // the first KBC.description item of a column decides, as in getTableDescription()
+                break;
             }
         }
 

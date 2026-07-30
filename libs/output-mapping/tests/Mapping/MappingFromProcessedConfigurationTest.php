@@ -125,6 +125,24 @@ class MappingFromProcessedConfigurationTest extends TestCase
             'mappingConfiguration' => ['description' => ''],
             'expectedDescription' => null,
         ];
+        yield 'the first KBC.description item of the metadata list decides' => [
+            'mappingConfiguration' => [
+                'metadata' => [
+                    ['key' => 'KBC.description', 'value' => 'first desc'],
+                    ['key' => 'KBC.description', 'value' => 'second desc'],
+                ],
+            ],
+            'expectedDescription' => 'first desc',
+        ];
+        yield 'an empty first KBC.description item is not overridden by a later one' => [
+            'mappingConfiguration' => [
+                'metadata' => [
+                    ['key' => 'KBC.description', 'value' => ''],
+                    ['key' => 'KBC.description', 'value' => 'second desc'],
+                ],
+            ],
+            'expectedDescription' => null,
+        ];
     }
 
     public function testGetColumnDescriptionsSkipsEmptyDescriptions(): void
@@ -187,6 +205,26 @@ class MappingFromProcessedConfigurationTest extends TestCase
         ], $physicalDataWithManifest);
 
         self::assertSame(['col1' => 'col1 desc'], $mapping->getColumnDescriptions());
+    }
+
+    public function testGetColumnDescriptionsUseTheFirstDescriptionItemOfAColumn(): void
+    {
+        $physicalDataWithManifest = $this->createMock(MappingFromRawConfigurationAndPhysicalDataWithManifest::class);
+        $mapping = new MappingFromProcessedConfiguration([
+            'destination' => 'in.c-main.table',
+            'column_metadata' => [
+                'col1' => [
+                    ['key' => 'KBC.description', 'value' => 'first desc'],
+                    ['key' => 'KBC.description', 'value' => 'second desc'],
+                ],
+                'col2' => [
+                    ['key' => 'KBC.description', 'value' => ''],
+                    ['key' => 'KBC.description', 'value' => 'second desc'],
+                ],
+            ],
+        ], $physicalDataWithManifest);
+
+        self::assertSame(['col1' => 'first desc'], $mapping->getColumnDescriptions());
     }
 
     public function testGetColumnDescriptionsSkipsRestrictedColumns(): void

@@ -251,7 +251,8 @@ class TableLoader
                 ['only-direct-grants' => true],
             );
         } catch (ClientException $e) {
-            if ($e->getCode() < 500) {
+            // only a 4xx is the user's fault; a connection failure or a client-side error carries code 0
+            if ($e->getCode() >= 400 && $e->getCode() < 500) {
                 throw new InvalidOutputException(
                     sprintf('Failed to refresh metadata of direct-grant tables: %s', $e->getMessage()),
                     $e->getCode(),

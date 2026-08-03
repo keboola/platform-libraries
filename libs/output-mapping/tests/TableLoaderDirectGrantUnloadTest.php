@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping\Tests;
 
+use Generator;
 use Keboola\OutputMapping\DeferredTasks\LoadTableQueue;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\MappingCombiner\MappingCombinerInterface;
@@ -106,9 +107,18 @@ class TableLoaderDirectGrantUnloadTest extends TestCase
         }
     }
 
-    public function testUnloadFailureWithSapiAppErrorPropagatesErrorFromClient(): void
+    public static function nonUserErrorProvider(): Generator
     {
-        $clientException = new ClientException('Internal Server Error', 500);
+        yield 'server error' => ['Internal Server Error', 500];
+        yield 'connection failure' => ['cURL error 6: Could not resolve host', 0];
+    }
+
+    /**
+     * @dataProvider nonUserErrorProvider
+     */
+    public function testUnloadFailureWithSapiAppErrorPropagatesErrorFromClient(string $message, int $code): void
+    {
+        $clientException = new ClientException($message, $code);
 
         $branchClient = $this->createMock(BranchAwareClient::class);
         $branchClient->expects(self::once())

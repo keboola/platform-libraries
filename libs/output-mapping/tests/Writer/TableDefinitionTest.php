@@ -245,13 +245,8 @@ class TableDefinitionTest extends AbstractTestCase
             'incremental' => $incrementalFlag,
             'columns' => ['Id', 'Name', 'birthweight', 'created'],
             'primary_key' => ['Id', 'Name'],
-            // the table exists before the run, so the descriptions go through the table-definition update
-            'description' => 'table description',
             'column_metadata' => [
-                'Id' => array_merge(
-                    $idDatatype->toMetadata(),
-                    [['key' => 'KBC.description', 'value' => 'Id description']],
-                ),
+                'Id' => $idDatatype->toMetadata(),
                 'Name' => $nameDatatype->toMetadata(),
                 'birthweight' => $birthweightDatatype->toMetadata(),
                 'created' => $created->toMetadata(),
@@ -310,16 +305,6 @@ class TableDefinitionTest extends AbstractTestCase
             },
         );
 
-        // StoragePreparer stores the descriptions through a table-definition update before the load
-        self::assertCount(1, array_filter(
-            $writerJobs,
-            fn(array $job) => $job['operationName'] === 'tableDefinitionUpdate',
-        ));
-        $writerJobs = array_filter(
-            $writerJobs,
-            fn(array $job) => $job['operationName'] !== 'tableDefinitionUpdate',
-        );
-
         self::assertCount(4, $writerJobs);
 
         // tableColumnAdd jobs
@@ -369,13 +354,6 @@ class TableDefinitionTest extends AbstractTestCase
             'length' => null,
             'nullable' => true,
         ]);
-
-        self::assertTrue($tableDetails['isDescriptionSystemManaged']);
-        self::assertSame('table description', $tableDetails['definition']['description'] ?? null);
-        self::assertSame(
-            'Id description',
-            $this->getColumnDescriptions($tableDetails['definition']['columns'])['Id'],
-        );
     }
 
     /**

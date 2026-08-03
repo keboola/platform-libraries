@@ -200,7 +200,10 @@ class MappingFromProcessedConfiguration
      */
     public function getTableMetadata(): array
     {
-        return DescriptionHelper::removeDescriptionFromMetadataMap($this->mapping['table_metadata'] ?? []);
+        return DescriptionHelper::removeDescriptionFromMetadataMap(
+            $this->mapping['table_metadata'] ?? [],
+            'table_metadata',
+        );
     }
 
     /**
@@ -217,21 +220,15 @@ class MappingFromProcessedConfiguration
             return DescriptionHelper::normalizeDescription($this->mapping['description']);
         }
 
-        // table_metadata is a variableNode in the configuration, so it is not guaranteed to be an array
-        $tableMetadata = $this->mapping['table_metadata'] ?? [];
-        if (is_array($tableMetadata) && isset($tableMetadata[DescriptionHelper::DESCRIPTION_METADATA_KEY])) {
-            return DescriptionHelper::normalizeDescription(
-                $tableMetadata[DescriptionHelper::DESCRIPTION_METADATA_KEY],
-            );
+        $tableMetadataDescription = DescriptionHelper::getDescriptionFromMetadataMap(
+            $this->mapping['table_metadata'] ?? [],
+            'table_metadata',
+        );
+        if ($tableMetadataDescription !== null) {
+            return $tableMetadataDescription;
         }
 
-        foreach ($this->mapping['metadata'] ?? [] as $item) {
-            if (is_array($item) && ($item['key'] ?? null) === DescriptionHelper::DESCRIPTION_METADATA_KEY) {
-                return DescriptionHelper::normalizeDescription($item['value'] ?? null);
-            }
-        }
-
-        return null;
+        return DescriptionHelper::getDescriptionFromMetadataList($this->mapping['metadata'] ?? []);
     }
 
     /**
@@ -263,16 +260,9 @@ class MappingFromProcessedConfiguration
             [];
 
         foreach ($columnMetadataFromConfiguration as $columnName => $metadata) {
-            foreach ($metadata as $item) {
-                if (!is_array($item) || ($item['key'] ?? null) !== DescriptionHelper::DESCRIPTION_METADATA_KEY) {
-                    continue;
-                }
-                $description = DescriptionHelper::normalizeDescription($item['value'] ?? null);
-                if ($description !== null) {
-                    $descriptions[(string) $columnName] = $description;
-                }
-                // the first KBC.description item of a column decides, as in getTableDescription()
-                break;
+            $description = DescriptionHelper::getDescriptionFromMetadataList($metadata);
+            if ($description !== null) {
+                $descriptions[(string) $columnName] = $description;
             }
         }
 

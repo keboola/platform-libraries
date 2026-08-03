@@ -165,10 +165,6 @@ class LoadTableQueue
      */
     private function applyCreatedTableDescriptions(LoadTableTaskInterface $task, array $tableData): void
     {
-        if ($this->createdTableDescriptions === []) {
-            return;
-        }
-
         $tableId = $task->getDestinationTableName();
         $descriptions = $this->createdTableDescriptions[$tableId] ?? null;
         if ($descriptions === null) {

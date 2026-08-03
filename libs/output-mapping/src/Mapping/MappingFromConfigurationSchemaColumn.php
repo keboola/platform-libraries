@@ -51,7 +51,10 @@ class MappingFromConfigurationSchemaColumn
      */
     public function getMetadata(): array
     {
-        return DescriptionHelper::removeDescriptionFromMetadataMap($this->mapping['metadata'] ?? []);
+        return DescriptionHelper::removeDescriptionFromMetadataMap(
+            $this->mapping['metadata'] ?? [],
+            'schema.metadata',
+        );
     }
 
     /**
@@ -65,14 +68,9 @@ class MappingFromConfigurationSchemaColumn
             return DescriptionHelper::normalizeDescription($this->mapping['description']);
         }
 
-        // metadata is a variableNode in the configuration, so it is not guaranteed to be an array
-        $metadata = $this->mapping['metadata'] ?? [];
-        if (is_array($metadata) && isset($metadata[DescriptionHelper::DESCRIPTION_METADATA_KEY])) {
-            return DescriptionHelper::normalizeDescription(
-                $metadata[DescriptionHelper::DESCRIPTION_METADATA_KEY],
-            );
-        }
-
-        return null;
+        return DescriptionHelper::getDescriptionFromMetadataMap(
+            $this->mapping['metadata'] ?? [],
+            'schema.metadata',
+        );
     }
 }

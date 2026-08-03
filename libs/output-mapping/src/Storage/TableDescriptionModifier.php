@@ -50,8 +50,9 @@ class TableDescriptionModifier
                 $tableDefinitionUpdate,
             );
         } catch (ClientException $e) {
-            if ($e->getCode() >= 500) {
-                // Let a Storage outage surface as a retryable application error, consistently with the
+            if ($e->getCode() < 400 || $e->getCode() >= 500) {
+                // Only a 4xx is the caller's fault. A Storage outage and a connection error (which carries no
+                // HTTP status, i.e. code 0) both stay a retryable application error, consistently with the
                 // metadata path in LoadTableQueue.
                 throw $e;
             }

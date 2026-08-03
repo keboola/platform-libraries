@@ -6,6 +6,7 @@ namespace Keboola\OutputMapping\Tests\Mapping;
 
 use Generator;
 use Keboola\OutputMapping\Configuration\Table\DeduplicationStrategy;
+use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Mapping\MappingFromProcessedConfiguration;
 use Keboola\OutputMapping\Mapping\MappingFromRawConfigurationAndPhysicalData;
 use Keboola\OutputMapping\Mapping\MappingFromRawConfigurationAndPhysicalDataWithManifest;
@@ -87,6 +88,23 @@ class MappingFromProcessedConfigurationTest extends TestCase
         self::assertSame($expectedDescription, $mapping->getTableDescription());
     }
 
+    /**
+     * `table_metadata` is a variableNode, so a non-object value reaches the code. Dropping it silently would
+     * hide the configuration error, so it is reported instead.
+     */
+    public function testNonObjectTableMetadataIsReported(): void
+    {
+        $mapping = new MappingFromProcessedConfiguration(
+            ['destination' => 'in.c-main.table', 'table_metadata' => 'not an array'],
+            $this->createMock(MappingFromRawConfigurationAndPhysicalDataWithManifest::class),
+        );
+
+        $this->expectException(InvalidOutputException::class);
+        $this->expectExceptionMessage('Configuration node "table_metadata" must be an object, "string" given.');
+
+        $mapping->getTableDescription();
+    }
+
     public static function tableDescriptionProvider(): Generator
     {
         yield 'from description field' => [
@@ -115,10 +133,6 @@ class MappingFromProcessedConfigurationTest extends TestCase
         ];
         yield 'no description' => [
             'mappingConfiguration' => ['table_metadata' => ['key1' => 'val1']],
-            'expectedDescription' => null,
-        ];
-        yield 'table_metadata is a variableNode, so it may be anything' => [
-            'mappingConfiguration' => ['table_metadata' => 'not an array'],
             'expectedDescription' => null,
         ];
         yield 'empty description is not stored' => [

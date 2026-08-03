@@ -16,6 +16,7 @@ use Keboola\OutputMapping\Writer\Table\StrategyInterface;
 use Keboola\OutputMapping\Writer\Table\TableDefinition\TableDefinitionFactory;
 use Keboola\OutputMapping\Writer\Table\TableDefinition\TableDefinitionFromColumns;
 use Keboola\OutputMapping\Writer\Table\TableDefinitionFromSchema\TableDefinitionFromSchema;
+use Keboola\OutputMapping\Writer\Table\TableDefinitionInterface;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Psr\Log\LoggerInterface;
 
@@ -25,7 +26,7 @@ class LoadTableTaskCreator
 
     public function __construct(readonly ClientWrapper $clientWrapper, readonly LoggerInterface $logger)
     {
-        $this->tableCreator = new TableCreator($clientWrapper, $logger);
+        $this->tableCreator = new TableCreator($clientWrapper);
     }
 
     /**
@@ -73,11 +74,7 @@ class LoadTableTaskCreator
                 $source->getPrimaryKey(),
                 $source->getColumnMetadata(),
             );
-            $this->tableCreator->createTableDefinition(
-                $source->getDestination()->getBucketId(),
-                $tableDefinition,
-                $descriptions,
-            );
+            $this->createTableDefinition($source, $tableDefinition, $descriptions);
             return new LoadTableTaskResult(new LoadTableTask($source->getDestination(), $loadOptions, true));
         } elseif ($settings->hasNewNativeTypesFeature() &&
             !$storageSources->didTableExistBefore() &&
@@ -88,11 +85,7 @@ class LoadTableTaskCreator
                 $source->getSchema(),
                 $storageSources->getBucket()->backend,
             );
-            $this->tableCreator->createTableDefinition(
-                $source->getDestination()->getBucketId(),
-                $tableDefinition,
-                $descriptions,
-            );
+            $this->createTableDefinition($source, $tableDefinition, $descriptions);
             return new LoadTableTaskResult(new LoadTableTask($source->getDestination(), $loadOptions, true));
         } elseif (!$storageSources->didTableExistBefore() && $source->hasColumns()) {
             // tabulka neexistuje a známe sloupce z manifestu - vytváříme ji přes table definition bez typů
@@ -101,11 +94,7 @@ class LoadTableTaskCreator
                 $source->getColumns(),
                 $source->getPrimaryKey(),
             );
-            $this->tableCreator->createTableDefinition(
-                $source->getDestination()->getBucketId(),
-                $tableDefinition,
-                $descriptions,
-            );
+            $this->createTableDefinition($source, $tableDefinition, $descriptions);
             return new LoadTableTaskResult(new LoadTableTask($source->getDestination(), $loadOptions, true));
         } elseif ($storageSources->didTableExistBefore()) {
             // tabulka existuje takže nahráváme data
@@ -126,6 +115,23 @@ class LoadTableTaskCreator
                 $descriptions !== null && !$descriptions->isEmpty() ? $descriptions : null,
             );
         }
+    }
+
+    private function createTableDefinition(
+        MappingFromProcessedConfiguration $source,
+        TableDefinitionInterface $tableDefinition,
+        ?TableDescription $descriptions,
+    ): void {
+        // The table is brand new, therefore its description is always system-managed (Storage default) and
+        // there is nothing to diff against.
+        if ($descriptions !== null && !$descriptions->isEmpty()) {
+            $tableDefinition->setDescriptions($descriptions, $this->logger);
+        }
+
+        $this->tableCreator->createTableDefinition(
+            $source->getDestination()->getBucketId(),
+            $tableDefinition,
+        );
     }
 
     public function buildLoadOptions(

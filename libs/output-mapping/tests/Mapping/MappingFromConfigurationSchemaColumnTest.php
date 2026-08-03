@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping\Tests\Mapping;
 
+use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Mapping\MappingFromConfigurationSchemaColumn;
 use PHPUnit\Framework\TestCase;
 
@@ -72,13 +73,20 @@ class MappingFromConfigurationSchemaColumnTest extends TestCase
         self::assertFalse($schemColumn->hasMetadata());
     }
 
-    public function testGetDescriptionIgnoresNonArrayMetadata(): void
+    /**
+     * The node is a variableNode, so a non-object value reaches the code. Dropping the metadata silently would
+     * hide the configuration error, so it is reported instead.
+     */
+    public function testNonObjectMetadataIsReported(): void
     {
         $schemColumn = new MappingFromConfigurationSchemaColumn([
             'name' => 'newColumn',
             'metadata' => 'this is a variableNode, so it may be anything',
         ]);
 
-        self::assertNull($schemColumn->getDescription());
+        $this->expectException(InvalidOutputException::class);
+        $this->expectExceptionMessage('Configuration node "schema.metadata" must be an object, "string" given.');
+
+        $schemColumn->getDescription();
     }
 }

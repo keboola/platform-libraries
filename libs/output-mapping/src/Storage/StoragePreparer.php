@@ -67,6 +67,16 @@ class StoragePreparer
             $destinationTableInfo = $this->getDestinationTableInfoIfExists(
                 $processedSource->getDestination()->getTableId(),
             );
+
+            if ($destinationTableInfo !== null) {
+                // The description of a table which already exists is only updated when it is system-managed.
+                // Descriptions of tables created by this run are stored once the load finishes, see TableLoader.
+                $descriptions = TableDescription::createFromMapping($processedSource);
+                if (!$descriptions->isEmpty()) {
+                    $descriptionModifier = new TableDescriptionModifier($this->clientWrapper, $this->logger);
+                    $descriptionModifier->updateDescriptions($destinationTableInfo, $descriptions);
+                }
+            }
         }
 
         return new MappingStorageSources($destinationBucket, $destinationTableInfo);

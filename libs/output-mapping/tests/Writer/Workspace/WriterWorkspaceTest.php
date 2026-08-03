@@ -35,6 +35,14 @@ class WriterWorkspaceTest extends AbstractTestCase
                 'destination' => $this->emptyOutputBucketId . '.table1a',
                 'incremental' => true,
                 'columns' => ['Id'],
+                // the descriptions are stored the same way regardless of the staging the data came from, but
+                // workspace unload reaches LoadTableTaskCreator through a different strategy
+                'description' => 'table description',
+                'column_metadata' => [
+                    'Id' => [
+                        ['key' => 'KBC.description', 'value' => 'Id description'],
+                    ],
+                ],
             ],
             [
                 'source' => 'table2a',
@@ -97,6 +105,17 @@ class WriterWorkspaceTest extends AbstractTestCase
                 '"id3","name3","foo3","bar3"',
             ],
         );
+
+        $tableDetail = $this->clientWrapper->getTableAndFileStorageClient()->getTable(
+            $this->emptyOutputBucketId . '.table1a',
+        );
+        self::assertSame('table description', $tableDetail['definition']['description'] ?? null);
+        $idColumn = array_values(array_filter(
+            $tableDetail['definition']['columns'],
+            fn($column) => $column['name'] === 'Id',
+        ));
+        self::assertCount(1, $idColumn);
+        self::assertSame('Id description', $idColumn[0]['definition']['description'] ?? null);
     }
 
     #[NeedsEmptyOutputBucket]

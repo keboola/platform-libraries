@@ -9,6 +9,7 @@ use Keboola\InputMapping\Table\Result\TableInfo;
 use Keboola\OutputMapping\DeferredTasks\LoadTableQueue;
 use Keboola\OutputMapping\DeferredTasks\TableWriter\LoadTableTask;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
+use Keboola\OutputMapping\Storage\TableDescription;
 use Keboola\OutputMapping\Table\Result;
 use Keboola\OutputMapping\Table\Result\Metrics;
 use Keboola\OutputMapping\Table\Result\TableMetrics;
@@ -17,6 +18,8 @@ use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Metadata;
 use Keboola\StorageApiBranch\ClientWrapper;
+use Monolog\Handler\TestHandler;
+use Monolog\Logger;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 
@@ -642,6 +645,366 @@ class LoadTableQueueTest extends TestCase
         self::assertSame(['my_var' => 'hello', 'count' => 42], $loadQueue->getTableResult()->getCustomVariables());
 
         unlink($tmpFile);
+    }
+
+    /**
+     * The deferred path is only reachable for a table created by the load job itself (CreateAndLoadTableTask),
+     * whose job operation is `tableCreate`. Every other created table carries its description already in the
+     * create-table-definition payload.
+     */
+    public function testWaitForAllStoresDescriptionsOfCreatedTable(): void
+    {
+        $tableId = 'in.c-myBucket.tableCreated';
+
+        $clientMock = $this->createMock(Client::class);
+        $clientMock->expects(self::once())
+            ->method('getTable')
+            ->with($tableId)
+            ->willReturn([
+                'id' => $tableId,
+                'displayName' => 'my-name',
+                'name' => 'my-name',
+                'columns' => ['col1'],
+                'lastImportDate' => null,
+                'lastChangeDate' => null,
+            ])
+        ;
+        $clientMock->expects(self::once())
+            ->method('updateTableDefinition')
+            ->with($tableId, [
+                'description' => 'table desc',
+                'columns' => [
+                    ['name' => 'col1', 'description' => 'col1 desc'],
+                ],
+            ])
+            ->willReturn([])
+        ;
+
+        $branchClientMock = $this->createMock(BranchAwareClient::class);
+        $branchClientMock->expects(self::once())
+            ->method('waitForJob')
+            ->with(123)
+            ->willReturn([
+                'operationName' => 'tableCreate',
+                'status' => 'success',
+                'tableId' => null,
+                'results' => [
+                    'id' => $tableId,
+                ],
+                'metrics' => [
+                    'inBytes' => 0,
+                    'inBytesUncompressed' => 0,
+                ],
+            ])
+        ;
+
+        $loadTask = $this->createMock(LoadTableTask::class);
+        $loadTask->expects(self::once())
+            ->method('getStorageJobId')
+            ->willReturn('123')
+        ;
+        $loadTask->expects(self::once())
+            ->method('applyMetadata')
+        ;
+        $loadTask->expects(self::once())
+            ->method('getDestinationTableName')
+            ->willReturn($tableId)
+        ;
+
+        $clientWrapperMock = $this->createMock(ClientWrapper::class);
+        $clientWrapperMock->method('getTableAndFileStorageClient')
+            ->willReturn($clientMock);
+        $clientWrapperMock->method('getBranchClient')
+            ->willReturn($branchClientMock);
+
+        $loadQueue = new LoadTableQueue(
+            $clientWrapperMock,
+            new NullLogger(),
+            [$loadTask],
+            [$tableId => new TableDescription($tableId, 'table desc', ['col1' => 'col1 desc'])],
+        );
+        $loadQueue->waitForAll();
+    }
+
+    public function testWaitForAllReportsFailedDescriptionUpdateAsError(): void
+    {
+        $tableId = 'in.c-myBucket.tableCreated';
+
+        $clientMock = $this->createMock(Client::class);
+        $clientMock->expects(self::once())
+            ->method('getTable')
+            ->with($tableId)
+            ->willReturn([
+                'id' => $tableId,
+                'displayName' => 'my-name',
+                'name' => 'my-name',
+                'columns' => ['col1'],
+                'lastImportDate' => null,
+                'lastChangeDate' => null,
+            ])
+        ;
+        $clientMock->expects(self::once())
+            ->method('updateTableDefinition')
+            ->willThrowException(new ClientException('Backend does not support definition update', 400))
+        ;
+
+        $branchClientMock = $this->createMock(BranchAwareClient::class);
+        $branchClientMock->expects(self::once())
+            ->method('waitForJob')
+            ->with(123)
+            ->willReturn([
+                'operationName' => 'tableCreate',
+                'status' => 'success',
+                'tableId' => null,
+                'results' => [
+                    'id' => $tableId,
+                ],
+                'metrics' => [
+                    'inBytes' => 0,
+                    'inBytesUncompressed' => 0,
+                ],
+            ])
+        ;
+
+        $loadTask = $this->createMock(LoadTableTask::class);
+        $loadTask->method('getStorageJobId')->willReturn('123');
+        $loadTask->method('getDestinationTableName')->willReturn($tableId);
+        $loadTask->expects(self::once())->method('applyMetadata');
+
+        $clientWrapperMock = $this->createMock(ClientWrapper::class);
+        $clientWrapperMock->method('getTableAndFileStorageClient')
+            ->willReturn($clientMock);
+        $clientWrapperMock->method('getBranchClient')
+            ->willReturn($branchClientMock);
+
+        $loadQueue = new LoadTableQueue(
+            $clientWrapperMock,
+            new NullLogger(),
+            [$loadTask],
+            [$tableId => new TableDescription($tableId, 'table desc', [])],
+        );
+
+        try {
+            $loadQueue->waitForAll();
+            self::fail('WaitForAll should fail with InvalidOutputException.');
+        } catch (InvalidOutputException $e) {
+            self::assertSame(
+                sprintf(
+                    'Cannot update description of table "%s": Backend does not support definition update',
+                    $tableId,
+                ),
+                $e->getMessage(),
+            );
+        }
+    }
+
+    /**
+     * A leftover description means it was never handed over to Storage. It cannot happen today, but it must
+     * never be dropped silently.
+     */
+    public function testWaitForAllWarnsAboutDescriptionsWhichWereNotStored(): void
+    {
+        $tableId = 'in.c-myBucket.tableImported';
+
+        $clientMock = $this->createMock(Client::class);
+        $clientMock->expects(self::once())
+            ->method('getTable')
+            ->with($tableId)
+            ->willReturn([
+                'id' => $tableId,
+                'displayName' => 'my-name',
+                'name' => 'my-name',
+                'columns' => ['col1'],
+                'lastImportDate' => null,
+                'lastChangeDate' => null,
+            ])
+        ;
+        $clientMock->expects(self::never())
+            ->method('updateTableDefinition')
+        ;
+
+        $branchClientMock = $this->createMock(BranchAwareClient::class);
+        $branchClientMock->expects(self::once())
+            ->method('waitForJob')
+            ->with(123)
+            ->willReturn([
+                'operationName' => 'tableImport',
+                'status' => 'success',
+                'tableId' => $tableId,
+                'metrics' => [
+                    'inBytes' => 0,
+                    'inBytesUncompressed' => 0,
+                ],
+            ])
+        ;
+
+        $loadTask = $this->createMock(LoadTableTask::class);
+        $loadTask->expects(self::once())->method('getStorageJobId')->willReturn('123');
+        $loadTask->expects(self::once())->method('applyMetadata');
+
+        $clientWrapperMock = $this->createMock(ClientWrapper::class);
+        $clientWrapperMock->method('getTableAndFileStorageClient')
+            ->willReturn($clientMock);
+        $clientWrapperMock->method('getBranchClient')
+            ->willReturn($branchClientMock);
+
+        $logHandler = new TestHandler();
+
+        $loadQueue = new LoadTableQueue(
+            $clientWrapperMock,
+            new Logger('test', [$logHandler]),
+            [$loadTask],
+            ['in.c-myBucket.leftover' => new TableDescription('in.c-myBucket.leftover', 'table desc', [])],
+        );
+        $loadQueue->waitForAll();
+
+        self::assertTrue($logHandler->hasWarningThatContains(
+            'Description of table(s) "in.c-myBucket.leftover" was not stored.',
+        ));
+    }
+
+    /**
+     * A failed load leaves nothing to describe, so the pending description is expected to disappear without
+     * the "was not stored" warning - that warning is about descriptions lost by mistake.
+     */
+    public function testWaitForAllDoesNotWarnAboutDescriptionsOfFailedLoad(): void
+    {
+        $tableId = 'in.c-myBucket.tableFailed';
+
+        $branchClientMock = $this->createMock(BranchAwareClient::class);
+        $branchClientMock->expects(self::once())
+            ->method('waitForJob')
+            ->with(123)
+            ->willReturn(['status' => 'error', 'error' => ['message' => 'Hi']])
+        ;
+
+        $clientMock = $this->createMock(Client::class);
+        $clientMock->expects(self::once())
+            ->method('getTable')
+            ->with($tableId)
+            ->willReturn(['rowsCount' => 0, 'metadata' => [], 'isTyped' => false])
+        ;
+        $clientMock->expects(self::once())
+            ->method('dropTable')
+            ->with($tableId, ['force' => true])
+        ;
+        $clientMock->expects(self::never())
+            ->method('updateTableDefinition')
+        ;
+
+        $loadTask = $this->createMock(LoadTableTask::class);
+        $loadTask->expects(self::once())->method('getStorageJobId')->willReturn('123');
+        $loadTask->expects(self::once())->method('isUsingFreshlyCreatedTable')->willReturn(true);
+        $loadTask->method('getDestinationTableName')->willReturn($tableId);
+
+        $clientWrapperMock = $this->createMock(ClientWrapper::class);
+        $clientWrapperMock->method('getTableAndFileStorageClient')
+            ->willReturn($clientMock);
+        $clientWrapperMock->method('getBranchClient')
+            ->willReturn($branchClientMock);
+
+        $logHandler = new TestHandler();
+
+        $loadQueue = new LoadTableQueue(
+            $clientWrapperMock,
+            new Logger('test', [$logHandler]),
+            [$loadTask],
+            [$tableId => new TableDescription($tableId, 'table desc', ['col1' => 'col1 desc'])],
+        );
+
+        try {
+            $loadQueue->waitForAll();
+            self::fail('WaitForAll should fail with InvalidOutputException.');
+        } catch (InvalidOutputException $e) {
+            self::assertSame(sprintf('Failed to load table "%s": Hi', $tableId), $e->getMessage());
+        }
+
+        self::assertFalse($logHandler->hasWarningThatContains('was not stored'));
+    }
+
+    /**
+     * Several sources may be mapped to the same destination table. The descriptions belong to the table, not
+     * to the mapping, so they are stored exactly once and nothing is left over afterwards.
+     */
+    public function testWaitForAllStoresDescriptionOnceForTwoTasksWithSameDestination(): void
+    {
+        $tableId = 'in.c-myBucket.tableCreated';
+        $tableData = [
+            'id' => $tableId,
+            'displayName' => 'my-name',
+            'name' => 'my-name',
+            'columns' => ['col1'],
+            'lastImportDate' => null,
+            'lastChangeDate' => null,
+        ];
+
+        $clientMock = $this->createMock(Client::class);
+        $clientMock->expects(self::exactly(2))
+            ->method('getTable')
+            ->with($tableId)
+            ->willReturn($tableData)
+        ;
+        $clientMock->expects(self::once())
+            ->method('updateTableDefinition')
+            ->with($tableId, [
+                'description' => 'table desc',
+                'columns' => [
+                    ['name' => 'col1', 'description' => 'col1 desc'],
+                ],
+            ])
+            ->willReturn([])
+        ;
+
+        $jobResults = [
+            [
+                'operationName' => 'tableCreate',
+                'status' => 'success',
+                'tableId' => null,
+                'results' => ['id' => $tableId],
+                'metrics' => ['inBytes' => 0, 'inBytesUncompressed' => 0],
+            ],
+            [
+                'operationName' => 'tableImport',
+                'status' => 'success',
+                'tableId' => $tableId,
+                'metrics' => ['inBytes' => 0, 'inBytesUncompressed' => 0],
+            ],
+        ];
+
+        $branchClientMock = $this->createMock(BranchAwareClient::class);
+        $branchClientMock->expects(self::exactly(count($jobResults)))
+            ->method('waitForJob')
+            ->willReturnCallback(function () use (&$jobResults) {
+                return array_shift($jobResults);
+            })
+        ;
+
+        $loadTasks = [];
+        foreach (['123', '456'] as $jobId) {
+            $loadTask = $this->createMock(LoadTableTask::class);
+            $loadTask->expects(self::once())->method('getStorageJobId')->willReturn($jobId);
+            $loadTask->expects(self::once())->method('applyMetadata');
+            $loadTask->method('getDestinationTableName')->willReturn($tableId);
+            $loadTasks[] = $loadTask;
+        }
+
+        $clientWrapperMock = $this->createMock(ClientWrapper::class);
+        $clientWrapperMock->method('getTableAndFileStorageClient')
+            ->willReturn($clientMock);
+        $clientWrapperMock->method('getBranchClient')
+            ->willReturn($branchClientMock);
+
+        $logHandler = new TestHandler();
+
+        $loadQueue = new LoadTableQueue(
+            $clientWrapperMock,
+            new Logger('test', [$logHandler]),
+            $loadTasks,
+            [$tableId => new TableDescription($tableId, 'table desc', ['col1' => 'col1 desc'])],
+        );
+        $loadQueue->waitForAll();
+
+        self::assertFalse($logHandler->hasWarningThatContains('was not stored'));
     }
 
     public function testLoadCustomVariablesDoesNothingWhenFileMissing(): void

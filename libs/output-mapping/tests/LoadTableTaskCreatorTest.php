@@ -14,6 +14,7 @@ use Keboola\OutputMapping\Mapping\MappingFromProcessedConfiguration;
 use Keboola\OutputMapping\Mapping\MappingFromRawConfigurationAndPhysicalDataWithManifest;
 use Keboola\OutputMapping\Mapping\MappingStorageSources;
 use Keboola\OutputMapping\Storage\BucketInfo;
+use Keboola\OutputMapping\Storage\TableDescription;
 use Keboola\OutputMapping\Tests\AbstractTestCase;
 use Keboola\OutputMapping\Tests\Needs\NeedsEmptyOutputBucket;
 use Keboola\OutputMapping\Tests\Needs\NeedsTestTables;
@@ -72,13 +73,22 @@ class LoadTableTaskCreatorTest extends AbstractTestCase
             $this->clientWrapper,
             $this->testLogger,
         );
-        $loadTask = $loadTableTaskCreator->create(
+        $loadTaskResult = $loadTableTaskCreator->create(
             strategy: $strategy,
             source: $source,
             storageSources: $storageSources,
             settings: $settings,
+            descriptions: new TableDescription(
+                $this->emptyOutputBucketId . '.destinationTable',
+                'table desc',
+                ['col1' => 'col1 desc'],
+            ),
         );
 
+        // the descriptions are part of the create payload, nothing is left for after the load
+        self::assertNull($loadTaskResult->getDescriptionsNotEmbeddedInCreatePayload());
+
+        $loadTask = $loadTaskResult->getLoadTableTask();
         self::assertInstanceOf(LoadTableTask::class, $loadTask);
         self::assertTrue($loadTask->isUsingFreshlyCreatedTable());
         self::assertSame(
@@ -90,6 +100,11 @@ class LoadTableTaskCreatorTest extends AbstractTestCase
         );
 
         self::assertTrue($storageTable['isTyped']);
+        self::assertSame('table desc', $storageTable['definition']['description'] ?? null);
+        self::assertSame(
+            ['col1' => 'col1 desc', 'col2' => null],
+            $this->getColumnDescriptions($storageTable['definition']['columns']),
+        );
         self::assertSame(
             [
                 [
@@ -113,7 +128,7 @@ class LoadTableTaskCreatorTest extends AbstractTestCase
                     'canBeFiltered' => true,
                 ],
             ],
-            $storageTable['definition']['columns'],
+            $this->stripColumnDescriptions($storageTable['definition']['columns']),
         );
     }
 
@@ -168,13 +183,22 @@ class LoadTableTaskCreatorTest extends AbstractTestCase
             $this->clientWrapper,
             $this->testLogger,
         );
-        $loadTask = $loadTableTaskCreator->create(
+        $loadTaskResult = $loadTableTaskCreator->create(
             strategy: $strategy,
             source: $source,
             storageSources: $storageSources,
             settings: $settings,
+            descriptions: new TableDescription(
+                $this->emptyOutputBucketId . '.destinationTable',
+                'table desc',
+                ['col2' => 'col2 desc'],
+            ),
         );
 
+        // the descriptions are part of the create payload, nothing is left for after the load
+        self::assertNull($loadTaskResult->getDescriptionsNotEmbeddedInCreatePayload());
+
+        $loadTask = $loadTaskResult->getLoadTableTask();
         self::assertInstanceOf(LoadTableTask::class, $loadTask);
         self::assertTrue($loadTask->isUsingFreshlyCreatedTable());
         self::assertSame(
@@ -186,6 +210,11 @@ class LoadTableTaskCreatorTest extends AbstractTestCase
         );
 
         self::assertTrue($storageTable['isTyped']);
+        self::assertSame('table desc', $storageTable['definition']['description'] ?? null);
+        self::assertSame(
+            ['col1' => null, 'col2' => 'col2 desc'],
+            $this->getColumnDescriptions($storageTable['definition']['columns']),
+        );
         self::assertSame(
             [
                 [
@@ -209,7 +238,7 @@ class LoadTableTaskCreatorTest extends AbstractTestCase
                     'canBeFiltered' => true,
                 ],
             ],
-            $storageTable['definition']['columns'],
+            $this->stripColumnDescriptions($storageTable['definition']['columns']),
         );
         self::assertSame(['col1'], $storageTable['definition']['primaryKeysNames']);
     }
@@ -242,13 +271,22 @@ class LoadTableTaskCreatorTest extends AbstractTestCase
             $this->clientWrapper,
             $this->testLogger,
         );
-        $loadTask = $loadTableTaskCreator->create(
+        $loadTaskResult = $loadTableTaskCreator->create(
             strategy: $strategy,
             source: $source,
             storageSources: $storageSources,
             settings: $settings,
+            descriptions: new TableDescription(
+                $this->emptyOutputBucketId . '.destinationTable',
+                'table desc',
+                ['col1' => 'col1 desc'],
+            ),
         );
 
+        // the descriptions are part of the create payload, nothing is left for after the load
+        self::assertNull($loadTaskResult->getDescriptionsNotEmbeddedInCreatePayload());
+
+        $loadTask = $loadTaskResult->getLoadTableTask();
         self::assertInstanceOf(LoadTableTask::class, $loadTask);
         self::assertTrue($loadTask->isUsingFreshlyCreatedTable());
         self::assertSame(
@@ -259,10 +297,16 @@ class LoadTableTaskCreatorTest extends AbstractTestCase
             $this->emptyOutputBucketId.'.destinationTable',
         );
 
+        // a column definition carrying only a description does not make the table typed
         self::assertFalse($storageTable['isTyped']);
         self::assertSame(
             ['col1', 'col2'],
             $storageTable['columns'],
+        );
+        self::assertSame('table desc', $storageTable['definition']['description'] ?? null);
+        self::assertSame(
+            ['col1' => 'col1 desc', 'col2' => null],
+            $this->getColumnDescriptions($storageTable['definition']['columns']),
         );
     }
 
@@ -292,13 +336,18 @@ class LoadTableTaskCreatorTest extends AbstractTestCase
             $this->clientWrapper,
             $this->testLogger,
         );
-        $loadTask = $loadTableTaskCreator->create(
+        $loadTaskResult = $loadTableTaskCreator->create(
             strategy: $strategy,
             source: $source,
             storageSources: $storageSources,
             settings: $settings,
+            descriptions: new TableDescription($this->testBucketId . '.test0', 'table desc', []),
         );
 
+        // the table existed before, its description was already handled by StoragePreparer
+        self::assertNull($loadTaskResult->getDescriptionsNotEmbeddedInCreatePayload());
+
+        $loadTask = $loadTaskResult->getLoadTableTask();
         self::assertInstanceOf(LoadTableTask::class, $loadTask);
         self::assertFalse($loadTask->isUsingFreshlyCreatedTable());
         self::assertSame(
@@ -333,19 +382,114 @@ class LoadTableTaskCreatorTest extends AbstractTestCase
             $this->clientWrapper,
             $this->testLogger,
         );
-        $loadTask = $loadTableTaskCreator->create(
+        $descriptions = new TableDescription(
+            $this->emptyOutputBucketId . '.test0',
+            'table desc',
+            ['col1' => 'col1 desc'],
+        );
+        $loadTaskResult = $loadTableTaskCreator->create(
             strategy: $strategy,
             source: $source,
             storageSources: $storageSources,
             settings: $settings,
+            descriptions: $descriptions,
         );
 
+        // the table is created by the load job itself, there is no create payload to embed the descriptions in
+        self::assertSame($descriptions, $loadTaskResult->getDescriptionsNotEmbeddedInCreatePayload());
+
+        $loadTask = $loadTaskResult->getLoadTableTask();
         self::assertInstanceOf(CreateAndLoadTableTask::class, $loadTask);
         self::assertTrue($loadTask->isUsingFreshlyCreatedTable());
         self::assertSame(
             $this->emptyOutputBucketId . '.test0',
             $loadTask->getDestinationTableName(),
         );
+    }
+
+    #[NeedsEmptyOutputBucket]
+    public function testLoadTaskWithoutManifestAndWithoutDescription(): void
+    {
+        $settings = self::createMock(OutputMappingSettings::class);
+        $settings->expects(self::once())->method('hasNativeTypesFeature')->willReturn(false);
+        $settings->expects(self::exactly(2))->method('hasNewNativeTypesFeature')->willReturn(false);
+
+        $strategy = self::createMock(LocalTableStrategy::class);
+        $strategy->expects(self::once())
+            ->method('prepareLoadTaskOptions')
+            ->willReturn([]);
+
+        $source = self::createMock(MappingFromProcessedConfiguration::class);
+        $source->expects(self::once())->method('hasColumns')->willReturn(false);
+        $source->expects(self::once())->method('getDestination')->willReturn(
+            new MappingDestination($this->emptyOutputBucketId . '.test0'),
+        );
+        $source->expects(self::once())->method('getPrimaryKey')->willReturn([]);
+
+        $storageSources = self::createMock(MappingStorageSources::class);
+        $storageSources->expects(self::exactly(3))->method('didTableExistBefore')->willReturn(false);
+
+        $loadTableTaskCreator = new LoadTableTaskCreator(
+            $this->clientWrapper,
+            $this->testLogger,
+        );
+        $loadTaskResult = $loadTableTaskCreator->create(
+            strategy: $strategy,
+            source: $source,
+            storageSources: $storageSources,
+            settings: $settings,
+            descriptions: new TableDescription($this->emptyOutputBucketId . '.test0', null, []),
+        );
+
+        // there is no description at all, so there is nothing to store after the load either
+        self::assertNull($loadTaskResult->getDescriptionsNotEmbeddedInCreatePayload());
+        self::assertInstanceOf(CreateAndLoadTableTask::class, $loadTaskResult->getLoadTableTask());
+    }
+
+    /**
+     * Storage returns the column description nested in the column definition, splitting it off keeps the
+     * assertions of the column types independent of the position of the description key.
+     *
+     * @param array<mixed> $columns
+     * @return array<string, string|null> column name => description
+     */
+    private function getColumnDescriptions(array $columns): array
+    {
+        $descriptions = [];
+        foreach ($columns as $column) {
+            self::assertIsArray($column);
+            $columnName = $column['name'];
+            self::assertIsString($columnName);
+
+            $definition = $column['definition'] ?? [];
+            self::assertIsArray($definition);
+            $description = $definition['description'] ?? null;
+
+            $descriptions[$columnName] = is_string($description) ? $description : null;
+        }
+
+        return $descriptions;
+    }
+
+    /**
+     * @param array<mixed> $columns
+     * @return list<mixed>
+     */
+    private function stripColumnDescriptions(array $columns): array
+    {
+        $strippedColumns = [];
+        foreach ($columns as $column) {
+            self::assertIsArray($column);
+
+            $definition = $column['definition'] ?? null;
+            if (is_array($definition)) {
+                unset($definition['description']);
+                $column['definition'] = $definition;
+            }
+            $strippedColumns[] = $column;
+        }
+
+        return $strippedColumns;
     }
 
     /**

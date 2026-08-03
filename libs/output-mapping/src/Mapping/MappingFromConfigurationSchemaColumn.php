@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping\Mapping;
 
+use Keboola\OutputMapping\Writer\Helper\DescriptionHelper;
+
 class MappingFromConfigurationSchemaColumn
 {
     public function __construct(private readonly array $mapping)
@@ -43,12 +45,32 @@ class MappingFromConfigurationSchemaColumn
         return !empty($this->getMetadata());
     }
 
+    /**
+     * Column metadata without the description, which is stored in the native Storage description field
+     * instead - see getDescription().
+     */
     public function getMetadata(): array
     {
-        $metadata = $this->mapping['metadata'] ?? [];
+        return DescriptionHelper::removeDescriptionFromMetadataMap(
+            $this->mapping['metadata'] ?? [],
+            'schema.metadata',
+        );
+    }
+
+    /**
+     * Description of the column, stored in the native Storage description field. The configuration allows only
+     * one of the two sources to be used at a time. An empty description is treated as no description, so that
+     * it never clears a description stored in Storage.
+     */
+    public function getDescription(): ?string
+    {
         if (isset($this->mapping['description'])) {
-            $metadata['KBC.description'] = $this->mapping['description'];
+            return DescriptionHelper::normalizeDescription($this->mapping['description']);
         }
-        return $metadata;
+
+        return DescriptionHelper::getDescriptionFromMetadataMap(
+            $this->mapping['metadata'] ?? [],
+            'schema.metadata',
+        );
     }
 }

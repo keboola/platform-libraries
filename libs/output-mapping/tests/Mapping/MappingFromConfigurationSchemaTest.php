@@ -68,10 +68,11 @@ class MappingFromConfigurationSchemaTest extends TestCase
         self::assertTrue($mappingSchema->isPrimaryKey());
         self::assertTrue($mappingSchema->isDistributionKey());
         self::assertTrue($mappingSchema->hasMetadata());
+        // the description is stored in the native Storage description field, not as KBC.description metadata
         self::assertEquals([
             'key1' => 'value1',
             'key2' => 'value2',
-            'KBC.description' => 'col1 description',
         ], $mappingSchema->getMetadata());
+        self::assertSame('col1 description', $mappingSchema->getDescription());
     }
 }

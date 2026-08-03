@@ -89,6 +89,9 @@ class TableDefinitionTest extends AbstractTestCase
             $value = is_string($value) ? sprintf($value, $this->emptyOutputBucketId) : $value;
         });
         $config = $configTemplate;
+        // the descriptions ride along in the create payload of the table definition
+        $config['description'] = 'table description';
+        $config['column_metadata']['Id'][] = ['key' => 'KBC.description', 'value' => 'Id description'];
 
         $root = $this->temp->getTmpFolder();
         file_put_contents(
@@ -123,6 +126,12 @@ class TableDefinitionTest extends AbstractTestCase
         self::assertDataTypeDefinition($tableDetails['columnMetadata']['Name'], $expectedTypes['Name']);
         self::assertDataTypeDefinition($tableDetails['columnMetadata']['birthweight'], $expectedTypes['birthweight']);
         self::assertDataTypeDefinition($tableDetails['columnMetadata']['created'], $expectedTypes['created']);
+
+        self::assertSame('table description', $tableDetails['definition']['description'] ?? null);
+        self::assertSame(
+            'Id description',
+            $this->getColumnDescriptions($tableDetails['definition']['columns'])['Id'],
+        );
     }
 
     public function configProvider(): iterable
@@ -236,8 +245,13 @@ class TableDefinitionTest extends AbstractTestCase
             'incremental' => $incrementalFlag,
             'columns' => ['Id', 'Name', 'birthweight', 'created'],
             'primary_key' => ['Id', 'Name'],
+            // the table exists before the run, so the descriptions go through the table-definition update
+            'description' => 'table description',
             'column_metadata' => [
-                'Id' => $idDatatype->toMetadata(),
+                'Id' => array_merge(
+                    $idDatatype->toMetadata(),
+                    [['key' => 'KBC.description', 'value' => 'Id description']],
+                ),
                 'Name' => $nameDatatype->toMetadata(),
                 'birthweight' => $birthweightDatatype->toMetadata(),
                 'created' => $created->toMetadata(),
@@ -296,6 +310,16 @@ class TableDefinitionTest extends AbstractTestCase
             },
         );
 
+        // StoragePreparer stores the descriptions through a table-definition update before the load
+        self::assertCount(1, array_filter(
+            $writerJobs,
+            fn(array $job) => $job['operationName'] === 'tableDefinitionUpdate',
+        ));
+        $writerJobs = array_filter(
+            $writerJobs,
+            fn(array $job) => $job['operationName'] !== 'tableDefinitionUpdate',
+        );
+
         self::assertCount(4, $writerJobs);
 
         // tableColumnAdd jobs
@@ -340,11 +364,23 @@ class TableDefinitionTest extends AbstractTestCase
             'length' => '38,9',
             'nullable' => true,
         ]);
+        // A column description on a typed table makes Storage re-read every column from the backend and
+        // rewrite its datatype metadata (TableDefinitionUpdateService::updateTableDefinitionOnStorageBackend()
+        // takes the syncTypedColumnInfo() branch, the description-only shortcut is gated on a non-typed
+        // table). `created` was added by basetype, where Storage recorded the requested Snowflake alias
+        // TIMESTAMP; the re-read reports the type the column really has.
         self::assertDataTypeDefinition($tableDetails['columnMetadata']['created'], [
-            'type' => Snowflake::TYPE_TIMESTAMP,
-            'length' => null,
+            'type' => Snowflake::TYPE_TIMESTAMP_LTZ,
+            'length' => '9',
             'nullable' => true,
         ]);
+
+        self::assertTrue($tableDetails['isDescriptionSystemManaged']);
+        self::assertSame('table description', $tableDetails['definition']['description'] ?? null);
+        self::assertSame(
+            'Id description',
+            $this->getColumnDescriptions($tableDetails['definition']['columns'])['Id'],
+        );
     }
 
     /**
@@ -687,5 +723,27 @@ class TableDefinitionTest extends AbstractTestCase
         self::assertSame('tablePrimaryKeyAdd', $jobData['operationName']);
         self::assertSame('success', $jobData['status']);
         self::assertSame($expectedPk, $jobData['operationParams']['columns']);
+    }
+
+    /**
+     * @param array<mixed> $columns
+     * @return array<string, string|null> column name => description
+     */
+    private function getColumnDescriptions(array $columns): array
+    {
+        $descriptions = [];
+        foreach ($columns as $column) {
+            self::assertIsArray($column);
+            $columnName = $column['name'];
+            self::assertIsString($columnName);
+
+            $definition = $column['definition'] ?? [];
+            self::assertIsArray($definition);
+            $description = $definition['description'] ?? null;
+
+            $descriptions[$columnName] = is_string($description) ? $description : null;
+        }
+
+        return $descriptions;
     }
 }

@@ -5,10 +5,13 @@ declare(strict_types=1);
 namespace Keboola\OutputMapping\Writer\Table\TableDefinitionFromSchema;
 
 use Keboola\OutputMapping\Mapping\MappingFromConfigurationSchemaColumn;
+use Keboola\OutputMapping\Writer\Table\TableDefinition\TableDefinitionDescriptionsTrait;
 use Keboola\OutputMapping\Writer\Table\TableDefinitionInterface;
 
 class TableDefinitionFromSchema implements TableDefinitionInterface
 {
+    use TableDefinitionDescriptionsTrait;
+
     private array $primaryKeys = [];
 
     private array $columns = [];
@@ -32,11 +35,11 @@ class TableDefinitionFromSchema implements TableDefinitionInterface
 
     public function getRequestData(): array
     {
-        return [
+        return $this->withDescriptions([
             'name' => $this->tableName,
             'primaryKeysNames' => $this->primaryKeys,
             'columns' => $this->columns,
-        ];
+        ]);
     }
 
     public function getTableName(): string

@@ -109,9 +109,11 @@ class TableDefinitionV2BigQueryTest extends AbstractTestCase
             [
                 'source' => 'tableDefinition.csv',
                 'destination' => $this->emptyBigqueryOutputBucketId . '.tableDefinitionBackendType',
+                'description' => 'table description',
                 'schema' => [
                     [
                         'name' => 'Id',
+                        'description' => 'Id description',
                         'data_type' => [
                             'base' => [
                                 'type' => BaseType::NUMERIC,
@@ -196,6 +198,17 @@ class TableDefinitionV2BigQueryTest extends AbstractTestCase
         self::assertCount(1, $tables);
         self::assertEquals($this->emptyBigqueryOutputBucketId . '.tableDefinitionBackendType', $tables[0]['id']);
         self::assertNotEmpty($jobIds[0]);
+
+        // The descriptions ride along in the create payload of the first run. The second run finds the table
+        // there and must not send an unchanged table-definition patch, which Storage rejects with 400.
+        $tableDetails = $this->clientWrapper->getTableAndFileStorageClient()->getTable($tables[0]['id']);
+        self::assertSame('table description', $tableDetails['definition']['description'] ?? null);
+        $idColumn = array_values(array_filter(
+            $tableDetails['definition']['columns'],
+            fn($column) => $column['name'] === 'Id',
+        ));
+        self::assertCount(1, $idColumn);
+        self::assertSame('Id description', $idColumn[0]['definition']['description'] ?? null);
     }
 
     public function configProvider(): iterable

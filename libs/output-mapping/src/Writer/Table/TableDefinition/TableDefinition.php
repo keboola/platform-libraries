@@ -8,6 +8,8 @@ use Keboola\OutputMapping\Writer\Table\TableDefinitionInterface;
 
 class TableDefinition implements TableDefinitionInterface
 {
+    use TableDefinitionDescriptionsTrait;
+
     public function __construct(
         private readonly TableDefinitionColumnFactory $tableDefinitionColumnFactory,
     ) {
@@ -57,10 +59,10 @@ class TableDefinition implements TableDefinitionInterface
         foreach ($this->columns as $column) {
             $columns[] = $column->toArray();
         }
-        return [
+        return $this->withDescriptions([
             'name' => $this->tableName,
             'primaryKeysNames' => $this->primaryKeysNames,
             'columns' => $columns,
-        ];
+        ]);
     }
 }

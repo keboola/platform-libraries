@@ -16,6 +16,8 @@ use Keboola\OutputMapping\Writer\Table\TableDefinitionInterface;
  */
 class TableDefinitionFromColumns implements TableDefinitionInterface
 {
+    use TableDefinitionDescriptionsTrait;
+
     /**
      * @param string[] $columns
      * @param string[] $primaryKeysNames
@@ -29,14 +31,14 @@ class TableDefinitionFromColumns implements TableDefinitionInterface
 
     public function getRequestData(): array
     {
-        return [
+        return $this->withDescriptions([
             'name' => $this->tableName,
             'primaryKeysNames' => array_values($this->primaryKeysNames),
             'columns' => array_map(
                 static fn(string $columnName): array => ['name' => $columnName],
                 array_values($this->columns),
             ),
-        ];
+        ]);
     }
 
     public function getTableName(): string

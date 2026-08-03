@@ -6,6 +6,9 @@ namespace Keboola\OutputMapping\DeferredTasks;
 
 use Keboola\InputMapping\Table\Result\TableInfo;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
+use Keboola\OutputMapping\Storage\TableDescription;
+use Keboola\OutputMapping\Storage\TableDescriptionModifier;
+use Keboola\OutputMapping\Storage\TableInfo as StorageTableInfo;
 use Keboola\OutputMapping\Table\Result;
 use Keboola\OutputMapping\Table\Result\Metrics;
 use Keboola\StorageApi\ClientException;
@@ -20,16 +23,26 @@ class LoadTableQueue
 
     /** @var LoadTableTaskInterface[] */
     private array $loadTableTasks;
+
+    /** @var array<string, TableDescription> table id => descriptions of a table created by this run */
+    private array $createdTableDescriptions;
+
     private Result $tableResult;
 
     /**
      * @param LoadTableTaskInterface[] $loadTableTasks
+     * @param array<string, TableDescription> $createdTableDescriptions
      */
-    public function __construct(ClientWrapper $clientWrapper, LoggerInterface $logger, array $loadTableTasks)
-    {
+    public function __construct(
+        ClientWrapper $clientWrapper,
+        LoggerInterface $logger,
+        array $loadTableTasks,
+        array $createdTableDescriptions = [],
+    ) {
         $this->clientWrapper = $clientWrapper;
         $this->logger = $logger;
         $this->loadTableTasks = $loadTableTasks;
+        $this->createdTableDescriptions = $createdTableDescriptions;
         $this->tableResult = new Result();
     }
 
@@ -66,14 +79,20 @@ class LoadTableQueue
             $jobResult = $this->clientWrapper->getBranchClient()->waitForJob($jobId);
 
             if ($jobResult['status'] === 'error') {
+                $destinationTableName = $task->getDestinationTableName();
                 $errors[] = sprintf(
                     'Failed to load table "%s": %s',
-                    $task->getDestinationTableName(),
+                    $destinationTableName,
                     $jobResult['error']['message'],
                 );
+                // The load failed, so there is no table to describe - it is about to be dropped below or it
+                // keeps the description it already had. Dropping the pending description here keeps it out of
+                // the "was not stored" warning, which is meant for descriptions lost by mistake.
+                unset($this->createdTableDescriptions[$destinationTableName]);
+
                 if (FailedLoadTableDecider::decideTableDelete($this->logger, $this->clientWrapper, $task)) {
                     $this->clientWrapper->getTableAndFileStorageClient()->dropTable(
-                        $task->getDestinationTableName(),
+                        $destinationTableName,
                         ['force' => true],
                     );
                 }
@@ -107,15 +126,30 @@ class LoadTableQueue
                         $jobResults[] = $jobResult;
                         break;
                     case 'tableCreate':
-                        $this->tableResult->addTable(
-                            new TableInfo($this->clientWrapper->getTableAndFileStorageClient()->getTable(
-                                $jobResult['results']['id'],
-                            )),
+                        $tableData = $this->clientWrapper->getTableAndFileStorageClient()->getTable(
+                            $jobResult['results']['id'],
                         );
+                        $this->tableResult->addTable(new TableInfo($tableData));
+                        // Only a table created by the load job itself (CreateAndLoadTableTask) can have a
+                        // pending description - every other table is created through a table definition,
+                        // which carries the description in its create payload.
+                        try {
+                            $this->applyCreatedTableDescriptions($task, $tableData);
+                        } catch (InvalidOutputException $e) {
+                            $errors[] = $e->getMessage();
+                        }
                         $jobResults[] = $jobResult;
                         break;
                 }
             }
+        }
+
+        if ($this->createdTableDescriptions !== []) {
+            // Must never happen - a description left here would be silently thrown away.
+            $this->logger->warning(sprintf(
+                'Description of table(s) "%s" was not stored.',
+                implode('", "', array_keys($this->createdTableDescriptions)),
+            ));
         }
 
         $this->tableResult->setMetrics(new Metrics($jobResults));
@@ -124,6 +158,25 @@ class LoadTableQueue
             throw new InvalidOutputException(implode("\n", $errors));
         }
         return $jobIds;
+    }
+
+    /**
+     * @param array<mixed> $tableData table detail as returned by Storage after a successful load
+     */
+    private function applyCreatedTableDescriptions(LoadTableTaskInterface $task, array $tableData): void
+    {
+        $tableId = $task->getDestinationTableName();
+        $descriptions = $this->createdTableDescriptions[$tableId] ?? null;
+        if ($descriptions === null) {
+            return;
+        }
+
+        // Several sources may be mapped to the same destination table, but the descriptions of a table only
+        // need to be stored once.
+        unset($this->createdTableDescriptions[$tableId]);
+
+        $descriptionModifier = new TableDescriptionModifier($this->clientWrapper, $this->logger);
+        $descriptionModifier->updateDescriptions(new StorageTableInfo($tableData), $descriptions);
     }
 
     public function getTaskCount(): int

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping\Tests\Mapping;
 
+use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Mapping\MappingFromConfigurationSchemaColumn;
 use PHPUnit\Framework\TestCase;
 
@@ -22,6 +23,7 @@ class MappingFromConfigurationSchemaColumnTest extends TestCase
         self::assertFalse($schemColumn->isDistributionKey());
         self::assertFalse($schemColumn->hasMetadata());
         self::assertSame([], $schemColumn->getMetadata());
+        self::assertNull($schemColumn->getDescription());
     }
 
     public function testGetters(): void
@@ -51,12 +53,40 @@ class MappingFromConfigurationSchemaColumnTest extends TestCase
         self::assertTrue($schemColumn->isPrimaryKey());
         self::assertTrue($schemColumn->isDistributionKey());
         self::assertTrue($schemColumn->hasMetadata());
-        self::assertSame(
-            [
-                'KBC.datatype.type' => 'STRING',
-                'KBC.description' => 'Some description of the newColumn.',
+        // the description is stored in the native Storage description field, not as KBC.description metadata
+        self::assertSame(['KBC.datatype.type' => 'STRING'], $schemColumn->getMetadata());
+        self::assertSame('Some description of the newColumn.', $schemColumn->getDescription());
+    }
+
+    public function testGetDescriptionFromMetadata(): void
+    {
+        $schemColumn = new MappingFromConfigurationSchemaColumn([
+            'name' => 'newColumn',
+            'metadata' => [
+                'KBC.description' => 'Description from metadata.',
             ],
-            $schemColumn->getMetadata(),
-        );
+        ]);
+
+        self::assertSame('Description from metadata.', $schemColumn->getDescription());
+        // the key is consumed as the description, so it must not be reported as metadata as well
+        self::assertSame([], $schemColumn->getMetadata());
+        self::assertFalse($schemColumn->hasMetadata());
+    }
+
+    /**
+     * The node is a variableNode, so a non-object value reaches the code. Dropping the metadata silently would
+     * hide the configuration error, so it is reported instead.
+     */
+    public function testNonObjectMetadataIsReported(): void
+    {
+        $schemColumn = new MappingFromConfigurationSchemaColumn([
+            'name' => 'newColumn',
+            'metadata' => 'this is a variableNode, so it may be anything',
+        ]);
+
+        $this->expectException(InvalidOutputException::class);
+        $this->expectExceptionMessage('Configuration node "schema.metadata" must be an object, "string" given.');
+
+        $schemColumn->getDescription();
     }
 }

@@ -22,5 +22,19 @@ class TableInfoTest extends TestCase
         $this->assertEquals('tableId', $tableInfo->getId());
         $this->assertTrue($tableInfo->isTyped());
         $this->assertEquals(['column1'], $tableInfo->getPrimaryKey());
+        $this->assertTrue($tableInfo->isDescriptionSystemManaged());
+    }
+
+    public function testIsDescriptionSystemManaged(): void
+    {
+        $tableInfo = new TableInfo([
+            'id' => 'tableId',
+            'columns' => [],
+            'isTyped' => true,
+            'primaryKey' => [],
+            'isDescriptionSystemManaged' => false,
+        ]);
+
+        $this->assertFalse($tableInfo->isDescriptionSystemManaged());
     }
 }

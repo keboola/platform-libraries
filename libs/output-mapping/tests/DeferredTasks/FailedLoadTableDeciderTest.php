@@ -49,10 +49,68 @@ class FailedLoadTableDeciderTest extends TestCase
             'tableInfo' => [
                 'rowsCount' => 0,
                 'isTyped' => false,
-                'metadata' => ['a' => 'b'],
+                'metadata' => [
+                    [
+                        'key' => 'KBC.createdBy.component.id',
+                        'value' => 'keboola.ex-db-snowflake',
+                        'provider' => 'system',
+                    ],
+                ],
             ],
             'freshlyCreated' => true,
             'expectedResult' => false,
+        ];
+        // A description sent in the create-table-definition payload is mirrored by Storage into a
+        // KBC.description metadata row under the "storage" provider at create time, before any load.
+        yield 'non-typed table fresh and storage KBC.description metadata' => [
+            'tableInfo' => [
+                'rowsCount' => 0,
+                'isTyped' => false,
+                'metadata' => [
+                    [
+                        'key' => 'KBC.description',
+                        'value' => 'table description',
+                        'provider' => 'storage',
+                    ],
+                ],
+            ],
+            'freshlyCreated' => true,
+            'expectedResult' => true,
+        ];
+        yield 'non-typed table fresh and component KBC.description metadata' => [
+            'tableInfo' => [
+                'rowsCount' => 0,
+                'isTyped' => false,
+                'metadata' => [
+                    [
+                        'key' => 'KBC.description',
+                        'value' => 'table description',
+                        'provider' => 'keboola.ex-db-snowflake',
+                    ],
+                ],
+            ],
+            'freshlyCreated' => true,
+            'expectedResult' => false,
+        ];
+        yield 'typed table fresh with storage KBC.dataTypesEnabled and KBC.description metadata' => [
+            'tableInfo' => [
+                'rowsCount' => 0,
+                'isTyped' => true,
+                'metadata' => [
+                    [
+                        'key' => 'KBC.dataTypesEnabled',
+                        'value' => true,
+                        'provider' => 'storage',
+                    ],
+                    [
+                        'key' => 'KBC.description',
+                        'value' => 'table description',
+                        'provider' => 'storage',
+                    ],
+                ],
+            ],
+            'freshlyCreated' => true,
+            'expectedResult' => true,
         ];
         yield 'typed table fresh and storage KBC.dataTypesEnabled metadata' => [
             'tableInfo' => [

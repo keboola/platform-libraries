@@ -11,15 +11,12 @@ use Keboola\StorageApiBranch\ClientWrapper;
 
 class TableCreator
 {
-    public function __construct(
-        private readonly ClientWrapper $clientWrapper,
-    ) {
+    public function __construct(private readonly ClientWrapper $clientWrapper)
+    {
     }
 
-    public function createTableDefinition(
-        string $bucketId,
-        TableDefinitionInterface $tableDefinition,
-    ): string {
+    public function createTableDefinition(string $bucketId, TableDefinitionInterface $tableDefinition): string
+    {
         try {
             return $this->clientWrapper->getTableAndFileStorageClient()->createTableDefinition(
                 $bucketId,

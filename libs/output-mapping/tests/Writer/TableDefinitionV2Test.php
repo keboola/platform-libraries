@@ -245,9 +245,12 @@ class TableDefinitionV2Test extends AbstractTestCase
         $config = [
             'source' => 'tableDefinition.csv',
             'destination' => $this->emptyOutputBucketId . '.tableDefinition',
+            // the table exists before the run, so the descriptions go through the table-definition update
+            'description' => 'table description',
             'schema' => [
                 [
                     'name' => 'Id',
+                    'description' => 'Id description',
                     'data_type' => [
                         'base' => [
                             'type' => BaseType::NUMERIC,
@@ -264,6 +267,7 @@ class TableDefinitionV2Test extends AbstractTestCase
                 ],
                 [
                     'name' => 'newColumn',
+                    'description' => 'newColumn description',
                     'data_type' => [
                         'base' => [
                             'type' => BaseType::STRING,
@@ -281,7 +285,7 @@ class TableDefinitionV2Test extends AbstractTestCase
             EOT,
         );
 
-        $tableQueue = $this->getTableLoader()->uploadTables(
+        $tableQueue = $this->getTableLoader(logger: $this->testLogger)->uploadTables(
             configuration: new OutputMappingSettings(
                 configuration: ['mapping' => [$config]],
                 sourcePathPrefix: 'upload',
@@ -304,6 +308,16 @@ class TableDefinitionV2Test extends AbstractTestCase
                 'nullable' => true,
             ],
         );
+
+        // A column added by the same run is already part of the table when the descriptions are stored, so its
+        // description must not be reported as belonging to a non-existent column.
+        self::assertTrue($tableDetails['isDescriptionSystemManaged']);
+        self::assertSame('table description', $tableDetails['definition']['description'] ?? null);
+        self::assertSame(
+            ['Id' => 'Id description', 'Name' => null, 'newColumn' => 'newColumn description'],
+            $this->getColumnDescriptions($tableDetails['definition']['columns']),
+        );
+        self::assertFalse($this->testHandler->hasWarningThatContains('Cannot store description of column(s)'));
     }
 
     public function configProvider(): iterable
@@ -752,6 +766,43 @@ class TableDefinitionV2Test extends AbstractTestCase
             ],
             $this->getMetadataValues($filteredColumnFooMetadata),
         );
+
+        // The metadata rows asserted above are Storage's mirror of the native description field, which is
+        // where output mapping actually stores it - assert the source, not only the mirror.
+        $tableDetails = $this->clientWrapper->getTableAndFileStorageClient()->getTable($tableId);
+        self::assertSame('table description', $tableDetails['definition']['description'] ?? null);
+        self::assertSame(
+            [
+                'Id' => null,
+                'Name' => 'name description',
+                'foo' => 'foo description',
+            ],
+            $this->getColumnDescriptions($tableDetails['definition']['columns']),
+        );
+        self::assertSame('storage', array_values($filteredTableMetadata)[0]['provider']);
+        self::assertSame('storage', array_values($filteredColumnNameMetadata)[0]['provider']);
+    }
+
+    /**
+     * @param array<mixed> $columns
+     * @return array<string, string|null> column name => description
+     */
+    private function getColumnDescriptions(array $columns): array
+    {
+        $descriptions = [];
+        foreach ($columns as $column) {
+            self::assertIsArray($column);
+            $columnName = $column['name'];
+            self::assertIsString($columnName);
+
+            $definition = $column['definition'] ?? [];
+            self::assertIsArray($definition);
+            $description = $definition['description'] ?? null;
+
+            $descriptions[$columnName] = is_string($description) ? $description : null;
+        }
+
+        return $descriptions;
     }
 
     #[NeedsEmptyOutputBucket]

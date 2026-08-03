@@ -35,7 +35,15 @@ class ColumnsMetadata implements MetadataInterface
                     ];
                 }
 
-                $columnsMetadata[$mappingColumnMetadata->getColumnName()] = $columnMetadata;
+                // a column may end up with no metadata at all, e.g. when its only entry was the description,
+                // which is stored in the native Storage description field instead
+                if ($columnMetadata) {
+                    $columnsMetadata[$mappingColumnMetadata->getColumnName()] = $columnMetadata;
+                }
+            }
+
+            if (!$columnsMetadata) {
+                continue;
             }
 
             $options = new TableMetadataUpdateOptions(

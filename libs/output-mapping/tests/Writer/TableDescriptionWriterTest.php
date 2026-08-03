@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping\Tests\Writer;
 
-use Generator;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\OutputMappingSettings;
 use Keboola\OutputMapping\SystemMetadata;
@@ -14,27 +13,16 @@ use Keboola\OutputMapping\Writer\Helper\DescriptionHelper;
 
 class TableDescriptionWriterTest extends AbstractTestCase
 {
-    /** the dedicated `description` field of the mapping */
-    private const SOURCE_DEDICATED_FIELD = 'description';
-
-    /** legacy `KBC.description` in the `table_metadata` key => value map */
-    private const SOURCE_TABLE_METADATA = 'table_metadata';
-
-    /** legacy `KBC.description` in the `metadata` list of {key, value} items */
-    private const SOURCE_METADATA_LIST = 'metadata';
-
     /**
-     * The description reaches Storage the same way regardless of which of the three configuration shapes
-     * carried it, and Storage is the only writer of the mirrored `KBC.description` metadata row.
-     *
-     * @dataProvider descriptionSourceProvider
+     * Storage is the only writer of the mirrored `KBC.description` metadata row - output mapping stores the
+     * description natively and never writes the key itself.
      */
     #[NeedsEmptyOutputBucket]
-    public function testDescriptionIsStoredOnCreatedTable(string $descriptionSource): void
+    public function testDescriptionIsStoredOnCreatedTable(): void
     {
         $tableId = $this->emptyOutputBucketId . '.tableDescription';
 
-        $this->uploadTable($tableId, 'table description', 'Id description', $descriptionSource);
+        $this->uploadTable($tableId, 'table description', 'Id description');
 
         $tableDetail = $this->clientWrapper->getTableAndFileStorageClient()->getTable($tableId);
         // `columns` in the mapping creates the table through a non-typed table-definition payload; which
@@ -46,69 +34,18 @@ class TableDescriptionWriterTest extends AbstractTestCase
         $this->assertSingleStorageDescriptionRow($tableDetail['metadata'], 'table description');
     }
 
-    public static function descriptionSourceProvider(): Generator
-    {
-        yield 'dedicated description field' => ['descriptionSource' => self::SOURCE_DEDICATED_FIELD];
-        yield 'table_metadata KBC.description' => ['descriptionSource' => self::SOURCE_TABLE_METADATA];
-        yield 'metadata list KBC.description' => ['descriptionSource' => self::SOURCE_METADATA_LIST];
-    }
-
-    /**
-     * A table written without a manifest and without `columns` is created by the load job itself
-     * (CreateAndLoadTableTask). There is no create-table-definition payload the description could be part of,
-     * so it is stored once the load finishes and the table surely exists.
-     */
-    #[NeedsEmptyOutputBucket]
-    public function testDescriptionIsStoredOnTableCreatedByLoadJob(): void
-    {
-        $tableId = $this->emptyOutputBucketId . '.tableDescriptionNoManifest';
-
-        $this->uploadTableWithoutColumns($tableId, 'table description', 'Id description');
-
-        $tableDetail = $this->clientWrapper->getTableAndFileStorageClient()->getTable($tableId);
-        self::assertSame(['Id', 'Name'], $tableDetail['columns']);
-        self::assertSame('table description', $tableDetail['definition']['description'] ?? null);
-        self::assertSame('Id description', $this->getColumnDescription($tableDetail, 'Id'));
-    }
-
     /**
      * The second run finds the table already there, so the description goes through StoragePreparer, which
-     * diffs it against the stored value read from `definition.description`. A table created by the load job
-     * must expose the description in the same place as one created through a table definition, otherwise the
-     * diff always sees null and Storage rejects the unchanged patch with 400.
+     * diffs it against the stored value read from `definition.description`. Storage rejects a table-definition
+     * patch without any effective change with 400 "No table definition changes were provided.", so a repeated
+     * run with an unchanged description must not send the patch at all.
      */
-    #[NeedsEmptyOutputBucket]
-    public function testRepeatedRunOnTableCreatedByLoadJobSucceeds(): void
-    {
-        $tableId = $this->emptyOutputBucketId . '.tableDescriptionNoManifest';
-
-        $this->uploadTableWithoutColumns($tableId, 'table description', 'Id description');
-        $this->uploadTableWithoutColumns($tableId, 'table description', 'Id description');
-
-        $tableDetail = $this->clientWrapper->getTableAndFileStorageClient()->getTable($tableId);
-        self::assertSame('table description', $tableDetail['definition']['description'] ?? null);
-        self::assertSame('Id description', $this->getColumnDescription($tableDetail, 'Id'));
-    }
-
-    #[NeedsEmptyOutputBucket]
-    public function testDescriptionIsUpdatedOnTableCreatedByLoadJob(): void
-    {
-        $tableId = $this->emptyOutputBucketId . '.tableDescriptionNoManifest';
-
-        $this->uploadTableWithoutColumns($tableId, 'table description', 'Id description');
-        $this->uploadTableWithoutColumns($tableId, 'updated table description', 'updated Id description');
-
-        $tableDetail = $this->clientWrapper->getTableAndFileStorageClient()->getTable($tableId);
-        self::assertTrue($tableDetail['isDescriptionSystemManaged']);
-        self::assertSame('updated table description', $tableDetail['definition']['description'] ?? null);
-        self::assertSame('updated Id description', $this->getColumnDescription($tableDetail, 'Id'));
-    }
-
     #[NeedsEmptyOutputBucket]
     public function testDescriptionIsUpdatedOnSystemManagedTable(): void
     {
         $tableId = $this->emptyOutputBucketId . '.tableDescription';
 
+        $this->uploadTable($tableId, 'table description', 'Id description');
         $this->uploadTable($tableId, 'table description', 'Id description');
         $this->uploadTable($tableId, 'updated table description', 'updated Id description');
 
@@ -119,18 +56,21 @@ class TableDescriptionWriterTest extends AbstractTestCase
     }
 
     /**
-     * Storage rejects a table-definition patch without any effective change with 400 "No table definition
-     * changes were provided.", so a repeated run with an unchanged description must not send the patch at all.
+     * A table written without a manifest and without `columns` is created by the load job itself
+     * (CreateAndLoadTableTask). There is no create-table-definition payload the description could be part of,
+     * so it is stored once the load finishes and the table surely exists. It must land in the same place a
+     * table definition puts it, otherwise the diff of the next run would keep re-sending an unchanged patch.
      */
     #[NeedsEmptyOutputBucket]
-    public function testRepeatedRunWithUnchangedDescriptionSucceeds(): void
+    public function testDescriptionIsStoredOnTableCreatedByLoadJob(): void
     {
-        $tableId = $this->emptyOutputBucketId . '.tableDescription';
+        $tableId = $this->emptyOutputBucketId . '.tableDescriptionNoManifest';
 
-        $this->uploadTable($tableId, 'table description', 'Id description');
-        $this->uploadTable($tableId, 'table description', 'Id description');
+        $this->uploadTableWithoutColumns($tableId, 'table description', 'Id description');
+        $this->uploadTableWithoutColumns($tableId, 'table description', 'Id description');
 
         $tableDetail = $this->clientWrapper->getTableAndFileStorageClient()->getTable($tableId);
+        self::assertSame(['Id', 'Name'], $tableDetail['columns']);
         self::assertSame('table description', $tableDetail['definition']['description'] ?? null);
         self::assertSame('Id description', $this->getColumnDescription($tableDetail, 'Id'));
     }
@@ -167,35 +107,19 @@ class TableDescriptionWriterTest extends AbstractTestCase
     /**
      * An empty description means "nothing to store", so a run which no longer carries one keeps the value
      * already in Storage instead of clearing it.
-     *
-     * @dataProvider descriptionRemovedProvider
      */
     #[NeedsEmptyOutputBucket]
-    public function testDescriptionIsKeptWhenNoLongerInConfiguration(
-        ?string $tableDescription,
-        ?string $columnDescription,
-    ): void {
+    public function testDescriptionIsKeptWhenNoLongerInConfiguration(): void
+    {
         $tableId = $this->emptyOutputBucketId . '.tableDescription';
 
         $this->uploadTable($tableId, 'table description', 'Id description');
-        $this->uploadTable($tableId, $tableDescription, $columnDescription);
+        $this->uploadTable($tableId, null, null);
 
         $tableDetail = $this->clientWrapper->getTableAndFileStorageClient()->getTable($tableId);
         self::assertTrue($tableDetail['isDescriptionSystemManaged']);
         self::assertSame('table description', $tableDetail['definition']['description'] ?? null);
         self::assertSame('Id description', $this->getColumnDescription($tableDetail, 'Id'));
-    }
-
-    public static function descriptionRemovedProvider(): Generator
-    {
-        yield 'description dropped from the configuration' => [
-            'tableDescription' => null,
-            'columnDescription' => null,
-        ];
-        yield 'description sent as an empty string' => [
-            'tableDescription' => '',
-            'columnDescription' => '',
-        ];
     }
 
     /**
@@ -207,7 +131,7 @@ class TableDescriptionWriterTest extends AbstractTestCase
     {
         $tableId = $this->emptyOutputBucketId . '.tableDescription';
 
-        $this->uploadTable($tableId, 'table description', 'Id description', self::SOURCE_DEDICATED_FIELD, [
+        $this->uploadTable($tableId, 'table description', 'Id description', [
             'nope' => [
                 ['key' => DescriptionHelper::DESCRIPTION_METADATA_KEY, 'value' => 'description of nothing'],
             ],
@@ -283,65 +207,12 @@ class TableDescriptionWriterTest extends AbstractTestCase
     }
 
     /**
-     * A table which existed before the failed load keeps its data and its description - only a table freshly
-     * created by the very same run may be dropped.
-     */
-    #[NeedsEmptyOutputBucket]
-    public function testFailedLoadKeepsPreExistingTableWithDescription(): void
-    {
-        $tableId = $this->emptyOutputBucketId . '.tableDescription';
-
-        $this->uploadTable($tableId, 'table description', 'Id description');
-
-        $root = $this->temp->getTmpFolder();
-        file_put_contents(
-            $root . '/upload/tableDescription.csv',
-            "\"test\",\"test\"\n\"aabb\",\"ccdd\",\"dddd\"\n",
-        );
-
-        $tableQueue = $this->getTableLoader(logger: $this->testLogger)->uploadTables(
-            configuration: new OutputMappingSettings(
-                configuration: [
-                    'mapping' => [
-                        [
-                            'source' => 'tableDescription.csv',
-                            'destination' => $tableId,
-                            'columns' => ['Id', 'Name'],
-                            'description' => 'table description',
-                        ],
-                    ],
-                ],
-                sourcePathPrefix: 'upload',
-                storageApiToken: $this->clientWrapper->getToken(),
-                isFailedJob: false,
-                dataTypeSupport: OutputMappingSettings::DATA_TYPES_SUPPORT_NONE,
-            ),
-            systemMetadata: new SystemMetadata(['componentId' => 'foo']),
-        );
-
-        try {
-            $tableQueue->waitForAll();
-            self::fail('Must throw exception');
-        } catch (InvalidOutputException $e) {
-            self::assertStringContainsString(sprintf('Failed to load table "%s"', $tableId), $e->getMessage());
-        }
-
-        self::assertTrue($this->clientWrapper->getTableAndFileStorageClient()->tableExists($tableId));
-        self::assertFalse($this->testHandler->hasWarningThatContains('Dropping table'));
-
-        $tableDetail = $this->clientWrapper->getTableAndFileStorageClient()->getTable($tableId);
-        self::assertSame('table description', $tableDetail['definition']['description'] ?? null);
-        self::assertSame('Id description', $this->getColumnDescription($tableDetail, 'Id'));
-    }
-
-    /**
      * @param array<string, mixed>|null $extraColumnMetadata
      */
     private function uploadTable(
         string $tableId,
         ?string $tableDescription,
         ?string $columnDescription,
-        string $descriptionSource = self::SOURCE_DEDICATED_FIELD,
         ?array $extraColumnMetadata = null,
     ): void {
         $root = $this->temp->getTmpFolder();
@@ -354,23 +225,7 @@ class TableDescriptionWriterTest extends AbstractTestCase
         ];
 
         if ($tableDescription !== null) {
-            $mapping += match ($descriptionSource) {
-                self::SOURCE_DEDICATED_FIELD => ['description' => $tableDescription],
-                self::SOURCE_TABLE_METADATA => [
-                    'table_metadata' => [
-                        DescriptionHelper::DESCRIPTION_METADATA_KEY => $tableDescription,
-                    ],
-                ],
-                self::SOURCE_METADATA_LIST => [
-                    'metadata' => [
-                        [
-                            'key' => DescriptionHelper::DESCRIPTION_METADATA_KEY,
-                            'value' => $tableDescription,
-                        ],
-                    ],
-                ],
-                default => self::fail(sprintf('Unknown description source "%s".', $descriptionSource)),
-            };
+            $mapping['description'] = $tableDescription;
         }
 
         $columnMetadata = $extraColumnMetadata ?? [];

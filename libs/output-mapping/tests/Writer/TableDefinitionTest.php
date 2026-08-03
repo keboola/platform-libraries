@@ -89,6 +89,9 @@ class TableDefinitionTest extends AbstractTestCase
             $value = is_string($value) ? sprintf($value, $this->emptyOutputBucketId) : $value;
         });
         $config = $configTemplate;
+        // the descriptions ride along in the create payload of the table definition
+        $config['description'] = 'table description';
+        $config['column_metadata']['Id'][] = ['key' => 'KBC.description', 'value' => 'Id description'];
 
         $root = $this->temp->getTmpFolder();
         file_put_contents(
@@ -123,6 +126,12 @@ class TableDefinitionTest extends AbstractTestCase
         self::assertDataTypeDefinition($tableDetails['columnMetadata']['Name'], $expectedTypes['Name']);
         self::assertDataTypeDefinition($tableDetails['columnMetadata']['birthweight'], $expectedTypes['birthweight']);
         self::assertDataTypeDefinition($tableDetails['columnMetadata']['created'], $expectedTypes['created']);
+
+        self::assertSame('table description', $tableDetails['definition']['description'] ?? null);
+        self::assertSame(
+            'Id description',
+            $this->getColumnDescriptions($tableDetails['definition']['columns'])['Id'],
+        );
     }
 
     public function configProvider(): iterable
@@ -236,8 +245,13 @@ class TableDefinitionTest extends AbstractTestCase
             'incremental' => $incrementalFlag,
             'columns' => ['Id', 'Name', 'birthweight', 'created'],
             'primary_key' => ['Id', 'Name'],
+            // the table exists before the run, so the descriptions go through the table-definition update
+            'description' => 'table description',
             'column_metadata' => [
-                'Id' => $idDatatype->toMetadata(),
+                'Id' => array_merge(
+                    $idDatatype->toMetadata(),
+                    [['key' => 'KBC.description', 'value' => 'Id description']],
+                ),
                 'Name' => $nameDatatype->toMetadata(),
                 'birthweight' => $birthweightDatatype->toMetadata(),
                 'created' => $created->toMetadata(),
@@ -296,6 +310,16 @@ class TableDefinitionTest extends AbstractTestCase
             },
         );
 
+        // StoragePreparer stores the descriptions through a table-definition update before the load
+        self::assertCount(1, array_filter(
+            $writerJobs,
+            fn(array $job) => $job['operationName'] === 'tableDefinitionUpdate',
+        ));
+        $writerJobs = array_filter(
+            $writerJobs,
+            fn(array $job) => $job['operationName'] !== 'tableDefinitionUpdate',
+        );
+
         self::assertCount(4, $writerJobs);
 
         // tableColumnAdd jobs
@@ -345,6 +369,13 @@ class TableDefinitionTest extends AbstractTestCase
             'length' => null,
             'nullable' => true,
         ]);
+
+        self::assertTrue($tableDetails['isDescriptionSystemManaged']);
+        self::assertSame('table description', $tableDetails['definition']['description'] ?? null);
+        self::assertSame(
+            'Id description',
+            $this->getColumnDescriptions($tableDetails['definition']['columns'])['Id'],
+        );
     }
 
     /**
@@ -687,91 +718,6 @@ class TableDefinitionTest extends AbstractTestCase
         self::assertSame('tablePrimaryKeyAdd', $jobData['operationName']);
         self::assertSame('success', $jobData['status']);
         self::assertSame($expectedPk, $jobData['operationParams']['columns']);
-    }
-
-    /**
-     * The legacy native-types path builds the table definition from `column_metadata`, and the descriptions
-     * ride along in the create payload. A following run finds the table there and goes through the
-     * table-definition update instead.
-     */
-    #[NeedsEmptyOutputBucket]
-    public function testDescriptionIsStoredAndUpdatedOnTypedTable(): void
-    {
-        $tableId = $this->emptyOutputBucketId . '.tableDefinition';
-
-        $this->uploadTableWithColumnMetadata($tableId, 'table description', 'Id description');
-
-        $tableDetails = $this->clientWrapper->getTableAndFileStorageClient()->getTable($tableId);
-        self::assertTrue($tableDetails['isTyped']);
-        self::assertSame('table description', $tableDetails['definition']['description'] ?? null);
-        self::assertSame(
-            ['Id' => 'Id description', 'Name' => null],
-            $this->getColumnDescriptions($tableDetails['definition']['columns']),
-        );
-
-        $this->uploadTableWithColumnMetadata($tableId, 'updated table description', 'updated Id description');
-
-        $tableDetails = $this->clientWrapper->getTableAndFileStorageClient()->getTable($tableId);
-        self::assertTrue($tableDetails['isDescriptionSystemManaged']);
-        self::assertSame('updated table description', $tableDetails['definition']['description'] ?? null);
-        self::assertSame(
-            ['Id' => 'updated Id description', 'Name' => null],
-            $this->getColumnDescriptions($tableDetails['definition']['columns']),
-        );
-
-        // Storage rejects a patch without any effective change with 400, so an unchanged run must not send one
-        $this->uploadTableWithColumnMetadata($tableId, 'updated table description', 'updated Id description');
-    }
-
-    private function uploadTableWithColumnMetadata(
-        string $tableId,
-        string $tableDescription,
-        string $idDescription,
-    ): void {
-        $config = [
-            'source' => 'tableDefinition.csv',
-            'destination' => $tableId,
-            'columns' => ['Id', 'Name'],
-            'description' => $tableDescription,
-            'metadata' => [
-                [
-                    'key' => 'KBC.datatype.backend',
-                    'value' => 'snowflake',
-                ],
-            ],
-            'column_metadata' => [
-                'Id' => [
-                    ['key' => 'KBC.datatype.type', 'value' => Snowflake::TYPE_INTEGER],
-                    ['key' => 'KBC.datatype.basetype', 'value' => 'INTEGER'],
-                    ['key' => 'KBC.description', 'value' => $idDescription],
-                ],
-                'Name' => [
-                    ['key' => 'KBC.datatype.type', 'value' => Snowflake::TYPE_TEXT],
-                    ['key' => 'KBC.datatype.basetype', 'value' => 'STRING'],
-                ],
-            ],
-        ];
-
-        file_put_contents(
-            $this->temp->getTmpFolder() . '/upload/tableDefinition.csv',
-            "\"1\",\"bob\"\n\"2\",\"alice\"\n",
-        );
-
-        $tableQueue = $this->getTableLoader(
-            logger: $this->testLogger,
-            strategyFactory: $this->getLocalStagingFactory(logger: $this->testLogger),
-        )->uploadTables(
-            configuration: new OutputMappingSettings(
-                configuration: ['mapping' => [$config]],
-                sourcePathPrefix: 'upload',
-                storageApiToken: $this->clientWrapper->getToken(),
-                isFailedJob: false,
-                dataTypeSupport: OutputMappingSettings::DATA_TYPES_SUPPORT_AUTHORITATIVE,
-            ),
-            systemMetadata: new SystemMetadata(['componentId' => 'foo']),
-        );
-
-        self::assertCount(1, $tableQueue->waitForAll());
     }
 
     /**

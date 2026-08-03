@@ -10,6 +10,7 @@ use Keboola\ApiBundle\RequestMapper\Attribute\RequestMapperAttributeInterface;
 use Keboola\ApiBundle\RequestMapper\Attribute\RequestPayloadObject;
 use Keboola\ApiBundle\RequestMapper\Attribute\RequestQueryObject;
 use Keboola\ApiBundle\RequestMapper\Exception\RequestMapperException;
+use Keboola\ApiBundle\RequestMapper\PayloadFormat;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Controller\ValueResolverInterface;
@@ -84,8 +85,23 @@ class ArgumentResolver implements ValueResolverInterface
         string $argumentType,
         RequestPayloadObject $attribute,
     ): object {
-        if ($request->getContentTypeFormat() !== 'json') {
-            throw new HttpException(Response::HTTP_NOT_ACCEPTABLE, 'Request content type must be application/json');
+        if ($request->getContentTypeFormat() !== $attribute->format->value) {
+            throw new HttpException(
+                Response::HTTP_NOT_ACCEPTABLE,
+                sprintf('Request content type must be %s', $attribute->format->contentType()),
+            );
+        }
+
+        if ($attribute->format === PayloadFormat::Form) {
+            return $this->dataMapper->mapData(
+                $argumentType,
+                $request->request->all(),
+                self::DATA_MAPPER_ERROR_MESSAGE,
+                self::DATA_MAPPER_ERROR_CODE,
+                // form values are always strings, so they need casting to reach typed properties
+                enableFlexibleCasting: true,
+                enableExtraKeys: $attribute->allowExtraKeys,
+            );
         }
 
         try {

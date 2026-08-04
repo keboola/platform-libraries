@@ -6,12 +6,14 @@ namespace Keboola\InputMapping\File\Strategy;
 
 use Keboola\InputMapping\Exception\FileNotFoundException;
 use Keboola\InputMapping\Exception\InputOperationException;
+use Keboola\InputMapping\Exception\InvalidInputException;
 use Keboola\InputMapping\File\StrategyInterface;
 use Keboola\InputMapping\Helper\ManifestCreator;
 use Keboola\InputMapping\Reader;
 use Keboola\InputMapping\State\InputFileStateList;
 use Keboola\StagingProvider\Staging\File\FileFormat;
 use Keboola\StagingProvider\Staging\File\FileStagingInterface;
+use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Options\GetFileOptions;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Psr\Log\LoggerInterface;
@@ -92,6 +94,18 @@ abstract class AbstractStrategy implements StrategyInterface
                         (string) $fileOptionsRewritten->getSourceBranchId(),
                         $fileDestinationPath,
                         $overwrite,
+                    );
+                } catch (ClientException $e) {
+                    // a missing or expired file is a user input problem, not a platform error
+                    throw new InvalidInputException(
+                        sprintf(
+                            'Failed to download file %s (%s): %s',
+                            $fileInfo['name'],
+                            $file['id'],
+                            $e->getMessage(),
+                        ),
+                        0,
+                        $e,
                     );
                 } catch (Throwable $e) {
                     throw new InputOperationException(

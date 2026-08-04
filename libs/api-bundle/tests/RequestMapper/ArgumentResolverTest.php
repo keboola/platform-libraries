@@ -10,6 +10,7 @@ use Keboola\ApiBundle\RequestMapper\Attribute\RequestPayloadObject;
 use Keboola\ApiBundle\RequestMapper\Attribute\RequestQueryObject;
 use Keboola\ApiBundle\RequestMapper\DataMapper;
 use Keboola\ApiBundle\RequestMapper\Exception\RequestMapperException;
+use Keboola\ApiBundle\RequestMapper\PayloadFormat;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpFoundation\Request;
@@ -204,6 +205,102 @@ class ArgumentResolverTest extends TestCase
                 Response::HTTP_UNPROCESSABLE_ENTITY,
                 false,
                 $extraKeysEnabled,
+            )
+            ->willReturn($data)
+        ;
+
+        $resolver = new ArgumentResolver($dataMapper);
+        $result = $resolver->resolve($request, $this->createArgumentMetadataForController($controller, 'data'));
+        $result = [...$result];
+
+        self::assertCount(1, $result);
+        self::assertSame($data, $result[0]);
+    }
+
+    public static function provideInvalidFormPayloads(): iterable
+    {
+        yield 'json content type sent to a form endpoint' => [
+            'request' => new Request(
+                server: [
+                    'HTTP_CONTENT_TYPE' => 'application/json',
+                ],
+                content: '{"name": "my name"}',
+            ),
+        ];
+
+        yield 'no content type' => [
+            'request' => new Request(),
+        ];
+    }
+
+    #[DataProvider('provideInvalidFormPayloads')]
+    public function testFormPayloadRejectsNonFormContentType(Request $request): void
+    {
+        $controller = new class {
+            public function __invoke(
+                #[RequestPayloadObject(format: PayloadFormat::Form)] RequestData $data,
+            ): void {
+            }
+        };
+
+        $dataMapper = $this->createMock(DataMapper::class);
+        $dataMapper->expects(self::never())->method('mapData');
+
+        $resolver = new ArgumentResolver($dataMapper);
+
+        $error = null;
+        try {
+            $result = $resolver->resolve($request, $this->createArgumentMetadataForController($controller, 'data'));
+            // @phpstan-ignore-next-line
+            [...$result];
+        } catch (HttpException $error) {
+            // error is checked below
+        }
+
+        self::assertNotNull($error, 'HttpException was not thrown');
+        self::assertSame(Response::HTTP_NOT_ACCEPTABLE, $error->getStatusCode());
+        self::assertSame(
+            'Request content type must be application/x-www-form-urlencoded',
+            $error->getMessage(),
+        );
+    }
+
+    public static function provideFormContentTypes(): iterable
+    {
+        yield 'urlencoded' => ['contentType' => 'application/x-www-form-urlencoded'];
+        yield 'multipart' => ['contentType' => 'multipart/form-data'];
+    }
+
+    #[DataProvider('provideFormContentTypes')]
+    public function testValidFormPayloadRequest(string $contentType): void
+    {
+        $controller = new class {
+            public function __invoke(
+                #[RequestPayloadObject(format: PayloadFormat::Form)] RequestData $data,
+            ): void {
+            }
+        };
+
+        $request = new Request(
+            request: ['name' => 'my name'],
+            server: [
+                'HTTP_CONTENT_TYPE' => $contentType,
+            ],
+        );
+
+        $data = new RequestData(name: 'my name', config: null);
+
+        $dataMapper = $this->createMock(DataMapper::class);
+        $dataMapper->expects(self::once())
+            ->method('mapData')
+            ->with(
+                RequestData::class,
+                ['name' => 'my name'],
+                'Request contents is not valid',
+                Response::HTTP_UNPROCESSABLE_ENTITY,
+                // form values are always strings, so casting must be enabled
+                true,
+                true,
             )
             ->willReturn($data)
         ;

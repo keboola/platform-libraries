@@ -145,6 +145,64 @@ which the bundle requires directly, so no extra installation is needed.
 > If you forget to install appropriate client, you will get exception like
 > `Service "Keboola\ApiBundle\Attribute\ApplicationTokenAuth" not found: the container inside "Symfony\Component\DependencyInjection\Argument\ServiceLocator" is a smaller service locator`
 
+## Request mapping
+
+Type-hint a payload object on a controller argument and annotate it with
+`#[RequestPayloadObject]` (request body) or `#[RequestQueryObject]` (query string). The bundle maps
+and validates the request with Valinor + the Symfony validator, and reports every failing field
+individually in the error `context` as `{path, message}`.
+
+```php
+public function __invoke(
+    #[RequestPayloadObject] CreateThingPayload $payload,
+    #[RequestQueryObject] ListFilters $filters,
+): Response {
+}
+```
+
+Both attributes accept `allowExtraKeys` (default `true`) to control whether unknown keys are
+rejected.
+
+### Form-encoded payloads
+
+`#[RequestPayloadObject]` expects `application/json` by default. Endpoints that receive
+`application/x-www-form-urlencoded` (or `multipart/form-data`) declare it with `format`:
+
+```php
+public function __invoke(
+    #[RequestPayloadObject(format: PayloadFormat::Form)] AuthorizePayload $payload,
+): Response {
+}
+```
+
+Form payloads are read from the request parameters rather than the raw body, and are mapped with
+casting enabled because form values are always strings. A request whose content type does not match
+the declared format is rejected with `406 Not Acceptable`.
+
+### Mapping wire keys that aren't valid property names
+
+Some payload fields arrive under a key that cannot be a PHP property — most commonly the Keboola
+`#` prefix marking an encrypted value. Annotate the property with `#[RequestKey]`:
+
+```php
+final readonly class CreateCredentialsPayload
+{
+    public function __construct(
+        #[RequestKey('#data')]
+        public string $data,
+    ) {
+    }
+}
+```
+
+Validation errors are reported under the wire key (`#data`), not the property name. A value sent
+directly under the property name (`data` here) is ignored — only the declared wire key may populate
+the property, so the result never depends on the order of keys in the request.
+
+`#[RequestKey]` applies to **top-level payload properties only**. Declaring it on a nested payload
+object, or declaring the same wire key on two properties, is a configuration error and throws
+`RequestMapperException`.
+
 ## Storage API client
 
 When `#[StorageApiTokenAuth]` is enabled, type-hint

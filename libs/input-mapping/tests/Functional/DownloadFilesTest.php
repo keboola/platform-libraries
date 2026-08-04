@@ -7,14 +7,23 @@ namespace Keboola\InputMapping\Tests\Functional;
 use Keboola\InputMapping\Configuration\File\Manifest\Adapter;
 use Keboola\InputMapping\Exception\InputOperationException;
 use Keboola\InputMapping\Exception\InvalidInputException;
+use Keboola\InputMapping\File\Strategy\Local;
 use Keboola\InputMapping\Reader;
 use Keboola\InputMapping\State\InputFileStateList;
 use Keboola\InputMapping\Tests\Needs\NeedsTestTables;
 use Keboola\Settle\SettleFactory;
 use Keboola\StagingProvider\Staging\File\FileFormat;
+use Keboola\StagingProvider\Staging\File\FileStagingInterface;
+use Keboola\StorageApi\BranchAwareClient;
+use Keboola\StorageApi\Client;
+use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Options\FileUploadOptions;
 use Keboola\StorageApi\Options\ListFilesOptions;
+use Keboola\StorageApiBranch\Branch;
+use Keboola\StorageApiBranch\ClientWrapper;
+use Keboola\StorageApiBranch\Factory\ClientOptions;
 use Psr\Log\NullLogger;
+use RuntimeException;
 use SplFileInfo;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Finder\Finder;
@@ -560,5 +569,79 @@ class DownloadFilesTest extends AbstractDownloadFilesTest
         self::assertEquals($id2, $manifest2['id']);
         self::assertTrue($this->testHandler->hasInfoThatContains(sprintf('Fetched file "%s_upload".', $id1)));
         self::assertTrue($this->testHandler->hasInfoThatContains(sprintf('Fetched file "%s_upload_second".', $id2)));
+    }
+
+    public function testStorageClientExceptionIsReportedAsUserError(): void
+    {
+        $storageClient = $this->createDownloadFailingStorageClient(function (): void {
+            throw new ClientException(
+                'Cannot download file "my-file.csv" (ID 123) from Storage, ' .
+                'please verify the contents of the file and that the file has not expired.',
+                404,
+            );
+        });
+        $strategy = $this->createLocalStrategyWithStorageClient($storageClient);
+
+        $this->expectException(InvalidInputException::class);
+        $this->expectExceptionMessage(
+            'Failed to download file my-file.csv (123): Cannot download file "my-file.csv" (ID 123) from Storage, ' .
+            'please verify the contents of the file and that the file has not expired.',
+        );
+
+        $strategy->downloadFiles([['tags' => ['my-tag'], 'overwrite' => true]], 'download');
+    }
+
+    public function testUnexpectedErrorIsReportedAsApplicationError(): void
+    {
+        $storageClient = $this->createDownloadFailingStorageClient(function (): void {
+            throw new RuntimeException('Something went wrong internally.');
+        });
+        $strategy = $this->createLocalStrategyWithStorageClient($storageClient);
+
+        $this->expectException(InputOperationException::class);
+        $this->expectExceptionMessage(
+            'Failed to download file my-file.csv (123): Something went wrong internally.',
+        );
+
+        $strategy->downloadFiles([['tags' => ['my-tag'], 'overwrite' => true]], 'download');
+    }
+
+    private function createDownloadFailingStorageClient(callable $downloadFileCallback): BranchAwareClient
+    {
+        $storageClient = $this->createMock(BranchAwareClient::class);
+        $storageClient->method('listFiles')->willReturn([['id' => 123, 'name' => 'my-file.csv']]);
+        $storageClient->method('getFile')->willReturn([
+            'id' => 123,
+            'name' => 'my-file.csv',
+            'isSliced' => false,
+        ]);
+        $storageClient->method('downloadFile')->willReturnCallback($downloadFileCallback);
+
+        return $storageClient;
+    }
+
+    private function createLocalStrategyWithStorageClient(BranchAwareClient $storageClient): Local
+    {
+        $basicClient = $this->createMock(Client::class);
+        $basicClient->method('getRunId')->willReturn('run-123');
+
+        $clientWrapper = $this->createMock(ClientWrapper::class);
+        $clientWrapper->method('isDevelopmentBranch')->willReturn(false);
+        $clientWrapper->method('getClientOptionsReadOnly')->willReturn(new ClientOptions());
+        $clientWrapper->method('getTableAndFileStorageClient')->willReturn($basicClient);
+        $clientWrapper->method('getClientForBranch')->willReturn($storageClient);
+        $clientWrapper->method('getDefaultBranch')->willReturn(new Branch('123', 'main', true, null));
+
+        $staging = $this->createMock(FileStagingInterface::class);
+        $staging->method('getPath')->willReturn($this->temp->getTmpFolder());
+
+        return new Local(
+            $clientWrapper,
+            new NullLogger(),
+            $staging,
+            $staging,
+            new InputFileStateList([]),
+            FileFormat::Json,
+        );
     }
 }

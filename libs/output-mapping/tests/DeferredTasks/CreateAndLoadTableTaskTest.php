@@ -7,11 +7,12 @@ namespace Keboola\OutputMapping\Tests\DeferredTasks;
 use Keboola\OutputMapping\DeferredTasks\TableWriter\CreateAndLoadTableTask;
 use Keboola\OutputMapping\Writer\Table\MappingDestination;
 use Keboola\StorageApi\Client;
+use Keboola\StorageApiBranch\ClientWrapper;
 use PHPUnit\Framework\TestCase;
 
 class CreateAndLoadTableTaskTest extends TestCase
 {
-    public function testStartImport(): void
+    public function testStart(): void
     {
         $destinationMock = $this->createMock(MappingDestination::class);
         $destinationMock->expects(self::once())
@@ -34,10 +35,15 @@ class CreateAndLoadTableTaskTest extends TestCase
             ->willReturn('123456')
         ;
 
-        $loadTableTask = new CreateAndLoadTableTask($destinationMock, ['foo' => 'bar'], true);
-        $loadTableTask->startImport($storageApiMock);
+        $clientWrapperMock = $this->createMock(ClientWrapper::class);
+        $clientWrapperMock->expects(self::once())
+            ->method('getTableAndFileStorageClient')
+            ->willReturn($storageApiMock);
 
-        self::assertSame('123456', $loadTableTask->getStorageJobId());
+        $loadTableTask = new CreateAndLoadTableTask($destinationMock, ['foo' => 'bar'], true);
+        $loadTableTask->start($clientWrapperMock);
+
+        self::assertSame(['123456'], $loadTableTask->getStorageJobIds());
         self::assertTrue($loadTableTask->isUsingFreshlyCreatedTable());
     }
 }

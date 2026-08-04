@@ -21,57 +21,40 @@ class LoadTableQueue
     private ClientWrapper $clientWrapper;
     private LoggerInterface $logger;
 
-    /** @var LoadTableTaskInterface[] */
-    private array $loadTableTasks;
+    /** @var DeferredTaskInterface[] */
+    private array $tasks;
 
     /** @var array<string, TableDescription> table id => descriptions of a table created by this run */
     private array $createdTableDescriptions;
 
-    /** @var int[] */
-    private array $unloadJobIds;
     private Result $tableResult;
 
     /**
-     * @param LoadTableTaskInterface[] $loadTableTasks
+     * @param DeferredTaskInterface[] $tasks
      * @param array<string, TableDescription> $createdTableDescriptions
-     * @param int[] $unloadJobIds Storage metadata refresh jobs enqueued for direct-grant tables
      */
     public function __construct(
         ClientWrapper $clientWrapper,
         LoggerInterface $logger,
-        array $loadTableTasks,
+        array $tasks,
         array $createdTableDescriptions = [],
-        array $unloadJobIds = [],
     ) {
         $this->clientWrapper = $clientWrapper;
         $this->logger = $logger;
-        $this->loadTableTasks = $loadTableTasks;
+        $this->tasks = $tasks;
         $this->createdTableDescriptions = $createdTableDescriptions;
-        $this->unloadJobIds = $unloadJobIds;
         $this->tableResult = new Result();
     }
 
     public function start(): void
     {
-        foreach ($this->loadTableTasks as $loadTableTask) {
-            try {
-                $loadTableTask->startImport($this->clientWrapper->getTableAndFileStorageClient());
-            } catch (ClientException $e) {
-                if ($e->getCode() < 500) {
-                    throw new InvalidOutputException(
-                        sprintf('%s [%s]', $e->getMessage(), $loadTableTask->getDestinationTableName()),
-                        $e->getCode(),
-                        $e,
-                    );
-                }
-
-                throw $e;
-            }
+        foreach ($this->tasks as $task) {
+            $task->start($this->clientWrapper);
         }
     }
 
     /**
-     * @return string[] ids of the table load jobs
+     * @return string[] ids of the Storage jobs waited for
      */
     public function waitForAll(): array
     {
@@ -80,74 +63,79 @@ class LoadTableQueue
         $jobIds = [];
         $errors = [];
         $jobResults = [];
-        foreach ($this->loadTableTasks as $task) {
-            $jobId = $task->getStorageJobId();
-            $jobIds[] = $jobId;
-            /** @var array $jobResult */
-            $jobResult = $this->clientWrapper->getBranchClient()->waitForJob($jobId);
+        foreach ($this->tasks as $task) {
+            foreach ($task->getStorageJobIds() as $jobId) {
+                $jobIds[] = $jobId;
+                /** @var array $jobResult */
+                $jobResult = $this->clientWrapper->getBranchClient()->waitForJob($jobId);
 
-            if ($jobResult['status'] === 'error') {
-                $destinationTableName = $task->getDestinationTableName();
-                $errors[] = sprintf(
-                    'Failed to load table "%s": %s',
-                    $destinationTableName,
-                    $jobResult['error']['message'],
-                );
-                // The load failed, so there is no table to describe - it is about to be dropped below or it
-                // keeps the description it already had. Dropping the pending description here keeps it out of
-                // the "was not stored" warning, which is meant for descriptions lost by mistake.
-                unset($this->createdTableDescriptions[$destinationTableName]);
-
-                if (FailedLoadTableDecider::decideTableDelete($this->logger, $this->clientWrapper, $task)) {
-                    $this->clientWrapper->getTableAndFileStorageClient()->dropTable(
-                        $destinationTableName,
-                        ['force' => true],
-                    );
-                }
-            } else {
-                try {
-                    $task->applyMetadata($metadataApiClient);
-                } catch (ClientException $e) {
-                    if ($e->getCode() >= 500) {
-                        throw $e;
+                if (!$task instanceof LoadTableTaskInterface) {
+                    // a job without a destination table carries nothing to describe, annotate or measure
+                    if ($jobResult['status'] === 'error') {
+                        $errors[] = $task->getFailedJobError($jobId, $jobResult);
                     }
-                    $extendedInfo = $e->getContextParams()['errors'] ?? [];
-                    $errors[] = sprintf(
-                        'Failed to update metadata for table "%s": %s (%s)',
-                        $task->getDestinationTableName(),
-                        $e->getMessage(),
-                        json_encode($extendedInfo),
-                    );
+                    continue;
                 }
 
-                switch ($jobResult['operationName']) {
-                    case 'tableImport':
-                        $tableData = $this->clientWrapper->getTableAndFileStorageClient()->getTable(
-                            $jobResult['tableId'],
+                if ($jobResult['status'] === 'error') {
+                    $destinationTableName = $task->getDestinationTableName();
+                    $errors[] = $task->getFailedJobError($jobId, $jobResult);
+                    // The load failed, so there is no table to describe - it is about to be dropped below or it
+                    // keeps the description it already had. Dropping the pending description here keeps it out of
+                    // the "was not stored" warning, which is meant for descriptions lost by mistake.
+                    unset($this->createdTableDescriptions[$destinationTableName]);
+
+                    if (FailedLoadTableDecider::decideTableDelete($this->logger, $this->clientWrapper, $task)) {
+                        $this->clientWrapper->getTableAndFileStorageClient()->dropTable(
+                            $destinationTableName,
+                            ['force' => true],
                         );
-                        $this->tableResult->addTable(new TableInfo($tableData));
-                        $this->tableResult->addGenericVariable(
-                            $jobResult['tableId'],
-                            'importedRowsCount',
-                            (int) ($jobResult['results']['importedRowsCount'] ?? 0),
-                        );
-                        $jobResults[] = $jobResult;
-                        break;
-                    case 'tableCreate':
-                        $tableData = $this->clientWrapper->getTableAndFileStorageClient()->getTable(
-                            $jobResult['results']['id'],
-                        );
-                        $this->tableResult->addTable(new TableInfo($tableData));
-                        // Only a table created by the load job itself (CreateAndLoadTableTask) can have a
-                        // pending description - every other table is created through a table definition,
-                        // which carries the description in its create payload.
-                        try {
-                            $this->applyCreatedTableDescriptions($task, $tableData);
-                        } catch (InvalidOutputException $e) {
-                            $errors[] = $e->getMessage();
+                    }
+                } else {
+                    try {
+                        $task->applyMetadata($metadataApiClient);
+                    } catch (ClientException $e) {
+                        if ($e->getCode() >= 500) {
+                            throw $e;
                         }
-                        $jobResults[] = $jobResult;
-                        break;
+                        $extendedInfo = $e->getContextParams()['errors'] ?? [];
+                        $errors[] = sprintf(
+                            'Failed to update metadata for table "%s": %s (%s)',
+                            $task->getDestinationTableName(),
+                            $e->getMessage(),
+                            json_encode($extendedInfo),
+                        );
+                    }
+
+                    switch ($jobResult['operationName']) {
+                        case 'tableImport':
+                            $tableData = $this->clientWrapper->getTableAndFileStorageClient()->getTable(
+                                $jobResult['tableId'],
+                            );
+                            $this->tableResult->addTable(new TableInfo($tableData));
+                            $this->tableResult->addGenericVariable(
+                                $jobResult['tableId'],
+                                'importedRowsCount',
+                                (int) ($jobResult['results']['importedRowsCount'] ?? 0),
+                            );
+                            $jobResults[] = $jobResult;
+                            break;
+                        case 'tableCreate':
+                            $tableData = $this->clientWrapper->getTableAndFileStorageClient()->getTable(
+                                $jobResult['results']['id'],
+                            );
+                            $this->tableResult->addTable(new TableInfo($tableData));
+                            // Only a table created by the load job itself (CreateAndLoadTableTask) can have a
+                            // pending description - every other table is created through a table definition,
+                            // which carries the description in its create payload.
+                            try {
+                                $this->applyCreatedTableDescriptions($task, $tableData);
+                            } catch (InvalidOutputException $e) {
+                                $errors[] = $e->getMessage();
+                            }
+                            $jobResults[] = $jobResult;
+                            break;
+                    }
                 }
             }
         }
@@ -161,20 +149,6 @@ class LoadTableQueue
         }
 
         $this->tableResult->setMetrics(new Metrics($jobResults));
-
-        // the metadata refresh dispatches trigger events; it must finish before the workspace is dropped
-        foreach ($this->unloadJobIds as $unloadJobId) {
-            /** @var array $unloadJobResult */
-            $unloadJobResult = $this->clientWrapper->getBranchClient()->waitForJob($unloadJobId);
-
-            if ($unloadJobResult['status'] === 'error') {
-                $errors[] = sprintf(
-                    'Failed to refresh metadata of direct-grant tables (Storage job "%s"): %s',
-                    $unloadJobId,
-                    $unloadJobResult['error']['message'],
-                );
-            }
-        }
 
         if ($errors) {
             throw new InvalidOutputException(implode("\n", $errors));
@@ -202,11 +176,14 @@ class LoadTableQueue
     }
 
     /**
-     * Number of Storage jobs waitForAll() waits for.
+     * Number of Storage jobs waitForAll() waits for. Only meaningful once the queue has been started.
      */
     public function getTaskCount(): int
     {
-        return count($this->loadTableTasks) + count($this->unloadJobIds);
+        return array_sum(array_map(
+            fn(DeferredTaskInterface $task) => count($task->getStorageJobIds()),
+            $this->tasks,
+        ));
     }
 
     public function getTableResult(): Result
@@ -214,9 +191,15 @@ class LoadTableQueue
         return $this->tableResult;
     }
 
+    /**
+     * @return LoadTableTaskInterface[]
+     */
     public function getLoadTableTasks(): array
     {
-        return $this->loadTableTasks;
+        return array_values(array_filter(
+            $this->tasks,
+            fn(DeferredTaskInterface $task) => $task instanceof LoadTableTaskInterface,
+        ));
     }
 
     public function loadCustomVariables(string $variablesFilePath): void

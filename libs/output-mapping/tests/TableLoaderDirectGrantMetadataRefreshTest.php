@@ -26,12 +26,12 @@ use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 
-class TableLoaderDirectGrantUnloadTest extends TestCase
+class TableLoaderDirectGrantMetadataRefreshTest extends TestCase
 {
     private const WORKSPACE_ID = '1234';
     private const UNLOAD_URL = 'workspaces/' . self::WORKSPACE_ID . '/unload?only-direct-grants=1';
 
-    public function testUnloadJobIsAwaitedByTheQueue(): void
+    public function testRefreshJobIsAwaitedByTheQueue(): void
     {
         $branchClient = $this->createMock(BranchAwareClient::class);
         $branchClient->expects(self::once())
@@ -41,7 +41,7 @@ class TableLoaderDirectGrantUnloadTest extends TestCase
         ;
         $branchClient->expects(self::once())
             ->method('waitForJob')
-            ->with(456)
+            ->with('456')
             ->willReturn([
                 'operationName' => 'refreshStorageBuckets',
                 'status' => 'success',
@@ -51,10 +51,35 @@ class TableLoaderDirectGrantUnloadTest extends TestCase
         $tableQueue = $this->uploadTables($branchClient);
 
         self::assertSame(1, $tableQueue->getTaskCount());
-        self::assertSame([], $tableQueue->waitForAll());
+        self::assertSame(['456'], $tableQueue->waitForAll());
     }
 
-    public function testFailedUnloadJobFailsTheQueue(): void
+    public function testEveryRefreshJobReturnedByStorageIsAwaited(): void
+    {
+        $awaitedJobIds = [];
+
+        $branchClient = $this->createMock(BranchAwareClient::class);
+        $branchClient->expects(self::once())
+            ->method('apiPostJson')
+            ->with(self::UNLOAD_URL, [], false)
+            ->willReturn([['id' => '456'], ['id' => '789']])
+        ;
+        $branchClient->expects(self::exactly(2))
+            ->method('waitForJob')
+            ->willReturnCallback(function ($jobId) use (&$awaitedJobIds): array {
+                $awaitedJobIds[] = $jobId;
+                return ['operationName' => 'refreshStorageBuckets', 'status' => 'success'];
+            })
+        ;
+
+        $tableQueue = $this->uploadTables($branchClient);
+
+        self::assertSame(2, $tableQueue->getTaskCount());
+        self::assertSame(['456', '789'], $tableQueue->waitForAll());
+        self::assertSame(['456', '789'], $awaitedJobIds);
+    }
+
+    public function testFailedRefreshJobFailsTheQueue(): void
     {
         $branchClient = $this->createMock(BranchAwareClient::class);
         $branchClient->expects(self::once())
@@ -64,7 +89,7 @@ class TableLoaderDirectGrantUnloadTest extends TestCase
         ;
         $branchClient->expects(self::once())
             ->method('waitForJob')
-            ->with(456)
+            ->with('456')
             ->willReturn([
                 'operationName' => 'refreshStorageBuckets',
                 'status' => 'error',
@@ -83,7 +108,7 @@ class TableLoaderDirectGrantUnloadTest extends TestCase
         $tableQueue->waitForAll();
     }
 
-    public function testUnloadFailureWithSapiUserErrorThrowsInvalidOutputException(): void
+    public function testRefreshFailureWithSapiUserErrorThrowsInvalidOutputException(): void
     {
         $clientException = new ClientException('Workspace "1234" not found.', 404);
 
@@ -116,7 +141,7 @@ class TableLoaderDirectGrantUnloadTest extends TestCase
     /**
      * @dataProvider nonUserErrorProvider
      */
-    public function testUnloadFailureWithSapiAppErrorPropagatesErrorFromClient(string $message, int $code): void
+    public function testRefreshFailureWithSapiAppErrorPropagatesErrorFromClient(string $message, int $code): void
     {
         $clientException = new ClientException($message, $code);
 

@@ -8,11 +8,11 @@ use Keboola\StorageApi\Client;
 
 class CreateAndLoadTableTask extends AbstractLoadTableTask
 {
-    public function startImport(Client $client): void
+    protected function queueStorageJob(Client $client): string
     {
         $options = $this->options;
         $options['name'] = $this->destination->getTableName();
 
-        $this->storageJobId = (string) $client->queueTableCreate($this->destination->getBucketId(), $options);
+        return (string) $client->queueTableCreate($this->destination->getBucketId(), $options);
     }
 }

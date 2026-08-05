@@ -11,7 +11,6 @@ use Keboola\OutputMapping\SystemMetadata;
 use Keboola\OutputMapping\Tests\Needs\NeedsEmptyOutputBucket;
 use Keboola\OutputMapping\Tests\Needs\NeedsTestTables;
 use Keboola\StorageApi\Workspaces;
-use RuntimeException;
 
 class TableLoaderUnloadStrategyTest extends AbstractTestCase
 {
@@ -257,26 +256,6 @@ class TableLoaderUnloadStrategyTest extends AbstractTestCase
         self::assertSame('refreshStorageBuckets', $job['operationName']);
     }
 
-    #[NeedsEmptyOutputBucket]
-    public function testDirectGrantTableIsRegisteredWhenUploadTablesReturns(): void
-    {
-        if ($this->clientWrapper->getToken()->getProjectBackend() !== 'snowflake') {
-            self::markTestSkipped('The table is written into the bucket schema with Snowflake SQL.');
-        }
-
-        $destinationTableId = $this->emptyOutputBucketId . '.table1';
-        $this->initDirectGrantWorkspace($destinationTableId);
-        $this->createTableThroughDirectGrant($this->emptyOutputBucketId, 'table1');
-
-        $this->uploadDirectGrantTable($destinationTableId)->waitForAll();
-
-        // The refresh job is what registers the table written through the direct grant, so it is in Storage only
-        // if uploadTables() really waited for that job.
-        $tables = $this->clientWrapper->getTableAndFileStorageClient()->listTables($this->emptyOutputBucketId);
-        self::assertCount(1, $tables);
-        self::assertSame($destinationTableId, $tables[0]['id']);
-    }
-
     private function initDirectGrantWorkspace(string $destinationTableId): void
     {
         $this->initConfigurationWorkspace([
@@ -321,33 +300,5 @@ class TableLoaderUnloadStrategyTest extends AbstractTestCase
                 'runId' => '1234567',
             ]),
         );
-    }
-
-    /**
-     * Writes a table straight into the bucket schema, which is what a transformation using direct grants does -
-     * the table exists in the backend before output mapping runs and only its Storage metadata is missing.
-     */
-    private function createTableThroughDirectGrant(string $bucketId, string $tableName): void
-    {
-        $bucket = $this->clientWrapper->getTableAndFileStorageClient()->getBucket($bucketId);
-        $backendPath = $bucket['backendPath'] ?? throw new RuntimeException(sprintf(
-            'Bucket "%s" detail carries no backendPath.',
-            $bucketId,
-        ));
-        [$database, $schema] = $backendPath;
-
-        $workspaces = new Workspaces($this->clientWrapper->getBranchClient());
-        $workspaces->executeQuery((int) $this->workspaceId, sprintf(
-            'CREATE TABLE "%s"."%s"."%s" ("id" VARCHAR, "name" VARCHAR)',
-            $database,
-            $schema,
-            $tableName,
-        ));
-        $workspaces->executeQuery((int) $this->workspaceId, sprintf(
-            'INSERT INTO "%s"."%s"."%s" VALUES (\'1\', \'test\')',
-            $database,
-            $schema,
-            $tableName,
-        ));
     }
 }

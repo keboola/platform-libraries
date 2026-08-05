@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping\Tests;
 
+use Keboola\OutputMapping\DeferredTasks\LoadTableQueue;
 use Keboola\OutputMapping\Mapping\MappingFromRawConfiguration;
 use Keboola\OutputMapping\OutputMappingSettings;
 use Keboola\OutputMapping\SystemMetadata;
 use Keboola\OutputMapping\Tests\Needs\NeedsEmptyOutputBucket;
 use Keboola\OutputMapping\Tests\Needs\NeedsTestTables;
 use Keboola\StorageApi\Workspaces;
+use RuntimeException;
 
 class TableLoaderUnloadStrategyTest extends AbstractTestCase
 {
@@ -64,9 +66,6 @@ class TableLoaderUnloadStrategyTest extends AbstractTestCase
 
         $tables = $this->clientWrapper->getTableAndFileStorageClient()->listTables($this->emptyOutputBucketId);
         self::assertCount(0, $tables, 'No tables should be imported when unload_strategy is direct-grant');
-
-        // Direct-grant configurations are filtered,
-        // so they don't go through the loading cycle and no loading message is logged
     }
 
     #[NeedsEmptyOutputBucket]
@@ -238,5 +237,117 @@ class TableLoaderUnloadStrategyTest extends AbstractTestCase
         $tables = $this->clientWrapper->getTableAndFileStorageClient()->listTables($this->emptyOutputBucketId);
         self::assertCount(1, $tables, 'Only non-direct-grant table should be imported');
         self::assertEquals($this->emptyOutputBucketId . '.table2', $tables[0]['id']);
+    }
+
+    #[NeedsEmptyOutputBucket]
+    public function testDirectGrantMetadataRefreshIsAwaited(): void
+    {
+        $destinationTableId = $this->emptyOutputBucketId . '.table1';
+        $this->initDirectGrantWorkspace($destinationTableId);
+
+        $tableQueue = $this->uploadDirectGrantTable($destinationTableId);
+
+        self::assertSame(1, $tableQueue->getTaskCount(), 'The metadata refresh job is the only queued job');
+        self::assertSame([], $tableQueue->getLoadTableTasks(), 'A direct-grant table has no table load job');
+
+        $jobIds = $tableQueue->waitForAll();
+        self::assertCount(1, $jobIds, 'The refresh job of the workspace is awaited');
+
+        $job = $this->clientWrapper->getBranchClient()->getJob((int) $jobIds[0]);
+        self::assertSame('refreshStorageBuckets', $job['operationName']);
+    }
+
+    #[NeedsEmptyOutputBucket]
+    public function testDirectGrantTableIsRegisteredWhenUploadTablesReturns(): void
+    {
+        if ($this->clientWrapper->getToken()->getProjectBackend() !== 'snowflake') {
+            self::markTestSkipped('The table is written into the bucket schema with Snowflake SQL.');
+        }
+
+        $destinationTableId = $this->emptyOutputBucketId . '.table1';
+        $this->initDirectGrantWorkspace($destinationTableId);
+        $this->createTableThroughDirectGrant($this->emptyOutputBucketId, 'table1');
+
+        $this->uploadDirectGrantTable($destinationTableId)->waitForAll();
+
+        // The refresh job is what registers the table written through the direct grant, so it is in Storage only
+        // if uploadTables() really waited for that job.
+        $tables = $this->clientWrapper->getTableAndFileStorageClient()->listTables($this->emptyOutputBucketId);
+        self::assertCount(1, $tables);
+        self::assertSame($destinationTableId, $tables[0]['id']);
+    }
+
+    private function initDirectGrantWorkspace(string $destinationTableId): void
+    {
+        $this->initConfigurationWorkspace([
+            [
+                'source' => 'table1a',
+                'destination' => $destinationTableId,
+                'unload_strategy' => 'direct-grant',
+            ],
+        ]);
+    }
+
+    private function uploadDirectGrantTable(string $destinationTableId): LoadTableQueue
+    {
+        $tableLoader = $this->getTableLoader(
+            clientWrapper: $this->clientWrapper,
+            logger: $this->testLogger,
+            strategyFactory: $this->getWorkspaceStagingFactory(
+                clientWrapper: $this->clientWrapper,
+                logger: $this->testLogger,
+            ),
+        );
+
+        return $tableLoader->uploadTables(
+            new OutputMappingSettings(
+                [
+                    'mapping' => [
+                        [
+                            'source' => 'table1a',
+                            'destination' => $destinationTableId,
+                            'unload_strategy' => 'direct-grant',
+                        ],
+                    ],
+                ],
+                '',
+                $this->clientWrapper->getToken(),
+                false,
+                OutputMappingSettings::DATA_TYPES_SUPPORT_NONE,
+            ),
+            new SystemMetadata([
+                'componentId' => 'testComponent',
+                'configurationId' => 'metadata-write-test',
+                'runId' => '1234567',
+            ]),
+        );
+    }
+
+    /**
+     * Writes a table straight into the bucket schema, which is what a transformation using direct grants does -
+     * the table exists in the backend before output mapping runs and only its Storage metadata is missing.
+     */
+    private function createTableThroughDirectGrant(string $bucketId, string $tableName): void
+    {
+        $bucket = $this->clientWrapper->getTableAndFileStorageClient()->getBucket($bucketId);
+        $backendPath = $bucket['backendPath'] ?? throw new RuntimeException(sprintf(
+            'Bucket "%s" detail carries no backendPath.',
+            $bucketId,
+        ));
+        [$database, $schema] = $backendPath;
+
+        $workspaces = new Workspaces($this->clientWrapper->getBranchClient());
+        $workspaces->executeQuery((int) $this->workspaceId, sprintf(
+            'CREATE TABLE "%s"."%s"."%s" ("id" VARCHAR, "name" VARCHAR)',
+            $database,
+            $schema,
+            $tableName,
+        ));
+        $workspaces->executeQuery((int) $this->workspaceId, sprintf(
+            'INSERT INTO "%s"."%s"."%s" VALUES (\'1\', \'test\')',
+            $database,
+            $schema,
+            $tableName,
+        ));
     }
 }

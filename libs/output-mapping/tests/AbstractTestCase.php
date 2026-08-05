@@ -13,6 +13,8 @@ use Keboola\StagingProvider\Staging\File\FileStagingInterface;
 use Keboola\StagingProvider\Staging\StagingProvider;
 use Keboola\StagingProvider\Staging\StagingType;
 use Keboola\StorageApi\ClientException;
+use Keboola\StorageApi\Components;
+use Keboola\StorageApi\Options\Components\Configuration;
 use Keboola\StorageApi\Options\ListFilesOptions;
 use Keboola\StorageApi\WorkspaceLoginType;
 use Keboola\StorageApi\Workspaces;
@@ -38,6 +40,9 @@ abstract class AbstractTestCase extends TestCase
     protected ?string $workspaceId = null;
     protected array $workspaceCredentials = [];
     protected array $workspace;
+
+    /** @var array{componentId: string, configurationId: string}|null */
+    protected ?array $workspaceConfiguration = null;
 
     protected string $emptyInputBucketId;
     protected string $emptyOutputBucketId;
@@ -128,6 +133,22 @@ abstract class AbstractTestCase extends TestCase
             }
             $this->workspaceId = null;
         }
+
+        if ($this->workspaceConfiguration !== null) {
+            $components = new Components($this->clientWrapper->getBranchClient());
+            try {
+                $components->deleteConfiguration(
+                    $this->workspaceConfiguration['componentId'],
+                    $this->workspaceConfiguration['configurationId'],
+                );
+            } catch (ClientException $e) {
+                if ($e->getCode() !== 404) {
+                    throw $e;
+                }
+            }
+            $this->workspaceConfiguration = null;
+        }
+
         parent::tearDown();
     }
 
@@ -139,6 +160,60 @@ abstract class AbstractTestCase extends TestCase
             $workspaces->deleteWorkspace((int) $this->workspaceId, async: true);
         }
 
+        $workspace = $workspaces->createWorkspace($this->getWorkspaceCreateOptions(), true);
+
+        $this->workspaceId = (string) $workspace['id'];
+        $this->workspaceCredentials = $workspace['connection'];
+    }
+
+    /**
+     * Storage resolves the direct-grant output tables of a workspace from the component configuration the workspace
+     * was created from, so only a workspace created this way can produce the metadata refresh job.
+     *
+     * @param list<array<string, mixed>> $outputTables items of storage.output.tables of the configuration
+     */
+    protected function initConfigurationWorkspace(array $outputTables): void
+    {
+        $stagingType = StagingType::from('workspace-' . $this->clientWrapper->getToken()->getProjectBackend());
+        $componentId = match ($stagingType) {
+            StagingType::WorkspaceSnowflake => 'keboola.snowflake-transformation',
+            StagingType::WorkspaceBigquery => 'keboola.google-bigquery-transformation',
+            default => throw new InvalidArgumentException(sprintf(
+                'Unknown staging %s',
+                $stagingType->value,
+            )),
+        };
+        $configurationId = uniqid('output-mapping-test-');
+
+        $components = new Components($this->clientWrapper->getBranchClient());
+        $components->addConfiguration(
+            (new Configuration())
+                ->setComponentId($componentId)
+                ->setConfigurationId($configurationId)
+                ->setName($configurationId)
+                ->setConfiguration(['storage' => ['output' => ['tables' => $outputTables]]]),
+        );
+        $this->workspaceConfiguration = [
+            'componentId' => $componentId,
+            'configurationId' => $configurationId,
+        ];
+
+        $workspace = $components->createConfigurationWorkspace(
+            $componentId,
+            $configurationId,
+            $this->getWorkspaceCreateOptions(),
+            true,
+        );
+
+        $this->workspaceId = (string) $workspace['id'];
+        $this->workspaceCredentials = $workspace['connection'];
+    }
+
+    /**
+     * @return array{backend: string, loginType?: WorkspaceLoginType}
+     */
+    private function getWorkspaceCreateOptions(): array
+    {
         $stagingType = StagingType::from('workspace-' . $this->clientWrapper->getToken()->getProjectBackend());
 
         $options = ['backend' => match ($stagingType) {
@@ -157,10 +232,7 @@ abstract class AbstractTestCase extends TestCase
             $options['loginType'] = WorkspaceLoginType::NONE;
         }
 
-        $workspace = $workspaces->createWorkspace($options, true);
-
-        $this->workspaceId = (string) $workspace['id'];
-        $this->workspaceCredentials = $workspace['connection'];
+        return $options;
     }
 
     protected function getWorkspaceStagingFactory(

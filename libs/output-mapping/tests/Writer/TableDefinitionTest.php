@@ -506,7 +506,8 @@ class TableDefinitionTest extends AbstractTestCase
             'nullable' => false,
         ]);
         self::assertDataTypeDefinition($tableDetails['columnMetadata']['birthweight'], [
-            'type' => Snowflake::TYPE_DECIMAL,
+            // Storage records the physical column, and Snowflake resolves DECIMAL to NUMBER
+            'type' => Snowflake::TYPE_NUMBER,
             'length' => '10,2',
             'nullable' => true,
         ]);

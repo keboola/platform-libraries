@@ -9,6 +9,7 @@ use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Workspaces;
 use Keboola\StorageApiBranch\ClientWrapper;
+use LogicException;
 
 /**
  * Tables written through direct grants are already in their Storage bucket when output mapping runs, so there is
@@ -20,10 +21,18 @@ class DirectGrantMetadataRefreshTask implements DeferredTaskInterface
     /** @var string[] */
     private array $storageJobIds = [];
 
+    private bool $started = false;
+
     public function __construct(private readonly int $workspaceId)
     {
     }
 
+    /**
+     * Storage enqueues a single refreshStorageBuckets job covering every direct-grant bucket of the workspace, but
+     * the endpoint is typed as a list of jobs and will grow the jobs of the remaining unload strategies, so every
+     * returned id has to be awaited. An empty list is a valid answer - a workspace with no direct-grant output
+     * mapping in its configuration has nothing to refresh.
+     */
     public function start(ClientWrapper $clientWrapper): void
     {
         // the workspace is a branch object, so the refresh has to be enqueued through the branch client
@@ -45,10 +54,15 @@ class DirectGrantMetadataRefreshTask implements DeferredTaskInterface
         }
 
         $this->storageJobIds = array_map(strval(...), $jobIds);
+        $this->started = true;
     }
 
     public function getStorageJobIds(): array
     {
+        if (!$this->started) {
+            throw new LogicException('Metadata refresh of direct-grant tables has not been started yet.');
+        }
+
         return $this->storageJobIds;
     }
 

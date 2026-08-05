@@ -237,6 +237,46 @@ class LoadTableQueueTest extends TestCase
         }
     }
 
+    public function testStartEnqueuesTasksInOrderUntilOneFails(): void
+    {
+        $startedTasks = [];
+
+        $firstTask = $this->createMock(DeferredTaskInterface::class);
+        $firstTask->expects(self::once())
+            ->method('start')
+            ->willReturnCallback(function () use (&$startedTasks): void {
+                $startedTasks[] = 'first';
+            })
+        ;
+
+        $failingTask = $this->createMock(LoadTableTask::class);
+        $failingTask->expects(self::once())
+            ->method('start')
+            ->willReturnCallback(function () use (&$startedTasks): void {
+                $startedTasks[] = 'failing';
+                throw new ClientException('Hi', 444);
+            })
+        ;
+
+        $lastTask = $this->createMock(LoadTableTask::class);
+        $lastTask->expects(self::never())
+            ->method('start')
+        ;
+
+        $loadQueue = new LoadTableQueue(
+            $this->createMock(ClientWrapper::class),
+            new NullLogger(),
+            [$firstTask, $failingTask, $lastTask],
+        );
+
+        try {
+            $loadQueue->start();
+            self::fail('LoadTableQueue should fail with ClientException');
+        } catch (ClientException) {
+            self::assertSame(['first', 'failing'], $startedTasks);
+        }
+    }
+
     public function testWaitForAllWithErrorThrowsInvalidOutputException(): void
     {
         $clientMock = $this->createMock(BranchAwareClient::class);

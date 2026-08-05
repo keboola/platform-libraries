@@ -59,7 +59,23 @@ class TableLoader
             $combinedSources = $this->getCombinedSources($strategy, $configuration);
         }
 
-        $loadTableTasks = [];
+        $tasks = [];
+        if ($strategy->hasDirectGrantUnloadStrategy()) {
+            if (!$strategy instanceof SqlWorkspaceTableStrategy) {
+                throw new LogicException(sprintf(
+                    'Direct-grant unload strategy is only supported for %s strategy but got %s.',
+                    SqlWorkspaceTableStrategy::class,
+                    $strategy::class,
+                ));
+            }
+
+            // First in the list, so the refresh is enqueued even when enqueuing a table load fails - the
+            // direct-grant tables are already written at this point and their metadata must catch up.
+            $tasks[] = new DirectGrantMetadataRefreshTask(
+                (int) $strategy->getDataStorage()->getWorkspaceId(),
+            );
+        }
+
         /** @var array<string, TableDescription> $createdTableDescriptions */
         $createdTableDescriptions = [];
         $tableConfigurationResolver = new TableConfigurationResolver($this->logger);
@@ -167,27 +183,13 @@ class TableLoader
                     $descriptionsToStoreAfterLoad;
             }
 
-            $loadTableTasks[] = $loadTableTask;
-        }
-
-        if ($strategy->hasDirectGrantUnloadStrategy()) {
-            if (!$strategy instanceof SqlWorkspaceTableStrategy) {
-                throw new LogicException(sprintf(
-                    'Direct-grant unload strategy is only supported for %s strategy but got %s.',
-                    SqlWorkspaceTableStrategy::class,
-                    $strategy::class,
-                ));
-            }
-
-            $loadTableTasks[] = new DirectGrantMetadataRefreshTask(
-                (int) $strategy->getDataStorage()->getWorkspaceId(),
-            );
+            $tasks[] = $loadTableTask;
         }
 
         $tableQueue = new LoadTableQueue(
             $this->clientWrapper,
             $this->logger,
-            $loadTableTasks,
+            $tasks,
             $createdTableDescriptions,
         );
         $tableQueue->start();

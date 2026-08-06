@@ -251,8 +251,10 @@ class TableStructureModifierTest extends AbstractTestCase
         $expectedNewColumnDefinition = [
             'name' => $newColumnName,
             'definition' => [
-                'type' => 'INTEGER',
+                // Storage records the physical column, and Snowflake resolves INT to NUMBER(38,0)
+                'type' => 'NUMBER',
                 'nullable' => true,
+                'length' => '38,0',
             ],
             'basetype' => 'INTEGER',
             'canBeFiltered' => true,

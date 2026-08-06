@@ -6,6 +6,7 @@ namespace Keboola\OutputMapping\Tests\DeferredTasks;
 
 use Generator;
 use Keboola\InputMapping\Table\Result\TableInfo;
+use Keboola\OutputMapping\DeferredTasks\DeferredTaskInterface;
 use Keboola\OutputMapping\DeferredTasks\LoadTableQueue;
 use Keboola\OutputMapping\DeferredTasks\TableWriter\LoadTableTask;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
@@ -52,93 +53,227 @@ class LoadTableQueueTest extends TestCase
         $clientWrapperMock->method('getTableAndFileStorageClient')
             ->willReturn($this->createMock(Client::class));
 
-        $loadQueue = new LoadTableQueue(
-            $clientWrapperMock,
-            new NullLogger(),
-            [
-                $this->createMock(LoadTableTask::class),
-                $this->createMock(LoadTableTask::class),
-            ],
-        );
+        $loadTask1 = $this->createMock(LoadTableTask::class);
+        $loadTask1->method('getStorageJobIds')->willReturn(['123']);
+        $loadTask2 = $this->createMock(LoadTableTask::class);
+        $loadTask2->method('getStorageJobIds')->willReturn(['456']);
+
+        $loadQueue = new LoadTableQueue($clientWrapperMock, new NullLogger(), [$loadTask1, $loadTask2]);
 
         self::assertSame(2, $loadQueue->getTaskCount());
     }
 
-    public function testStart(): void
+    public function testTaskCountCountsEveryStorageJobOfATask(): void
     {
-        $loadTask = $this->createMock(LoadTableTask::class);
-        $loadTask->expects(self::once())
-            ->method('startImport')
-            ->with($this->callback(function ($client) {
-                self::assertInstanceOf(Client::class, $client);
-                return true;
-            }))
-        ;
         $clientWrapperMock = $this->createMock(ClientWrapper::class);
         $clientWrapperMock->method('getTableAndFileStorageClient')
             ->willReturn($this->createMock(Client::class));
+
+        $loadTask = $this->createMock(LoadTableTask::class);
+        $loadTask->method('getStorageJobIds')->willReturn(['123']);
+
+        $refreshTask = $this->createMock(DeferredTaskInterface::class);
+        $refreshTask->method('getStorageJobIds')->willReturn(['456', '789']);
+
+        $loadQueue = new LoadTableQueue($clientWrapperMock, new NullLogger(), [$loadTask, $refreshTask]);
+
+        self::assertSame(3, $loadQueue->getTaskCount());
+    }
+
+    public function testWaitForAllWaitsForTaskWithoutDestinationTable(): void
+    {
+        $expectedTableId = 'in.c-myBucket.myTable';
+        $awaitedJobIds = [];
+
+        $branchClientMock = $this->createMock(BranchAwareClient::class);
+        $branchClientMock->expects(self::exactly(2))
+            ->method('waitForJob')
+            ->willReturnCallback(
+                function ($jobId) use (&$awaitedJobIds, $expectedTableId): array {
+                    $awaitedJobIds[] = $jobId;
+
+                    if ($jobId === '456') {
+                        return [
+                            'operationName' => 'refreshStorageBuckets',
+                            'status' => 'success',
+                        ];
+                    }
+
+                    return [
+                        'operationName' => 'tableImport',
+                        'status' => 'success',
+                        'tableId' => $expectedTableId,
+                        'metrics' => [
+                            'inBytes' => 123,
+                            'inBytesUncompressed' => 456,
+                        ],
+                    ];
+                },
+            )
+        ;
+
+        $clientMock = $this->createMock(Client::class);
+        $clientMock->expects(self::once())
+            ->method('getTable')
+            ->with($expectedTableId)
+            ->willReturn([
+                'id' => $expectedTableId,
+                'displayName' => 'my-name',
+                'name' => 'my-name',
+                'columns' => [],
+                'lastImportDate' => null,
+                'lastChangeDate' => null,
+            ])
+        ;
+
+        $loadTask = $this->createMock(LoadTableTask::class);
+        $loadTask->expects(self::once())
+            ->method('getStorageJobIds')
+            ->willReturn(['123'])
+        ;
+        $loadTask->expects(self::once())
+            ->method('applyMetadata')
+        ;
+
+        $refreshTask = $this->createMock(DeferredTaskInterface::class);
+        $refreshTask->expects(self::once())
+            ->method('getStorageJobIds')
+            ->willReturn(['456'])
+        ;
+
+        $clientWrapperMock = $this->createMock(ClientWrapper::class);
+        $clientWrapperMock->method('getTableAndFileStorageClient')
+            ->willReturn($clientMock);
+        $clientWrapperMock->method('getBranchClient')
+            ->willReturn($branchClientMock);
+
+        $loadQueue = new LoadTableQueue($clientWrapperMock, new NullLogger(), [$loadTask, $refreshTask]);
+        $jobIds = $loadQueue->waitForAll();
+
+        self::assertSame(['123', '456'], $awaitedJobIds);
+        self::assertSame(['123', '456'], $jobIds);
+
+        // a job without a destination table contributes no table metrics
+        $tablesMetrics = $loadQueue->getTableResult()->getMetrics()?->getTableMetrics();
+        self::assertNotNull($tablesMetrics);
+        self::assertCount(1, $tablesMetrics);
+    }
+
+    public function testWaitForAllWithFailedTaskWithoutDestinationTableThrowsInvalidOutputException(): void
+    {
+        $jobResult = [
+            'operationName' => 'refreshStorageBuckets',
+            'status' => 'error',
+            'error' => [
+                'message' => 'Workspace "1234" not found.',
+            ],
+        ];
+
+        $branchClientMock = $this->createMock(BranchAwareClient::class);
+        $branchClientMock->expects(self::once())
+            ->method('waitForJob')
+            ->with('456')
+            ->willReturn($jobResult)
+        ;
+
+        $refreshTask = $this->createMock(DeferredTaskInterface::class);
+        $refreshTask->expects(self::once())
+            ->method('getStorageJobIds')
+            ->willReturn(['456'])
+        ;
+        $refreshTask->expects(self::once())
+            ->method('getFailedJobError')
+            ->with('456', $jobResult)
+            ->willReturn('Failed to refresh metadata of direct-grant tables (Storage job "456"): '
+                . 'Workspace "1234" not found.')
+        ;
+
+        $clientWrapperMock = $this->createMock(ClientWrapper::class);
+        $clientWrapperMock->method('getTableAndFileStorageClient')
+            ->willReturn($this->createMock(Client::class));
+        $clientWrapperMock->method('getBranchClient')
+            ->willReturn($branchClientMock);
+
+        $loadQueue = new LoadTableQueue($clientWrapperMock, new NullLogger(), [$refreshTask]);
+
+        $this->expectException(InvalidOutputException::class);
+        $this->expectExceptionMessage(
+            'Failed to refresh metadata of direct-grant tables (Storage job "456"): Workspace "1234" not found.',
+        );
+        $loadQueue->waitForAll();
+    }
+
+    public function testStart(): void
+    {
+        $clientWrapperMock = $this->createMock(ClientWrapper::class);
+
+        $loadTask = $this->createMock(LoadTableTask::class);
+        $loadTask->expects(self::once())
+            ->method('start')
+            ->with($clientWrapperMock)
+        ;
 
         $loadQueue = new LoadTableQueue($clientWrapperMock, new NullLogger(), [$loadTask]);
         $loadQueue->start();
     }
 
-    public function testStartFailureWithSapiUserErrorThrowsInvalidOutputException(): void
+    public function testStartPropagatesFailureOfTask(): void
     {
         $clientException = new ClientException('Hi', 444);
 
         $loadTask = $this->createMock(LoadTableTask::class);
         $loadTask->expects(self::once())
-            ->method('startImport')
-            ->with($this->callback(function ($client) {
-                self::assertInstanceOf(Client::class, $client);
-                return true;
-            }))
-            ->willThrowException($clientException)
-        ;
-        $loadTask->expects(self::once())
-            ->method('getDestinationTableName')
-            ->willReturn('out.c-test.test-table')
-        ;
-
-        $clientWrapperMock = $this->createMock(ClientWrapper::class);
-        $clientWrapperMock->method('getTableAndFileStorageClient')
-            ->willReturn($this->createMock(Client::class));
-
-        try {
-            $loadQueue = new LoadTableQueue($clientWrapperMock, new NullLogger(), [$loadTask]);
-            $loadQueue->start();
-            self::fail('LoadTableQueue should fail with InvalidOutputException');
-        } catch (InvalidOutputException $e) {
-            self::assertSame('Hi [out.c-test.test-table]', $e->getMessage());
-            self::assertSame(444, $e->getCode());
-            self::assertSame($clientException, $e->getPrevious());
-        }
-    }
-
-    public function testStartFailureWithSapiAppErrorPropagatesErrorFromClient(): void
-    {
-        $clientException = new ClientException('Hi', 500);
-
-        $loadTask = $this->createMock(LoadTableTask::class);
-        $loadTask->expects(self::once())
-            ->method('startImport')
-            ->with($this->callback(function ($client) {
-                self::assertInstanceOf(Client::class, $client);
-                return true;
-            }))
+            ->method('start')
             ->willThrowException($clientException)
         ;
 
-        $clientWrapperMock = $this->createMock(ClientWrapper::class);
-        $clientWrapperMock->method('getTableAndFileStorageClient')
-            ->willReturn($this->createMock(Client::class));
+        $loadQueue = new LoadTableQueue($this->createMock(ClientWrapper::class), new NullLogger(), [$loadTask]);
 
         try {
-            $loadQueue = new LoadTableQueue($clientWrapperMock, new NullLogger(), [$loadTask]);
             $loadQueue->start();
             self::fail('LoadTableQueue should fail with ClientException');
         } catch (ClientException $e) {
             self::assertSame($clientException, $e);
+        }
+    }
+
+    public function testStartEnqueuesTasksInOrderUntilOneFails(): void
+    {
+        $startedTasks = [];
+
+        $firstTask = $this->createMock(DeferredTaskInterface::class);
+        $firstTask->expects(self::once())
+            ->method('start')
+            ->willReturnCallback(function () use (&$startedTasks): void {
+                $startedTasks[] = 'first';
+            })
+        ;
+
+        $failingTask = $this->createMock(LoadTableTask::class);
+        $failingTask->expects(self::once())
+            ->method('start')
+            ->willReturnCallback(function () use (&$startedTasks): void {
+                $startedTasks[] = 'failing';
+                throw new ClientException('Hi', 444);
+            })
+        ;
+
+        $lastTask = $this->createMock(LoadTableTask::class);
+        $lastTask->expects(self::never())
+            ->method('start')
+        ;
+
+        $loadQueue = new LoadTableQueue(
+            $this->createMock(ClientWrapper::class),
+            new NullLogger(),
+            [$firstTask, $failingTask, $lastTask],
+        );
+
+        try {
+            $loadQueue->start();
+            self::fail('LoadTableQueue should fail with ClientException');
+        } catch (ClientException) {
+            self::assertSame(['first', 'failing'], $startedTasks);
         }
     }
 
@@ -161,15 +296,20 @@ class LoadTableQueueTest extends TestCase
 
         $loadTask = $this->createMock(LoadTableTask::class);
         $loadTask->expects(self::never())
-            ->method('startImport')
+            ->method('start')
         ;
         $loadTask->expects(self::exactly(2))
             ->method('getDestinationTableName')
             ->willReturn('myTable')
         ;
         $loadTask->expects($this->atLeastOnce())
-            ->method('getStorageJobId')
-            ->willReturn('123')
+            ->method('getStorageJobIds')
+            ->willReturn(['123'])
+        ;
+        $loadTask->expects(self::once())
+            ->method('getFailedJobError')
+            ->with('123', $this->anything())
+            ->willReturn('Failed to load table "myTable": Table with displayName "test" already exists.')
         ;
 
         $clientWrapperMock = $this->createMock(ClientWrapper::class);
@@ -237,15 +377,15 @@ class LoadTableQueueTest extends TestCase
 
         $loadTask = $this->createMock(LoadTableTask::class);
         $loadTask->expects(self::never())
-            ->method('startImport')
+            ->method('start')
         ;
         $loadTask->expects(self::once())
             ->method('getDestinationTableName')
             ->willReturn('myTable')
         ;
         $loadTask->expects(self::once())
-            ->method('getStorageJobId')
-            ->willReturn('123')
+            ->method('getStorageJobIds')
+            ->willReturn(['123'])
         ;
 
         $clientException = new ClientException('Hi', 444, null, null, ['errors' => ['bar' => 'Kochba']]);
@@ -326,11 +466,11 @@ class LoadTableQueueTest extends TestCase
 
         $loadTask = $this->createMock(LoadTableTask::class);
         $loadTask->expects(self::never())
-            ->method('startImport')
+            ->method('start')
         ;
         $loadTask->expects(self::once())
-            ->method('getStorageJobId')
-            ->willReturn('123')
+            ->method('getStorageJobIds')
+            ->willReturn(['123'])
         ;
         $loadTask->expects(self::once())
             ->method('applyMetadata')
@@ -388,11 +528,11 @@ class LoadTableQueueTest extends TestCase
 
         $loadTask = $this->createMock(LoadTableTask::class);
         $loadTask->expects(self::never())
-            ->method('startImport')
+            ->method('start')
         ;
         $loadTask->expects(self::once())
-            ->method('getStorageJobId')
-            ->willReturn('123')
+            ->method('getStorageJobIds')
+            ->willReturn(['123'])
         ;
 
         $clientException = new ClientException('Hi', 500);
@@ -493,11 +633,11 @@ class LoadTableQueueTest extends TestCase
 
         $loadTask = $this->createMock(LoadTableTask::class);
         $loadTask->expects(self::never())
-            ->method('startImport')
+            ->method('start')
         ;
         $loadTask->expects(self::once())
-            ->method('getStorageJobId')
-            ->willReturn('123')
+            ->method('getStorageJobIds')
+            ->willReturn(['123'])
         ;
         $loadTask->expects(self::once())
             ->method('applyMetadata')
@@ -617,6 +757,10 @@ class LoadTableQueueTest extends TestCase
             ->willReturn(true);
         $loadTask->method('getDestinationTableName')
             ->willReturn('my-table');
+        $loadTask->method('getStorageJobIds')
+            ->willReturn(['123']);
+        $loadTask->method('getFailedJobError')
+            ->willReturn('Failed to load table "my-table": Hi');
 
         $clientWrapperMock = $this->createMock(ClientWrapper::class);
         $clientWrapperMock->method('getTableAndFileStorageClient')
@@ -700,8 +844,8 @@ class LoadTableQueueTest extends TestCase
 
         $loadTask = $this->createMock(LoadTableTask::class);
         $loadTask->expects(self::once())
-            ->method('getStorageJobId')
-            ->willReturn('123')
+            ->method('getStorageJobIds')
+            ->willReturn(['123'])
         ;
         $loadTask->expects(self::once())
             ->method('applyMetadata')
@@ -767,7 +911,7 @@ class LoadTableQueueTest extends TestCase
         ;
 
         $loadTask = $this->createMock(LoadTableTask::class);
-        $loadTask->method('getStorageJobId')->willReturn('123');
+        $loadTask->method('getStorageJobIds')->willReturn(['123']);
         $loadTask->method('getDestinationTableName')->willReturn($tableId);
         $loadTask->expects(self::once())->method('applyMetadata');
 
@@ -839,7 +983,7 @@ class LoadTableQueueTest extends TestCase
         ;
 
         $loadTask = $this->createMock(LoadTableTask::class);
-        $loadTask->expects(self::once())->method('getStorageJobId')->willReturn('123');
+        $loadTask->expects(self::once())->method('getStorageJobIds')->willReturn(['123']);
         $loadTask->expects(self::once())->method('applyMetadata');
 
         $clientWrapperMock = $this->createMock(ClientWrapper::class);
@@ -893,9 +1037,10 @@ class LoadTableQueueTest extends TestCase
         ;
 
         $loadTask = $this->createMock(LoadTableTask::class);
-        $loadTask->expects(self::once())->method('getStorageJobId')->willReturn('123');
+        $loadTask->expects(self::once())->method('getStorageJobIds')->willReturn(['123']);
         $loadTask->expects(self::once())->method('isUsingFreshlyCreatedTable')->willReturn(true);
         $loadTask->method('getDestinationTableName')->willReturn($tableId);
+        $loadTask->method('getFailedJobError')->willReturn(sprintf('Failed to load table "%s": Hi', $tableId));
 
         $clientWrapperMock = $this->createMock(ClientWrapper::class);
         $clientWrapperMock->method('getTableAndFileStorageClient')
@@ -982,7 +1127,7 @@ class LoadTableQueueTest extends TestCase
         $loadTasks = [];
         foreach (['123', '456'] as $jobId) {
             $loadTask = $this->createMock(LoadTableTask::class);
-            $loadTask->expects(self::once())->method('getStorageJobId')->willReturn($jobId);
+            $loadTask->expects(self::once())->method('getStorageJobIds')->willReturn([$jobId]);
             $loadTask->expects(self::once())->method('applyMetadata');
             $loadTask->method('getDestinationTableName')->willReturn($tableId);
             $loadTasks[] = $loadTask;

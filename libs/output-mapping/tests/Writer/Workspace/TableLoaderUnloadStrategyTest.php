@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping\Tests;
 
+use Keboola\OutputMapping\DeferredTasks\LoadTableQueue;
 use Keboola\OutputMapping\Mapping\MappingFromRawConfiguration;
 use Keboola\OutputMapping\OutputMappingSettings;
 use Keboola\OutputMapping\SystemMetadata;
@@ -64,9 +65,6 @@ class TableLoaderUnloadStrategyTest extends AbstractTestCase
 
         $tables = $this->clientWrapper->getTableAndFileStorageClient()->listTables($this->emptyOutputBucketId);
         self::assertCount(0, $tables, 'No tables should be imported when unload_strategy is direct-grant');
-
-        // Direct-grant configurations are filtered,
-        // so they don't go through the loading cycle and no loading message is logged
     }
 
     #[NeedsEmptyOutputBucket]
@@ -174,18 +172,12 @@ class TableLoaderUnloadStrategyTest extends AbstractTestCase
         );
 
         $result = $tableLoader->uploadTables($configuration, $systemMetadata);
+        self::assertSame(1, $result->getTaskCount(), 'Only the table load job is queued, no metadata refresh');
         $result->waitForAll();
 
         $tables = $this->clientWrapper->getTableAndFileStorageClient()->listTables($this->emptyOutputBucketId);
         self::assertCount(1, $tables, 'Table should be imported when unload_strategy is not set');
         self::assertEquals($this->emptyOutputBucketId . '.table1', $tables[0]['id']);
-
-        $logRecords = $this->testHandler->getRecords();
-        $unloadWarnings = array_filter(
-            $logRecords,
-            fn($record) => is_string($record['message']) && str_contains($record['message'], 'Workspace unload failed'),
-        );
-        self::assertCount(0, $unloadWarnings, 'Should not attempt workspace unload when no direct-grant mappings');
     }
 
     #[NeedsEmptyOutputBucket]
@@ -244,5 +236,69 @@ class TableLoaderUnloadStrategyTest extends AbstractTestCase
         $tables = $this->clientWrapper->getTableAndFileStorageClient()->listTables($this->emptyOutputBucketId);
         self::assertCount(1, $tables, 'Only non-direct-grant table should be imported');
         self::assertEquals($this->emptyOutputBucketId . '.table2', $tables[0]['id']);
+    }
+
+    #[NeedsEmptyOutputBucket]
+    public function testDirectGrantMetadataRefreshIsAwaited(): void
+    {
+        $destinationTableId = $this->emptyOutputBucketId . '.table1';
+        $this->initDirectGrantWorkspace($destinationTableId);
+
+        $tableQueue = $this->uploadDirectGrantTable($destinationTableId);
+
+        self::assertSame(1, $tableQueue->getTaskCount(), 'The metadata refresh job is the only queued job');
+        self::assertSame([], $tableQueue->getLoadTableTasks(), 'A direct-grant table has no table load job');
+
+        $jobIds = $tableQueue->waitForAll();
+        self::assertCount(1, $jobIds, 'The refresh job of the workspace is awaited');
+
+        $job = $this->clientWrapper->getBranchClient()->getJob((int) $jobIds[0]);
+        self::assertSame('refreshStorageBuckets', $job['operationName']);
+    }
+
+    private function initDirectGrantWorkspace(string $destinationTableId): void
+    {
+        $this->initConfigurationWorkspace([
+            [
+                'source' => 'table1a',
+                'destination' => $destinationTableId,
+                'unload_strategy' => 'direct-grant',
+            ],
+        ]);
+    }
+
+    private function uploadDirectGrantTable(string $destinationTableId): LoadTableQueue
+    {
+        $tableLoader = $this->getTableLoader(
+            clientWrapper: $this->clientWrapper,
+            logger: $this->testLogger,
+            strategyFactory: $this->getWorkspaceStagingFactory(
+                clientWrapper: $this->clientWrapper,
+                logger: $this->testLogger,
+            ),
+        );
+
+        return $tableLoader->uploadTables(
+            new OutputMappingSettings(
+                [
+                    'mapping' => [
+                        [
+                            'source' => 'table1a',
+                            'destination' => $destinationTableId,
+                            'unload_strategy' => 'direct-grant',
+                        ],
+                    ],
+                ],
+                '',
+                $this->clientWrapper->getToken(),
+                false,
+                OutputMappingSettings::DATA_TYPES_SUPPORT_NONE,
+            ),
+            new SystemMetadata([
+                'componentId' => 'testComponent',
+                'configurationId' => 'metadata-write-test',
+                'runId' => '1234567',
+            ]),
+        );
     }
 }

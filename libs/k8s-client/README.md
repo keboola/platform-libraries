@@ -9,8 +9,8 @@ it in many ways:
 
 ## Usage
 To create a client, first pick a `Keboola\K8sClient\ClientFactory\KubernetesApiClientFactory` implementation that
-matches how you obtain credentials, then use it together with the universal `KubernetesApiClientFacadeFactory` to
-build the high-level facade:
+matches how you obtain credentials, then pass the `KubernetesApiClient` it produces to
+`KubernetesApiClientFacade::create()` to build the high-level facade:
 * `StaticKubernetesApiClientFactory` if you have explicit cluster credentials
 * `InClusterKubernetesApiClientFactory` if you run inside a Pod which has access to K8S API
 * `EnvVariablesKubernetesApiClientFactory` if credentials are provided via `K8S_HOST`/`K8S_TOKEN`/`K8S_CA_CERT_PATH`/`K8S_NAMESPACE` env variables

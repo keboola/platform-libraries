@@ -2,162 +2,56 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Library Purpose
+`README.md` covers usage, the credential factories, CRD registration, Symfony wiring, the Terraform-based
+local cluster setup and the steps for implementing a new API. Root `CLAUDE.md` has the monorepo conventions
+(Docker workflow, commit format, coding standards). This file only adds what neither covers.
 
-High-level Kubernetes client library built on top of `kubernetes/php-client`. Provides enhanced functionality including:
-- Connection to multiple clusters
-- Automatic result type handling (transparent `Status` vs actual response)
-- Integrated retries for networking problems
-- High-level operations (`createModels`, `deleteModels`, `waitWhileExists`, etc.)
+## Commands
 
-## Development Commands
-
-All commands must be run inside the Docker container:
+Docker service `dev-k8s-client` (PHP 8.2); no environment variables for unit tests.
 
 ```bash
-# Enter the container
-docker compose run --rm dev-k8s-client bash
-
-# Inside container - install dependencies
-composer install
-
-# Run tests
-composer tests          # PHPUnit
-composer ci             # Full CI suite (validate + phpcs + phpstan + tests)
-
-# Code quality
-composer phpcs          # Check code style
-composer phpcbf         # Fix code style automatically
-composer phpstan        # Static analysis (level: max)
+docker compose run --rm dev-k8s-client composer ci   # validate + phpcs + phpstan + tests
+docker compose run --rm dev-k8s-client vendor/bin/phpunit --filter testCreateAndDeletePod tests/ApiClient/PodsApiClientFunctionalTest.php
 ```
 
-**Note:** This library uses PHP 8.2 and does NOT require environment variables for local development or unit tests.
+`composer phpcs` scans `.` with `--ignore=vendor,cache,Kernel.php`, not `src tests`.
 
-### Running Individual Tests
-
-```bash
-# Run specific test file
-docker compose run --rm dev-k8s-client bash -c "vendor/bin/phpunit tests/ApiClient/PodsApiClientFunctionalTest.php"
-
-# Run specific test method
-docker compose run --rm dev-k8s-client bash -c "vendor/bin/phpunit --filter testCreateAndDeletePod tests/ApiClient/PodsApiClientFunctionalTest.php"
-```
+`*FunctionalTest.php` files under `tests/ApiClient/` need a real cluster provisioned via `provisioning/`
+(see README); everything else runs offline.
 
 ## Architecture
 
-### Three-Layer Structure
+Three layers, and the split inside the first one is the part that isn't obvious from the README:
 
-1. **ClientFactory** - Two separate concerns, both under `Keboola\K8sClient\ClientFactory\`:
-   - Client factories (`KubernetesApiClientFactory` implementations) resolve credentials and produce a single
-     configured `KubernetesApiClient`:
-     - `StaticKubernetesApiClientFactory` - For explicit cluster credentials
-     - `InClusterKubernetesApiClientFactory` - For Pods running inside K8s (uses service account)
-     - `EnvVariablesKubernetesApiClientFactory` - Loads config from environment variables
-     - `AutoDetectKubernetesApiClientFactory` - Tries env variables first, falls back to in-cluster
-   - `KubernetesApiClientFacadeFactory` - Universal factory that assembles a `KubernetesApiClientFacade` from any
-     already-configured `KubernetesApiClient` (regardless of which client factory produced it), via `create()`
-   - `ClientConfigurator` / `Token\{TokenInterface,StaticToken,InClusterToken}` - shared low-level helpers used by
-     the client factories to configure the underlying `kubernetes/php-client` `Client` singleton
+1. **`ClientFactory\`** holds two different things. The `KubernetesApiClientFactory` implementations
+   (`Static`, `InCluster`, `EnvVariables`, `AutoDetect`) resolve credentials and produce a single configured
+   `KubernetesApiClient`. Alongside them, `ClientConfigurator` and `Token\{TokenInterface, StaticToken,
+   InClusterToken}` are shared low-level helpers those factories use to configure the underlying
+   `kubernetes/php-client` `Client` **singleton** — which is why multi-cluster support has to go through
+   this indirection rather than instantiating the vendor client directly.
+2. **`KubernetesApiClientFacade`** is built by its own static `create()` (there is no separate facade
+   factory class) and holds `$resourceTypeClientMap`, keyed by model class. `client(string $modelClass)`
+   resolves any registered type, and the generic methods (`createModels`, `deleteModels`, `mergePatch`, …)
+   route through the same map — so consumer-supplied CRD clients passed via `$extraClients` work with the
+   generic methods too, not just `client()`.
+3. **`ApiClient\` wrappers** extend `BaseNamespaceApiClient` or `BaseClusterApiClient`, which absorb the
+   `Status`-vs-resource result ambiguity of the vendor client and apply `keboola/retry` retries.
 
-2. **KubernetesApiClientFacade** - High-level facade providing:
-   - Type-safe resource operations (`createModels`, `deleteModels`, `mergePatch`, etc.)
-   - Convenience methods for multiple resources at once
-   - Waiting operations (`waitWhileExists`)
-   - Resource listing with pagination (`listMatching`)
-   - Access to specific API clients via getters
-   - `client(string $modelClass)` - generic accessor resolving any registered resource type (core or extra)
-   - `$extraClients` constructor param - lets consumers register their own CRD API clients (e.g. custom
-     Keboola CRDs) without the library needing to own the model/BaseApi/typed-client classes for them
+Currently wrapped: `ConfigMaps`, `Events`, `Ingresses`, `PersistentVolumeClaims`, `Pods` (including log
+streaming via `BaseApi\PodWithLogStream`), `Secrets`, `Services` — all namespace-scoped — plus
+`PersistentVolumes`, the only cluster-scoped one.
 
-3. **ApiClient Wrappers** - Namespace/cluster-scoped API wrappers
-   - Wrap `kubernetes/php-client` API classes
-   - Handle automatic result type detection (Status vs resource)
-   - Integrated retry logic via `keboola/retry`
-   - Base classes: `BaseNamespaceApiClient`, `BaseClusterApiClient`
+`Event::class` is deliberately excluded from the resource list the facade reports for generic operations;
+events are read-only and must not be swept into `createModels` / `deleteModels`.
 
-### Supported Resources
+The library owns **no** Keboola CRD model classes. Consumers (e.g. sandboxes-service's `App`/`AppRun`)
+implement their own model/BaseApi/typed-client and register them through `$extraClients`.
 
-**Namespace-scoped:**
-- `ConfigMapsApiClient` - ConfigMaps
-- `EventsApiClient` - Events
-- `IngressesApiClient` - Ingresses
-- `PersistentVolumeClaimsApiClient` - PVCs
-- `PodsApiClient` - Pods (includes log streaming)
-- `SecretsApiClient` - Secrets
-- `ServicesApiClient` - Services
+## Tooling specifics
 
-**Cluster-scoped:**
-- `PersistentVolumesApiClient` - PVs
-
-### Custom Resources (CRDs)
-
-The library does not own any custom Keboola CRD (model/BaseApi/typed-client) classes itself. Consumers that
-need a custom CRD (e.g. the `App`/`AppRun` CRDs used by sandboxes-service for billing) implement their own
-model/BaseApi/typed-client classes and register the typed client via `KubernetesApiClientFacade`'s
-`$extraClients` constructor param; it is then accessed through `client(SomeModel::class)`.
-
-## Implementing New API Support
-
-To add support for a new Kubernetes API:
-
-1. **Create API client wrapper** in `src/ApiClient/`:
-   - Extend `BaseNamespaceApiClient` (for namespaced resources) or `BaseClusterApiClient` (for cluster-scoped)
-   - Wrap corresponding `kubernetes/php-client` API class
-   - Handle result types automatically (most methods already handled by base class)
-
-2. **Update `KubernetesApiClientFacade`**:
-   - Inject new API client via constructor
-   - Add getter method (e.g., `public function myResource(): MyResourceApiClient`)
-   - Add resource class to `$resourceTypeClientMap` array
-   - Update type annotations for generic methods (`createModels`, `deleteModels`, etc.)
-
-3. **Update `KubernetesApiClientFacadeFactory::create()`** in `ClientFactory/`:
-   - Instantiate new API client and inject into facade
-
-## Code Quality Standards
-
-### PHPStan Configuration
-- Level: `max`
-- Custom ignoreErrors: `missingType.iterableValue` (broad, library-wide)
-- Stub file: `tests/stubs/K8s.stub` for external type definitions
-
-### PHP_CodeSniffer
-Uses `keboola/coding-standard` with exclusions:
-- Excludes type hint sniffs (library has some untyped parameters for compatibility)
-
-## Testing
-
-### Test Structure
-- Unit tests: `tests/` - No K8s cluster required
-- Functional tests: `tests/ApiClient/*FunctionalTest.php` - Require real K8s cluster
-
-### Local Development Setup
-
-Functional tests require a Kubernetes cluster. Use Terraform to provision local resources:
-
-```bash
-export NAME_PREFIX=your-name  # Make resources unique
-
-cat <<EOF > ./provisioning/local/terraform.tfvars
-name_prefix = "${NAME_PREFIX}"
-EOF
-
-terraform -chdir=./provisioning/local init -backend-config="key=k8s-client/${NAME_PREFIX}.tfstate"
-terraform -chdir=./provisioning/local apply
-./provisioning/local/update-env.sh azure  # or aws
-```
-
-This creates test clusters and generates environment variables for functional tests.
-
-## Commit Message Format
-
-Since this is part of a monorepo, use Conventional Commits with library name:
-
-```
-<type>(k8s-client): <description>
-```
-
-Examples:
-- `feat(k8s-client): add support for DaemonSets API`
-- `fix(k8s-client): handle timeout in waitWhileExists correctly`
-- `refactor(k8s-client): extract retry configuration to factory`
+- PHPStan runs at `level: max` with a library-wide `missingType.iterableValue` ignore and
+  `tests/stubs/K8s.stub` supplying types the vendor package doesn't declare. New code should not need to
+  extend that ignore.
+- `phpcs.xml` excludes the Slevomat parameter/property/return type-hint sniffs, because the vendor client's
+  signatures force untyped boundaries in the wrappers.

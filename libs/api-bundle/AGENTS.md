@@ -20,7 +20,7 @@ it on every green build and force-pushes the result, so any commit made there is
 - If the checkout you are in has no `libs/` directory at its root, you are in the mirror. Stop, clone
   `keboola/platform-libraries`, and make the change in `libs/api-bundle/` there.
 - Commit messages are Conventional Commits scoped to the library: `fix(api-bundle): …`.
-- A release is a `api-bundle/<version>` tag pushed in the monorepo; the mirror's tag is derived from it
+- A release is an `api-bundle/<version>` tag pushed in the monorepo; the mirror's tag is derived from it
   with the `api-bundle/` prefix stripped.
 - Monorepo-wide conventions (Docker-based dev workflow, coding standards, CI layout) are in the monorepo's
   root `AGENTS.md`.

@@ -19,7 +19,7 @@ into it on every green build and force-pushes the result, so any commit made the
 - If the checkout you are in has no `libs/` directory at its root, you are in the mirror. Stop, clone
   `keboola/platform-libraries`, and make the change in `libs/input-mapping/` there.
 - Commit messages are Conventional Commits scoped to the library: `fix(input-mapping): …`.
-- A release is a `input-mapping/<version>` tag pushed in the monorepo; the mirror's tag is derived from
+- A release is an `input-mapping/<version>` tag pushed in the monorepo; the mirror's tag is derived from
   it with the `input-mapping/` prefix stripped.
 - Monorepo-wide conventions (Docker-based dev workflow, coding standards, CI layout) are in the monorepo's
   root `AGENTS.md`.

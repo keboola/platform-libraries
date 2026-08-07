@@ -18,7 +18,7 @@ into it on every green build and force-pushes the result, so any commit made the
 - If the checkout you are in has no `libs/` directory at its root, you are in the mirror. Stop, clone
   `keboola/platform-libraries`, and make the change in `libs/azure-api-client/` there.
 - Commit messages are Conventional Commits scoped to the library: `fix(azure-api-client): …`.
-- A release is a `azure-api-client/<version>` tag pushed in the monorepo; the mirror's tag is derived
+- A release is an `azure-api-client/<version>` tag pushed in the monorepo; the mirror's tag is derived
   from it with the `azure-api-client/` prefix stripped.
 - Monorepo-wide conventions (Docker-based dev workflow, coding standards, CI layout) are in the monorepo's
   root `AGENTS.md`.

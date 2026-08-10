@@ -1,129 +1,173 @@
 # Staging Provider
 
-[![Build Status](https://dev.azure.com/keboola-dev/wokspace-provider/_apis/build/status/keboola.staging-provider?branchName=main)](https://dev.azure.com/keboola-dev/wokspace-provider/_build/latest?definitionId=69&branchName=main)
+Defines the *staging* vocabulary shared by [`keboola/input-mapping`](../input-mapping) and
+[`keboola/output-mapping`](../output-mapping), and wraps the lifecycle of Keboola Connection workspaces.
+
+It answers two questions:
+
+* **Where does data live during a job?** — `Staging\StagingType` and `Staging\StagingProvider`
+* **How do I get a workspace to put it in?** — `Workspace\WorkspaceProvider`
+
+The library itself does no reading or writing; the mapping libraries build their strategies from what it
+exposes.
 
 ## Installation
 
-`composer require keboola/staging-provider`
+```bash
+composer require keboola/staging-provider
+```
 
-## Usage
+## Staging types
 
-The staging provider package helps you to properly configure input/output staging factory for various environments.
+`Staging\StagingType` is the enum both mapping libraries branch on:
 
-Typical use-case can be set up a `Reader` instance to access some data:
+| `StagingType`         | value                  | `StagingClass` |
+|-----------------------|------------------------|----------------|
+| `Local`               | `local`                | `Disk`         |
+| `S3`                  | `s3`                   | `Disk`         |
+| `Abs`                 | `abs`                  | `Disk`         |
+| `WorkspaceSnowflake`  | `workspace-snowflake`  | `Workspace`    |
+| `WorkspaceBigquery`   | `workspace-bigquery`   | `Workspace`    |
+| `None`                | `none`                 | `None`         |
+
+`StagingType::getStagingClass()` collapses the type into the coarse distinction the rest of the code cares
+about — data on disk versus data in a database workspace.
+
+## `StagingProvider`
+
+`Staging\StagingProvider` resolves a staging type plus a local path plus an optional workspace id into the
+four staging slots a mapping run needs:
+
+```php
+use Keboola\StagingProvider\Staging\StagingProvider;
+use Keboola\StagingProvider\Staging\StagingType;
+
+$stagingProvider = new StagingProvider(
+    StagingType::WorkspaceSnowflake,
+    '/data',            // local staging path
+    '1234',             // staging workspace id, or null for disk staging
+);
+
+$stagingProvider->getStagingType();          // StagingType::WorkspaceSnowflake
+$stagingProvider->getTableDataStaging();     // WorkspaceStaging('1234')
+$stagingProvider->getTableMetadataStaging(); // LocalStaging('/data')
+$stagingProvider->getFileDataStaging();      // LocalStaging('/data')
+$stagingProvider->getFileMetadataStaging();  // LocalStaging('/data')
+```
+
+Only **table data** ever lives in a workspace. Files, file metadata and table metadata (manifests) are
+always local, whatever the staging type — which is why the provider exposes four separate getters rather
+than one staging object.
+
+The constructor enforces that a workspace id is passed exactly when the staging class is `Workspace`, and
+throws `InvalidArgumentException` otherwise.
+
+Both staging kinds implement `Staging\StagingInterface`:
+
+* `Staging\File\LocalStaging` (`FileStagingInterface`) — exposes `getPath()`
+* `Staging\Workspace\WorkspaceStaging` (`WorkspaceStagingInterface`) — exposes `getWorkspaceId()`
+
+`Staging\File\FileFormat` (`json` / `yaml`) is the manifest format, passed by the mapping libraries to their
+strategies.
+
+Wiring the provider into a reader:
 
 ```php
 use Keboola\InputMapping\Reader;
-use Keboola\InputMapping\Staging\StrategyFactory as InputStrategyFactory;
-use Keboola\StagingProvider\InputProviderInitializer;
-use Keboola\StagingProvider\Workspace\ExistingWorkspaceProvider;
-use Keboola\StorageApi\Client;
+use Keboola\InputMapping\Staging\StrategyFactory;
+use Keboola\StagingProvider\Staging\File\FileFormat;
+
+$strategyFactory = new StrategyFactory($stagingProvider, $clientWrapper, $logger, FileFormat::Json);
+$reader = new Reader($clientWrapper, $logger, $strategyFactory);
+```
+
+`keboola/output-mapping` has an equivalent `StrategyFactory` used with `TableLoader` / `FileWriter`.
+
+## Workspaces
+
+`Workspace\WorkspaceProvider` wraps the Storage API `Workspaces` and `Components` clients.
+
+```php
+use Keboola\StagingProvider\Staging\StagingType;
+use Keboola\StagingProvider\Workspace\Configuration\NetworkPolicy;
+use Keboola\StagingProvider\Workspace\Configuration\NewWorkspaceConfig;
+use Keboola\StagingProvider\Workspace\SnowflakeKeypairGenerator;
+use Keboola\StagingProvider\Workspace\WorkspaceProvider;
+use Keboola\KeyGenerator\PemKeyCertificateGenerator;
+use Keboola\StorageApi\Components;
 use Keboola\StorageApi\Workspaces;
-use Keboola\StorageApiBranch\ClientWrapper;
-use Psr\Log\NullLogger;
 
-$storageApiClient = new Client(...);
-$storageApiClientWrapper = new ClientWrapper($storageApiClient, ...);
-$logger = new NullLogger();
-
-$strategyFactory = new InputStrategyFactory($storageApiClientWrapper, $logger, 'json');
-$tokenInfo = $storageApiClient->verifyToken();
-$dataDir = '/data';
-
-$workspaceProvider = new ExistingWorkspaceProvider(
+$workspaceProvider = new WorkspaceProvider(
     new Workspaces($storageApiClient),
-    'my-workspace', // workspace ID
-    new Credentials\ExistingCredentialsProvider(
-        new Configuration\WorkspaceCredentials([
-            'password' => 'abcd1234' // workspace password
-        ]),
-    ),
+    new Components($storageApiClient),
+    new SnowflakeKeypairGenerator(new PemKeyCertificateGenerator()),
 );
 
-$providerInitializer = new InputProviderInitializer($strategyFactory, $workspaceProvider, $dataDir);
-$providerInitializer->initializeProviders(
-    InputStrategyFactory::WORKSPACE_SNOWFLAKE,
-    $tokenInfo
-);
+$workspace = $workspaceProvider->createNewWorkspace($storageApiToken, new NewWorkspaceConfig(
+    stagingType: StagingType::WorkspaceSnowflake,
+    componentId: 'keboola.my-component',
+    configId: '123',            // null creates a workspace not tied to a configuration
+    size: null,
+    useReadonlyRole: null,
+    networkPolicy: NetworkPolicy::SYSTEM,
+    loginType: null,
+));
 
-// now the $strategyFactory is ready to be used
-$reader = new Reader($strategyFactory);
+$workspace->getWorkspaceId();
+$workspace->getCredentials();
 ```
 
-We start by creating a `StrategyFactory` needed by the reader. The strategy itself has no knowledge of which storage
-should be used with each staging type. This is what provider initializer does - configure the `StrategyFactory` for
-a specific type of staging.
+| Method | Purpose |
+| --- | --- |
+| `createNewWorkspace(StorageApiToken, NewWorkspaceConfig)` | Creates a workspace; returns `WorkspaceWithCredentialsInterface` |
+| `getExistingWorkspace(string $workspaceId, ?array $credentialsData)` | Loads a workspace; returns `WorkspaceInterface` when `$credentialsData` is `null`, `WorkspaceWithCredentialsInterface` otherwise |
+| `resetWorkspaceCredentials(string $workspaceId)` | Issues fresh credentials for a workspace nobody else is using |
+| `cleanupWorkspace(string $workspaceId)` | Deletes the workspace; a missing workspace (404) is not an error |
 
-To create a provider initializer, we pass it:
-* the `StrategyFactory` to initialize
-* a workspace provider, used to access workspace information for workspace staging
-  * `ExistingWorkspaceProvider` in case we want to re-use existing workspace
-  * `NewWorkspaceProvider` in case we want a new workspace to be created (based on a component configuration)
-* a data directory path used for local staging
+Notes:
 
-Then we call `initializeProviders` method to configure the `StrategyFactory` for specific staging type.  It's up to the
-caller to know, which staging type to configure:
-* when working with components, each component has staging type defined in its configuration
-* sandbox has the type deduced from its workspace
-* etc.
+* `createNewWorkspace()` first checks the project actually supports the backend (`hasSnowflake` /
+  `hasBigquery` on the token owner) and throws `Exception\StagingNotSupportedByProjectException` if not.
+  A non-workspace staging type throws `Exception\StagingProviderException`.
+* Passing a `configId` routes through `Components::createConfigurationWorkspace()` so the workspace is tied
+  to a component configuration; without it a standalone workspace is created. The resulting workspace is
+  the same either way.
+* For key-pair login (`WorkspaceLoginType`), the provider generates the keypair locally via
+  `SnowflakeKeypairGenerator`, sends only the **public** key to Connection, and merges the private key into
+  the returned workspace data. The private key is never returned by the API.
 
-The example above presents usage of `InputProviderInitializer` for configuration of input mapping `StrategyFactory` for
-a `Reader`. Similarly, we can use `OutputProviderInitializer` to configure output mapping `StrategyFactory` for a `Writer`. 
+### Workspaces with and without credentials
 
-## Internals
-The main objective of the library is to configure `StrategyFactory` so it knows which staging provider to
-use with each kind of storage.
+"I have a workspace" and "I can log into it" are separate types rather than a nullable getter:
 
-### Staging
-Generally, there are two kinds of staging:
-* local staging - used to store data locally on filesystem, represented by `LocalStaging` class
-* workspace staging - used to store data in a workspace, represented by `WorkspaceStagingInterface`
+* `Workspace\WorkspaceInterface` — `getWorkspaceId()`, `getBackendType()`, `getBackendSize()`,
+  `getLoginType()`. Enough to talk to the workspace through the Connection API.
+* `Workspace\WorkspaceWithCredentialsInterface` — adds `getCredentials()`, needed to connect to the backend
+  directly.
 
-### Provider (staging provider)
-The `StrategyFactory` does not use a staging directly but rather through a provider (`ProviderInterface`) so there is
-a provider implementation for each kind:
-* `LocalStagingProvider` - for local filesystem staging
-* `WorkspaceProviderInterface` - for Connection workspace staging
-  
-The main reason the `StrategyFactory` does not use the staging directly is to achieve lazy initialization of the staging -
-provider instance is created during bootstrap, but the staging instance is only created when really used.
+Use `getExistingWorkspace($id, null)` when you only need the former; pass a credentials array (for example
+credentials supplied by an end user, as with SQL sandboxes) to get the latter. When nobody else holds the
+credentials — a staging workspace accessed only from code — `resetWorkspaceCredentials()` is the safe way
+to obtain them.
 
-### Workspace provider factory
-Local staging is pretty simple. It contains just the path to the data directory, provided by the caller. On the other hand,
-things get a bit more complicated with workspace staging as the provider may represent an already existing workspace or
-a configuration for creating a new workspace. To achieve this, caller must provide a `WorkspaceProviderInterface`.
-Currently, there are 2 implementations:
-* `NewWorkspaceProvider` which creates a provider that creates a new workspace based on a component configuration
-* `ExistingWorkspaceProvider` which creates a provider working with an existing workspace
-
-When using `ExistingWorkspaceProvider`, a developer is responsible for providing workspace credentials. Depending on the
-situation, the following options are available:
-* `ExistingCredentialsProvider` for situation when we know the exact workspace credentials. For example, when working with
-  a workspace for which the end user provides credentials, like SQL sandbox. Credentials are in the form of a free array,
-  and it's the caller's responsibility to provide correct credentials properties (password, private key, etc.).
-* `ResetCredentialsProvider` for situation nobody else accesses the workspace, and we can safely generate new credentials.
-  This is typical when working with a staging workspace, which is accessed only through code (nobody has stored the credentials
-  anywhere).
-* `NoCredentialsProvider` for situations when we need to just work with the workspace indirectly (through Connection API)
-  and don't need credentials. When something tries to access the credentials, the provider throws an exception.
-  
 ## Development
-First start with creating `.env` file from `.env.dist`.
+
+Run everything through the library's Docker Compose service:
+
 ```bash
-cp .env.dist .env
-# edit .env to set variable values
+docker compose run --rm dev-staging-provider composer install
+docker compose run --rm dev-staging-provider composer ci     # validate + phpcs + phpstan + tests
 ```
 
-To run tests, there is a separate service for each PHP major version (5.6 to 7.4).
-For example, to run tests against PHP 5.6, run following:
-```bash
-docker compose run --rm tests56
+`tests/Workspace/WorkspaceProviderFunctionalTest.php` creates real workspaces and requires the following
+variables in the repository-root `.env` file:
+
+```
+STORAGE_API_URL=https://connection.keboola.com
+STORAGE_API_TOKEN=...
 ```
 
-To develop locally, use `dev` service. Following will install Composer dependencies:
-```bash
-docker compose run --rm dev composer install
-```
+The rest of the test suite runs without them.
 
 ## License
 

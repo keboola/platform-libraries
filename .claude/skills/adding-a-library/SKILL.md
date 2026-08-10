@@ -40,7 +40,7 @@ Create `.github/workflows/lib-<name>.yml` (copy `lib-settle.yml` for the simple 
 - `on: workflow_call: {}`
 - `concurrency: { group: <name>-lock, cancel-in-progress: false }`
 - a `tests` job: Checkout → Set up Docker Buildx → `docker compose build dev-<name>` → `docker compose run --rm dev-<name> bash -c 'composer install && composer ci'` → show logs on failure.
-- pass any required env from `secrets.*` / `vars.*` (see root `CLAUDE.md` for the variables-vs-secrets split). Add new secrets/variables there + in the repo settings.
+- pass any required env from `secrets.*` / `vars.*` (see root `AGENTS.md` for the variables-vs-secrets split). Add new secrets/variables there + in the repo settings.
 
 ### 4. Wire it into `ci.yml` (two edits)
 - Add a test job in the fan-out (these stay explicit — a reusable-workflow `uses:` cannot be matrixed):
@@ -66,7 +66,9 @@ Also add the **standalone repo name** to the `matrix.repo` list in `.github/work
 This is **not in code** — it is a one-time admin action in GitHub org settings. Without it the first publish/release for the new library fails at authentication.
 
 ### 7. Docs
-Update `libs/<name>/README.md` (required env vars) and, if it adds a new env var, the lists in root `CLAUDE.md` / `README.md`.
+Update `libs/<name>/README.md` (required env vars) and, if it adds a new env var, the lists in root `AGENTS.md` / `README.md`.
+
+Add `libs/<name>/AGENTS.md` (architecture, commands, gotchas) and the `libs/<name>/CLAUDE.md` pointer next to it — copy both from an existing library. `AGENTS.md` must keep the *"this repository is a mirror; pull requests go to the monorepo"* section, with `<name>` and `<repo>` substituted: it is the only guidance file that ends up in the standalone repo, so it is what stops an agent working there from opening an unmergeable PR against the mirror.
 
 ## Verify
 ```bash
@@ -87,7 +89,8 @@ Sanity-check detection picks it up: edit a file under `libs/<name>/`, then
 | `ci.yml` — test job **and** `tests-result` `needs:` | yes (both) |
 | `.github/actions/split-library/action.yml` `case` | only if repo name ≠ dir |
 | `.github/workflows/cleanup-branch.yml` `matrix.repo` (standalone repo name) | yes |
-| repo `CLAUDE.md`/`README.md`, repo secrets/vars | if new env vars |
+| `libs/<name>/AGENTS.md` + `CLAUDE.md` pointer | yes |
+| repo `AGENTS.md`/`README.md`, repo secrets/vars | if new env vars |
 | standalone repo + App install | yes (for publishing) |
 
 ## Gotchas

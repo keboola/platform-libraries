@@ -10,6 +10,11 @@ resource "google_pubsub_subscription" "testing_queue" {
   message_retention_duration = "3600s"
   retain_acked_messages      = false
   enable_message_ordering    = false
+
+  # without this GCP deletes the subscription after 31 days of inactivity
+  expiration_policy {
+    ttl = "" # never expire
+  }
 }
 
 resource "google_pubsub_topic_iam_binding" "messenger_bundle_iam" {

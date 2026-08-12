@@ -1,17 +1,24 @@
 name: Create release
 description: Write release notes with Claude Code and create a GitHub release in the library's standalone repo
 
-# Credentials come from the environment, not from inputs (the secrets context is not available
-# inside an action). The calling workflow must set:
-#  - SPLIT_APP_ID / SPLIT_APP_PRIVATE_KEY — the same GitHub App that pushes the tags; creating a
-#    release needs the contents:write it already has, so no separate App is needed
-#  - ANTHROPIC_API_KEY — claude-code-action falls back to this env var when given no key input
+# Every credential is an input, never job-level env: a composite action substitutes inputs into the
+# steps that name them instead of exporting them, so the App private key reaches the token step and
+# nothing else. Job-level env would put it in the environment of every step, Claude Code's included.
 inputs:
   library:
     description: Library directory name under libs/ (e.g. output-mapping)
     required: true
   version:
     description: Released version, without the library prefix (e.g. 27.10.0)
+    required: true
+  app-id:
+    description: GitHub App ID used to mint a scoped installation token
+    required: true
+  private-key:
+    description: GitHub App private key (PEM) used to mint a scoped installation token
+    required: true
+  anthropic-api-key:
+    description: Anthropic API key Claude Code uses to write the release notes
     required: true
   dry-run:
     description: Print the notes to the job summary instead of creating the release
@@ -36,8 +43,8 @@ runs:
       id: app-token
       uses: actions/create-github-app-token@v3
       with:
-        app-id: ${{ env.SPLIT_APP_ID }}
-        private-key: ${{ env.SPLIT_APP_PRIVATE_KEY }}
+        app-id: ${{ inputs.app-id }}
+        private-key: ${{ inputs.private-key }}
         owner: keboola
         repositories: ${{ steps.target.outputs.repo }}
 
@@ -65,18 +72,33 @@ runs:
         LIBRARY: ${{ inputs.library }}
         VERSION: ${{ inputs.version }}
       run: |
-        PREVIOUS_VERSION="$("${{ github.workspace }}/bin/release-context.sh" \
+        # The script prints 'previous-version=' and 'has-changes=' on stdout, progress on stderr.
+        "${{ github.workspace }}/bin/release-context.sh" \
           "${LIBRARY}" \
           "${VERSION}" \
-          "${{ github.workspace }}/.release/context.md")"
-        echo "previous-version=${PREVIOUS_VERSION}" >> "$GITHUB_OUTPUT"
+          "${{ github.workspace }}/.release/context.md" >> "$GITHUB_OUTPUT"
+
+    # A library re-released only to pick up its '*@dev' siblings has nothing for the model to
+    # describe. The body is fixed text derived from the empty commit list rather than whatever the
+    # model would make of an empty context file.
+    - name: Write release notes for a release without library changes
+      if: steps.existing.outputs.skip != 'true' && steps.context.outputs.has-changes != 'true'
+      shell: bash
+      env:
+        NOTES_FILE: ${{ github.workspace }}/.release/notes.md
+        LIBRARY: ${{ inputs.library }}
+      run: |
+        printf '%s\n' \
+          "No changes in \`libs/${LIBRARY}\` itself. Released to pick up changes in the libraries it depends on." \
+          > "${NOTES_FILE}"
 
     - name: Write release notes with Claude Code
-      if: steps.existing.outputs.skip != 'true'
+      if: steps.existing.outputs.skip != 'true' && steps.context.outputs.has-changes == 'true'
       uses: anthropics/claude-code-action@v1
       env:
         GH_TOKEN: ${{ github.token }}
       with:
+        anthropic_api_key: ${{ inputs.anthropic-api-key }}
         show_full_output: true
         prompt: |
           ## Task
@@ -132,8 +154,11 @@ runs:
 
           Write the bullets to `${{ github.workspace }}/.release/notes.md` with the Write tool. Do
           not create, change or comment on anything else.
+        # Pull request bodies are attacker-influenced input, so nothing here may reach the network:
+        # no 'gh api' (it takes arbitrary URLs), only the two read-only 'gh pr' subcommands the
+        # prompt needs. The commit -> pull request lookup already happened in release-context.sh.
         claude_args: >-
-          --allowedTools "Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh api:*),Bash(git log:*),Bash(git show:*),Bash(git diff:*),Read,Grep,Glob,Write"
+          --allowedTools "Bash(gh pr view:*),Bash(gh pr diff:*),Bash(git log:*),Bash(git show:*),Bash(git diff:*),Read,Grep,Glob,Write"
 
     # The compare link is appended here rather than by the model so it can never be wrong.
     - name: Finalize release notes
@@ -170,6 +195,8 @@ runs:
         REPO: keboola/${{ steps.target.outputs.repo }}
         VERSION: ${{ inputs.version }}
       run: |
+        # --verify-tag runs seconds after split-repo.sh pushed that tag. If this ever fails claiming
+        # the tag does not exist, suspect replication lag on the target repo before anything else.
         gh release create "${VERSION}" \
           --repo "${REPO}" \
           --title "${VERSION}" \

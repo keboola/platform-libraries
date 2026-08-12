@@ -230,9 +230,6 @@ jobs:
       fail-fast: false
       matrix:
         lib: ${{ fromJSON(needs.detect-changes.outputs.libs) }}
-    env:
-      SPLIT_APP_ID: ${{ vars.SPLIT_APP_ID }}
-      SPLIT_APP_PRIVATE_KEY: ${{ secrets.SPLIT_APP_PRIVATE_KEY }}
     steps:
       - uses: actions/checkout@v6
         with:
@@ -241,3 +238,5 @@ jobs:
       - uses: ./.github/actions/split-library
         with:
           library: ${{ matrix.lib }}
+          app-id: ${{ vars.SPLIT_APP_ID }}
+          private-key: ${{ secrets.SPLIT_APP_PRIVATE_KEY }}

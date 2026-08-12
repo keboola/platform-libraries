@@ -28,10 +28,6 @@ jobs:
   create-release:
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    env:
-      SPLIT_APP_ID: ${{ vars.SPLIT_APP_ID }}
-      SPLIT_APP_PRIVATE_KEY: ${{ secrets.SPLIT_APP_PRIVATE_KEY }}
-      ANTHROPIC_API_KEY: ${{ secrets.AI_CR_ANTHROPIC_API_KEY }}
     steps:
       - uses: actions/checkout@v6
         with:
@@ -60,3 +56,6 @@ jobs:
           library: ${{ inputs.library }}
           version: ${{ inputs.version }}
           dry-run: ${{ inputs.dry-run }}
+          app-id: ${{ vars.SPLIT_APP_ID }}
+          private-key: ${{ secrets.SPLIT_APP_PRIVATE_KEY }}
+          anthropic-api-key: ${{ secrets.AI_CR_ANTHROPIC_API_KEY }}

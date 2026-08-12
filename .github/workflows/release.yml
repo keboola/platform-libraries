@@ -12,10 +12,6 @@ jobs:
   release:
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    env:
-      SPLIT_APP_ID: ${{ vars.SPLIT_APP_ID }}
-      SPLIT_APP_PRIVATE_KEY: ${{ secrets.SPLIT_APP_PRIVATE_KEY }}
-      ANTHROPIC_API_KEY: ${{ secrets.AI_CR_ANTHROPIC_API_KEY }}
     steps:
       - uses: actions/checkout@v6
         with:
@@ -31,6 +27,7 @@ jobs:
           if ! printf '%s' "${LIB}" | grep -qE '^[a-z0-9]+(-[a-z0-9]+)*$' || [ ! -d "libs/${LIB}" ]; then
             echo "::notice::Tag '${TAG}' does not map to a library directory; skipping release."
             echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
           fi
           # Build and dev tags share the '<lib>/<something>' shape but are not releases, so they are
           # published to the standalone repo without a GitHub release being created for them.
@@ -44,8 +41,13 @@ jobs:
         if: steps.lib.outputs.skip != 'true'
         with:
           library: ${{ steps.lib.outputs.library }}
+          app-id: ${{ vars.SPLIT_APP_ID }}
+          private-key: ${{ secrets.SPLIT_APP_PRIVATE_KEY }}
       - uses: ./.github/actions/create-release
         if: steps.lib.outputs.skip != 'true' && steps.lib.outputs.skip-release != 'true'
         with:
           library: ${{ steps.lib.outputs.library }}
           version: ${{ steps.lib.outputs.version }}
+          app-id: ${{ vars.SPLIT_APP_ID }}
+          private-key: ${{ secrets.SPLIT_APP_PRIVATE_KEY }}
+          anthropic-api-key: ${{ secrets.AI_CR_ANTHROPIC_API_KEY }}

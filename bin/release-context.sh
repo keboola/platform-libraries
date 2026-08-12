@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+# Deliberately 'set -e' without '-o pipefail': the PREVIOUS_TAG pipeline below relies on a 'grep'
+# that finds nothing exiting 1 without failing the script, which is what a library's first release
+# looks like. Adding pipefail here breaks every first release.
 set -e
 
 if [[ -z ${1+x} || -z ${2+x} || -z ${3+x} ]]; then
@@ -10,7 +13,10 @@ if [[ -z ${1+x} || -z ${2+x} || -z ${3+x} ]]; then
   echo ""
   echo "Collects everything needed to write release notes for a library version: the previous"
   echo "released version, the commits that changed the library since then and the pull requests"
-  echo "those commits came from. Prints the previous version (empty for a first release) to stdout."
+  echo "those commits came from."
+  echo ""
+  echo "Prints 'previous-version=<version>' (empty for a first release) and 'has-changes=true|false'"
+  echo "to stdout, so a GitHub Actions caller can append them straight to \$GITHUB_OUTPUT."
   echo ""
   echo "Requires GH_TOKEN with read access to the monorepo pull requests."
   exit 1
@@ -57,18 +63,52 @@ else
 fi
 
 echo ">> Collecting commits in '${RANGE}' touching 'libs/${LIBRARY}'" >&2
-mapfile -t COMMITS < <(git log --format='%H' "${LOG_LIMIT[@]}" "${RANGE}" -- "libs/${LIBRARY}")
+# Assigned, not piped into 'mapfile': a failing 'git log' inside a process substitution leaves
+# mapfile succeeding on empty input, and empty input here has to be fatal, not quietly plausible.
+COMMIT_LIST="$(git log --format='%H' "${LOG_LIMIT[@]}" "${RANGE}" -- "libs/${LIBRARY}")"
+
+# An empty commit list must never be passed off as context: the model would still write *something*
+# from it, and that something is non-empty text which passes the caller's emptiness check and ships
+# as a release note. It is not an error though — 14 of the first 518 releases changed nothing in
+# their own library, because this monorepo re-releases a library to pick up the sibling libraries it
+# depends on through '*@dev'. So it is reported as has-changes=false and the caller writes a fixed
+# note instead of asking the model. A broken 'git log' or 'gh api' below stays fatal.
+if [[ -z "${COMMIT_LIST}" ]]; then
+  echo ">> No commit in '${RANGE}' changed 'libs/${LIBRARY}'" >&2
+  mkdir -p "$(dirname "${OUTPUT_FILE}")"
+  {
+    echo "# Release context"
+    echo ""
+    echo "No commit in \`${RANGE}\` changed \`libs/${LIBRARY}\`."
+  } > "${OUTPUT_FILE}"
+  echo "previous-version=${PREVIOUS_VERSION}"
+  echo "has-changes=false"
+  exit 0
+fi
+mapfile -t COMMITS <<< "${COMMIT_LIST}"
 
 # Resolve pull requests per commit rather than by parsing the merge commits in the range: the range
 # also contains merges of pull requests that changed other libraries, and a path-filtered 'git log'
 # drops the merge commits themselves. The commit -> pull request lookup maps reliably either way,
 # and also covers squash merges, which leave no merge commit at all.
 echo ">> Resolving pull requests for ${#COMMITS[@]} commit(s)" >&2
-PULL_REQUESTS="$(
-  for COMMIT in "${COMMITS[@]}"; do
-    gh api "repos/${MONOREPO}/commits/${COMMIT}/pulls" --jq '.[].number' 2> /dev/null || true
-  done | sort -un
-)"
+PULL_REQUEST_NUMBERS=()
+for COMMIT in "${COMMITS[@]}"; do
+  # No '|| true' and no discarded stderr: an expired token or a rate limit must fail the release
+  # rather than silently turn into "no pull requests found". A commit with no pull request is not
+  # an error and simply returns nothing.
+  COMMIT_PULL_REQUESTS="$(gh api "repos/${MONOREPO}/commits/${COMMIT}/pulls" --jq '.[].number')"
+  if [[ -n "${COMMIT_PULL_REQUESTS}" ]]; then
+    while read -r PULL_REQUEST; do
+      PULL_REQUEST_NUMBERS+=("${PULL_REQUEST}")
+    done <<< "${COMMIT_PULL_REQUESTS}"
+  fi
+done
+
+PULL_REQUESTS=""
+if [[ ${#PULL_REQUEST_NUMBERS[@]} -gt 0 ]]; then
+  PULL_REQUESTS="$(printf '%s\n' "${PULL_REQUEST_NUMBERS[@]}" | sort -un)"
+fi
 
 mkdir -p "$(dirname "${OUTPUT_FILE}")"
 
@@ -102,11 +142,7 @@ mkdir -p "$(dirname "${OUTPUT_FILE}")"
 
   echo "## Commits touching libs/${LIBRARY}"
   echo ""
-  if [[ ${#COMMITS[@]} -gt 0 ]]; then
-    git log --format='- `%h` %s' "${LOG_LIMIT[@]}" "${RANGE}" -- "libs/${LIBRARY}"
-  else
-    echo "None — no commit in this range changed the library."
-  fi
+  git log --format='- `%h` %s' "${LOG_LIMIT[@]}" "${RANGE}" -- "libs/${LIBRARY}"
   echo ""
 
   if [[ -n "${PREVIOUS_TAG}" ]]; then
@@ -119,4 +155,5 @@ mkdir -p "$(dirname "${OUTPUT_FILE}")"
 } > "${OUTPUT_FILE}"
 
 echo ">> Written to '${OUTPUT_FILE}'" >&2
-echo "${PREVIOUS_VERSION}"
+echo "previous-version=${PREVIOUS_VERSION}"
+echo "has-changes=true"

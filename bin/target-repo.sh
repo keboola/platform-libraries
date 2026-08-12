@@ -10,6 +10,14 @@ if [[ -z ${1+x} ]]; then
   exit 1
 fi
 
+# Both publishing actions resolve the target repo through this script before they use the library
+# name in paths, refs or repo names, so this is where the name is checked. 'libs/<library>' existing
+# is not enough on its own — 'libs/../bin' exists too.
+if ! printf '%s' "${1}" | grep -qE '^[a-z0-9]+(-[a-z0-9]+)*$'; then
+  echo "Invalid library name '${1}'; expected lowercase letters, digits and hyphens" >&2
+  exit 1
+fi
+
 # Most libraries publish to a standalone repo of the same name; these are the exceptions where the
 # target repo name differs from the library directory. This is the only place the mapping lives —
 # both the split-library and create-release actions call this script.

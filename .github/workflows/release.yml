@@ -26,7 +26,9 @@ jobs:
         run: |
           TAG="${GITHUB_REF#refs/tags/}"
           LIB="${TAG%%/*}"
-          if [ ! -d "libs/${LIB}" ]; then
+          # The name has to be checked before the path: 'libs/../bin' is an existing directory, so a
+          # tag like '../1.0.0' would otherwise look like a library.
+          if ! printf '%s' "${LIB}" | grep -qE '^[a-z0-9]+(-[a-z0-9]+)*$' || [ ! -d "libs/${LIB}" ]; then
             echo "::notice::Tag '${TAG}' does not map to a library directory; skipping release."
             echo "skip=true" >> "$GITHUB_OUTPUT"
           fi

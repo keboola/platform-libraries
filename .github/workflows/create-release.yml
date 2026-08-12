@@ -42,6 +42,11 @@ jobs:
           LIBRARY: ${{ inputs.library }}
           VERSION: ${{ inputs.version }}
         run: |
+          # Check the shape before the path: 'libs/../bin' is an existing directory.
+          if ! printf '%s' "${LIBRARY}" | grep -qE '^[a-z0-9]+(-[a-z0-9]+)*$'; then
+            echo "::error::'${LIBRARY}' is not a library name. Pass the directory name under libs/, e.g. output-mapping."
+            exit 1
+          fi
           if [ ! -d "libs/${LIBRARY}" ]; then
             echo "::error::'libs/${LIBRARY}' is not a library directory."
             exit 1

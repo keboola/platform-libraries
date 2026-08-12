@@ -18,7 +18,9 @@ runs:
       env:
         LIBRARY: ${{ inputs.library }}
       run: |
-        echo "repo=$("${{ github.workspace }}/bin/target-repo.sh" "${LIBRARY}")" >> "$GITHUB_OUTPUT"
+        # Assign first: an 'echo "repo=$(...)"' one-liner would swallow the script's exit code.
+        REPO="$("${{ github.workspace }}/bin/target-repo.sh" "${LIBRARY}")"
+        echo "repo=${REPO}" >> "$GITHUB_OUTPUT"
 
     - name: Generate GitHub App token
       id: app-token

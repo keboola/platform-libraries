@@ -1,0 +1,57 @@
+name: Create release (manual)
+
+# Releases are normally created by release.yml when a '<library>/<version>' tag is pushed. Use this
+# workflow to retry after a failed notes generation, or to create a release for a version that was
+# tagged before this automation existed. The tag must already exist in both repositories.
+on:
+  workflow_dispatch:
+    inputs:
+      library:
+        description: Library directory name under libs/ (e.g. output-mapping)
+        required: true
+        type: string
+      version:
+        description: Released version, without the library prefix (e.g. 27.10.0)
+        required: true
+        type: string
+      dry-run:
+        description: Only print the notes to the job summary, do not create the release
+        required: false
+        default: true
+        type: boolean
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  create-release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      SPLIT_APP_ID: ${{ vars.SPLIT_APP_ID }}
+      SPLIT_APP_PRIVATE_KEY: ${{ secrets.SPLIT_APP_PRIVATE_KEY }}
+      ANTHROPIC_API_KEY: ${{ secrets.AI_CR_ANTHROPIC_API_KEY }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+      - name: Validate inputs
+        env:
+          LIBRARY: ${{ inputs.library }}
+          VERSION: ${{ inputs.version }}
+        run: |
+          if [ ! -d "libs/${LIBRARY}" ]; then
+            echo "::error::'libs/${LIBRARY}' is not a library directory."
+            exit 1
+          fi
+          if ! printf '%s' "${VERSION}" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "::error::'${VERSION}' is not a version. Pass it without the library prefix, e.g. 27.10.0."
+            exit 1
+          fi
+      - uses: ./.github/actions/create-release
+        with:
+          library: ${{ inputs.library }}
+          version: ${{ inputs.version }}
+          dry-run: ${{ inputs.dry-run }}

@@ -63,7 +63,7 @@ enum Service
             self::GIT_SERVICE => 'git-service.git-service',
             self::IMPORT => 'sapi-importer.default',
             self::NOTIFICATION => 'notification-api.default',
-            self::OAUTH => 'oauth-api.default',
+            self::OAUTH => 'oauth-service-api.default',
             self::QUERY => 'query-service-api.query-service',
             self::QUEUE => 'job-queue-api.default',
             self::QUEUE_INTERNAL_API => 'job-queue-internal-api.default',

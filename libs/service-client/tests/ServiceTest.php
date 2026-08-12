@@ -63,7 +63,7 @@ class ServiceTest extends TestCase
         yield 'git service' => [Service::GIT_SERVICE, 'git-service.git-service']; // <-- custom namespace, internal-only
         yield 'import' => [Service::IMPORT, 'sapi-importer.default'];
         yield 'notification' => [Service::NOTIFICATION, 'notification-api.default'];
-        yield 'oauth' => [Service::OAUTH, 'oauth-api.default'];
+        yield 'oauth' => [Service::OAUTH, 'oauth-service-api.default'];
         yield 'queue' => [Service::QUEUE, 'job-queue-api.default'];
         yield 'queue internal api' => [Service::QUEUE_INTERNAL_API, 'job-queue-internal-api.default'];
         yield 'scheduler' => [Service::SCHEDULER, 'scheduler-api.default'];

@@ -47,6 +47,25 @@ constructor, `ApiClientOptions` and `Auth\RequestAuthenticatorInterface` as a co
 Most consumers depend on `*@dev` (the path repository) rather than a released version, so a signature
 change breaks them at `composer install` time, not at review time.
 
+This package is also pulled in **transitively**: `keboola/storage-api-client` requires it as `^1.0` since
+v18.10. That collides with the monorepo layout — the `../../libs/*` path repository is canonical and higher
+priority, so it shadows Packagist with `dev-<current branch>`, which no `^1.x` constraint can satisfy, and
+the library fails to install. Libraries hitting this pin the path version explicitly in their own
+`repositories` block (see `input-mapping`, `output-mapping`):
+
+```json
+"options": { "versions": { "keboola/php-api-client-base": "1.1.2" } }
+```
+
+Keep that pin in step with the released version when a new one is tagged. Two things that look like fixes
+but are not:
+
+- A `dev-main` **branch alias** here. CI checks out only the pull request branch, so the path repository
+  reports `dev-<branch>` and the alias never applies — it passes locally and fails in CI.
+- Requiring `keboola/php-api-client-base: "*@dev"` in the affected library. Stability flags only take
+  effect in the **root** `composer.json`, so the dev version is then rejected by every downstream consumer
+  (`output-mapping`, `job-runner`) under their own `minimum-stability: stable`.
+
 ## Design invariants to preserve
 
 - **Constructor args vs options is a semantic split, not style.** `ApiClient` constructor arguments

@@ -22,7 +22,12 @@
     "repositories": {
         "libs": {
             "type": "path",
-            "url": "../../libs/*"
+            "url": "../../libs/*",
+            "options": {
+                "versions": {
+                    "keboola/php-api-client-base": "1.1.2"
+                }
+            }
         }
     },
     "require": {

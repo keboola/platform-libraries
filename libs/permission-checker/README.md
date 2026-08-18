@@ -39,6 +39,32 @@ and throws `Keboola\PermissionChecker\Exception\PermissionException` if the chec
 
 If the checker requires any additional data or depends on some other service, it is free to require it through its constructor.
 
+## Role-less (machine) tokens
+
+A project storage token minted through the Manage API (`POST /manage/projects/{id}/tokens`) has no user
+behind it, so `tokens/verify` returns no `admin` block and `StorageApiToken::getRole()` resolves to
+`Role::NONE`. The `admin` block is returned only for admin tokens, so **every** limited (non-master)
+token resolves to `Role::NONE` as well, no matter which admin created it.
+
+`Check\Notification\CanModifySubscriptions` treats such a token like any other non-`readOnly` token:
+
+| Project | `Role::NONE` may modify subscriptions |
+| --- | --- |
+| regular project | yes, on any branch type |
+| `protected-default-branch` project | no, on any branch type |
+
+The non-SOX branch of the check is deliberately identical to `Check\OAuth\CanCreateAuthorization` — only
+`Role::READ_ONLY` is denied, everything else is allowed — so no new authorisation pattern is introduced. In a
+`protected-default-branch` project `Role::NONE` has no SOX role to map onto a branch, so it falls through to
+`default => false` and stays denied exactly as before.
+
+The trade-off, stated plainly: in a regular project **every** limited token can now create and delete
+notification subscriptions, not just automation that was meant to. This is accepted because
+`Check\JobQueue\CanRunJob` already lets `Role::NONE` run jobs in a regular project without any role or
+token-permission gate — it denies only `Role::READ_ONLY` — and running a job is the more powerful capability of
+the two. If a narrower rule is ever needed, gate it on a token permission (`TokenPermission`) the way
+`CanRunJob` does inside its `protected-default-branch` path.
+
 ## License
 
 MIT licensed, see [LICENSE](./LICENSE) file.

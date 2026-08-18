@@ -34,6 +34,26 @@ class CanModifySubscriptionsTest extends TestCase
             'token' => new StorageApiToken(role: 'guest'),
         ];
 
+        yield 'role-less token on regular project default branch' => [
+            'branchType' => BranchType::DEFAULT,
+            'token' => new StorageApiToken(role: null),
+        ];
+
+        yield 'role-less token on regular project dev branch' => [
+            'branchType' => BranchType::DEV,
+            'token' => new StorageApiToken(role: 'none'),
+        ];
+
+        yield 'role-less token on regular project without branch' => [
+            'branchType' => null,
+            'token' => new StorageApiToken(role: null),
+        ];
+
+        yield 'role-less token with permission flags on regular project' => [
+            'branchType' => BranchType::DEFAULT,
+            'token' => new StorageApiToken(role: null, permissions: ['canCreateJobs', 'canManageTokens']),
+        ];
+
         yield 'productionManager on protected default branch' => [
             'branchType' => BranchType::DEFAULT,
             'token' => new StorageApiToken(features: ['protected-default-branch'], role: 'productionManager'),
@@ -63,22 +83,40 @@ class CanModifySubscriptionsTest extends TestCase
 
     public static function provideInvalidPermissionsCheckData(): iterable
     {
-        yield 'no role role' => [
-            'branchType' => BranchType::DEFAULT,
-            'token' => new StorageApiToken(role: null),
-            'error' => new PermissionDeniedException('Role "none" is not allowed to modify subscriptions'),
-        ];
-
         yield 'readOnly role' => [
             'branchType' => BranchType::DEFAULT,
             'token' => new StorageApiToken(role: 'readOnly'),
             'error' => new PermissionDeniedException('Role "readOnly" is not allowed to modify subscriptions'),
         ];
 
-        yield 'regular token on protected default branch' => [
+        yield 'role-less token on protected default branch' => [
             'branchType' => BranchType::DEFAULT,
             'token' => new StorageApiToken(features: ['protected-default-branch'], role: null),
             'error' => new PermissionDeniedException('Role "none" is not allowed to modify subscriptions'),
+        ];
+
+        yield 'role-less token on protected dev branch' => [
+            'branchType' => BranchType::DEV,
+            'token' => new StorageApiToken(features: ['protected-default-branch'], role: 'none'),
+            'error' => new PermissionDeniedException('Role "none" is not allowed to modify subscriptions'),
+        ];
+
+        yield 'role-less token on protected project without branch' => [
+            'branchType' => null,
+            'token' => new StorageApiToken(features: ['protected-default-branch'], role: null),
+            'error' => new PermissionDeniedException('Role "none" is not allowed to modify subscriptions'),
+        ];
+
+        yield 'admin role on protected default branch' => [
+            'branchType' => BranchType::DEFAULT,
+            'token' => new StorageApiToken(features: ['protected-default-branch'], role: 'admin'),
+            'error' => new PermissionDeniedException('Role "admin" is not allowed to modify subscriptions'),
+        ];
+
+        yield 'admin role on protected dev branch' => [
+            'branchType' => BranchType::DEV,
+            'token' => new StorageApiToken(features: ['protected-default-branch'], role: 'admin'),
+            'error' => new PermissionDeniedException('Role "admin" is not allowed to modify subscriptions'),
         ];
 
         yield 'developer role on protected default branch' => [

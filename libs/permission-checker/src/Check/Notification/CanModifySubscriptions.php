@@ -28,7 +28,7 @@ class CanModifySubscriptions implements PermissionCheckInterface
             };
         } else {
             $isRoleAllowed = match ($token->getRole()) {
-                Role::NONE, Role::READ_ONLY => false,
+                Role::READ_ONLY => false,
                 default => true,
             };
         }

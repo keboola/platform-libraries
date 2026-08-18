@@ -43,8 +43,8 @@ If the checker requires any additional data or depends on some other service, it
 
 A project storage token minted through the Manage API (`POST /manage/projects/{id}/tokens`) has no user
 behind it, so `tokens/verify` returns no `admin` block and `StorageApiToken::getRole()` resolves to
-`Role::NONE`. The `admin` block is returned only for admin tokens, so **every** limited (non-master)
-token resolves to `Role::NONE` as well, no matter which admin created it.
+`Role::NONE` — `getRole()` falls back to `Role::NONE` whenever the verify payload carries no role. Any
+other token whose payload carries no role resolves the same way, and the check cannot tell them apart.
 
 `Check\Notification\CanModifySubscriptions` treats such a token like any other non-`readOnly` token:
 
@@ -58,7 +58,7 @@ The non-SOX branch of the check is deliberately identical to `Check\OAuth\CanCre
 `protected-default-branch` project `Role::NONE` has no SOX role to map onto a branch, so it falls through to
 `default => false` and stays denied exactly as before.
 
-The trade-off, stated plainly: in a regular project **every** limited token can now create and delete
+The trade-off, stated plainly: in a regular project **every** role-less token can now create and delete
 notification subscriptions, not just automation that was meant to. This is accepted because
 `Check\JobQueue\CanRunJob` already lets `Role::NONE` run jobs in a regular project without any role or
 token-permission gate — it denies only `Role::READ_ONLY` — and running a job is the more powerful capability of

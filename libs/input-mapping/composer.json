@@ -12,7 +12,12 @@
     "repositories": {
         "libs": {
             "type": "path",
-            "url": "../../libs/*"
+            "url": "../../libs/*",
+            "options": {
+                "versions": {
+                    "keboola/php-api-client-base": "1.1.2"
+                }
+            }
         }
     },
     "require": {
@@ -21,7 +26,7 @@
         "keboola/php-file-storage-utils": "^0.2",
         "keboola/key-generator": "*@dev",
         "keboola/staging-provider": "*@dev",
-        "keboola/storage-api-client": "^18.9.0",
+        "keboola/storage-api-client": "^18.11.0",
         "keboola/storage-api-php-client-branch-wrapper": "^7.0",
         "symfony/config": "^5.4|^6.0|^7.0",
         "symfony/finder": "^5.4|^6.0|^7.0",

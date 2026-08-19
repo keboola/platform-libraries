@@ -69,7 +69,7 @@ class InClusterTokenTest extends TestCase
         $token->getValue();
     }
 
-    public function testGetValueReturnsCachedValueWhenRefreshReadFails(): void
+    public function testGetValueThrowsOnFailedRefreshReadDespiteCachedValue(): void
     {
         $tmpFile = (string) tempnam(sys_get_temp_dir(), 'k8s-creds-test');
         file_put_contents($tmpFile, 'foo-token-1');
@@ -83,7 +83,12 @@ class InClusterTokenTest extends TestCase
 
         unlink($tmpFile);
 
-        self::assertSame('foo-token-1', $token->getValue());
+        $this->expectException(ConfigurationException::class);
+        $this->expectExceptionMessage(sprintf(
+            'Failed to read contents of in-cluster configuration file "%s"',
+            $tmpFile,
+        ));
+        $token->getValue();
     }
 
     public function testGetValueReadsExternallyRotatedTokenWithoutSpendingRetryBudget(): void
@@ -95,10 +100,15 @@ class InClusterTokenTest extends TestCase
         symlink('..2026_a', $dir.'/..data');
         symlink('..data/token', $dir.'/token');
 
+        // the base delay must stay well above $maxSeconds below, otherwise the timing assertion
+        // no longer distinguishes a direct read from one that backed off and retried
+        $retryBaseDelayMicroseconds = 1_000_000;
+        $maxSeconds = $retryBaseDelayMicroseconds / 1e6 / 2;
+
         $token = new InClusterToken(
             $dir.'/token',
             expirationTime: 0,
-            retryBaseDelayMicroseconds: 1_000_000,
+            retryBaseDelayMicroseconds: $retryBaseDelayMicroseconds,
         );
 
         self::assertSame('foo-token-1', $token->getValue());
@@ -116,7 +126,7 @@ class InClusterTokenTest extends TestCase
 
         $startTime = microtime(true);
         self::assertSame('foo-token-2', $token->getValue());
-        self::assertLessThan(0.5, microtime(true) - $startTime);
+        self::assertLessThan($maxSeconds, microtime(true) - $startTime);
     }
 
     public function testConstructRejectsInvalidMaxReadAttempts(): void
@@ -135,7 +145,7 @@ class InClusterTokenTest extends TestCase
         new InClusterToken('token-file', retryBaseDelayMicroseconds: -1);
     }
 
-    public function testGetValueReturnsCachedValueWhenFileBecomesEmpty(): void
+    public function testGetValueThrowsWhenFileBecomesEmptyDespiteCachedValue(): void
     {
         $tmpFile = (string) tempnam(sys_get_temp_dir(), 'k8s-creds-test');
         file_put_contents($tmpFile, 'foo-token-1');
@@ -143,13 +153,20 @@ class InClusterTokenTest extends TestCase
         $token = new InClusterToken(
             $tmpFile,
             expirationTime: 0,
+            maxReadAttempts: 3,
+            retryBaseDelayMicroseconds: 1_000,
         );
 
         self::assertSame('foo-token-1', $token->getValue());
 
         file_put_contents($tmpFile, '');
 
-        self::assertSame('foo-token-1', $token->getValue());
+        $this->expectException(ConfigurationException::class);
+        $this->expectExceptionMessage(sprintf(
+            'In-cluster configuration file "%s" is empty or unreadable after 3 attempts',
+            $tmpFile,
+        ));
+        $token->getValue();
     }
 
     public function testGetValueRetriesUntilTokenAppears(): void
@@ -196,16 +213,21 @@ class InClusterTokenTest extends TestCase
         $token->getValue();
     }
 
-    public function testGetValueDoesNotRetryWhenFileIsMissing(): void
+    public function testGetValueFailsFastWhenFileIsMissing(): void
     {
         $tmpFile = (string) tempnam(sys_get_temp_dir(), 'k8s-creds-test');
         file_put_contents($tmpFile, 'foo-token-1');
+
+        // the base delay must stay well above $maxSeconds below, otherwise the timing assertion
+        // no longer distinguishes an immediate failure from one that spent the retry budget
+        $retryBaseDelayMicroseconds = 1_000_000;
+        $maxSeconds = $retryBaseDelayMicroseconds / 1e6 / 2;
 
         $token = new InClusterToken(
             $tmpFile,
             expirationTime: 0,
             maxReadAttempts: 6,
-            retryBaseDelayMicroseconds: 1_000_000,
+            retryBaseDelayMicroseconds: $retryBaseDelayMicroseconds,
         );
 
         self::assertSame('foo-token-1', $token->getValue());
@@ -213,27 +235,16 @@ class InClusterTokenTest extends TestCase
         unlink($tmpFile);
 
         $startTime = microtime(true);
-        self::assertSame('foo-token-1', $token->getValue());
-        self::assertLessThan(0.5, microtime(true) - $startTime);
-    }
+        try {
+            $token->getValue();
+            self::fail('Reading a missing token file was expected to fail');
+        } catch (ConfigurationException $e) {
+            self::assertSame(
+                sprintf('Failed to read contents of in-cluster configuration file "%s"', $tmpFile),
+                $e->getMessage(),
+            );
+        }
 
-    public function testGetValueRetriesReadImmediatelyAfterFailedRefresh(): void
-    {
-        $tmpFile = (string) tempnam(sys_get_temp_dir(), 'k8s-creds-test');
-        file_put_contents($tmpFile, 'foo-token-1');
-
-        $token = new InClusterToken(
-            $tmpFile,
-            expirationTime: 1,
-        );
-
-        self::assertSame('foo-token-1', $token->getValue());
-
-        sleep(1);
-        unlink($tmpFile);
-        self::assertSame('foo-token-1', $token->getValue());
-
-        file_put_contents($tmpFile, 'foo-token-2');
-        self::assertSame('foo-token-2', $token->getValue());
+        self::assertLessThan($maxSeconds, microtime(true) - $startTime);
     }
 }

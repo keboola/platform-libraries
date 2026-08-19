@@ -194,23 +194,31 @@ class InClusterTokenTest extends TestCase
         }
     }
 
-    public function testGetValueThrowsAfterExhaustingRetries(): void
+    public function testGetValueThrowsAfterExhaustingRetriesOnFirstRead(): void
     {
         $tmpFile = (string) tempnam(sys_get_temp_dir(), 'k8s-creds-test');
         file_put_contents($tmpFile, '');
 
+        // 3 attempts back off twice, for 50 ms and 100 ms, before the last one gives up
         $token = new InClusterToken(
             $tmpFile,
             maxReadAttempts: 3,
-            retryBaseDelayMicroseconds: 1_000,
+            retryBaseDelayMicroseconds: 50_000,
         );
 
-        $this->expectException(ConfigurationException::class);
-        $this->expectExceptionMessage(sprintf(
-            'In-cluster configuration file "%s" is empty or unreadable after 3 attempts',
-            $tmpFile,
-        ));
-        $token->getValue();
+        $startTime = microtime(true);
+        try {
+            $token->getValue();
+            self::fail('Reading an empty token file was expected to fail');
+        } catch (ConfigurationException $e) {
+            self::assertSame(
+                sprintf('In-cluster configuration file "%s" is empty or unreadable after 3 attempts', $tmpFile),
+                $e->getMessage(),
+            );
+        }
+
+        // proves the attempts were really spent rather than the loop giving up on the first read
+        self::assertGreaterThan(0.1, microtime(true) - $startTime);
     }
 
     public function testGetValueFailsFastWhenFileIsMissing(): void

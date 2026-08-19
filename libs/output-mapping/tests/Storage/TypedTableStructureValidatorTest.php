@@ -201,7 +201,8 @@ class TypedTableStructureValidatorTest extends TestCase
         $this->expectException(InvalidTableStructureException::class);
         $this->expectExceptionMessage(
             'Table "in.c-main.table" does not contain the same number of columns as the schema.'.
-            ' Table columns: 3, schema columns: 2.',
+            ' Table columns: 3, schema columns: 2.'.
+            ' Columns "col3" are present in the table but missing in the schema.',
         );
         $validator->validate($schema);
     }
@@ -245,7 +246,12 @@ class TypedTableStructureValidatorTest extends TestCase
             $this->getClientMock()->getTable('in.c-main.table'),
         );
         $this->expectException(InvalidTableStructureException::class);
-        $this->expectExceptionMessage('Table "in.c-main.table" does not contain columns: "col4".');
+        $this->expectExceptionMessage(
+            'Table "in.c-main.table" does not contain columns: "col4".'.
+            ' Columns "col3" are present in the table but missing in the schema.'.
+            ' This usually means a column was renamed or replaced; such a change cannot be applied automatically,'.
+            ' add the new columns or drop the obsolete ones in the table manually.',
+        );
         $validator->validate($schema);
     }
 

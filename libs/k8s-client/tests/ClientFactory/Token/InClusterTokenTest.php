@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Keboola\K8sClient\Tests\ClientFactory\Token;
 
 use Keboola\K8sClient\ClientFactory\Token\InClusterToken;
+use Keboola\K8sClient\Exception\ConfigurationException;
 use PHPUnit\Framework\TestCase;
 
 class InClusterTokenTest extends TestCase
@@ -63,7 +64,45 @@ class InClusterTokenTest extends TestCase
     {
         $token = new InClusterToken('non-existing-file');
 
+        $this->expectException(ConfigurationException::class);
         $this->expectExceptionMessage('Failed to read contents of in-cluster configuration file "non-existing-file"');
         $token->getValue();
+    }
+
+    public function testGetValueReturnsCachedValueWhenRefreshReadFails(): void
+    {
+        $tmpFile = (string) tempnam(sys_get_temp_dir(), 'k8s-creds-test');
+        file_put_contents($tmpFile, 'foo-token-1');
+
+        $token = new InClusterToken(
+            $tmpFile,
+            expirationTime: 0,
+        );
+
+        self::assertSame('foo-token-1', $token->getValue());
+
+        unlink($tmpFile);
+
+        self::assertSame('foo-token-1', $token->getValue());
+    }
+
+    public function testGetValueRetriesReadImmediatelyAfterFailedRefresh(): void
+    {
+        $tmpFile = (string) tempnam(sys_get_temp_dir(), 'k8s-creds-test');
+        file_put_contents($tmpFile, 'foo-token-1');
+
+        $token = new InClusterToken(
+            $tmpFile,
+            expirationTime: 1,
+        );
+
+        self::assertSame('foo-token-1', $token->getValue());
+
+        sleep(1);
+        unlink($tmpFile);
+        self::assertSame('foo-token-1', $token->getValue());
+
+        file_put_contents($tmpFile, 'foo-token-2');
+        self::assertSame('foo-token-2', $token->getValue());
     }
 }

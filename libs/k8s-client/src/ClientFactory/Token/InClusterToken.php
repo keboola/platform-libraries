@@ -30,6 +30,15 @@ class InClusterToken implements TokenInterface
             $fileContents = @file_get_contents($this->tokenFilePath);
 
             if ($fileContents === false) {
+                // K8S rotates projected service account tokens by atomically swapping the "..data" symlink,
+                // so the read can transiently fail while the previously read token is still valid
+                // (K8S refreshes the token ~10 minutes before its expiration)
+                if ($this->cachedValue !== null) {
+                    // $lastRefreshTime is intentionally not updated, so that the next call retries the read
+                    // instead of serving the cached value for another full expiration period
+                    return $this->cachedValue;
+                }
+
                 throw new ConfigurationException(sprintf(
                     'Failed to read contents of in-cluster configuration file "%s"',
                     $this->tokenFilePath,

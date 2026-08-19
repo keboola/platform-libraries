@@ -76,6 +76,11 @@ class InClusterToken implements TokenInterface
         $attempt = 0;
 
         while (true) {
+            // the token path is resolved through the "..data" symlink, and PHP's realpath cache keeps that
+            // resolution pointing at the previous "..<timestamp>" directory: until the entry expires, the
+            // read either returns the pre-rotation token or fails once K8S removes that directory
+            $this->clearStatCache();
+
             $fileContents = @file_get_contents($this->tokenFilePath);
             $token = $fileContents === false ? '' : trim($fileContents);
 
@@ -83,6 +88,7 @@ class InClusterToken implements TokenInterface
                 return $token;
             }
 
+            // the failed read itself re-populates the cache
             $this->clearStatCache();
 
             // a file that can't be read at all is not a rotation glitch, so the retry budget is not spent on it
@@ -102,7 +108,6 @@ class InClusterToken implements TokenInterface
             }
 
             usleep($this->backoffMicroseconds($attempt));
-            $this->clearStatCache();
         }
     }
 

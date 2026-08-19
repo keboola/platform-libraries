@@ -86,6 +86,39 @@ class InClusterTokenTest extends TestCase
         self::assertSame('foo-token-1', $token->getValue());
     }
 
+    public function testGetValueReadsExternallyRotatedTokenWithoutSpendingRetryBudget(): void
+    {
+        // projected service account volume layout: token -> ..data/token -> ..<timestamp>/token
+        $dir = sys_get_temp_dir().'/k8s-creds-test-'.uniqid();
+        mkdir($dir.'/..2026_a', 0777, true);
+        file_put_contents($dir.'/..2026_a/token', 'foo-token-1');
+        symlink('..2026_a', $dir.'/..data');
+        symlink('..data/token', $dir.'/token');
+
+        $token = new InClusterToken(
+            $dir.'/token',
+            expirationTime: 0,
+            retryBaseDelayMicroseconds: 1_000_000,
+        );
+
+        self::assertSame('foo-token-1', $token->getValue());
+
+        // rotate the way kubelet does - in another process, so that PHP can't invalidate its own
+        // realpath cache the way it would for a deletion performed by this process
+        $rotate = <<<SH
+            cd {$dir}
+            mkdir ..2026_b && printf foo-token-2 > ..2026_b/token
+            ln -sfn ..2026_b ..data_tmp && mv -Tf ..data_tmp ..data
+            rm -rf ..2026_a
+            SH;
+        exec($rotate, $output, $resultCode);
+        self::assertSame(0, $resultCode);
+
+        $startTime = microtime(true);
+        self::assertSame('foo-token-2', $token->getValue());
+        self::assertLessThan(0.5, microtime(true) - $startTime);
+    }
+
     public function testConstructRejectsInvalidMaxReadAttempts(): void
     {
         $this->expectException(ConfigurationException::class);
@@ -137,9 +170,11 @@ class InClusterTokenTest extends TestCase
             retryBaseDelayMicroseconds: 100_000,
         );
 
-        self::assertSame('foo-token-1', $token->getValue());
-
-        proc_close($writer);
+        try {
+            self::assertSame('foo-token-1', $token->getValue());
+        } finally {
+            proc_close($writer);
+        }
     }
 
     public function testGetValueThrowsAfterExhaustingRetries(): void

@@ -47,20 +47,10 @@ class InClusterToken implements TokenInterface
             return $cachedValue;
         }
 
-        try {
-            $token = $this->readTokenFile();
-        } catch (ConfigurationException $e) {
-            // K8S rotates projected service account tokens by atomically swapping the "..data" symlink,
-            // so a read can fail or return an empty file while the previously read token is still valid
-            // (K8S refreshes the token ~10 minutes before its expiration)
-            if ($cachedValue === null) {
-                throw $e;
-            }
-
-            // $lastRefreshTime is intentionally not updated, so that the next call retries the read
-            // instead of serving the cached value for another full expiration period
-            return $cachedValue;
-        }
+        // a read that keeps failing past the retry budget is reported rather than papered over with the
+        // still-valid cached token: a failure naming the token file is easier to act on than the HTTP 401
+        // that a silently kept credential would produce once it does expire
+        $token = $this->readTokenFile();
 
         $this->cachedValue = $token;
         $this->lastRefreshTime = $currentTime;

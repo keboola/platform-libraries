@@ -13,7 +13,7 @@ class InClusterToken implements TokenInterface
     public const DEFAULT_EXPIRATION_TIME = 5 * 60; // 5 minutes
 
     public const DEFAULT_MAX_READ_ATTEMPTS = 6;
-    public const DEFAULT_RETRY_BASE_DELAY_US = 40_000; // 40 ms, doubled on each retry => ~1.24 s total
+    public const DEFAULT_RETRY_BASE_DELAY_US = 40_000;
     private const MAX_RETRY_DELAY_US = 1_000_000;
 
     private int $lastRefreshTime = 0;
@@ -41,21 +41,14 @@ class InClusterToken implements TokenInterface
     public function getValue(): string
     {
         $currentTime = time();
-        $cachedValue = $this->cachedValue;
+        $secondsSinceRefresh = $currentTime - $this->lastRefreshTime;
 
-        if ($cachedValue !== null && $currentTime - $this->lastRefreshTime < $this->expirationTime) {
-            return $cachedValue;
+        if ($this->cachedValue === null || $secondsSinceRefresh >= $this->expirationTime) {
+            $this->cachedValue = $this->readTokenFile();
+            $this->lastRefreshTime = $currentTime;
         }
 
-        // a read that keeps failing past the retry budget is reported rather than papered over with the
-        // still-valid cached token: a failure naming the token file is easier to act on than the HTTP 401
-        // that a silently kept credential would produce once it does expire
-        $token = $this->readTokenFile();
-
-        $this->cachedValue = $token;
-        $this->lastRefreshTime = $currentTime;
-
-        return $token;
+        return $this->cachedValue;
     }
 
     /**
@@ -66,11 +59,7 @@ class InClusterToken implements TokenInterface
         $attempt = 0;
 
         while (true) {
-            // the token path is resolved through the "..data" symlink, and PHP's realpath cache keeps that
-            // resolution pointing at the previous "..<timestamp>" directory: until the entry expires, the
-            // read either returns the pre-rotation token or fails once K8S removes that directory
             $this->clearStatCache();
-
             $fileContents = @file_get_contents($this->tokenFilePath);
             $token = $fileContents === false ? '' : trim($fileContents);
 
@@ -78,10 +67,8 @@ class InClusterToken implements TokenInterface
                 return $token;
             }
 
-            // the failed read itself re-populates the cache
             $this->clearStatCache();
 
-            // a file that can't be read at all is not a rotation glitch, so the retry budget is not spent on it
             if (!is_readable($this->tokenFilePath)) {
                 throw new ConfigurationException(sprintf(
                     'Failed to read contents of in-cluster configuration file "%s"',
@@ -108,10 +95,6 @@ class InClusterToken implements TokenInterface
         return max(0, (int) min($delay, self::MAX_RETRY_DELAY_US));
     }
 
-    /**
-     * Clears the stat cache for the token path and, when it is a symlink (the projected SA token is one),
-     * for the link target and its directory too, so that a stale entry can't mask a freshly rotated file.
-     */
     private function clearStatCache(): void
     {
         clearstatcache(true, $this->tokenFilePath);

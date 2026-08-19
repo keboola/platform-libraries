@@ -93,15 +93,13 @@ class InClusterTokenTest extends TestCase
 
     public function testGetValueReadsExternallyRotatedTokenWithoutSpendingRetryBudget(): void
     {
-        // projected service account volume layout: token -> ..data/token -> ..<timestamp>/token
         $dir = sys_get_temp_dir().'/k8s-creds-test-'.uniqid();
         mkdir($dir.'/..2026_a', 0777, true);
         file_put_contents($dir.'/..2026_a/token', 'foo-token-1');
         symlink('..2026_a', $dir.'/..data');
         symlink('..data/token', $dir.'/token');
 
-        // the base delay must stay well above $maxSeconds below, otherwise the timing assertion
-        // no longer distinguishes a direct read from one that backed off and retried
+        // the delay must stay above $maxSeconds, otherwise the timing assertion proves nothing
         $retryBaseDelayMicroseconds = 1_000_000;
         $maxSeconds = $retryBaseDelayMicroseconds / 1e6 / 2;
 
@@ -113,8 +111,7 @@ class InClusterTokenTest extends TestCase
 
         self::assertSame('foo-token-1', $token->getValue());
 
-        // rotate the way kubelet does - in another process, so that PHP can't invalidate its own
-        // realpath cache the way it would for a deletion performed by this process
+        // rotating in another process, so that PHP does not invalidate its own realpath cache
         $rotate = <<<SH
             cd {$dir}
             mkdir ..2026_b && printf foo-token-2 > ..2026_b/token
@@ -199,7 +196,6 @@ class InClusterTokenTest extends TestCase
         $tmpFile = (string) tempnam(sys_get_temp_dir(), 'k8s-creds-test');
         file_put_contents($tmpFile, '');
 
-        // 3 attempts back off twice, for 50 ms and 100 ms, before the last one gives up
         $token = new InClusterToken(
             $tmpFile,
             maxReadAttempts: 3,
@@ -217,7 +213,6 @@ class InClusterTokenTest extends TestCase
             );
         }
 
-        // proves the attempts were really spent rather than the loop giving up on the first read
         self::assertGreaterThan(0.1, microtime(true) - $startTime);
     }
 
@@ -226,8 +221,7 @@ class InClusterTokenTest extends TestCase
         $tmpFile = (string) tempnam(sys_get_temp_dir(), 'k8s-creds-test');
         file_put_contents($tmpFile, 'foo-token-1');
 
-        // the base delay must stay well above $maxSeconds below, otherwise the timing assertion
-        // no longer distinguishes an immediate failure from one that spent the retry budget
+        // the delay must stay above $maxSeconds, otherwise the timing assertion proves nothing
         $retryBaseDelayMicroseconds = 1_000_000;
         $maxSeconds = $retryBaseDelayMicroseconds / 1e6 / 2;
 

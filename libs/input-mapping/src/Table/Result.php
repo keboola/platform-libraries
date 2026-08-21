@@ -16,6 +16,11 @@ class Result
     private InputTableStateList $inputTableStateList;
     private ?Metrics $metrics = null;
 
+    public function __construct()
+    {
+        $this->inputTableStateList = new InputTableStateList([]);
+    }
+
     public function addTable(TableInfo $table): void
     {
         $this->tables[] = $table;

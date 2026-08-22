@@ -72,7 +72,8 @@ runs:
         LIBRARY: ${{ inputs.library }}
         VERSION: ${{ inputs.version }}
       run: |
-        # The script prints 'previous-version=' and 'has-changes=' on stdout, progress on stderr.
+        # The script prints 'previous-version=', 'is-newest=' and 'has-changes=' on stdout, progress
+        # on stderr.
         "${{ github.workspace }}/bin/release-context.sh" \
           "${LIBRARY}" \
           "${VERSION}" \
@@ -92,14 +93,18 @@ runs:
           "No changes in \`libs/${LIBRARY}\` itself. Released to pick up changes in the libraries it depends on." \
           > "${NOTES_FILE}"
 
+    # github_token is required, not optional: the action resolves a token either from this input or
+    # from OIDC, and nothing else. Without it the step fails before the model runs. It must stay the
+    # input rather than 'id-token: write' — the OIDC path exchanges for a Claude App token minted
+    # with contents/pull-requests/issues write, while this keeps the model on the caller's
+    # 'contents: read' + 'pull-requests: read'. The action also exports whatever it resolves as
+    # GH_TOKEN for the model's own 'gh' calls, so setting that in 'env:' here has no effect.
     - name: Write release notes with Claude Code
       if: steps.existing.outputs.skip != 'true' && steps.context.outputs.has-changes == 'true'
       uses: anthropics/claude-code-action@v1
-      env:
-        GH_TOKEN: ${{ github.token }}
       with:
+        github_token: ${{ github.token }}
         anthropic_api_key: ${{ inputs.anthropic-api-key }}
-        show_full_output: true
         prompt: |
           ## Task
 
@@ -194,13 +199,19 @@ runs:
         NOTES_FILE: ${{ github.workspace }}/.release/notes.md
         REPO: keboola/${{ steps.target.outputs.repo }}
         VERSION: ${{ inputs.version }}
+        IS_NEWEST: ${{ steps.context.outputs.is-newest }}
       run: |
+        # --latest is always explicit. 'gh' only sends make_latest when the flag is given, and the
+        # API defaults it to true, which would let a backfilled older version steal the Latest badge
+        # from the real newest release.
+        #
         # --verify-tag runs seconds after split-repo.sh pushed that tag. If this ever fails claiming
         # the tag does not exist, suspect replication lag on the target repo before anything else.
         gh release create "${VERSION}" \
           --repo "${REPO}" \
           --title "${VERSION}" \
           --notes-file "${NOTES_FILE}" \
+          --latest="${IS_NEWEST}" \
           --verify-tag
         echo "::notice::Created release ${VERSION} in ${REPO}."
 

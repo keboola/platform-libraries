@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Deliberately 'set -e' without '-o pipefail': the PREVIOUS_TAG pipeline below relies on a 'grep'
+# Deliberately 'set -e' without '-o pipefail': the RELEASE_TAGS pipeline below relies on a 'grep'
 # that finds nothing exiting 1 without failing the script, which is what a library's first release
 # looks like. Adding pipefail here breaks every first release.
 set -e
@@ -15,8 +15,9 @@ if [[ -z ${1+x} || -z ${2+x} || -z ${3+x} ]]; then
   echo "released version, the commits that changed the library since then and the pull requests"
   echo "those commits came from."
   echo ""
-  echo "Prints 'previous-version=<version>' (empty for a first release) and 'has-changes=true|false'"
-  echo "to stdout, so a GitHub Actions caller can append them straight to \$GITHUB_OUTPUT."
+  echo "Prints 'previous-version=<version>' (empty for a first release), 'has-changes=true|false'"
+  echo "and 'is-newest=true|false' (whether this is the library's highest released version) to"
+  echo "stdout, so a GitHub Actions caller can append them straight to \$GITHUB_OUTPUT."
   echo ""
   echo "Requires GH_TOKEN with read access to the monorepo pull requests."
   exit 1
@@ -46,13 +47,23 @@ fi
 # Releases are strictly '<library>/X.Y.Z'. The same tag namespace also holds throwaway build and dev
 # tags (e.g. 'output-mapping/build-pat-664.1'), which must not be taken for the previous release —
 # and which is why 'git tag --sort=-v:refname' cannot be used here, it sorts them to the top.
-PREVIOUS_TAG="$(
+RELEASE_TAGS="$(
   git tag --list "${LIBRARY}/*" \
     | grep -E "^${LIBRARY}/[0-9]+\.[0-9]+\.[0-9]+$" \
-    | sort -V \
-    | awk -v tag="${TAG}" '$0 == tag { print previous; exit } { previous = $0 }'
+    | sort -V
 )"
+PREVIOUS_TAG="$(awk -v tag="${TAG}" '$0 == tag { print previous; exit } { previous = $0 }' <<< "${RELEASE_TAGS}")"
 PREVIOUS_VERSION="${PREVIOUS_TAG#"${LIBRARY}/"}"
+
+# Whether this is the library's highest released version, so the caller can pass an explicit
+# '--latest' to 'gh release create'. Without it the GitHub API defaults make_latest to true, and
+# backfilling an older version — the reason create-release.yml exists — would demote the real
+# latest release.
+if [[ "$(tail -n 1 <<< "${RELEASE_TAGS}")" == "${TAG}" ]]; then
+  IS_NEWEST=true
+else
+  IS_NEWEST=false
+fi
 
 if [[ -n "${PREVIOUS_TAG}" ]]; then
   RANGE="${PREVIOUS_TAG}..${TAG}"
@@ -82,6 +93,7 @@ if [[ -z "${COMMIT_LIST}" ]]; then
     echo "No commit in \`${RANGE}\` changed \`libs/${LIBRARY}\`."
   } > "${OUTPUT_FILE}"
   echo "previous-version=${PREVIOUS_VERSION}"
+  echo "is-newest=${IS_NEWEST}"
   echo "has-changes=false"
   exit 0
 fi
@@ -156,4 +168,5 @@ mkdir -p "$(dirname "${OUTPUT_FILE}")"
 
 echo ">> Written to '${OUTPUT_FILE}'" >&2
 echo "previous-version=${PREVIOUS_VERSION}"
+echo "is-newest=${IS_NEWEST}"
 echo "has-changes=true"

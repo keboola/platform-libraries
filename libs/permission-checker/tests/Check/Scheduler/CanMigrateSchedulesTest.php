@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Keboola\PersmissionChecker\Tests\Check\Scheduler;
+namespace Keboola\PermissionChecker\Tests\Check\Scheduler;
 
 use Keboola\PermissionChecker\BranchType;
 use Keboola\PermissionChecker\Check\Scheduler\CanMigrateSchedules;

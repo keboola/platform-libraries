@@ -277,15 +277,40 @@ class AbstractWorkspaceStrategyTest extends TestCase
             self::assertSame('in.c-test-bucket.table1', $manifest['id']);
             self::assertSame('2022-06-03T03:31:43+0200', $manifest['last_import_date']);
 
+            // info level carries the stable, greppable contract messages, unchanged by AJDA-3148
             self::assertTrue($this->testHandler->hasInfoThatContains('Processed 1 workspace exports.'));
             self::assertTrue($this->testHandler->hasInfoThatContains('Fetched table in.c-test-bucket.table1.'));
             self::assertTrue($this->testHandler->hasInfoThatContains('Fetched table in.c-test-bucket.table2.'));
             self::assertTrue($this->testHandler->hasInfoThatContains('All tables were fetched.'));
+
+            // every timing / size / job-id detail is debug only
+            self::assertTrue($this->testHandler->hasDebugThatContains('Waiting for 1 storage jobs to finish.'));
+            self::assertTrue($this->testHandler->hasDebugThatContains('1 storage jobs finished in '));
+            self::assertTrue($this->testHandler->hasDebugThatContains('Wrote 2 table manifests in '));
+            self::assertTrue($this->testHandler->hasDebugThatContains('All tables were fetched. 2 tables in '));
         } finally {
             array_map('unlink', glob($tmpDir . '/destination/*.manifest') ?: []);
             @rmdir($tmpDir . '/destination');
             rmdir($tmpDir);
         }
+    }
+
+    public function testWaitForTableLoadCompletionWithEmptyQueueSkipsWaitLogging(): void
+    {
+        $clientWrapper = $this->createMock(ClientWrapper::class);
+        $clientWrapper->expects($this->never())->method('getBranchClient');
+
+        $strategy = $this->createTestStrategy($clientWrapper, 'snowflake');
+
+        $result = $strategy->waitForTableLoadCompletion(
+            new WorkspaceLoadQueue([], TestWorkspaceStrategy::class, 'destination'),
+        );
+
+        self::assertCount(0, $result->getTables());
+        self::assertFalse($this->testHandler->hasDebugThatContains('Waiting for '));
+        self::assertFalse($this->testHandler->hasDebugThatContains(' storage jobs finished in '));
+        self::assertTrue($this->testHandler->hasInfoThatContains('All tables were fetched.'));
+        self::assertTrue($this->testHandler->hasDebugThatContains('All tables were fetched. 0 tables in '));
     }
 
     private function createTestStrategy(

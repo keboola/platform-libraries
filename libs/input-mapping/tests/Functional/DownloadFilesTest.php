@@ -81,8 +81,21 @@ class DownloadFilesTest extends AbstractDownloadFilesTest
         self::assertFalse($manifest1['is_sliced']);
         self::assertEquals($id1, $manifest1['id']);
         self::assertEquals($id2, $manifest2['id']);
+        // info level: the unchanged, greppable contract messages
         self::assertTrue($this->testHandler->hasInfoThatContains(sprintf('Fetched file "%s_upload".', $id1)));
-        self::assertTrue($this->testHandler->hasInfoThatContains(sprintf('Fetched file "%s_upload_second".', $id2)));
+        self::assertTrue($this->testHandler->hasInfoThatContains(
+            sprintf('Fetched file "%s_upload_second".', $id2),
+        ));
+        self::assertTrue($this->testHandler->hasInfoThatContains('All files were fetched.'));
+
+        // debug level: the download size and duration detail added by AJDA-3148
+        self::assertTrue($this->testHandler->hasDebugThatContains(
+            sprintf('Fetched file "%s_upload". Downloaded ', $id1),
+        ));
+        self::assertTrue($this->testHandler->hasDebugThatContains(
+            sprintf('Fetched file "%s_upload_second". Downloaded ', $id2),
+        ));
+        self::assertTrue($this->testHandler->hasDebugThatContains('All files were fetched. 2 files, '));
     }
 
     public function testReadFilesOverwrite(): void

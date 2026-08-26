@@ -6,7 +6,9 @@ namespace Keboola\InputMapping\Table\Strategy;
 
 use Keboola\InputMapping\Exception\InputOperationException;
 use Keboola\InputMapping\Exception\InvalidInputException;
+use Keboola\InputMapping\Helper\LogFormatter;
 use Keboola\InputMapping\Helper\PathHelper;
+use Keboola\InputMapping\Helper\Timer;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\TableExporter;
 
@@ -17,6 +19,7 @@ class Local extends AbstractFileStrategy
 
     public function prepareAndExecuteTableLoads(array $tables, bool $preserve): TableLoadQueueInterface
     {
+        $timer = Timer::start();
         $tokenInfo = $this->clientWrapper->getBranchClient()->verifyToken();
         $exportLimit = self::DEFAULT_MAX_EXPORT_SIZE_BYTES;
         if (!empty($tokenInfo['owner']['limits'][self::EXPORT_SIZE_LIMIT_NAME])) {
@@ -24,7 +27,7 @@ class Local extends AbstractFileStrategy
         }
 
         $this->logger->info('Processing ' . count($tables) . ' local table exports.');
-        $tableExporter = new TableExporter($this->clientWrapper->getTableAndFileStorageClient());
+        $tableExporter = $this->createTableExporter();
 
         $tablesByJobId = [];
         $exportJobs = [];
@@ -53,6 +56,12 @@ class Local extends AbstractFileStrategy
             $exportJobs[$jobId] = $queuedJobs[$jobId];
         }
 
+        $this->logger->debug(sprintf(
+            'Queued %s table exports in %s.',
+            count($tablesByJobId),
+            LogFormatter::formatDuration($timer->getElapsedSeconds()),
+        ));
+
         return new TableExportQueue($tablesByJobId, static::class, $this->destination, $exportJobs);
     }
 
@@ -62,10 +71,81 @@ class Local extends AbstractFileStrategy
             throw new InputOperationException('Local strategy requires TableExportQueue.');
         }
 
-        $tableExporter = new TableExporter($this->clientWrapper->getTableAndFileStorageClient());
-        $tableExporter->downloadExportedFiles($jobResults, $queue->exportJobs);
+        $this->downloadTableExports($queue, $jobResults);
+        $this->writeManifests($queue);
+    }
 
-        foreach ($queue->getAllTables() as $table) {
+    /**
+     * Downloads one export at a time so that each table gets its own timing.
+     *
+     * TableExporter::downloadExportedFiles() is a plain loop over the job results, so N single-result
+     * calls do exactly what one N-result call did before.
+     *
+     * @param array $jobResults results of the finished Storage jobs, as returned by handleAsyncTasks()
+     */
+    private function downloadTableExports(TableExportQueue $queue, array $jobResults): void
+    {
+        $resultsByJobId = [];
+        foreach ($jobResults as $jobResult) {
+            $resultsByJobId[$jobResult['id']] = $jobResult;
+        }
+
+        $tableExporter = $this->createTableExporter();
+        $tableCount = count($queue->tablesByJobId);
+        $this->logger->debug(sprintf('Downloading %s exported tables.', $tableCount));
+
+        $phaseTimer = Timer::start();
+        $totalBytes = 0;
+
+        foreach ($queue->tablesByJobId as $jobId => $table) {
+            if (!isset($resultsByJobId[$jobId])) {
+                throw new InputOperationException(sprintf(
+                    'Result of export job "%s" for table "%s" is missing.',
+                    $jobId,
+                    $table->getSource(),
+                ));
+            }
+            $jobResult = $resultsByJobId[$jobId];
+            $fileId = $jobResult['results']['file']['id'] ?? 'unknown';
+            $bytes = (int) ($jobResult['metrics']['outBytes'] ?? 0);
+            $totalBytes += $bytes;
+
+            $this->logger->debug(sprintf(
+                'Fetching table %s (export job %s, file %s).',
+                $table->getSource(),
+                $jobId,
+                $fileId,
+            ));
+
+            $tableTimer = Timer::start();
+            $tableExporter->downloadExportedFiles([$jobResult], $queue->exportJobs);
+            $tableSeconds = $tableTimer->getElapsedSeconds();
+
+            $this->logTableFetched($table->getSource(), sprintf(
+                'Downloaded %s in %s (%s), export job %s, file %s.',
+                LogFormatter::formatBytes($bytes),
+                LogFormatter::formatDuration($tableSeconds),
+                LogFormatter::formatThroughput($bytes, $tableSeconds),
+                $jobId,
+                $fileId,
+            ));
+        }
+
+        $phaseSeconds = $phaseTimer->getElapsedSeconds();
+        $this->logger->debug(sprintf(
+            'Downloaded %s tables, %s in %s (%s).',
+            $tableCount,
+            LogFormatter::formatBytes($totalBytes),
+            LogFormatter::formatDuration($phaseSeconds),
+            LogFormatter::formatThroughput($totalBytes, $phaseSeconds),
+        ));
+    }
+
+    private function writeManifests(TableExportQueue $queue): void
+    {
+        $timer = Timer::start();
+        $tables = $queue->getAllTables();
+        foreach ($tables as $table) {
             $this->manifestCreator->writeTableManifest(
                 $table->getTableInfo(),
                 PathHelper::getManifestPath($this->metadataStorage, $this->destination, $table),
@@ -73,6 +153,13 @@ class Local extends AbstractFileStrategy
                 $this->format,
             );
         }
+
+        $this->logManifestsWritten(count($tables), $timer->getElapsedSeconds());
+    }
+
+    protected function createTableExporter(): TableExporter
+    {
+        return new TableExporter($this->clientWrapper->getTableAndFileStorageClient());
     }
 
     protected function getAwaitingClient(): Client

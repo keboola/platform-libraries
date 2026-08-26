@@ -1,5 +1,5 @@
 name: Create release
-description: Write release notes with Claude Code and create a GitHub release in the library's standalone repo
+description: Write release notes with Gemini and create a GitHub release in the library's standalone repo
 
 # Credentials stay inputs, never job-level env, so the App private key reaches only the token step.
 inputs:
@@ -15,8 +15,12 @@ inputs:
   private-key:
     description: GitHub App private key (PEM) used to mint a scoped installation token
     required: true
-  anthropic-api-key:
-    description: Anthropic API key Claude Code uses to write the release notes
+  gemini-api-key:
+    description: Gemini API key used to write the release notes
+    required: true
+  model:
+    description: Gemini model that writes the notes (no default — model IDs go stale, so it is
+      configured in the RELEASE_GENERATOR_GEMINI_MODEL repository variable)
     required: true
   dry-run:
     description: Print the notes to the job summary instead of creating the release
@@ -88,43 +92,55 @@ runs:
           "No changes in \`libs/${LIBRARY}\` itself. Released to pick up changes in the libraries it depends on." \
           > "${NOTES_FILE}"
 
-    # The CLI, not anthropics/claude-code-action: that action rejects push events, which is what a
-    # tag push is. --bare keeps the run independent of repository content (no hooks, plugins or
-    # CLAUDE.md) and takes auth strictly from ANTHROPIC_API_KEY. The notes are stdout, so no tool
-    # needs write access; --allowed-tools is a security boundary because pull request bodies are
-    # attacker-influenced, and nothing on it reaches the network.
-    - name: Write release notes with Claude Code
+    # One completion, no agent: release-context.sh already gathered the pull request descriptions and
+    # the diff, so the model needs no tools, no network and no repository access. That leaves nothing
+    # for a prompt injection in a pull request body to reach.
+    - name: Write release notes
       id: notes
       if: steps.existing.outputs.skip != 'true' && steps.context.outputs.has-changes == 'true'
       shell: bash
       env:
-        # Scoped to this one step: the key belongs in the model's process and nowhere else.
-        ANTHROPIC_API_KEY: ${{ inputs.anthropic-api-key }}
-        # The workflow token, for the model's own 'gh pr' calls against the monorepo. Read-only.
-        GH_TOKEN: ${{ github.token }}
+        GEMINI_API_KEY: ${{ inputs.gemini-api-key }}
+        MODEL: ${{ inputs.model }}
         NOTES_FILE: ${{ github.workspace }}/.release/notes.md
         PROMPT_FILE: ${{ github.action_path }}/prompt.md
+        CONTEXT_FILE: ${{ github.workspace }}/.release/context.md
+        REQUEST_FILE: ${{ runner.temp }}/gemini-request.json
+        RESPONSE_FILE: ${{ runner.temp }}/gemini-response.json
       run: |
-        # The key is an org secret; it reads as empty in a repository the secret does not grant
-        # access to, and --bare has no other way to authenticate.
-        if [ -z "${ANTHROPIC_API_KEY}" ]; then
-          echo "::error::ANTHROPIC_API_KEY is empty. Grant this repository access to the AI_CR_ANTHROPIC_API_KEY organization secret."
+        if [ -z "${GEMINI_API_KEY}" ]; then
+          echo "::error::gemini-api-key is empty. Check the RELEASE_GENERATOR_GEMINI_API_KEY secret is readable by this repository."
           exit 1
         fi
 
-        # Pinned; bump deliberately so wording does not drift with a CLI release.
-        npm install -g @anthropic-ai/claude-code@2.1.246
+        # jq builds the body so the prompt and the context are JSON-escaped rather than interpolated.
+        jq -n --rawfile prompt "${PROMPT_FILE}" --rawfile context "${CONTEXT_FILE}" --arg model "${MODEL}" \
+          '{model: $model, input: ($prompt + "\n\n" + $context)}' > "${REQUEST_FILE}"
 
-        # Prompt on stdin: --allowed-tools is variadic and would swallow it as an argument.
-        claude --print --bare \
-          --model opus \
-          --allowed-tools "Bash(gh pr view:*),Bash(gh pr diff:*),Read,Grep,Glob" \
-          < "${PROMPT_FILE}" > "${NOTES_FILE}" || {
-          # stdout is the notes file, so any diagnostic the CLI printed there is the only clue.
-          echo "::error::Claude Code failed to write the release notes:"
-          cat "${NOTES_FILE}" || true
+        HTTP_STATUS="$(curl --silent --show-error \
+          --output "${RESPONSE_FILE}" --write-out '%{http_code}' \
+          --max-time 300 --retry 2 --retry-connrefused \
+          -X POST 'https://generativelanguage.googleapis.com/v1beta2/interactions' \
+          -H 'Content-Type: application/json' \
+          -H "x-goog-api-key: ${GEMINI_API_KEY}" \
+          --data-binary "@${RUNNER_TEMP}/gemini-request.json")"
+
+        if [ "${HTTP_STATUS}" != "200" ]; then
+          echo "::error::Gemini returned HTTP ${HTTP_STATUS}:"
+          jq '.' "${RESPONSE_FILE}" 2>/dev/null || cat "${RESPONSE_FILE}"
           exit 1
-        }
+        fi
+
+        # The text lives on the model_output step; selected by type rather than by index so an extra
+        # step in the response does not silently yield the wrong content.
+        jq -r '[.steps[] | select(.type == "model_output") | .content[] | select(.type == "text")
+          | .text] | join("\n")' "${RESPONSE_FILE}" > "${NOTES_FILE}"
+
+        if [ ! -s "${NOTES_FILE}" ]; then
+          echo "::error::Gemini returned no text. Response was:"
+          jq '.' "${RESPONSE_FILE}" 2>/dev/null || cat "${RESPONSE_FILE}"
+          exit 1
+        fi
 
     # The compare link is appended here rather than by the model so it can never be wrong.
     - name: Finalize release notes
@@ -140,7 +156,7 @@ runs:
         sed -i -n '/^- /,$p' "${NOTES_FILE}"
 
         if [ ! -s "${NOTES_FILE}" ]; then
-          echo "::error::Claude Code wrote no release notes; refusing to create a release without them."
+          echo "::error::No release notes were written; refusing to create a release without them."
           exit 1
         fi
         if [ -n "${PREVIOUS_VERSION}" ]; then

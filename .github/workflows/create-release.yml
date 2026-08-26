@@ -58,4 +58,5 @@ jobs:
           dry-run: ${{ inputs.dry-run }}
           app-id: ${{ vars.SPLIT_APP_ID }}
           private-key: ${{ secrets.SPLIT_APP_PRIVATE_KEY }}
-          anthropic-api-key: ${{ secrets.AI_CR_ANTHROPIC_API_KEY }}
+          gemini-api-key: ${{ secrets.RELEASE_GENERATOR_GEMINI_API_KEY }}
+          model: ${{ vars.RELEASE_GENERATOR_GEMINI_MODEL }}

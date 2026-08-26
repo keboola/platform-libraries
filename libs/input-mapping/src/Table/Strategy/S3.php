@@ -6,13 +6,16 @@ namespace Keboola\InputMapping\Table\Strategy;
 
 use Keboola\InputMapping\Exception\InputOperationException;
 use Keboola\InputMapping\Exception\InvalidInputException;
+use Keboola\InputMapping\Helper\LogFormatter;
 use Keboola\InputMapping\Helper\PathHelper;
+use Keboola\InputMapping\Helper\Timer;
 use Keboola\StorageApi\Options\GetFileOptions;
 
 class S3 extends AbstractFileStrategy
 {
     public function prepareAndExecuteTableLoads(array $tables, bool $preserve): TableLoadQueueInterface
     {
+        $timer = Timer::start();
         $this->logger->info('Processing ' . count($tables) . ' S3 table exports.');
         $tablesByJobId = [];
         foreach ($tables as $table) {
@@ -24,6 +27,13 @@ class S3 extends AbstractFileStrategy
             );
             $tablesByJobId[$jobId] = $table;
         }
+
+        $this->logger->debug(sprintf(
+            'Queued %s table exports in %s.',
+            count($tablesByJobId),
+            LogFormatter::formatDuration($timer->getElapsedSeconds()),
+        ));
+
         return new TableExportQueue($tablesByJobId, static::class, $this->destination);
     }
 
@@ -38,6 +48,7 @@ class S3 extends AbstractFileStrategy
             $keyedResults[$result['id']] = $result;
         }
 
+        $timer = Timer::start();
         foreach ($queue->tablesByJobId as $jobId => $table) {
             $manifestPath = PathHelper::getManifestPath(
                 $this->metadataStorage,
@@ -56,7 +67,13 @@ class S3 extends AbstractFileStrategy
                 $table->getColumnNamesFromTypes(),
                 $this->format,
             );
+            $this->logTableFetched($table->getSource(), sprintf(
+                'Export job %s, file %s.',
+                $jobId,
+                $fileInfo['id'],
+            ));
         }
+        $this->logManifestsWritten(count($queue->tablesByJobId), $timer->getElapsedSeconds());
     }
 
     /**

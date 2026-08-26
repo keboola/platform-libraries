@@ -72,7 +72,27 @@ class DownloadTablesDefaultTest extends AbstractTestCase
         );
         $manifest = $adapter->readFromFile($this->temp->getTmpFolder() . '/download/test2.csv.manifest');
         self::assertEquals($this->secondTableId, $manifest['id']);
+        // info level: the unchanged, greppable contract messages
         self::assertTrue($this->testHandler->hasInfoThatContains('Processing 2 local table exports.'));
+        self::assertTrue($this->testHandler->hasInfoThatContains(
+            sprintf('Fetched table %s.', $this->firstTableId),
+        ));
+        self::assertTrue($this->testHandler->hasInfoThatContains('All tables were fetched.'));
+
+        // debug level: all the timing, size and Storage job detail added by AJDA-3148
+        self::assertTrue($this->testHandler->hasDebugThatContains('Queued 2 table exports in '));
+        self::assertTrue($this->testHandler->hasDebugThatContains('Waiting for 2 storage jobs to finish.'));
+        self::assertTrue($this->testHandler->hasDebugThatContains('2 storage jobs finished in '));
+        self::assertTrue($this->testHandler->hasDebugThatContains('Downloading 2 exported tables.'));
+        self::assertTrue($this->testHandler->hasDebugThatContains(
+            sprintf('Fetching table %s (export job ', $this->firstTableId),
+        ));
+        self::assertTrue($this->testHandler->hasDebugThatContains(
+            sprintf('Fetched table %s. Downloaded ', $this->firstTableId),
+        ));
+        self::assertTrue($this->testHandler->hasDebugThatContains('Downloaded 2 tables, '));
+        self::assertTrue($this->testHandler->hasDebugThatContains('Wrote 2 table manifests in '));
+        self::assertTrue($this->testHandler->hasDebugThatContains('All tables were fetched. 2 tables in '));
     }
 
     #[NeedsTestTables]

@@ -251,7 +251,7 @@ Non-sensitive values are stored as **repository variables** (read via `vars.*`);
 - `OUTPUT_MAPPING__BIGQUERY_STORAGE_API_URL`
 - `K8S_CLIENT_TERRAFORM_AWS_ACCESS_KEY_ID`
 - `MESSENGER_BUNDLE_TERRAFORM_AWS_ACCESS_KEY_ID`
-- `SPLIT_APP_ID` (GitHub App ID used to mint publish tokens)
+- `SPLIT_APP_CLIENT_ID` (GitHub App **Client ID** used to mint publish tokens; `SPLIT_APP_ID`, the numeric App ID, is the fallback and can be removed once the Client ID is set)
 
 **Repository secrets** (`secrets.*`) — Storage API tokens, Terraform secret keys and the publish App private key:
 - Storage tokens: `INPUT_MAPPING__*`, `OUTPUT_MAPPING__STORAGE_API_TOKEN_*` / `OUTPUT_MAPPING_*__STORAGE_API_TOKEN_*`, `OUTPUT_MAPPING__BIGQUERY_STORAGE_API_TOKEN`, `VARIABLES_RESOLVER__*`, `STAGING_PROVIDER__STORAGE_API_TOKEN_AWS`, `QUERY_SERVICE__STORAGE_API_TOKEN_GCP` (also used by `php-storage-names-sanitizer`), `SYNC_ACTIONS_CLIENT__STORAGE_API_TOKEN_GCP`, `PHP_TEST_UTILS__TEST_STORAGE_API_TOKEN_SNOWFLAKE`.

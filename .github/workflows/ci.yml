@@ -238,5 +238,7 @@ jobs:
       - uses: ./.github/actions/split-library
         with:
           library: ${{ matrix.lib }}
-          app-id: ${{ vars.SPLIT_APP_ID }}
+          # Prefers the App's Client ID; falls back to the App ID, which the API also accepts as the
+          # JWT issuer, so this works whether or not SPLIT_APP_CLIENT_ID has been provisioned yet.
+          client-id: ${{ vars.SPLIT_APP_CLIENT_ID || vars.SPLIT_APP_ID }}
           private-key: ${{ secrets.SPLIT_APP_PRIVATE_KEY }}

@@ -1,4 +1,5 @@
 .idea/
+.release/
 .phpunit.result.cache
 .env
 **/.claude/*.local.json

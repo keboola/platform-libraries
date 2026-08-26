@@ -15,20 +15,15 @@ inputs:
 runs:
   using: composite
   steps:
-    # Most libraries publish to a standalone repo of the same name; these are the
-    # exceptions where the target repo name differs from the library directory.
+    # The library -> standalone repo mapping lives in bin/target-repo.sh, shared with create-release.
     - name: Resolve target repository
       id: target
       shell: bash
+      env:
+        LIBRARY: ${{ inputs.library }}
       run: |
-        case "${{ inputs.library }}" in
-          git-service-api-client)      REPO=git-service-php-api-client ;;
-          key-generator)               REPO=php-key-generator ;;
-          query-service-api-client)    REPO=query-service-api-php-client ;;
-          sandboxes-service-api-client) REPO=sandboxes-service-api-php-client ;;
-          vault-api-client)            REPO=vault-api-php-client ;;
-          *)                           REPO="${{ inputs.library }}" ;;
-        esac
+        # Assign first: an 'echo "repo=$(...)"' one-liner would swallow the script's exit code.
+        REPO="$("${{ github.workspace }}/bin/target-repo.sh" "${LIBRARY}")"
         echo "repo=${REPO}" >> "$GITHUB_OUTPUT"
 
     - name: Generate GitHub App token
@@ -50,6 +45,7 @@ runs:
       shell: bash
       env:
         SPLIT_TOKEN: ${{ steps.app-token.outputs.token }}
+        LIBRARY: ${{ inputs.library }}
       run: |
         TARGET_URL="https://x-access-token:${SPLIT_TOKEN}@github.com/keboola/${{ steps.target.outputs.repo }}.git"
         # Branch build -> push that branch; tag build -> push only that one (stripped) tag.
@@ -58,12 +54,12 @@ runs:
         if [ "${GITHUB_REF_TYPE}" = "branch" ]; then
           PUSH_BRANCH="${GITHUB_REF_NAME}"
         else
-          PUSH_TAG="${GITHUB_REF_NAME#${{ inputs.library }}/}"
+          PUSH_TAG="${GITHUB_REF_NAME#"${LIBRARY}/"}"
         fi
         "${{ github.workspace }}/bin/split-repo.sh" \
           "${{ github.workspace }}" \
           "${TARGET_URL}" \
-          "libs/${{ inputs.library }}" \
-          "${{ inputs.library }}/" \
+          "libs/${LIBRARY}" \
+          "${LIBRARY}/" \
           "${PUSH_BRANCH}" \
           "${PUSH_TAG}"

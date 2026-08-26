@@ -38,7 +38,7 @@ class ServiceClientTest extends TestCase
     private const INTERNAL_GIT_SERVICE = 'http://git-service.git-service.svc.cluster.local';
     private const INTERNAL_IMPORT_SERVICE = 'http://sapi-importer.default.svc.cluster.local';
     private const INTERNAL_NOTIFICATION_SERVICE = 'http://notification-api.default.svc.cluster.local';
-    private const INTERNAL_OAUTH = 'http://oauth-api.default.svc.cluster.local';
+    private const INTERNAL_OAUTH = 'http://oauth-service-api.default.svc.cluster.local';
     private const INTERNAL_QUERY_SERVICE = 'http://query-service-api.query-service.svc.cluster.local';
     private const INTERNAL_QUEUE = 'http://job-queue-api.default.svc.cluster.local';
     private const INTERNAL_QUEUE_INTERNAL_API = 'http://job-queue-internal-api.default.svc.cluster.local';

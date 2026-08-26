@@ -114,31 +114,35 @@ runs:
         fi
 
         # jq builds the body so the prompt and the context are JSON-escaped rather than interpolated.
-        jq -n --rawfile prompt "${PROMPT_FILE}" --rawfile context "${CONTEXT_FILE}" --arg model "${MODEL}" \
-          '{model: $model, input: ($prompt + "\n\n" + $context)}' > "${REQUEST_FILE}"
+        # The instructions go in systemInstruction and the context — which carries the untrusted pull
+        # request bodies — stays user content, so the two are never one indistinguishable string.
+        jq -n --rawfile prompt "${PROMPT_FILE}" --rawfile context "${CONTEXT_FILE}" \
+          '{systemInstruction: {parts: [{text: $prompt}]}, contents: [{parts: [{text: $context}]}]}' \
+          > "${REQUEST_FILE}"
 
         HTTP_STATUS="$(curl --silent --show-error \
           --output "${RESPONSE_FILE}" --write-out '%{http_code}' \
           --max-time 300 --retry 2 --retry-connrefused \
-          -X POST 'https://generativelanguage.googleapis.com/v1beta2/interactions' \
+          -X POST "https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent" \
           -H 'Content-Type: application/json' \
           -H "x-goog-api-key: ${GEMINI_API_KEY}" \
-          --data-binary "@${RUNNER_TEMP}/gemini-request.json")"
+          --data-binary "@${REQUEST_FILE}")"
 
+        # Printed raw and unconditionally. Piping this through jq hid the body of a 404 completely,
+        # because a non-JSON error page makes jq fail and there was nothing left to read.
         if [ "${HTTP_STATUS}" != "200" ]; then
-          echo "::error::Gemini returned HTTP ${HTTP_STATUS}:"
-          jq '.' "${RESPONSE_FILE}" 2>/dev/null || cat "${RESPONSE_FILE}"
+          echo "::error::Gemini returned HTTP ${HTTP_STATUS} for model '${MODEL}'"
+          if [ -s "${RESPONSE_FILE}" ]; then cat "${RESPONSE_FILE}"; else echo "(empty response body)"; fi
           exit 1
         fi
 
-        # The text lives on the model_output step; selected by type rather than by index so an extra
-        # step in the response does not silently yield the wrong content.
-        jq -r '[.steps[] | select(.type == "model_output") | .content[] | select(.type == "text")
-          | .text] | join("\n")' "${RESPONSE_FILE}" > "${NOTES_FILE}"
+        jq -r '[.candidates[]?.content.parts[]? | select(has("text")) | .text] | join("")' \
+          "${RESPONSE_FILE}" > "${NOTES_FILE}"
 
+        # Empty means a safety block or a truncated candidate, and the reason is in the response.
         if [ ! -s "${NOTES_FILE}" ]; then
-          echo "::error::Gemini returned no text. Response was:"
-          jq '.' "${RESPONSE_FILE}" 2>/dev/null || cat "${RESPONSE_FILE}"
+          echo "::error::Gemini returned no text."
+          cat "${RESPONSE_FILE}"
           exit 1
         fi
 

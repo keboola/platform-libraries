@@ -1,9 +1,7 @@
 name: Create release
 description: Write release notes with Claude Code and create a GitHub release in the library's standalone repo
 
-# Every credential is an input, never job-level env: a composite action substitutes inputs into the
-# steps that name them instead of exporting them, so the App private key reaches the token step and
-# nothing else. Job-level env would put it in the environment of every step, Claude Code's included.
+# Credentials stay inputs, never job-level env, so the App private key reaches only the token step.
 inputs:
   library:
     description: Library directory name under libs/ (e.g. output-mapping)
@@ -35,7 +33,7 @@ runs:
       env:
         LIBRARY: ${{ inputs.library }}
       run: |
-        # Assign first: an 'echo "repo=$(...)"' one-liner would swallow the script's exit code.
+        # Assigned, not echoed inline, so a rejected library name fails the step.
         REPO="$("${{ github.workspace }}/bin/target-repo.sh" "${LIBRARY}")"
         echo "repo=${REPO}" >> "$GITHUB_OUTPUT"
 
@@ -62,7 +60,7 @@ runs:
           echo "skip=true" >> "$GITHUB_OUTPUT"
         fi
 
-    # GH_TOKEN is the workflow token here, not the App token: this reads the monorepo, not the target.
+    # The workflow token, not the App token: this reads the monorepo, not the target repo.
     - name: Collect release context
       id: context
       if: steps.existing.outputs.skip != 'true'
@@ -72,16 +70,13 @@ runs:
         LIBRARY: ${{ inputs.library }}
         VERSION: ${{ inputs.version }}
       run: |
-        # The script prints 'previous-version=', 'is-newest=' and 'has-changes=' on stdout, progress
-        # on stderr.
+        # Prints 'previous-version=', 'is-newest=' and 'has-changes=' on stdout; progress on stderr.
         "${{ github.workspace }}/bin/release-context.sh" \
           "${LIBRARY}" \
           "${VERSION}" \
           "${{ github.workspace }}/.release/context.md" >> "$GITHUB_OUTPUT"
 
-    # A library re-released only to pick up its '*@dev' siblings has nothing for the model to
-    # describe. The body is fixed text derived from the empty commit list rather than whatever the
-    # model would make of an empty context file.
+    # Nothing changed under libs/<lib>, so there is nothing to describe and the model is not asked.
     - name: Write release notes for a release without library changes
       if: steps.existing.outputs.skip != 'true' && steps.context.outputs.has-changes != 'true'
       shell: bash
@@ -93,17 +88,11 @@ runs:
           "No changes in \`libs/${LIBRARY}\` itself. Released to pick up changes in the libraries it depends on." \
           > "${NOTES_FILE}"
 
-    # Deliberately the Claude Code CLI and not anthropics/claude-code-action: that action rejects
-    # this workflow outright ("Unsupported event type: push" — src/github/context.ts allows only the
-    # issue/PR events plus workflow_dispatch, repository_dispatch, schedule and workflow_run), and a
-    # tag push is a push event. Its PR-automation features are not wanted here either; this needs
-    # one headless generation. --bare skips hooks, plugins and CLAUDE.md discovery and takes auth
-    # strictly from ANTHROPIC_API_KEY, so the run does not depend on repository content.
-    #
-    # The notes are the process stdout, so the model needs no write access anywhere. Pull request
-    # bodies are attacker-influenced input, so nothing in --allowed-tools may reach the network: no
-    # 'gh api' (it takes arbitrary URLs), only the two read-only 'gh pr' subcommands the prompt
-    # needs. The commit -> pull request lookup already happened in release-context.sh.
+    # The CLI, not anthropics/claude-code-action: that action rejects push events, which is what a
+    # tag push is. --bare keeps the run independent of repository content (no hooks, plugins or
+    # CLAUDE.md) and takes auth strictly from ANTHROPIC_API_KEY. The notes are stdout, so no tool
+    # needs write access; --allowed-tools is a security boundary because pull request bodies are
+    # attacker-influenced, and nothing on it reaches the network.
     - name: Write release notes with Claude Code
       id: notes
       if: steps.existing.outputs.skip != 'true' && steps.context.outputs.has-changes == 'true'
@@ -116,17 +105,26 @@ runs:
         NOTES_FILE: ${{ github.workspace }}/.release/notes.md
         PROMPT_FILE: ${{ github.action_path }}/prompt.md
       run: |
-        # Pinned on purpose: release notes should not change wording because a CLI release landed
-        # overnight. Bump deliberately.
+        # The key is an org secret; it reads as empty in a repository the secret does not grant
+        # access to, and --bare has no other way to authenticate.
+        if [ -z "${ANTHROPIC_API_KEY}" ]; then
+          echo "::error::ANTHROPIC_API_KEY is empty. Grant this repository access to the AI_CR_ANTHROPIC_API_KEY organization secret."
+          exit 1
+        fi
+
+        # Pinned; bump deliberately so wording does not drift with a CLI release.
         npm install -g @anthropic-ai/claude-code@2.1.246
 
-        # The prompt goes in on stdin, not as an argument: --allowed-tools is variadic, so it eats
-        # every following argument and the prompt disappears into the tool list ("Input must be
-        # provided either through stdin or as a prompt argument").
+        # Prompt on stdin: --allowed-tools is variadic and would swallow it as an argument.
         claude --print --bare \
           --model opus \
           --allowed-tools "Bash(gh pr view:*),Bash(gh pr diff:*),Read,Grep,Glob" \
-          < "${PROMPT_FILE}" > "${NOTES_FILE}"
+          < "${PROMPT_FILE}" > "${NOTES_FILE}" || {
+          # stdout is the notes file, so any diagnostic the CLI printed there is the only clue.
+          echo "::error::Claude Code failed to write the release notes:"
+          cat "${NOTES_FILE}" || true
+          exit 1
+        }
 
     # The compare link is appended here rather than by the model so it can never be wrong.
     - name: Finalize release notes
@@ -138,9 +136,7 @@ runs:
         VERSION: ${{ inputs.version }}
         PREVIOUS_VERSION: ${{ steps.context.outputs.previous-version }}
       run: |
-        # The notes are bullets. Drop anything before the first one: the model occasionally opens
-        # with a line about what it verified, which is fine to read in the log and wrong to publish.
-        # If that leaves nothing, the emptiness check below fails the release rather than shipping it.
+        # Keep the bullets only; a preamble about what the model checked must not reach the release.
         sed -i -n '/^- /,$p' "${NOTES_FILE}"
 
         if [ ! -s "${NOTES_FILE}" ]; then
@@ -173,8 +169,7 @@ runs:
         # API defaults it to true, which would let a backfilled older version steal the Latest badge
         # from the real newest release.
         #
-        # --verify-tag runs seconds after split-repo.sh pushed that tag. If this ever fails claiming
-        # the tag does not exist, suspect replication lag on the target repo before anything else.
+        # If --verify-tag ever fails claiming the tag is missing, suspect replication lag first.
         gh release create "${VERSION}" \
           --repo "${REPO}" \
           --title "${VERSION}" \

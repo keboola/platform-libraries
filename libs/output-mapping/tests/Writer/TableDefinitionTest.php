@@ -327,13 +327,13 @@ class TableDefinitionTest extends AbstractTestCase
         self::assertSame('tableColumnAdd', $job['operationName']);
         self::assertSame('birthweight', $job['operationParams']['name']);
         self::assertSame('NUMERIC', $job['operationParams']['basetype']);
-        self::assertNull($job['operationParams']['definition']);
+        self::assertArrayNotHasKey('definition', $job['operationParams']);
 
         $job = array_pop($writerJobs);
         self::assertSame('tableColumnAdd', $job['operationName']);
         self::assertSame('created', $job['operationParams']['name']);
         self::assertSame('TIMESTAMP', $job['operationParams']['basetype']);
-        self::assertNull($job['operationParams']['definition']);
+        self::assertArrayNotHasKey('definition', $job['operationParams']);
 
         // modify PK job
         $job = array_pop($writerJobs);
@@ -469,20 +469,18 @@ class TableDefinitionTest extends AbstractTestCase
         );
 
         self::assertCount(4, $writerJobs);
-        self::assertTableTypedColumnAddJob(
+        self::assertTableTypedColumnAddJobWithDefinition(
             array_pop($writerJobs),
             'birthweight',
-            null,
             [
                 'type' => 'DECIMAL',
                 'length' => '10,2',
                 'nullable' => true,
             ],
         );
-        self::assertTableTypedColumnAddJob(
+        self::assertTableTypedColumnAddJobWithDefinition(
             array_pop($writerJobs),
             'created',
-            null,
             [
                 'type' => 'TIMESTAMP_TZ',
                 'length' => null,
@@ -637,17 +635,15 @@ class TableDefinitionTest extends AbstractTestCase
         );
 
         self::assertCount(4, $writerJobs);
-        self::assertTableTypedColumnAddJob(
+        self::assertTableTypedColumnAddJobWithBasetype(
             array_pop($writerJobs),
             'birthweight',
             'STRING',
-            null,
         );
-        self::assertTableTypedColumnAddJob(
+        self::assertTableTypedColumnAddJobWithBasetype(
             array_pop($writerJobs),
             'created',
             'STRING',
-            null,
         );
         self::assertTablePrimaryKeyAddJob(array_pop($writerJobs), ['Id', 'Name']);
         self::assertTableImportJob(array_pop($writerJobs), $incrementalFlag);
@@ -701,17 +697,36 @@ class TableDefinitionTest extends AbstractTestCase
         self::assertEquals($expectedType['nullable'], $nullableMetadata[0]['value']);
     }
 
-    private static function assertTableTypedColumnAddJob(
+    /**
+     * A column added from a native-type definition: Storage records the `definition` and omits
+     * `basetype`, which the request did not carry.
+     */
+    private static function assertTableTypedColumnAddJobWithDefinition(
         array $jobData,
         string $expectedColumnName,
-        ?string $expectedBaseType,
-        ?array $expectedDefinition,
+        array $expectedDefinition,
+    ): void {
+        self::assertSame('tableColumnAdd', $jobData['operationName']);
+        self::assertSame('success', $jobData['status']);
+        self::assertSame($expectedColumnName, $jobData['operationParams']['name']);
+        self::assertSame($expectedDefinition, $jobData['operationParams']['definition']);
+        self::assertArrayNotHasKey('basetype', $jobData['operationParams']);
+    }
+
+    /**
+     * A column added from a base type: Storage records the `basetype` and omits `definition`,
+     * which the request did not carry.
+     */
+    private static function assertTableTypedColumnAddJobWithBasetype(
+        array $jobData,
+        string $expectedColumnName,
+        string $expectedBaseType,
     ): void {
         self::assertSame('tableColumnAdd', $jobData['operationName']);
         self::assertSame('success', $jobData['status']);
         self::assertSame($expectedColumnName, $jobData['operationParams']['name']);
         self::assertSame($expectedBaseType, $jobData['operationParams']['basetype']);
-        self::assertSame($expectedDefinition, $jobData['operationParams']['definition']);
+        self::assertArrayNotHasKey('definition', $jobData['operationParams']);
     }
 
     private static function assertTablePrimaryKeyAddJob(array $jobData, array $expectedPk): void

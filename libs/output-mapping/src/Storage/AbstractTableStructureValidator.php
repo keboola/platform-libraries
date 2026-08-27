@@ -65,8 +65,8 @@ abstract class AbstractTableStructureValidator
             throw new InvalidTableStructureException(sprintf(
                 'Table "%s" does not contain columns: "%s".'.
                 ' Columns "%s" are present in the table but missing in the schema.'.
-                ' This usually means a column was renamed or replaced; such a change cannot be applied automatically,'.
-                ' add the new columns or drop the obsolete ones in the table manually.',
+                ' This usually means a column was renamed or replaced; such a change cannot be applied automatically.'.
+                ' Drop the obsolete columns from the table — the new ones will be added on the next run.',
                 $tableId,
                 implode('", "', $diff),
                 implode('", "', array_diff($tableColumns, $schemaColumnsNames)),

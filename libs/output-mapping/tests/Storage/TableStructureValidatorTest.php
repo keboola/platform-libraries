@@ -138,8 +138,8 @@ class TableStructureValidatorTest extends TestCase
         $this->expectExceptionMessage(
             'Table "in.c-main.table" does not contain columns: "col4".'.
             ' Columns "col3" are present in the table but missing in the schema.'.
-            ' This usually means a column was renamed or replaced; such a change cannot be applied automatically,'.
-            ' add the new columns or drop the obsolete ones in the table manually.',
+            ' This usually means a column was renamed or replaced; such a change cannot be applied automatically.'.
+            ' Drop the obsolete columns from the table — the new ones will be added on the next run.',
         );
         $validator->validate($schema);
     }

@@ -44,7 +44,7 @@ jobs:
         id: app-token
         uses: actions/create-github-app-token@v3
         with:
-          app-id: ${{ vars.SPLIT_APP_ID }}
+          client-id: ${{ vars.SPLIT_APP_CLIENT_ID || vars.SPLIT_APP_ID }}
           private-key: ${{ secrets.SPLIT_APP_PRIVATE_KEY }}
           owner: keboola
           repositories: ${{ matrix.repo }}

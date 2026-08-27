@@ -5,7 +5,7 @@ on:
 
 permissions:
   contents: read
-  # Claude Code reads the pull requests behind the release to write the release notes.
+  # The release notes are written from the pull requests behind the release.
   pull-requests: read
 
 jobs:
@@ -41,13 +41,14 @@ jobs:
         if: steps.lib.outputs.skip != 'true'
         with:
           library: ${{ steps.lib.outputs.library }}
-          app-id: ${{ vars.SPLIT_APP_ID }}
+          client-id: ${{ vars.SPLIT_APP_CLIENT_ID || vars.SPLIT_APP_ID }}
           private-key: ${{ secrets.SPLIT_APP_PRIVATE_KEY }}
       - uses: ./.github/actions/create-release
         if: steps.lib.outputs.skip != 'true' && steps.lib.outputs.skip-release != 'true'
         with:
           library: ${{ steps.lib.outputs.library }}
           version: ${{ steps.lib.outputs.version }}
-          app-id: ${{ vars.SPLIT_APP_ID }}
+          client-id: ${{ vars.SPLIT_APP_CLIENT_ID || vars.SPLIT_APP_ID }}
           private-key: ${{ secrets.SPLIT_APP_PRIVATE_KEY }}
-          anthropic-api-key: ${{ secrets.AI_CR_ANTHROPIC_API_KEY }}
+          gemini-api-key: ${{ secrets.RELEASE_GENERATOR_GEMINI_API_KEY }}
+          model: ${{ vars.RELEASE_GENERATOR_GEMINI_MODEL }}

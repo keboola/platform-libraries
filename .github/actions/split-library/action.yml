@@ -5,8 +5,8 @@ inputs:
   library:
     description: Library directory name under libs/ (e.g. key-generator)
     required: true
-  app-id:
-    description: GitHub App ID used to mint a scoped installation token
+  client-id:
+    description: GitHub App Client ID (an App ID is also accepted) used to mint a scoped token
     required: true
   private-key:
     description: GitHub App private key (PEM) used to mint a scoped installation token
@@ -30,7 +30,7 @@ runs:
       id: app-token
       uses: actions/create-github-app-token@v3
       with:
-        app-id: ${{ inputs.app-id }}
+        client-id: ${{ inputs.client-id }}
         private-key: ${{ inputs.private-key }}
         owner: keboola
         repositories: ${{ steps.target.outputs.repo }}

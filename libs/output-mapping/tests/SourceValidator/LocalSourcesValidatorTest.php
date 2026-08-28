@@ -33,7 +33,9 @@ class LocalSourcesValidatorTest extends TestCase
     public function testValidatePhysicalFilesWithConfigurationWithMissingSource(): void
     {
         $this->expectException(InvalidOutputException::class);
-        $this->expectExceptionMessage('Table sources not found: "missing.source"');
+        $this->expectExceptionMessage(
+            'Output mapping error: The source file "missing.source" was not found.',
+        );
 
         $dataItems = [$this->createMock(FileItem::class)];
         $configurationSource = [$this->createConfiguredMock(

@@ -577,7 +577,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             ],
         ];
         $this->expectException(InvalidOutputException::class);
-        $this->expectExceptionMessage('Table sources not found: "table81.csv"');
+        $this->expectExceptionMessage('Output mapping error: The source file "table81.csv" was not found.');
         $tableQueue = $this->getTableLoader()->uploadTables(
             configuration: new OutputMappingSettings(
                 configuration: ['mapping' => $configs],
@@ -1771,7 +1771,7 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
         $stagingFactory = $this->getLocalStagingFactory(logger: $this->testLogger);
 
         $this->expectException(InvalidOutputException::class);
-        $this->expectExceptionMessage('Table sources not found: "unknown.csv"');
+        $this->expectExceptionMessage('Output mapping error: The source file "unknown.csv" was not found.');
         $this->getTableLoader(
             logger: $this->testLogger,
             strategyFactory: $stagingFactory,

@@ -1,15 +1,14 @@
 variable "az_aks_resource_group_name" {
   type    = string
-  default = "sandboxes-ci-2021"
+  default = "jobs-queue-ci"
 }
 
 variable "az_aks_cluster_name" {
   type    = string
-  default = "sandboxes-ci-2021-aks"
+  default = "jobs-queue-ci"
 }
 
 data "azurerm_kubernetes_cluster" "current" {
-  provider            = azurerm.aks_subscription
   name                = var.az_aks_cluster_name
   resource_group_name = var.az_aks_resource_group_name
 }

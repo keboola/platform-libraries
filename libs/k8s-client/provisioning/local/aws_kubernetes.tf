@@ -1,18 +1,19 @@
-# cluster `dev-ps-eu-central-1` requires specific role
+# cluster `ci-ps-eu-central-1` requires specific role, regular developer account
+# does not have access to K8S (without assume role)
 provider "aws" {
-  alias   = "aws_k8s_cluster"
-  profile = "Keboola-Dev-Platform-Services-AWSAdministratorAccess"
-  region  = "eu-central-1"
+  alias               = "aws_k8s_cluster"
+  profile             = "Keboola-CI-Platform-Services-Team-AWSAdministratorAccess"
+  allowed_account_ids = ["480319613404"] # CI-Platform-Services-Team
+  region              = "eu-central-1"
 
   assume_role {
-    // https://keboola.atlassian.net/wiki/spaces/KB/pages/1885863951/EKS+cluster+s+p+stupem+do+centralizovan+ho+ECR#Cluster-dev-ps-eu-central-1%3A
-    role_arn     = "arn:aws:iam::025303414634:role/dev-ps-eu-central-1-admin20220407124852230600000001"
+    role_arn     = "arn:aws:iam::480319613404:role/ci-ps-eu-central-1-admin20220415152656187300000002"
     session_name = "terraform"
   }
 }
 
 data "aws_eks_cluster" "current" {
-  name = "dev-ps-eu-central-1"
+  name = "ci-ps-eu-central-1"
 }
 
 data "aws_eks_cluster_auth" "current" {

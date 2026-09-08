@@ -1,6 +1,6 @@
 provider "aws" {
-  profile             = "Keboola-Dev-Platform-Services-AWSAdministratorAccess"
-  allowed_account_ids = ["025303414634"] # Dev - Platform Services
+  profile             = "Keboola-CI-Platform-Services-Team-AWSAdministratorAccess"
+  allowed_account_ids = ["480319613404"] # CI-Platform-Services-Team
   region              = "eu-central-1"
 
   default_tags {

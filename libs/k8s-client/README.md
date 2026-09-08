@@ -125,7 +125,9 @@ For a single credential source you can skip `AutoDetect` and point the client at
 
 ## Development
 Prerequisites:
-* configured `az` and `aws` CLI tools (run `az login` and `aws configure --profile keboola-dev-platform-services`)
+* configured `az` and `aws` CLI tools (run `az login` and configure the
+  `Keboola-CI-Platform-Services-Team-AWSAdministratorAccess` profile — the AWS local env uses the
+  `ci-ps-eu-central-1` cluster in the `CI-Platform-Services-Team` account)
 * installed `terraform` (https://www.terraform.io) and `jq` (https://stedolan.github.io/jq) to setup local env
 * installed `docker` to run & develop the library
 

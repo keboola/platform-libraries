@@ -51,14 +51,19 @@ git filter-repo --quiet --subdirectory-filter "${LIB_PATH}" --refname-callback "
 if not refname.startswith(b'refs/tags/'):
   return refname
 
-# tag, but not matching prefix -> SKIP
+# tag, but not matching prefix -> move under a throwaway namespace (deleted below).
+# It must stay UNIQUE per tag (keep the original suffix): collapsing every non-matching
+# tag onto a single ref makes git fast-import abort with
+# 'multiple updates for ref ... not allowed' as soon as two of them are annotated tags
+# (each annotated tag emits its own ref update for the same target ref).
 if not refname.startswith(b'refs/tags/${TAG_PREFIX}'):
-  return b'refs/tags/SKIP'
+  return b'refs/tags/__split_skip__/' + refname[len(b'refs/tags/'):]
 
 # tag, with correct prefix -> strip prefix
 return b'refs/tags/' + refname[len(b'refs/tags/${TAG_PREFIX}'):]
 "
-git update-ref -d refs/tags/SKIP
+# Drop the throwaway tags so they are never pushed.
+git for-each-ref --format='delete %(refname)' 'refs/tags/__split_skip__/' | git update-ref --stdin
 
 echo ">> Push to target repo '${TARGET_REPO_URL}'"
 git remote add origin "${TARGET_REPO_URL}"

@@ -160,6 +160,41 @@ class WorkspaceProviderFunctionalTest extends TestCase
         self::assertSame($configuration->getComponentId(), $workspaceData['component']);
     }
 
+    /**
+     * Connection refuses Snowflake workspaces without an explicit login type, so a null login type has to
+     * resolve to a service key-pair login and the private key must be available to the caller.
+     */
+    public function testCreateNewSnowflakeWorkspaceWithoutLoginTypeUsesKeyPairAuth(): void
+    {
+        $config = new NewWorkspaceConfig(
+            StagingType::WorkspaceSnowflake,
+            'keboola.staging-provider-functional-test',
+            null,
+            'small',
+            null,
+            NetworkPolicy::USER,
+            null,
+        );
+
+        $workspace = $this->workspaceProvider->createNewWorkspace(
+            $this->storageApiToken,
+            $config,
+        );
+        $this->createdWorkspaceIds[] = $workspace->getWorkspaceId();
+
+        self::assertSame('snowflake', $workspace->getBackendType());
+        self::assertSame(WorkspaceLoginType::SNOWFLAKE_SERVICE_KEYPAIR, $workspace->getLoginType());
+        self::assertNull($workspace->getCredentials()['password'] ?? null);
+        self::assertNotEmpty($workspace->getCredentials()['privateKey'] ?? null);
+        self::assertStringStartsWith('-----BEGIN PRIVATE KEY-----', $workspace->getCredentials()['privateKey']);
+
+        $workspaceData = $this->workspacesApiClient->getWorkspace($workspace->getWorkspaceId());
+        self::assertSame(
+            WorkspaceLoginType::SNOWFLAKE_SERVICE_KEYPAIR->value,
+            $workspaceData['connection']['loginType'] ?? null,
+        );
+    }
+
     public function testCreateNewSnowflakeWorkspaceWithKeyPairAuth(): void
     {
         $config = new NewWorkspaceConfig(

@@ -94,5 +94,20 @@ attribute from `tests/Needs/` (`NeedsEmptyInputBucket`, `NeedsDevBranch`, `Needs
 properties. Add a fixture kind by adding an attribute plus a branch in `TestSatisfyer` — don't create
 buckets ad hoc inside test methods.
 
-Several tests assert on log output via the `TestHandler` set up in `setUp()`; the strategies'
-`Using "…" table input staging.` messages are part of that contract.
+Several tests assert on log output via the `TestHandler` set up in `setUp()`. The strategies'
+`Using "…" table input staging.` messages are part of that contract, and so is the whole job-log
+message sequence documented in `README.md`.
+
+Everything is logged at `info` - job logs do not pass `debug` through, so a `debug` line is invisible
+where it matters. Support greps job logs for `Fetched table <source>.`, `All tables were fetched.`,
+`Processing N … table exports.`, `Processed N workspace exports.`, `Fetched file "<name>".` and
+`All files were fetched.`, so those messages keep their original wording and any detail is appended
+after them, never spliced in.
+
+`Table\Strategy\AbstractStrategy::logTableFetched()` owns the per-table line (the contract message plus
+its optional detail); go through it rather than building the message inline.
+
+Per-table timing works because `TableExporter::downloadExportedFiles()` is a plain loop over the job
+results, so `Table\Strategy\Local` calls it once per export job. If that ever changes upstream, the
+per-table durations silently become one batch again - `tests/Table/Strategy/LocalStrategyLoggingTest.php`
+is the guard.

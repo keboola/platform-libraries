@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Keboola\InputMapping\Table\Strategy;
 
-use Keboola\InputMapping\Helper\LogFormatter;
 use Keboola\InputMapping\Helper\Timer;
 use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Result;
@@ -40,11 +39,10 @@ abstract class AbstractStrategy implements StrategyInterface
         }
         $result->setMetrics($jobResults);
         $result->setInputTableStateList(new InputTableStateList($outputStateConfiguration));
-        $this->logger->info('All tables were fetched.');
-        $this->logger->debug(sprintf(
-            'All tables were fetched. %s tables in %s.',
+        $this->logger->info(sprintf(
+            'All tables were fetched. %s tables in %.2f s.',
             count($tables),
-            LogFormatter::formatDuration($timer->getElapsedSeconds()),
+            $timer->getElapsedSeconds(),
         ));
 
         return $result;
@@ -59,13 +57,13 @@ abstract class AbstractStrategy implements StrategyInterface
      */
     private function awaitJobs(array $jobIds): array
     {
-        $this->logger->debug(sprintf('Waiting for %s storage jobs to finish.', count($jobIds)));
+        $this->logger->info(sprintf('Waiting for %s storage jobs to finish.', count($jobIds)));
         $timer = Timer::start();
         $jobResults = $this->getAwaitingClient()->handleAsyncTasks($jobIds);
-        $this->logger->debug(sprintf(
-            '%s storage jobs finished in %s.',
+        $this->logger->info(sprintf(
+            '%s storage jobs finished in %.2f s.',
             count($jobIds),
-            LogFormatter::formatDuration($timer->getElapsedSeconds()),
+            $timer->getElapsedSeconds(),
         ));
 
         return $jobResults;
@@ -74,25 +72,21 @@ abstract class AbstractStrategy implements StrategyInterface
     /**
      * Emits the per-table completion line.
      *
-     * `Fetched table <source>.` is a log contract - job logs are grepped for it - so it stays
-     * byte-identical at info level. Timing, size and Storage job identifiers are diagnostics, so they go
-     * out as a separate debug line that repeats the table id to stay readable on its own.
+     * `Fetched table <source>.` is a log contract - job logs are grepped for it - so the message always
+     * starts with it; timing, size and Storage job identifiers are appended after it.
      */
     protected function logTableFetched(string $source, string $details = ''): void
     {
-        $this->logger->info(sprintf('Fetched table %s.', $source));
+        $message = sprintf('Fetched table %s.', $source);
         if ($details !== '') {
-            $this->logger->debug(sprintf('Fetched table %s. %s', $source, $details));
+            $message .= ' ' . $details;
         }
+        $this->logger->info($message);
     }
 
     protected function logManifestsWritten(int $count, float $seconds): void
     {
-        $this->logger->debug(sprintf(
-            'Wrote %s table manifests in %s.',
-            $count,
-            LogFormatter::formatDuration($seconds),
-        ));
+        $this->logger->info(sprintf('Wrote %s table manifests in %.2f s.', $count, $seconds));
     }
 
     /**

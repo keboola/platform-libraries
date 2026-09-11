@@ -6,7 +6,6 @@ namespace Keboola\InputMapping\Table\Strategy;
 
 use Keboola\InputMapping\Exception\InputOperationException;
 use Keboola\InputMapping\Exception\InvalidInputException;
-use Keboola\InputMapping\Helper\LogFormatter;
 use Keboola\InputMapping\Helper\PathHelper;
 use Keboola\InputMapping\Helper\Timer;
 use Keboola\StorageApi\Options\GetFileOptions;
@@ -28,10 +27,10 @@ class S3 extends AbstractFileStrategy
             $tablesByJobId[$jobId] = $table;
         }
 
-        $this->logger->debug(sprintf(
-            'Queued %s table exports in %s.',
+        $this->logger->info(sprintf(
+            'Queued %s table exports in %.2f s.',
             count($tablesByJobId),
-            LogFormatter::formatDuration($timer->getElapsedSeconds()),
+            $timer->getElapsedSeconds(),
         ));
 
         return new TableExportQueue($tablesByJobId, static::class, $this->destination);

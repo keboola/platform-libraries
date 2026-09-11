@@ -8,7 +8,6 @@ use Keboola\InputMapping\Exception\FileNotFoundException;
 use Keboola\InputMapping\Exception\InputOperationException;
 use Keboola\InputMapping\Exception\InvalidInputException;
 use Keboola\InputMapping\File\StrategyInterface;
-use Keboola\InputMapping\Helper\LogFormatter;
 use Keboola\InputMapping\Helper\ManifestCreator;
 use Keboola\InputMapping\Helper\Timer;
 use Keboola\InputMapping\Reader;
@@ -138,12 +137,11 @@ abstract class AbstractStrategy implements StrategyInterface
                 $outputStateList[] = $outputStateConfiguration;
             }
         }
-        $this->logger->info('All files were fetched.');
-        $this->logger->debug(sprintf(
-            'All files were fetched. %s files, %s in %s.',
+        $this->logger->info(sprintf(
+            'All files were fetched. %s files, %s bytes in %.2f s.',
             $fileCount,
-            LogFormatter::formatBytes($totalBytes),
-            LogFormatter::formatDuration($totalTimer->getElapsedSeconds()),
+            $totalBytes,
+            $totalTimer->getElapsedSeconds(),
         ));
         return new InputFileStateList($outputStateList);
     }
@@ -151,19 +149,16 @@ abstract class AbstractStrategy implements StrategyInterface
     /**
      * Emits the per-file completion line.
      *
-     * `Fetched file "<name>".` is a log contract - job logs are grepped for it - so it stays
-     * byte-identical at info level. Size, duration and throughput are diagnostics, so they go out as a
-     * separate debug line that repeats the file name to stay readable on its own.
+     * `Fetched file "<name>".` is a log contract - job logs are grepped for it - so the message always
+     * starts with it; the downloaded size and duration are appended after it.
      */
     private function logFileFetched(string $fileName, int $bytes, float $seconds): void
     {
-        $this->logger->info(sprintf('Fetched file "%s".', $fileName));
-        $this->logger->debug(sprintf(
-            'Fetched file "%s". Downloaded %s in %s (%s).',
+        $this->logger->info(sprintf(
+            'Fetched file "%s". Downloaded %s bytes in %.2f s.',
             $fileName,
-            LogFormatter::formatBytes($bytes),
-            LogFormatter::formatDuration($seconds),
-            LogFormatter::formatThroughput($bytes, $seconds),
+            $bytes,
+            $seconds,
         ));
     }
 }

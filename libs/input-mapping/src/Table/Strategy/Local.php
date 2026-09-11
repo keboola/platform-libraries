@@ -6,7 +6,6 @@ namespace Keboola\InputMapping\Table\Strategy;
 
 use Keboola\InputMapping\Exception\InputOperationException;
 use Keboola\InputMapping\Exception\InvalidInputException;
-use Keboola\InputMapping\Helper\LogFormatter;
 use Keboola\InputMapping\Helper\PathHelper;
 use Keboola\InputMapping\Helper\Timer;
 use Keboola\StorageApi\Client;
@@ -56,10 +55,10 @@ class Local extends AbstractFileStrategy
             $exportJobs[$jobId] = $queuedJobs[$jobId];
         }
 
-        $this->logger->debug(sprintf(
-            'Queued %s table exports in %s.',
+        $this->logger->info(sprintf(
+            'Queued %s table exports in %.2f s.',
             count($tablesByJobId),
-            LogFormatter::formatDuration($timer->getElapsedSeconds()),
+            $timer->getElapsedSeconds(),
         ));
 
         return new TableExportQueue($tablesByJobId, static::class, $this->destination, $exportJobs);
@@ -92,7 +91,7 @@ class Local extends AbstractFileStrategy
 
         $tableExporter = $this->createTableExporter();
         $tableCount = count($queue->tablesByJobId);
-        $this->logger->debug(sprintf('Downloading %s exported tables.', $tableCount));
+        $this->logger->info(sprintf('Downloading %s exported tables.', $tableCount));
 
         $phaseTimer = Timer::start();
         $totalBytes = 0;
@@ -110,7 +109,7 @@ class Local extends AbstractFileStrategy
             $bytes = (int) ($jobResult['metrics']['outBytes'] ?? 0);
             $totalBytes += $bytes;
 
-            $this->logger->debug(sprintf(
+            $this->logger->info(sprintf(
                 'Fetching table %s (export job %s, file %s).',
                 $table->getSource(),
                 $jobId,
@@ -122,22 +121,19 @@ class Local extends AbstractFileStrategy
             $tableSeconds = $tableTimer->getElapsedSeconds();
 
             $this->logTableFetched($table->getSource(), sprintf(
-                'Downloaded %s in %s (%s), export job %s, file %s.',
-                LogFormatter::formatBytes($bytes),
-                LogFormatter::formatDuration($tableSeconds),
-                LogFormatter::formatThroughput($bytes, $tableSeconds),
+                'Downloaded %s bytes in %.2f s, export job %s, file %s.',
+                $bytes,
+                $tableSeconds,
                 $jobId,
                 $fileId,
             ));
         }
 
-        $phaseSeconds = $phaseTimer->getElapsedSeconds();
-        $this->logger->debug(sprintf(
-            'Downloaded %s tables, %s in %s (%s).',
+        $this->logger->info(sprintf(
+            'Downloaded %s tables, %s bytes in %.2f s.',
             $tableCount,
-            LogFormatter::formatBytes($totalBytes),
-            LogFormatter::formatDuration($phaseSeconds),
-            LogFormatter::formatThroughput($totalBytes, $phaseSeconds),
+            $totalBytes,
+            $phaseTimer->getElapsedSeconds(),
         ));
     }
 

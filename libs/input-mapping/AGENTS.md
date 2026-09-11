@@ -98,20 +98,16 @@ Several tests assert on log output via the `TestHandler` set up in `setUp()`. Th
 `Using "…" table input staging.` messages are part of that contract, and so is the whole job-log
 message sequence documented in `README.md`.
 
-**The level split is the contract.** `info` carries the stable, greppable messages — `Fetched table
-<source>.`, `All tables were fetched.`, `Processing N … table exports.`, `Processed N workspace
-exports.`, `Fetched file "<name>".`, `All files were fetched.` — with their original text. Support
-greps job logs for them, so they may never be rewritten and nothing may be appended to them; a new
-message is added as a new line, not by extending an existing one. All timing, size, throughput and
-Storage job/file detail goes to `debug`, as a standalone line that repeats the identifier it describes
-so it reads on its own. Assert on the new detail with `hasDebugThatContains()`, never
-`hasInfoThatContains()`.
+Everything is logged at `info` - job logs do not pass `debug` through, so a `debug` line is invisible
+where it matters. Support greps job logs for `Fetched table <source>.`, `All tables were fetched.`,
+`Processing N … table exports.`, `Processed N workspace exports.`, `Fetched file "<name>".` and
+`All files were fetched.`, so those messages keep their original wording and any detail is appended
+after them, never spliced in.
 
-`Table\Strategy\AbstractStrategy::logTableFetched()` owns both halves of the per-table line (the info
-message and its optional debug detail); go through it rather than building either message inline.
+`Table\Strategy\AbstractStrategy::logTableFetched()` owns the per-table line (the contract message plus
+its optional detail); go through it rather than building the message inline.
 
 Per-table timing works because `TableExporter::downloadExportedFiles()` is a plain loop over the job
 results, so `Table\Strategy\Local` calls it once per export job. If that ever changes upstream, the
-per-table durations silently become one batch again — `tests/Table/Strategy/LocalStrategyLoggingTest.php`
-is the guard; it also asserts that the info level contains *exactly* the three unchanged contract
-messages, so anything new leaking into `info` fails there.
+per-table durations silently become one batch again - `tests/Table/Strategy/LocalStrategyLoggingTest.php`
+is the guard.

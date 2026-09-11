@@ -106,55 +106,37 @@ class LocalStrategyLoggingTest extends TestCase
 
         self::assertCount(2, $result->getTables());
 
-        $infoMessages = $this->messagesAtLevel(Level::Info);
-        $debugMessages = $this->messagesAtLevel(Level::Debug);
+        $messages = $this->messagesAtLevel(Level::Info);
 
-        // info carries only the pre-existing contract messages, byte-identical and without any
-        // appended detail - nothing new is allowed to leak into this level
-        self::assertSame(
-            [
-                'Fetched table in.c-test-bucket.table1.',
-                'Fetched table in.c-test-bucket.table2.',
-                'All tables were fetched.',
-            ],
-            $infoMessages,
-        );
+        self::assertContains('Waiting for 2 storage jobs to finish.', $messages);
+        self::assertContains('Downloading 2 exported tables.', $messages);
+        self::assertContains('Fetching table in.c-test-bucket.table1 (export job 100, file 555).', $messages);
+        self::assertContains('Fetching table in.c-test-bucket.table2 (export job 101, file 556).', $messages);
 
-        self::assertContains('Waiting for 2 storage jobs to finish.', $debugMessages);
-        self::assertContains('Downloading 2 exported tables.', $debugMessages);
-        self::assertContains(
-            'Fetching table in.c-test-bucket.table1 (export job 100, file 555).',
-            $debugMessages,
-        );
-        self::assertContains(
-            'Fetching table in.c-test-bucket.table2 (export job 101, file 556).',
-            $debugMessages,
-        );
-
-        $firstFetched = self::indexOfMessageContaining($debugMessages, 'Fetched table in.c-test-bucket.table1.');
-        $secondFetching = self::indexOfMessageContaining($debugMessages, 'Fetching table in.c-test-bucket.table2');
+        $firstFetched = self::indexOfMessageContaining($messages, 'Fetched table in.c-test-bucket.table1.');
+        $secondFetching = self::indexOfMessageContaining($messages, 'Fetching table in.c-test-bucket.table2');
 
         // the regression guard for AJDA-3148: per-table lines are interleaved with the downloads,
         // they are not all emitted after the whole batch has finished
         self::assertLessThan($secondFetching, $firstFetched);
 
         self::assertStringStartsWith(
-            'Fetched table in.c-test-bucket.table1. Downloaded 1.0 MB in ',
-            $debugMessages[$firstFetched],
+            'Fetched table in.c-test-bucket.table1. Downloaded 1048576 bytes in ',
+            $messages[$firstFetched],
         );
-        self::assertStringEndsWith('export job 100, file 555.', $debugMessages[$firstFetched]);
+        self::assertStringEndsWith('export job 100, file 555.', $messages[$firstFetched]);
 
         self::assertStringStartsWith(
-            'Downloaded 2 tables, 3.0 MB in ',
-            $debugMessages[self::indexOfMessageContaining($debugMessages, 'Downloaded 2 tables,')],
+            'Downloaded 2 tables, 3145728 bytes in ',
+            $messages[self::indexOfMessageContaining($messages, 'Downloaded 2 tables,')],
         );
         self::assertStringStartsWith(
             'Wrote 2 table manifests in ',
-            $debugMessages[self::indexOfMessageContaining($debugMessages, 'Wrote 2 table manifests')],
+            $messages[self::indexOfMessageContaining($messages, 'Wrote 2 table manifests')],
         );
         self::assertStringStartsWith(
             'All tables were fetched. 2 tables in ',
-            $debugMessages[self::indexOfMessageContaining($debugMessages, 'All tables were fetched.')],
+            $messages[self::indexOfMessageContaining($messages, 'All tables were fetched.')],
         );
     }
 

@@ -18,6 +18,8 @@ use Retry\RetryProxy;
  */
 class KubernetesApiClient
 {
+    private const RAW_RESULT_PREVIEW_LENGTH = 512;
+
     private RetryProxy $retryProxy;
     protected string $k8sNamespace;
 
@@ -109,9 +111,32 @@ class KubernetesApiClient
                 $expectedResult,
                 get_class($api),
                 $method,
-                get_debug_type($result),
+                self::describeResult($result),
             ),
             null,
         );
+    }
+
+    /**
+     * The runtime hands back the raw body of anything it can not map onto a K8S model and drops the HTTP status
+     * code with it, so for those the body is the only thing left to say what the API server actually answered.
+     */
+    private static function describeResult(mixed $result): string
+    {
+        $type = get_debug_type($result);
+        if (is_object($result)) {
+            return $type;
+        }
+
+        $body = is_string($result) ? $result : json_encode($result);
+        if (!is_string($body)) {
+            return $type;
+        }
+
+        if (strlen($body) > self::RAW_RESULT_PREVIEW_LENGTH) {
+            $body = substr($body, 0, self::RAW_RESULT_PREVIEW_LENGTH) . '...';
+        }
+
+        return sprintf('%s: "%s"', $type, $body);
     }
 }

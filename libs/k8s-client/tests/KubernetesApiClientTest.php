@@ -201,6 +201,67 @@ class KubernetesApiClientTest extends TestCase
         }
     }
 
+    public function clusterRequestFailsOnRawResultProvider(): Generator
+    {
+        yield 'plain text body' => [
+            'result' => '502 Bad Gateway',
+            'expectedFoundPart' => 'found string: "502 Bad Gateway"',
+        ];
+
+        yield 'json body without kind' => [
+            'result' => ['detail' => 'no kind here'],
+            'expectedFoundPart' => 'found array: "{"detail":"no kind here"}"',
+        ];
+
+        yield 'long body is truncated' => [
+            'result' => str_repeat('a', 600),
+            'expectedFoundPart' => sprintf('found string: "%s..."', str_repeat('a', 512)),
+        ];
+    }
+
+    /**
+     * @dataProvider clusterRequestFailsOnRawResultProvider
+     */
+    public function testClusterRequestFailsOnRawResult(
+        mixed $result,
+        string $expectedFoundPart,
+    ): void {
+        $client = new KubernetesApiClient(
+            $this->createRetryProxyMock(),
+            self::TEST_NAMESPACE,
+        );
+
+        $eventsApiMock = $this->createMock(EventsApi::class);
+        $eventsApiMock->expects(self::once())
+            ->method('read')
+            ->with(self::TEST_NAMESPACE, 'event-name')
+            ->willReturn($result)
+        ;
+
+        try {
+            $client->clusterRequest(
+                $eventsApiMock,
+                'read',
+                Event::class,
+                self::TEST_NAMESPACE,
+                'event-name',
+            );
+
+            $this->fail('Cluster request should throw KubernetesResponseException');
+        } catch (KubernetesResponseException $e) {
+            self::assertNull($e->getStatus());
+            self::assertSame(
+                sprintf(
+                    'Expected response class %s for request %s::read, %s',
+                    Event::class,
+                    get_class($eventsApiMock),
+                    $expectedFoundPart,
+                ),
+                $e->getMessage(),
+            );
+        }
+    }
+
     private function createRetryProxyMock(): RetryProxy
     {
         $retryProxyMock = $this->createMock(RetryProxy::class);

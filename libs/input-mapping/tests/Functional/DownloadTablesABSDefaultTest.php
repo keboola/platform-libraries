@@ -58,6 +58,19 @@ class DownloadTablesABSDefaultTest extends AbstractTestCase
         $this->assertABSinfo($manifest);
 
         self::assertTrue($this->testHandler->hasInfoThatContains('Processing 2 ABS table exports.'));
+        self::assertTrue($this->testHandler->hasInfoThatContains(
+            sprintf('Fetched table %s.', $this->firstTableId),
+        ));
+        self::assertTrue($this->testHandler->hasInfoThatContains('All tables were fetched.'));
+
+        // the timing and Storage job detail added by AJDA-3148
+        self::assertTrue($this->testHandler->hasInfoThatContains('Queued 2 table exports in '));
+        self::assertTrue($this->testHandler->hasInfoThatContains('Waiting for 2 storage jobs to finish.'));
+        self::assertTrue($this->testHandler->hasInfoThatContains(
+            sprintf('Fetched table %s. Export job ', $this->firstTableId),
+        ));
+        self::assertTrue($this->testHandler->hasInfoThatContains('Wrote 2 table manifests in '));
+        self::assertTrue($this->testHandler->hasInfoThatContains('All tables were fetched. 2 tables in '));
     }
 
     #[NeedsTestTables]

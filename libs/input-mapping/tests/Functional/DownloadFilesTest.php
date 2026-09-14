@@ -82,7 +82,19 @@ class DownloadFilesTest extends AbstractDownloadFilesTest
         self::assertEquals($id1, $manifest1['id']);
         self::assertEquals($id2, $manifest2['id']);
         self::assertTrue($this->testHandler->hasInfoThatContains(sprintf('Fetched file "%s_upload".', $id1)));
-        self::assertTrue($this->testHandler->hasInfoThatContains(sprintf('Fetched file "%s_upload_second".', $id2)));
+        self::assertTrue($this->testHandler->hasInfoThatContains(
+            sprintf('Fetched file "%s_upload_second".', $id2),
+        ));
+        self::assertTrue($this->testHandler->hasInfoThatContains('All files were fetched.'));
+
+        // the download size and duration detail added by AJDA-3148
+        self::assertTrue($this->testHandler->hasInfoThatContains(
+            sprintf('Fetched file "%s_upload". Downloaded ', $id1),
+        ));
+        self::assertTrue($this->testHandler->hasInfoThatContains(
+            sprintf('Fetched file "%s_upload_second". Downloaded ', $id2),
+        ));
+        self::assertTrue($this->testHandler->hasInfoThatContains('All files were fetched. 2 files, '));
     }
 
     public function testReadFilesOverwrite(): void

@@ -281,11 +281,34 @@ class AbstractWorkspaceStrategyTest extends TestCase
             self::assertTrue($this->testHandler->hasInfoThatContains('Fetched table in.c-test-bucket.table1.'));
             self::assertTrue($this->testHandler->hasInfoThatContains('Fetched table in.c-test-bucket.table2.'));
             self::assertTrue($this->testHandler->hasInfoThatContains('All tables were fetched.'));
+
+            // the timing / size / job-id detail added by AJDA-3148
+            self::assertTrue($this->testHandler->hasInfoThatContains('Waiting for 1 storage jobs to finish.'));
+            self::assertTrue($this->testHandler->hasInfoThatContains('1 storage jobs finished in '));
+            self::assertTrue($this->testHandler->hasInfoThatContains('Wrote 2 table manifests in '));
+            self::assertTrue($this->testHandler->hasInfoThatContains('All tables were fetched. 2 tables in '));
         } finally {
             array_map('unlink', glob($tmpDir . '/destination/*.manifest') ?: []);
             @rmdir($tmpDir . '/destination');
             rmdir($tmpDir);
         }
+    }
+
+    public function testWaitForTableLoadCompletionWithEmptyQueueSkipsWaitLogging(): void
+    {
+        $clientWrapper = $this->createMock(ClientWrapper::class);
+        $clientWrapper->expects($this->never())->method('getBranchClient');
+
+        $strategy = $this->createTestStrategy($clientWrapper, 'snowflake');
+
+        $result = $strategy->waitForTableLoadCompletion(
+            new WorkspaceLoadQueue([], TestWorkspaceStrategy::class, 'destination'),
+        );
+
+        self::assertCount(0, $result->getTables());
+        self::assertFalse($this->testHandler->hasInfoThatContains('Waiting for '));
+        self::assertFalse($this->testHandler->hasInfoThatContains(' storage jobs finished in '));
+        self::assertTrue($this->testHandler->hasInfoThatContains('All tables were fetched. 0 tables in '));
     }
 
     private function createTestStrategy(

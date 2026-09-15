@@ -34,6 +34,14 @@ class KeboolaApiExtension extends Extension
     public const STORAGE_TOKEN_RESOLVER_CLIENT_ID = 'keboola.api_bundle.storage_token_resolver_client';
 
     /**
+     * Retry cap for the bundle-built Storage client. Left unset, {@see \Keboola\StorageApi\Client}
+     * applies its own default of 11, whose exponential delay (2^(n-1) seconds) sums to 2047 s of
+     * blocking sleep; 3 caps the retry window at 1 + 2 + 4 = 7 s. Overridable per consumer through
+     * `keboola_api.storage_client_options.backoff_max_tries`.
+     */
+    public const DEFAULT_BACKOFF_MAX_TRIES = 3;
+
+    /**
      * Service id of the base Storage {@see ClientOptions} shared by token verification and the
      * controller-facing Storage client, so both use identical Connection URL / logger / options.
      */
@@ -93,10 +101,14 @@ class KeboolaApiExtension extends Extension
         $connectionUrl = (new Definition())
             ->setFactory([new Reference(ServiceClient::class), 'getConnectionServiceUrl']);
 
+        // $backoffMaxTries must be set before applyStorageClientOptions(): the object form replaces
+        // the argument, and the service form early-returns after registering addValuesFrom(), which
+        // merges only non-null values on top. Setting it afterwards would clobber both overrides.
         $baseClientOptions = (new Definition(ClientOptions::class))
             ->setArgument('$url', $connectionUrl)
             ->setArgument('$logger', new Reference('logger'))
-            ->setArgument('$userAgent', $config['app_name']);
+            ->setArgument('$userAgent', $config['app_name'])
+            ->setArgument('$backoffMaxTries', self::DEFAULT_BACKOFF_MAX_TRIES);
 
         $storageClientOptions = $config['storage_client_options'] ?? [];
         assert(is_array($storageClientOptions));

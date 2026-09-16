@@ -16,6 +16,7 @@ use Keboola\ServiceClient\ServiceClient;
 use Keboola\StorageApiBranch\Factory\AuthType;
 use Keboola\StorageApiBranch\Factory\ClientOptions;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\NullLogger;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\Reference;
@@ -246,12 +247,19 @@ class KeboolaApiExtensionTest extends TestCase
         self::assertInstanceOf(Reference::class, $reference);
         self::assertSame('app.storage_options', (string) $reference);
 
-        // service form must not touch the scalar args
+        // service form must not touch the scalar args, but the bundle default backoff stays:
+        // the constructor sets it and addValuesFrom() only merges the referenced service's
+        // non-null values on top, so a service that leaves it null keeps the default.
         $args = $base->getArguments();
-        self::assertArrayNotHasKey('$backoffMaxTries', $args);
+        self::assertSame(
+            KeboolaApiExtension::DEFAULT_BACKOFF_MAX_TRIES,
+            $args['$backoffMaxTries'],
+        );
+        self::assertArrayNotHasKey('$awsRetries', $args);
+        self::assertArrayNotHasKey('$retryOnMaintenance', $args);
     }
 
-    public function testStorageClientOptionsAbsentLeavesBaseUntouched(): void
+    public function testStorageClientOptionsAbsentAppliesBundleDefaultBackoffMaxTries(): void
     {
         $container = $this->buildContainer([[]]);
 
@@ -259,9 +267,23 @@ class KeboolaApiExtensionTest extends TestCase
 
         self::assertSame([], $base->getMethodCalls());
         self::assertSame(
-            ['$url', '$logger', '$userAgent'],
+            ['$url', '$logger', '$userAgent', '$backoffMaxTries'],
             array_keys($base->getArguments()),
         );
+        self::assertSame(3, $base->getArgument('$backoffMaxTries'));
+    }
+
+    public function testStorageClientOptionsBackoffMaxTriesCanBeOverriddenBelowTheDefault(): void
+    {
+        $container = $this->buildContainer([[
+            'storage_client_options' => [
+                'backoff_max_tries' => 0,
+            ],
+        ]]);
+
+        $base = $this->resolveSharedBaseClientOptions($container);
+
+        self::assertSame(0, $base->getArgument('$backoffMaxTries'));
     }
 
     // -------------------------------------------------------------------------
@@ -360,5 +382,81 @@ class KeboolaApiExtensionTest extends TestCase
     public static function createRunIdGenerator(): Closure
     {
         return static fn (ClientOptions $options): string => 'generated-run-id';
+    }
+
+    // -------------------------------------------------------------------------
+    // backoff_max_tries default, observed on the instantiated ClientOptions
+    // -------------------------------------------------------------------------
+
+    /**
+     * Instantiates the extension-built base {@see ClientOptions} for real. The Connection URL and
+     * logger are container references resolved at runtime, so they are swapped for literals here;
+     * everything else - including the addValuesFrom() merge the service form registers - is exactly
+     * what the extension produced. The service form's fallback (constructor sets the default, then
+     * addValuesFrom() merges non-null values on top) only exists at instantiation, so asserting on
+     * the Definition alone cannot catch a regression there.
+     *
+     * @param array<array<mixed>> $configs
+     */
+    private function instantiateBaseClientOptions(array $configs, ?Definition $referencedOptions): ClientOptions
+    {
+        $base = $this->resolveSharedBaseClientOptions($this->buildContainer($configs));
+        $base->setArgument('$url', 'https://connection.test');
+        $base->setArgument('$logger', new Definition(NullLogger::class));
+        $base->setPublic(true);
+
+        $container = new ContainerBuilder();
+        $container->setDefinition('base_options', $base);
+        if ($referencedOptions !== null) {
+            $container->setDefinition('app.storage_options', $referencedOptions);
+        }
+        $container->compile();
+
+        $options = $container->get('base_options');
+        self::assertInstanceOf(ClientOptions::class, $options);
+
+        return $options;
+    }
+
+    public function testBundleDefaultBackoffMaxTriesReachesStorageClientConstructOptions(): void
+    {
+        $options = $this->instantiateBaseClientOptions([[]], null);
+
+        // Keboola\StorageApi\Client gates on isset(), so a null here would silently fall back to
+        // its own default of 11 - the defect this default exists to close.
+        self::assertSame(3, $options->getBackoffMaxTries());
+        self::assertSame(3, $options->getClientConstructOptions()['backoffMaxTries']);
+    }
+
+    public function testServiceFormOptionsWithoutBackoffKeepBundleDefault(): void
+    {
+        $options = $this->instantiateBaseClientOptions(
+            [['storage_client_options' => 'app.storage_options']],
+            (new Definition(ClientOptions::class))->setArgument('$url', 'https://other.test'),
+        );
+
+        self::assertSame(3, $options->getBackoffMaxTries());
+    }
+
+    public function testServiceFormOptionsWithBackoffOverrideBundleDefault(): void
+    {
+        $options = $this->instantiateBaseClientOptions(
+            [['storage_client_options' => 'app.storage_options']],
+            (new Definition(ClientOptions::class))
+                ->setArgument('$url', 'https://other.test')
+                ->setArgument('$backoffMaxTries', 7),
+        );
+
+        self::assertSame(7, $options->getBackoffMaxTries());
+    }
+
+    public function testObjectFormBackoffOverrideReachesStorageClientConstructOptions(): void
+    {
+        $options = $this->instantiateBaseClientOptions(
+            [['storage_client_options' => ['backoff_max_tries' => 0]]],
+            null,
+        );
+
+        self::assertSame(0, $options->getClientConstructOptions()['backoffMaxTries']);
     }
 }

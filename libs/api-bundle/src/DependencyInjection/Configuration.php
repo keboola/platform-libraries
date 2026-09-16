@@ -39,7 +39,13 @@ class Configuration implements ConfigurationInterface
                             ->cannotBeEmpty()
                             ->info('Service id of a ClientOptions instance merged onto the base options.')
                         ->end()
-                        ->integerNode('backoff_max_tries')->min(0)->end()
+                        ->integerNode('backoff_max_tries')
+                            ->min(0)
+                            ->info(sprintf(
+                                'Storage API retry cap. Defaults to %d; 0 disables retries.',
+                                KeboolaApiExtension::DEFAULT_BACKOFF_MAX_TRIES,
+                            ))
+                        ->end()
                         ->integerNode('aws_retries')->min(0)->end()
                         ->booleanNode('aws_debug')->end()
                         ->booleanNode('retry_on_maintenance')->end()

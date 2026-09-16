@@ -251,9 +251,14 @@ public function __invoke(?StorageClientApiFactory $storage)
 
 ### Configuring the base client options
 
-The base `ClientOptions` (Connection URL, `@logger`, `app_name` user agent) can be tuned with the
-optional `storage_client_options` node. Values are **merged onto** the bundle-built base — you never
-have to reproduce the Connection URL resolution.
+The base `ClientOptions` (Connection URL, `@logger`, `app_name` user agent, `backoff_max_tries: 3`)
+can be tuned with the optional `storage_client_options` node. Values are **merged onto** the
+bundle-built base — you never have to reproduce the Connection URL resolution.
+
+`backoff_max_tries` defaults to `3`, capping the retry window at `1 + 2 + 4 = 7` s. Without it
+`Keboola\StorageApi\Client` applies its own default of `11`, which is 2047 s (34 min) of blocking
+sleep — enough to occupy a worker for the whole ladder on a single Connection blip. Raise it for
+long-running data operations, or set `0` to disable retries entirely.
 
 Set individual options (only YAML-expressible options are supported here):
 

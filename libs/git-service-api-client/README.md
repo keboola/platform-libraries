@@ -41,10 +41,19 @@ new GitServiceApiClient(
 ### Repositories
 
 ```php
+// empty repository — no commits, no branches
 $repository = $client->createRepository('my-repo');
+
+// with an initial commit on the default branch, so a branch can be cut straight away
+$repository = $client->createRepository('my-repo', autoInit: true);
+
 $repository = $client->getRepository('my-repo');
 $client->deleteRepository('my-repo');
 ```
+
+`autoInit` defaults to `false`, which leaves the repository empty. With `autoInit: true` the
+initial commit contains a single `README.md` holding `# <repo-name>`, is named `Initial commit`,
+and lands on the branch git-service is configured to use as the default (`main`).
 
 ### Credentials
 

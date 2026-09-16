@@ -48,6 +48,46 @@ class GitServiceApiClientTest extends TestCase
         self::assertSame('{"name":"app-1"}', (string) $request->getBody());
     }
 
+    public function testCreateRepositoryWithAutoInit(): void
+    {
+        $mock = new MockHandler([new Response(201, [], (string) json_encode([
+            'name' => 'app-1',
+            'createdAt' => '2026-04-28T10:00:00Z',
+            'defaultBranch' => 'main',
+            'sshUrl' => 'ssh://git/app-1',
+            'httpsUrl' => 'https://git/app-1.git',
+        ]))]);
+        $client = $this->buildClient($mock);
+
+        $repo = $client->createRepository('app-1', autoInit: true);
+
+        self::assertSame('app-1', $repo->name);
+        $request = $mock->getLastRequest();
+        self::assertNotNull($request);
+        self::assertSame(
+            ['name' => 'app-1', 'autoInit' => true],
+            (array) json_decode((string) $request->getBody(), true),
+        );
+    }
+
+    public function testCreateRepositoryOmitsAutoInitWhenFalse(): void
+    {
+        $mock = new MockHandler([new Response(201, [], (string) json_encode([
+            'name' => 'app-1',
+            'createdAt' => '2026-04-28T10:00:00Z',
+            'defaultBranch' => 'main',
+            'sshUrl' => 'ssh://git/app-1',
+            'httpsUrl' => 'https://git/app-1.git',
+        ]))]);
+        $client = $this->buildClient($mock);
+
+        $client->createRepository('app-1', autoInit: false);
+
+        $request = $mock->getLastRequest();
+        self::assertNotNull($request);
+        self::assertSame('{"name":"app-1"}', (string) $request->getBody());
+    }
+
     public function testGetRepository(): void
     {
         $mock = new MockHandler([new Response(200, [], (string) json_encode([

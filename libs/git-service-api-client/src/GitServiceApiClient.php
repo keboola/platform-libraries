@@ -68,14 +68,25 @@ class GitServiceApiClient
         );
     }
 
-    public function createRepository(string $name): Repository
+    /**
+     * Create a repository, optionally with an initial commit on its default branch.
+     *
+     * Without $autoInit the repository has no commits and no branch exists yet, so a branch
+     * cannot be cut from it until something pushes.
+     */
+    public function createRepository(string $name, bool $autoInit = false): Repository
     {
+        $body = ['name' => $name];
+        if ($autoInit) {
+            $body['autoInit'] = true;
+        }
+
         return $this->apiClient->sendRequestAndMapResponse(
             new Request(
                 'POST',
                 'repos',
                 self::JSON_HEADERS,
-                Json::encodeArray(['name' => $name]),
+                Json::encodeArray($body),
             ),
             Repository::class,
         );

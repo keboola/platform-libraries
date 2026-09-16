@@ -161,6 +161,29 @@ class GitServiceApiClient
     }
 
     /**
+     * Create a branch, optionally at a given commit, branch or tag.
+     *
+     * $from is resolved by git-service; omitting it cuts from the repository's default branch.
+     */
+    public function createBranch(string $repo, string $branch, ?string $from = null): GitRef
+    {
+        $body = ['branch' => $branch];
+        if ($from !== null) {
+            $body['from'] = $from;
+        }
+
+        return $this->apiClient->sendRequestAndMapResponse(
+            new Request(
+                'POST',
+                'repos/' . rawurlencode($repo) . '/branches',
+                self::JSON_HEADERS,
+                Json::encodeArray($body),
+            ),
+            GitRef::class,
+        );
+    }
+
+    /**
      * List all git references (branches and tags) of a repository.
      *
      * @return list<GitRef>

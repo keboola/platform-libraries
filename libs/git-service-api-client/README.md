@@ -86,6 +86,18 @@ $commits = $client->listCommits('my-repo', 'main', page: 1, limit: 30); // Model
 $refs = $client->listRefs('my-repo');
 ```
 
+### Branches
+
+```php
+// cut at a commit, branch or tag
+$ref = $client->createBranch('my-repo', 'draft-1', 'abc123'); // Model\GitRef
+
+// omit the source to cut at the repository's default branch
+$ref = $client->createBranch('my-repo', 'draft-2');
+```
+
+`branch` and the source are each capped at 100 characters by git-service.
+
 ## Errors
 
 All failures throw `Keboola\GitServiceApiClient\Exception\GitServiceClientException`, a subclass of the base

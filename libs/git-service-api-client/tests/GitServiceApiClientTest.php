@@ -334,6 +334,74 @@ class GitServiceApiClientTest extends TestCase
         $client->listCommits('app-1', 'main');
     }
 
+    public function testCreateBranch(): void
+    {
+        $mock = new MockHandler([new Response(201, [], (string) json_encode([
+            'ref' => 'refs/heads/draft-1',
+            'sha' => 'abc123',
+            'type' => 'commit',
+        ]))]);
+        $client = $this->buildClient($mock);
+
+        $ref = $client->createBranch('app-1', 'draft-1', 'abc123');
+
+        self::assertSame('refs/heads/draft-1', $ref->ref);
+        self::assertSame('abc123', $ref->sha);
+        self::assertSame('commit', $ref->type);
+        $request = $mock->getLastRequest();
+        self::assertNotNull($request);
+        self::assertSame('POST', $request->getMethod());
+        self::assertSame('https://example.test/repos/app-1/branches', (string) $request->getUri());
+        self::assertSame(
+            ['branch' => 'draft-1', 'from' => 'abc123'],
+            (array) json_decode((string) $request->getBody(), true),
+        );
+    }
+
+    public function testCreateBranchOmitsFromWhenNotGiven(): void
+    {
+        $mock = new MockHandler([new Response(201, [], (string) json_encode([
+            'ref' => 'refs/heads/draft-2',
+            'sha' => 'def456',
+            'type' => 'commit',
+        ]))]);
+        $client = $this->buildClient($mock);
+
+        $client->createBranch('app-1', 'draft-2');
+
+        $request = $mock->getLastRequest();
+        self::assertNotNull($request);
+        self::assertSame(['branch' => 'draft-2'], (array) json_decode((string) $request->getBody(), true));
+    }
+
+    public function testCreateBranchEncodesName(): void
+    {
+        $mock = new MockHandler([new Response(201, [], (string) json_encode([
+            'ref' => 'refs/heads/draft-3',
+            'sha' => 'aaa',
+            'type' => 'commit',
+        ]))]);
+        $client = $this->buildClient($mock);
+
+        $client->createBranch('app/1', 'draft-3');
+
+        $request = $mock->getLastRequest();
+        self::assertNotNull($request);
+        self::assertSame('https://example.test/repos/app%2F1/branches', (string) $request->getUri());
+    }
+
+    public function testCreateBranchAlreadyExists(): void
+    {
+        $mock = new MockHandler([
+            new Response(409, [], '{"code":"branch.exists","error":"branch already exists"}'),
+        ]);
+        $client = $this->buildClient($mock);
+
+        $this->expectException(GitServiceClientException::class);
+        $this->expectExceptionCode(409);
+        $client->createBranch('app-1', 'draft-1');
+    }
+
     public function testListRefs(): void
     {
         $mock = new MockHandler([new Response(200, [], (string) json_encode([

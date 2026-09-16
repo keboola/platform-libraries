@@ -25,10 +25,16 @@ use PHPUnit\Framework\TestCase;
 
 class WorkspaceProviderTest extends TestCase
 {
+    /**
+     * Without an explicit login type a Snowflake workspace gets a service key-pair login: Connection refuses
+     * to create Snowflake workspaces that would fall back to password authentication.
+     */
     public function testCreateNewWorkspace(): void
     {
         $workspaceId = '123456';
         $backendSize = 'large';
+        $publicKey = 'public-key';
+        $privateKey = 'private-key';
 
         $componentsApiClient = $this->createMock(Components::class);
         $componentsApiClient
@@ -41,6 +47,8 @@ class WorkspaceProviderTest extends TestCase
                     'backend' => 'snowflake',
                     'networkPolicy' => 'user',
                     'backendSize' => $backendSize,
+                    'loginType' => WorkspaceLoginType::SNOWFLAKE_SERVICE_KEYPAIR,
+                    'publicKey' => $publicKey,
                 ],
                 true,
             )
@@ -54,7 +62,7 @@ class WorkspaceProviderTest extends TestCase
                     'database' => 'some-database',
                     'schema' => 'some-schema',
                     'user' => 'some-user',
-                    'password' => 'secret',
+                    'loginType' => WorkspaceLoginType::SNOWFLAKE_SERVICE_KEYPAIR->value,
                 ],
             ]);
 
@@ -62,7 +70,13 @@ class WorkspaceProviderTest extends TestCase
         $workspacesApiClient->expects(self::never())->method(self::anything());
 
         $snowflakeKeypairGenerator = $this->createMock(SnowflakeKeypairGenerator::class);
-        $snowflakeKeypairGenerator->expects(self::never())->method(self::anything());
+        $snowflakeKeypairGenerator
+            ->expects(self::once())
+            ->method('generateKeyPair')
+            ->willReturn(new PemKeyCertificatePair(
+                privateKey: $privateKey,
+                publicKey: $publicKey,
+            ));
 
         $storageApiToken = $this->createMock(StorageApiToken::class);
         $storageApiToken
@@ -95,6 +109,7 @@ class WorkspaceProviderTest extends TestCase
         self::assertSame($workspaceId, $workspace->getWorkspaceId());
         self::assertSame($backendSize, $workspace->getBackendSize());
         self::assertSame('snowflake', $workspace->getBackendType());
+        self::assertSame(WorkspaceLoginType::SNOWFLAKE_SERVICE_KEYPAIR, $workspace->getLoginType());
         self::assertSame(
             [
                 'host' => 'some-host',
@@ -102,8 +117,8 @@ class WorkspaceProviderTest extends TestCase
                 'database' => 'some-database',
                 'schema' => 'some-schema',
                 'user' => 'some-user',
-                'password' => 'secret',
-                'privateKey' => null,
+                'password' => null,
+                'privateKey' => $privateKey,
                 'account' => 'some-host',
             ],
             $workspace->getCredentials(),
@@ -114,6 +129,8 @@ class WorkspaceProviderTest extends TestCase
     {
         $workspaceId = '123456';
         $backendSize = 'large';
+        $publicKey = 'public-key';
+        $privateKey = 'private-key';
 
         $componentsApiClient = $this->createMock(Components::class);
         $componentsApiClient
@@ -130,6 +147,8 @@ class WorkspaceProviderTest extends TestCase
                     'networkPolicy' => 'system',
                     'backendSize' => $backendSize,
                     'readOnlyStorageAccess' => true,
+                    'loginType' => WorkspaceLoginType::SNOWFLAKE_SERVICE_KEYPAIR,
+                    'publicKey' => $publicKey,
                 ],
                 true,
             )
@@ -143,12 +162,18 @@ class WorkspaceProviderTest extends TestCase
                     'database' => 'some-database',
                     'schema' => 'some-schema',
                     'user' => 'some-user',
-                    'password' => 'secret',
+                    'loginType' => WorkspaceLoginType::SNOWFLAKE_SERVICE_KEYPAIR->value,
                 ],
             ]);
 
         $snowflakeKeypairGenerator = $this->createMock(SnowflakeKeypairGenerator::class);
-        $snowflakeKeypairGenerator->expects(self::never())->method(self::anything());
+        $snowflakeKeypairGenerator
+            ->expects(self::once())
+            ->method('generateKeyPair')
+            ->willReturn(new PemKeyCertificatePair(
+                privateKey: $privateKey,
+                publicKey: $publicKey,
+            ));
 
         $storageApiToken = $this->createMock(StorageApiToken::class);
         $storageApiToken
@@ -181,6 +206,7 @@ class WorkspaceProviderTest extends TestCase
         self::assertSame($workspaceId, $workspace->getWorkspaceId());
         self::assertSame($backendSize, $workspace->getBackendSize());
         self::assertSame('snowflake', $workspace->getBackendType());
+        self::assertSame(WorkspaceLoginType::SNOWFLAKE_SERVICE_KEYPAIR, $workspace->getLoginType());
         self::assertSame(
             [
                 'host' => 'some-host',
@@ -188,12 +214,81 @@ class WorkspaceProviderTest extends TestCase
                 'database' => 'some-database',
                 'schema' => 'some-schema',
                 'user' => 'some-user',
-                'password' => 'secret',
-                'privateKey' => null,
+                'password' => null,
+                'privateKey' => $privateKey,
                 'account' => 'some-host',
             ],
             $workspace->getCredentials(),
         );
+    }
+
+    /**
+     * The Snowflake-only default must not leak into other backends: a BigQuery workspace without an explicit
+     * login type is still created without "loginType" and without any key pair.
+     */
+    public function testCreateNewBigQueryWorkspaceWithoutLoginType(): void
+    {
+        $workspaceId = '123456';
+
+        $componentsApiClient = $this->createMock(Components::class);
+        $componentsApiClient->expects(self::never())->method(self::anything());
+
+        $workspacesApiClient = $this->createMock(Workspaces::class);
+        $workspacesApiClient
+            ->expects(self::once())
+            ->method('createWorkspace')
+            ->with(
+                [
+                    'backend' => 'bigquery',
+                    'networkPolicy' => 'system',
+                ],
+                true,
+            )
+            ->willReturn([
+                'id' => $workspaceId,
+                'backendSize' => 'small',
+                'connection' => [
+                    'backend' => 'bigquery',
+                    'schema' => 'some-schema',
+                    'region' => 'us',
+                    'credentials' => ['type' => 'service_account'],
+                ],
+            ]);
+
+        $snowflakeKeypairGenerator = $this->createMock(SnowflakeKeypairGenerator::class);
+        $snowflakeKeypairGenerator->expects(self::never())->method(self::anything());
+
+        $storageApiToken = $this->createMock(StorageApiToken::class);
+        $storageApiToken
+            ->expects(self::once())
+            ->method('getTokenInfo')
+            ->willReturn([
+                'owner' => [
+                    'hasBigquery' => true,
+                ],
+            ]);
+
+        $config = new NewWorkspaceConfig(
+            StagingType::WorkspaceBigquery,
+            'test-component',
+            null,
+            null,
+            null,
+            NetworkPolicy::SYSTEM,
+            null,
+        );
+
+        $workspaceProvider = new WorkspaceProvider(
+            $workspacesApiClient,
+            $componentsApiClient,
+            $snowflakeKeypairGenerator,
+        );
+
+        $workspace = $workspaceProvider->createNewWorkspace($storageApiToken, $config);
+
+        self::assertSame($workspaceId, $workspace->getWorkspaceId());
+        self::assertSame('bigquery', $workspace->getBackendType());
+        self::assertSame(WorkspaceLoginType::DEFAULT, $workspace->getLoginType());
     }
 
     public function testCreateNewWorkspaceWithKeyPairLogin(): void

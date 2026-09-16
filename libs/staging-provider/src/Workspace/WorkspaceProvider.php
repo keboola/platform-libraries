@@ -11,6 +11,7 @@ use Keboola\StagingProvider\Staging\StagingType;
 use Keboola\StagingProvider\Workspace\Configuration\NewWorkspaceConfig;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Components;
+use Keboola\StorageApi\WorkspaceLoginType;
 use Keboola\StorageApi\Workspaces;
 use Keboola\StorageApiBranch\StorageApiToken;
 
@@ -164,17 +165,35 @@ class WorkspaceProvider
             $options['readOnlyStorageAccess'] = $config->useReadonlyRole;
         }
 
-        if ($config->loginType !== null) {
-            $options['loginType'] = $config->loginType;
+        $loginType = $config->loginType ?? $this->getDefaultLoginType($stagingType);
+        if ($loginType !== null) {
+            $options['loginType'] = $loginType;
         }
 
         $privateKey = null;
-        if ($config->loginType !== null && $config->loginType->isKeyPairLogin()) {
+        if ($loginType !== null && $loginType->isKeyPairLogin()) {
             $keypair = $this->snowflakeKeypairGenerator->generateKeyPair();
             $options['publicKey'] = $keypair->publicKey;
             $privateKey = $keypair->privateKey;
         }
 
         return [$options, $privateKey];
+    }
+
+    /**
+     * Login type used when the caller does not request a specific one.
+     *
+     * Connection rejects Snowflake workspaces created without an explicit "loginType": the missing value used
+     * to resolve to password authentication, which Snowflake no longer supports for service users. A workspace
+     * created by this provider is meant to be connected to directly, so it needs credentials, and the only
+     * credentials Snowflake still issues for service users are key pairs. Other backends keep Connection's own
+     * default.
+     */
+    private function getDefaultLoginType(StagingType $stagingType): ?WorkspaceLoginType
+    {
+        return match ($stagingType) {
+            StagingType::WorkspaceSnowflake => WorkspaceLoginType::SNOWFLAKE_SERVICE_KEYPAIR,
+            default => null,
+        };
     }
 }

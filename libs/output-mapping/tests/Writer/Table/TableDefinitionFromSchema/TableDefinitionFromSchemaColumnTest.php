@@ -169,5 +169,24 @@ class TableDefinitionFromSchemaColumnTest extends TestCase
                 'basetype' => 'STRING',
             ],
         ];
+
+        yield 'backend definition without type' => [
+            'column' => new MappingFromConfigurationSchemaColumn([
+                'name' => 'test_table_name',
+                'data_type' => [
+                    'base' => [
+                        'type' => 'STRING',
+                    ],
+                    'snowflake' => [
+                        'length' => '1024',
+                    ],
+                ],
+            ]),
+            'backend' => 'snowflake',
+            'expectedStructure' => [
+                'name' => 'test_table_name',
+                'basetype' => 'STRING',
+            ],
+        ];
     }
 }

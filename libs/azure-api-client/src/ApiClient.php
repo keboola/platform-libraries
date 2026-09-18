@@ -112,9 +112,9 @@ class ApiClient
         }
     }
 
-    public function sendRequest(RequestInterface $request): void
+    public function sendRequest(RequestInterface $request): ResponseInterface
     {
-        $this->doSendRequest($request);
+        return $this->doSendRequest($request);
     }
 
     private function doSendRequest(RequestInterface $request, array $options = []): ResponseInterface

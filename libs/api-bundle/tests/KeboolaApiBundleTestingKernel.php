@@ -7,7 +7,7 @@ namespace Keboola\ApiBundle\Tests;
 use CuyZ\ValinorBundle\ValinorBundle;
 use Keboola\ApiBundle\DependencyInjection\KeboolaApiExtension;
 use Keboola\ApiBundle\KeboolaApiBundle;
-use Keboola\ApiBundle\Security\ApplicationToken\ManageApiClientFactory;
+use Keboola\ApiBundle\Security\ApplicationToken\ApplicationTokenAuthenticator;
 use Symfony\Bundle\FrameworkBundle\FrameworkBundle;
 use Symfony\Bundle\MonologBundle\MonologBundle;
 use Symfony\Component\Config\Loader\LoaderInterface;
@@ -36,7 +36,8 @@ class KeboolaApiBundleTestingKernel extends Kernel
                 public function process(ContainerBuilder $container): void
                 {
                     $publicIds = [
-                        ManageApiClientFactory::class,
+                        ApplicationTokenAuthenticator::class,
+                        KeboolaApiExtension::AUTH_MANAGE_CLIENT_FACTORY_ID,
                         KeboolaApiExtension::STORAGE_TOKEN_RESOLVER_CLIENT_ID,
                     ];
                     foreach ($publicIds as $id) {

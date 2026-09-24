@@ -233,6 +233,9 @@ trait AuthenticatorTestTrait
             ->with($tokenString)
             ->willReturn($manageApiClient);
 
-        self::getContainer()->set(ManageApiClientFactory::class, $manageApiClientFactory);
+        self::getContainer()->set(
+            KeboolaApiExtension::AUTH_MANAGE_CLIENT_FACTORY_ID,
+            $manageApiClientFactory,
+        );
     }
 }

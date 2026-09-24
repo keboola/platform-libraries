@@ -25,6 +25,14 @@ use Symfony\Component\DependencyInjection\Reference;
 use Symfony\Component\HttpKernel\DependencyInjection\Extension;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 
+/**
+ * @phpstan-type ProcessedConfig array{
+ *     app_name: mixed,
+ *     default_service_dns_type: string,
+ *     storage_client_options?: array<string, mixed>,
+ *     auth: array{client_options: array{backoff_max_tries: int}},
+ * }
+ */
 class KeboolaApiExtension extends Extension
 {
     /**
@@ -32,6 +40,19 @@ class KeboolaApiExtension extends Extension
      * legacy Storage tokens. Exposed so functional tests can swap it for a mock.
      */
     public const STORAGE_TOKEN_RESOLVER_CLIENT_ID = 'keboola.api_bundle.storage_token_resolver_client';
+
+    /**
+     * Retry cap for the authentication clients only, deliberately low so authentication fails fast.
+     *
+     * Failing fast is safe here in a way it is not for application calls: a request that is still
+     * being authenticated has not been handled yet, so nothing is in progress and no work is lost.
+     * The client can simply retry. Holding a worker through a long retry ladder buys nothing and
+     * risks wedging the whole pool.
+     */
+    public const DEFAULT_AUTH_BACKOFF_MAX_TRIES = 3;
+
+    public const AUTH_STORAGE_CLIENT_OPTIONS_ID = 'keboola.api_bundle.auth.storage_client_options';
+    public const AUTH_MANAGE_CLIENT_FACTORY_ID = 'keboola.api_bundle.auth.manage_client_factory';
 
     /**
      * Service id of the base Storage {@see ClientOptions} shared by token verification and the
@@ -51,6 +72,7 @@ class KeboolaApiExtension extends Extension
         $loader->load('api_bundle.php');
 
         $configuration = new Configuration();
+        /** @var ProcessedConfig $config */
         $config = $this->processConfiguration($configuration, $configs);
 
         $config['app_name'] = $container->resolveEnvPlaceholders($config['app_name'], true);
@@ -59,14 +81,33 @@ class KeboolaApiExtension extends Extension
         assert(is_string($defaultServiceDnsType) || $defaultServiceDnsType instanceof ServiceDnsType);
         $container->setParameter('keboola_api_bundle.default_service_dns_type', $defaultServiceDnsType);
 
-        // Shared by #[ApplicationTokenAuth] and by the Storage token exchange resolver.
+        $authBackoffMaxTries = $config['auth']['client_options']['backoff_max_tries'];
+
+        // Consumer-facing factory, autowired by consumers for their own privileged Manage calls.
+        // It deliberately carries no retry cap, so it keeps ManageApiClient's own default and
+        // upgrading changes nothing for them.
         $container->register(ManageApiClientFactory::class)
             ->setArgument('$appName', $config['app_name'])
             ->setArgument('$serviceClient', new Reference(ServiceClient::class))
         ;
 
+        // Separate instance for the clients that authenticate a request - #[ApplicationTokenAuth]
+        // and the Storage token exchange resolver - so the auth cap never reaches a consumer's own
+        // Manage calls. Anything stubbing authentication in a functional test must replace THIS id;
+        // see AuthenticatorTestTrait.
+        $container->register(self::AUTH_MANAGE_CLIENT_FACTORY_ID, ManageApiClientFactory::class)
+            ->setArgument('$appName', $config['app_name'])
+            ->setArgument('$serviceClient', new Reference(ServiceClient::class))
+            ->setArgument('$backoffMaxTries', $authBackoffMaxTries)
+        ;
+
         $authenticators = [];
-        $this->setupStorageApiAuthenticator($container, $config, $authenticators);
+        $this->setupStorageApiAuthenticator(
+            $container,
+            $config,
+            $authenticators,
+            $authBackoffMaxTries,
+        );
         $this->setupApplicationTokenAuthenticator($container, $authenticators);
 
         $container->getDefinition('keboola.api_bundle.security.authenticators_locator')
@@ -76,10 +117,14 @@ class KeboolaApiExtension extends Extension
         ;
     }
 
+    /**
+     * @param ProcessedConfig $config
+     */
     private function setupStorageApiAuthenticator(
         ContainerBuilder $container,
         array $config,
         array &$authenticators,
+        int $authBackoffMaxTries,
     ): void {
         if (!class_exists(ClientWrapper::class)) {
             return;
@@ -93,13 +138,15 @@ class KeboolaApiExtension extends Extension
         $connectionUrl = (new Definition())
             ->setFactory([new Reference(ServiceClient::class), 'getConnectionServiceUrl']);
 
+        // $backoffMaxTries must be set before applyStorageClientOptions(): the object form replaces
+        // the argument, and the service form early-returns after registering addValuesFrom(), which
+        // merges only non-null values on top. Setting it afterwards would clobber both overrides.
         $baseClientOptions = (new Definition(ClientOptions::class))
             ->setArgument('$url', $connectionUrl)
             ->setArgument('$logger', new Reference('logger'))
             ->setArgument('$userAgent', $config['app_name']);
 
         $storageClientOptions = $config['storage_client_options'] ?? [];
-        assert(is_array($storageClientOptions));
         $this->applyStorageClientOptions($baseClientOptions, $storageClientOptions);
 
         $container->setDefinition(self::STORAGE_CLIENT_BASE_OPTIONS_ID, $baseClientOptions);
@@ -108,7 +155,10 @@ class KeboolaApiExtension extends Extension
         // authenticates with the service's projected Kubernetes ServiceAccount JWT (read per
         // request) and calls Connection over the ServiceClient's default DNS.
         $container->register(self::STORAGE_TOKEN_RESOLVER_CLIENT_ID, ManageApiClient::class)
-            ->setFactory([new Reference(ManageApiClientFactory::class), 'getClientForServiceAccountTokenPath'])
+            ->setFactory([
+                new Reference(self::AUTH_MANAGE_CLIENT_FACTORY_ID),
+                'getClientForServiceAccountTokenPath',
+            ])
             ->setArguments([self::SERVICE_ACCOUNT_TOKEN_PATH])
         ;
 
@@ -124,11 +174,20 @@ class KeboolaApiExtension extends Extension
             $requestFactory->setArgument('$runIdGenerator', new Reference($runIdGenerator));
         }
 
-        $container->register(StorageApiTokenFactory::class)
+        $tokenFactory = $container->register(StorageApiTokenFactory::class)
             ->setArgument('$clientFactory', new Reference(StorageClientRequestFactory::class))
             ->setArgument('$resolverClient', new Reference(self::STORAGE_TOKEN_RESOLVER_CLIENT_ID))
             ->setArgument('$logger', new Reference('logger'))
         ;
+
+        // Merged on top of the base options for token verification only, leaving the
+        // controller-facing client on whatever storage_client_options chose.
+        $container->register(self::AUTH_STORAGE_CLIENT_OPTIONS_ID, ClientOptions::class)
+            ->setArgument('$backoffMaxTries', $authBackoffMaxTries);
+        $tokenFactory->setArgument(
+            '$authClientOptions',
+            new Reference(self::AUTH_STORAGE_CLIENT_OPTIONS_ID),
+        );
 
         $container->register(StorageApiTokenAuthenticator::class)
             ->setArgument('$tokenFactory', new Reference(StorageApiTokenFactory::class))
@@ -187,7 +246,7 @@ class KeboolaApiExtension extends Extension
         array &$authenticators,
     ): void {
         $container->register(ApplicationTokenAuthenticator::class)
-            ->setArgument('$manageApiClientFactory', new Reference(ManageApiClientFactory::class))
+            ->setArgument('$manageApiClientFactory', new Reference(self::AUTH_MANAGE_CLIENT_FACTORY_ID))
         ;
 
         $authenticators[ApplicationTokenAuth::class] = new Reference(

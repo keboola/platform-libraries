@@ -10,28 +10,25 @@ use Keboola\ServiceClient\ServiceDnsType;
 
 class ManageApiClientFactory
 {
+    /**
+     * @param ?int $backoffMaxTries Retry cap for every client this factory builds. Null leaves
+     *     {@see ManageApiClient}'s own default in place.
+     */
     public function __construct(
         private readonly string $appName,
         private readonly ServiceClient $serviceClient,
+        private readonly ?int $backoffMaxTries = null,
     ) {
     }
 
     public function getClientForManageToken(string $token): ManageApiClient
     {
-        return new ManageApiClient([
-            'url' => $this->serviceClient->getConnectionServiceUrl(),
-            'token' => $token,
-            'userAgent' => $this->appName,
-        ]);
+        return new ManageApiClient($this->baseConfig() + ['token' => $token]);
     }
 
     public function getClientForServiceAccountToken(string $jwt): ManageApiClient
     {
-        return new ManageApiClient([
-            'url' => $this->serviceClient->getConnectionServiceUrl(),
-            'jwtToken' => $jwt,
-            'userAgent' => $this->appName,
-        ]);
+        return new ManageApiClient($this->baseConfig() + ['jwtToken' => $jwt]);
     }
 
     /**
@@ -45,10 +42,22 @@ class ManageApiClientFactory
         string $tokenPath,
         ?ServiceDnsType $dnsType = null,
     ): ManageApiClient {
-        return new ManageApiClient([
+        return new ManageApiClient($this->baseConfig($dnsType) + ['kubernetesTokenPath' => $tokenPath]);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function baseConfig(?ServiceDnsType $dnsType = null): array
+    {
+        $config = [
             'url' => $this->serviceClient->getConnectionServiceUrl($dnsType),
-            'kubernetesTokenPath' => $tokenPath,
             'userAgent' => $this->appName,
-        ]);
+        ];
+        if ($this->backoffMaxTries !== null) {
+            $config['backoffMaxTries'] = $this->backoffMaxTries;
+        }
+
+        return $config;
     }
 }

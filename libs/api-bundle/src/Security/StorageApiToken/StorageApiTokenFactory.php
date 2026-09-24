@@ -10,6 +10,7 @@ use Keboola\ManageApi\ClientException as ManageApiClientException;
 use Keboola\ManageApi\MaintenanceException;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApiBranch\Factory\AuthType;
+use Keboola\StorageApiBranch\Factory\ClientOptions;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 use SensitiveParameter;
@@ -33,10 +34,16 @@ class StorageApiTokenFactory
 {
     private const PROJECT_ID_HEADER = 'X-KBC-ProjectId';
 
+    /**
+     * @param ?ClientOptions $authClientOptions Overrides merged on top of the factory's base options
+     *     for token verification only, so authentication can be tuned separately from the
+     *     controller-facing Storage client. Wired from `keboola_api.auth.client_options`.
+     */
     public function __construct(
         private readonly StorageClientRequestFactory $clientFactory,
         private readonly ManageApiClient $resolverClient,
         private readonly LoggerInterface $logger,
+        private readonly ?ClientOptions $authClientOptions = null,
     ) {
     }
 
@@ -56,7 +63,7 @@ class StorageApiTokenFactory
     ): StorageApiToken {
         try {
             $storageApiClient = $this->clientFactory
-                ->createClientWrapper($token, $authType, $request)
+                ->createClientWrapper($token, $authType, $request, $this->authClientOptions)
                 ->getBasicClient();
             $tokenInfo = $storageApiClient->verifyToken();
 

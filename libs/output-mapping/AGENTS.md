@@ -94,6 +94,14 @@ resolution errors are swallowed instead of thrown, and only sources with `write_
 uploaded. Any new validation added to the loop must respect that branch, or failed jobs will start
 throwing where they previously wrote their partial output.
 
+### Direct-grant metadata refresh
+
+Tables with `unload_strategy: direct-grant` are written by the component itself, so the component may have
+changed them even when it failed or was terminated. `TableLoader::uploadTables()` therefore starts
+`DirectGrantMetadataRefreshTask` before listing any source - nothing that fails later may prevent the refresh.
+`TableLoader::refreshDirectGrantMetadata()` does the refresh alone, for a runner which does not call
+`uploadTables()` at all. The task's `start()` is idempotent because both the loader and `LoadTableQueue` call it.
+
 ### Table structure reconciliation
 
 `Storage\TableStructureValidatorFactory` picks a validator per destination table

@@ -25,6 +25,28 @@ class Configuration implements ConfigurationInterface
                     ->values(array_map(fn(ServiceDnsType $v) => $v->value, ServiceDnsType::cases()))
                     ->defaultValue(ServiceDnsType::PUBLIC->value)
                 ->end()
+                ->arrayNode('auth')
+                    ->addDefaultsIfNotSet()
+                    ->info(
+                        'Options for the clients that authenticate requests: Storage token '
+                        . 'verification and Manage token exchange/verification.',
+                    )
+                    ->children()
+                        ->arrayNode('client_options')
+                            ->addDefaultsIfNotSet()
+                            ->children()
+                                ->integerNode('backoff_max_tries')
+                                    ->min(0)
+                                    ->defaultValue(KeboolaApiExtension::DEFAULT_AUTH_BACKOFF_MAX_TRIES)
+                                    ->info(
+                                        'Retry cap for authentication calls only, layered on top of '
+                                        . 'storage_client_options; 0 disables retries.',
+                                    )
+                                ->end()
+                            ->end()
+                        ->end()
+                    ->end()
+                ->end()
                 ->arrayNode('storage_client_options')
                     ->info(
                         'Extra ClientOptions for the Storage API client factory: '
@@ -39,7 +61,13 @@ class Configuration implements ConfigurationInterface
                             ->cannotBeEmpty()
                             ->info('Service id of a ClientOptions instance merged onto the base options.')
                         ->end()
-                        ->integerNode('backoff_max_tries')->min(0)->end()
+                        ->integerNode('backoff_max_tries')
+                            ->min(0)
+                            ->info(
+                                'Storage API retry cap for the controller-facing client; 0 disables '
+                                . 'retries. Unset leaves the Storage client on its own default of 11.',
+                            )
+                        ->end()
                         ->integerNode('aws_retries')->min(0)->end()
                         ->booleanNode('aws_debug')->end()
                         ->booleanNode('retry_on_maintenance')->end()

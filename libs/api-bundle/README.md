@@ -255,6 +255,10 @@ The base `ClientOptions` (Connection URL, `@logger`, `app_name` user agent) can 
 optional `storage_client_options` node. Values are **merged onto** the bundle-built base — you never
 have to reproduce the Connection URL resolution.
 
+The bundle sets no `backoff_max_tries` here, so an unconfigured controller-facing client keeps
+`Keboola\StorageApi\Client`'s own default of `11`. Authentication is defaulted separately — see
+below.
+
 Set individual options (only YAML-expressible options are supported here):
 
 ```yaml
@@ -288,6 +292,38 @@ $services->set('app.storage_client_options', ClientOptions::class)
 
 The service's non-null values are merged over the bundle base via `ClientOptions::addValuesFrom()`.
 The `service` (string) form and the individual options are mutually exclusive.
+
+### Tuning authentication separately
+
+Everything above configures the clients your controllers use. Authentication has different needs:
+verifying a token is a small GET that should fail fast, while an application call may be a table
+import worth waiting for. The `auth` node applies only to the clients that authenticate a request —
+Storage token verification and the Manage token exchange / application-token check.
+
+**`auth.client_options.backoff_max_tries` defaults to `3`**, capping the authentication retry window
+at `1 + 2 + 4 = 7` s. Left to the underlying clients it would be 11 tries for Storage (2047 s, 34
+min of blocking sleep) and 10 for Manage (1023 s) — long enough for one Connection blip to hold a
+worker for the whole ladder. Override it if you need to:
+
+```yaml
+keboola_api:
+  storage_client_options:
+    backoff_max_tries: 11   # patient: the app's own Storage calls
+  auth:
+    client_options:
+      backoff_max_tries: 2  # impatient: token verification (default 3)
+```
+
+For the Storage client the auth value is layered on top of `storage_client_options`, so anything you
+set there still applies unless `auth` overrides it. The Manage client has no equivalent base node,
+so `auth.client_options` is its only configuration. `0` disables authentication retries entirely.
+
+Only settings that behave identically on both clients are accepted here.
+
+The bundle builds Manage clients **only** for authentication, so `ManageApiClientFactory` is
+registered under a bundle-private service id rather than its class name. Autowiring it in your own
+code will fail with a service-not-found error — that is deliberate, so nobody silently inherits the
+authentication retry cap for unrelated Manage calls. Build your own factory if you need one.
 
 ### Customizing the run id
 
@@ -347,8 +383,8 @@ Storage/Manage APIs. It provides five helpers:
 
 The `setupFake*Token()` helpers replace services in the test container via
 `getContainer()->set(...)`. That only works while those services are **not yet initialized**: a
-`#[StorageApiTokenAuth]` request initializes `ManageApiClientFactory` (it backs the programmatic-token
-exchange resolver), and an initialized service can no longer be replaced. So whenever a request has
+`#[StorageApiTokenAuth]` request initializes the bundle's Manage client factory (it backs the
+programmatic-token exchange resolver), and an initialized service can no longer be replaced. So whenever a request has
 already run in the test — or you simply want a guaranteed-clean container — call
 `self::bootCleanClient()` first. It boots a fresh kernel, disables client reboot, and returns the
 `KernelBrowser` to use for the request.

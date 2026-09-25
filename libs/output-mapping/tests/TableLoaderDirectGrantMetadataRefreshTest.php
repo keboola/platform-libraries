@@ -22,8 +22,11 @@ use Keboola\StorageApi\ClientException;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Keboola\StorageApiBranch\Factory\AuthType;
 use Keboola\StorageApiBranch\StorageApiToken;
+use Monolog\Handler\TestHandler;
+use Monolog\Logger;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 
 class TableLoaderDirectGrantMetadataRefreshTest extends TestCase
@@ -160,13 +163,18 @@ class TableLoaderDirectGrantMetadataRefreshTest extends TestCase
         }
     }
 
-    public function testRefreshIsEnqueuedEvenWhenProcessingSourcesFails(): void
+    public function testRefreshIsAwaitedEvenWhenProcessingSourcesFails(): void
     {
         $branchClient = $this->createMock(BranchAwareClient::class);
         $branchClient->expects(self::once())
             ->method('apiPostJson')
             ->with(self::UNLOAD_URL, [], false)
             ->willReturn([['id' => '456']])
+        ;
+        $branchClient->expects(self::once())
+            ->method('waitForJob')
+            ->with('456')
+            ->willReturn(['operationName' => 'refreshStorageBuckets', 'status' => 'success'])
         ;
 
         $sourcesValidator = $this->createMock(SourcesValidatorInterface::class);
@@ -183,6 +191,53 @@ class TableLoaderDirectGrantMetadataRefreshTest extends TestCase
         $this->expectException(InvalidOutputException::class);
         $this->expectExceptionMessage('Table sources not found: "table1a"');
         $tableLoader->uploadTables($this->createSettings(), new SystemMetadata(['componentId' => 'testComponent']));
+    }
+
+    public function testFailedRefreshDoesNotHideTheFailureOfProcessingSources(): void
+    {
+        $branchClient = $this->createMock(BranchAwareClient::class);
+        $branchClient->expects(self::once())
+            ->method('apiPostJson')
+            ->with(self::UNLOAD_URL, [], false)
+            ->willReturn([['id' => '456']])
+        ;
+        $branchClient->expects(self::once())
+            ->method('waitForJob')
+            ->with('456')
+            ->willReturn([
+                'operationName' => 'refreshStorageBuckets',
+                'status' => 'error',
+                'error' => ['message' => 'Workspace "1234" not found.'],
+            ])
+        ;
+
+        $sourcesValidator = $this->createMock(SourcesValidatorInterface::class);
+        $sourcesValidator->expects(self::once())
+            ->method('validatePhysicalFilesWithManifest')
+            ->willThrowException(new InvalidOutputException('Table sources not found: "table1a"'))
+        ;
+
+        $logsHandler = new TestHandler();
+        $tableLoader = $this->createTableLoader(
+            $branchClient,
+            $this->createStrategyFactory(processesSources: false, sourcesValidator: $sourcesValidator),
+            new Logger('test', [$logsHandler]),
+        );
+
+        try {
+            $tableLoader->uploadTables(
+                $this->createSettings(),
+                new SystemMetadata(['componentId' => 'testComponent']),
+            );
+            self::fail('Upload should fail on the sources.');
+        } catch (InvalidOutputException $e) {
+            self::assertSame('Table sources not found: "table1a"', $e->getMessage());
+        }
+
+        self::assertTrue($logsHandler->hasWarning(
+            'Failed to refresh metadata of direct-grant tables: ' .
+            'Failed to refresh metadata of direct-grant tables (Storage job "456"): Workspace "1234" not found.',
+        ));
     }
 
     public function testRefreshDirectGrantMetadataRefreshesWithoutLoadingTables(): void
@@ -243,12 +298,13 @@ class TableLoaderDirectGrantMetadataRefreshTest extends TestCase
     private function createTableLoader(
         BranchAwareClient&MockObject $branchClient,
         StrategyFactory&MockObject $strategyFactory,
+        LoggerInterface $logger = new NullLogger(),
     ): TableLoader {
         $clientWrapper = $this->createMock(ClientWrapper::class);
         $clientWrapper->method('getBranchClient')->willReturn($branchClient);
         $clientWrapper->method('getTableAndFileStorageClient')->willReturn($this->createMock(Client::class));
 
-        return new TableLoader(new NullLogger(), $clientWrapper, $strategyFactory);
+        return new TableLoader($logger, $clientWrapper, $strategyFactory);
     }
 
     private function createSettings(): OutputMappingSettings

@@ -52,8 +52,27 @@ class TableLoader
 
         // Started before any table is touched - the direct-grant tables are already written by the component,
         // so their metadata must catch up even when processing the remaining tables fails.
-        $tasks = $this->startDirectGrantMetadataRefresh($strategy);
+        $refreshTasks = $this->startDirectGrantMetadataRefresh($strategy);
 
+        try {
+            return $this->queueTableLoads($strategy, $configuration, $systemMetadata, $refreshTasks);
+        } catch (Throwable $e) {
+            // nobody waits for the returned queue now, but the caller drops the workspace right after a failure
+            // and the refresh must finish before that
+            $this->waitForDirectGrantMetadataRefresh($refreshTasks);
+            throw $e;
+        }
+    }
+
+    /**
+     * @param DirectGrantMetadataRefreshTask[] $tasks
+     */
+    private function queueTableLoads(
+        StrategyInterface $strategy,
+        OutputMappingSettings $configuration,
+        SystemMetadata $systemMetadata,
+        array $tasks,
+    ): LoadTableQueue {
         $combinedSources = $this->getCombinedSources($strategy, $configuration);
 
         if ($configuration->hasSlicingFeature() && $strategy->hasSlicer()) {
@@ -207,6 +226,23 @@ class TableLoader
             $this->logger,
             $this->startDirectGrantMetadataRefresh($strategy),
         );
+    }
+
+    /**
+     * @param DirectGrantMetadataRefreshTask[] $refreshTasks
+     */
+    private function waitForDirectGrantMetadataRefresh(array $refreshTasks): void
+    {
+        if ($refreshTasks === []) {
+            return;
+        }
+
+        try {
+            (new LoadTableQueue($this->clientWrapper, $this->logger, $refreshTasks))->waitForAll();
+        } catch (Throwable $e) {
+            // the failure which interrupted the output mapping is the one to report
+            $this->logger->warning('Failed to refresh metadata of direct-grant tables: ' . $e->getMessage());
+        }
     }
 
     /**

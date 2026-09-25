@@ -99,6 +99,8 @@ throwing where they previously wrote their partial output.
 Tables with `unload_strategy: direct-grant` are written by the component itself, so the component may have
 changed them even when it failed or was terminated. `TableLoader::uploadTables()` therefore starts
 `DirectGrantMetadataRefreshTask` before listing any source - nothing that fails later may prevent the refresh.
+When the loader fails after that, it waits for the refresh before rethrowing, because the runner drops the
+workspace right after a failure and the refresh must finish first.
 `TableLoader::refreshDirectGrantMetadata()` does the refresh alone, for a runner which does not call
 `uploadTables()` at all. The task's `start()` is idempotent because both the loader and `LoadTableQueue` call it.
 

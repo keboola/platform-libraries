@@ -49,6 +49,30 @@ class TableLoader
             $configuration,
             $configuration->isFailedJob(),
         );
+
+        // Started before any table is touched - the direct-grant tables are already written by the component,
+        // so their metadata must catch up even when processing the remaining tables fails.
+        $refreshTasks = $this->startDirectGrantMetadataRefresh($strategy);
+
+        try {
+            return $this->queueTableLoads($strategy, $configuration, $systemMetadata, $refreshTasks);
+        } catch (Throwable $e) {
+            // nobody waits for the returned queue now, but the caller drops the workspace right after a failure
+            // and the refresh must finish before that
+            $this->waitForDirectGrantMetadataRefresh($refreshTasks);
+            throw $e;
+        }
+    }
+
+    /**
+     * @param DirectGrantMetadataRefreshTask[] $tasks
+     */
+    private function queueTableLoads(
+        StrategyInterface $strategy,
+        OutputMappingSettings $configuration,
+        SystemMetadata $systemMetadata,
+        array $tasks,
+    ): LoadTableQueue {
         $combinedSources = $this->getCombinedSources($strategy, $configuration);
 
         if ($configuration->hasSlicingFeature() && $strategy->hasSlicer()) {
@@ -57,23 +81,6 @@ class TableLoader
             $strategy->sliceFiles($sourcesForSlicing, $configuration->getDataTypeSupport());
 
             $combinedSources = $this->getCombinedSources($strategy, $configuration);
-        }
-
-        $tasks = [];
-        if ($strategy->hasDirectGrantUnloadStrategy()) {
-            if (!$strategy instanceof SqlWorkspaceTableStrategy) {
-                throw new LogicException(sprintf(
-                    'Direct-grant unload strategy is only supported for %s strategy but got %s.',
-                    SqlWorkspaceTableStrategy::class,
-                    $strategy::class,
-                ));
-            }
-
-            // First in the list, so the refresh is enqueued even when enqueuing a table load fails - the
-            // direct-grant tables are already written at this point and their metadata must catch up.
-            $tasks[] = new DirectGrantMetadataRefreshTask(
-                (int) $strategy->getDataStorage()->getWorkspaceId(),
-            );
         }
 
         /** @var array<string, TableDescription> $createdTableDescriptions */
@@ -200,6 +207,65 @@ class TableLoader
         ));
 
         return $tableQueue;
+    }
+
+    /**
+     * Refreshes metadata of the tables written through direct grants without loading any table. Meant for a job
+     * which never gets to uploadTables() - e.g. a terminated job - because the component may have changed the
+     * direct-grant tables anyway. The returned queue is already started; waiting for it is up to the caller.
+     */
+    public function refreshDirectGrantMetadata(OutputMappingSettings $configuration): LoadTableQueue
+    {
+        $strategy = $this->strategyFactory->getTableOutputStrategy(
+            $configuration,
+            $configuration->isFailedJob(),
+        );
+
+        return new LoadTableQueue(
+            $this->clientWrapper,
+            $this->logger,
+            $this->startDirectGrantMetadataRefresh($strategy),
+        );
+    }
+
+    /**
+     * @param DirectGrantMetadataRefreshTask[] $refreshTasks
+     */
+    private function waitForDirectGrantMetadataRefresh(array $refreshTasks): void
+    {
+        if ($refreshTasks === []) {
+            return;
+        }
+
+        try {
+            (new LoadTableQueue($this->clientWrapper, $this->logger, $refreshTasks))->waitForAll();
+        } catch (Throwable $e) {
+            // the failure which interrupted the output mapping is the one to report
+            $this->logger->warning('Failed to refresh metadata of direct-grant tables: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * @return DirectGrantMetadataRefreshTask[] the started refresh, or nothing when no table is direct-grant
+     */
+    private function startDirectGrantMetadataRefresh(StrategyInterface $strategy): array
+    {
+        if (!$strategy->hasDirectGrantUnloadStrategy()) {
+            return [];
+        }
+
+        if (!$strategy instanceof SqlWorkspaceTableStrategy) {
+            throw new LogicException(sprintf(
+                'Direct-grant unload strategy is only supported for %s strategy but got %s.',
+                SqlWorkspaceTableStrategy::class,
+                $strategy::class,
+            ));
+        }
+
+        $refreshTask = new DirectGrantMetadataRefreshTask((int) $strategy->getDataStorage()->getWorkspaceId());
+        $refreshTask->start($this->clientWrapper);
+
+        return [$refreshTask];
     }
 
     /**

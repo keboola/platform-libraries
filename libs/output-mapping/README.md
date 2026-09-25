@@ -8,6 +8,7 @@ Output mapping library for Keboola Runner and Workspaces. Processes component ou
     - Requires: `output-mapping-slice` feature flag, default CSV format (`,` delimiter, `"` enclosure), no custom `columns` mapping
     - Sliced files must have `columns` or `schema` specified in configuration
 - Workspace staging (Snowflake/BigQuery): Loads tables directly from workspace database objects (no file upload, no slicing)
+- Direct-grant tables (`unload_strategy: direct-grant`): written by the component straight into Storage, so there is no load job. Output mapping refreshes their metadata through the workspace unload endpoint (`only-direct-grants`) before any other table is processed, so the refresh happens even when the rest of the output mapping fails. A job which never reaches `uploadTables()` (e.g. a terminated job) must call `TableLoader::refreshDirectGrantMetadata()` instead.
 - Descriptions: Table and column descriptions (`description`, `schema[].description` or `KBC.description` metadata) are stored in the native Storage description field. A table created by the run always gets its description; on an existing table the description is only stored when the table's `isDescriptionSystemManaged` flag is set, so a description managed by the user is never overwritten.
 
 **Files:**

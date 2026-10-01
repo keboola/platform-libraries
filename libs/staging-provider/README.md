@@ -110,7 +110,7 @@ $workspace = $workspaceProvider->createNewWorkspace($storageApiToken, new NewWor
     size: null,
     useReadonlyRole: null,
     networkPolicy: NetworkPolicy::SYSTEM,
-    loginType: null,
+    loginType: null,            // null = service key-pair for Snowflake, Connection default otherwise
 ));
 
 $workspace->getWorkspaceId();
@@ -135,6 +135,11 @@ Notes:
 * For key-pair login (`WorkspaceLoginType`), the provider generates the keypair locally via
   `SnowflakeKeypairGenerator`, sends only the **public** key to Connection, and merges the private key into
   the returned workspace data. The private key is never returned by the API.
+* A Snowflake workspace created with `loginType: null` gets `WorkspaceLoginType::SNOWFLAKE_SERVICE_KEYPAIR`.
+  Connection rejects Snowflake workspaces without an explicit login type (they used to fall back to password
+  authentication, which Snowflake no longer supports), so there is no password-based default any more. Pass
+  `WorkspaceLoginType::NONE` explicitly for a workspace that needs no credentials of its own. Other backends
+  still send no `loginType` when `null` is passed.
 
 ### Workspaces with and without credentials
 

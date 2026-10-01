@@ -32,9 +32,16 @@ class DirectGrantMetadataRefreshTask implements DeferredTaskInterface
      * the endpoint is typed as a list of jobs and will grow the jobs of the remaining unload strategies, so every
      * returned id has to be awaited. An empty list is a valid answer - a workspace with no direct-grant output
      * mapping in its configuration has nothing to refresh.
+     *
+     * TableLoader starts the task before it touches any table and LoadTableQueue starts it again, so a started
+     * task must not enqueue a second refresh.
      */
     public function start(ClientWrapper $clientWrapper): void
     {
+        if ($this->started) {
+            return;
+        }
+
         // the workspace is a branch object, so the refresh has to be enqueued through the branch client
         $workspaces = new Workspaces($clientWrapper->getBranchClient());
 

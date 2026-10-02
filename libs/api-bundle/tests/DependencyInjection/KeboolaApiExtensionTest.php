@@ -6,6 +6,7 @@ namespace Keboola\ApiBundle\Tests\DependencyInjection;
 
 use Closure;
 use Keboola\ApiBundle\DependencyInjection\KeboolaApiExtension;
+use Keboola\ApiBundle\Security\ApplicationToken\ApplicationTokenAuthenticator;
 use Keboola\ApiBundle\Security\ApplicationToken\ManageApiClientFactory;
 use Keboola\ApiBundle\Security\StorageApiToken\StorageApiTokenAuthenticator;
 use Keboola\ApiBundle\Security\StorageApiToken\StorageApiTokenFactory;
@@ -16,6 +17,7 @@ use Keboola\ServiceClient\ServiceClient;
 use Keboola\StorageApiBranch\Factory\AuthType;
 use Keboola\StorageApiBranch\Factory\ClientOptions;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\NullLogger;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\Reference;
@@ -137,10 +139,12 @@ class KeboolaApiExtensionTest extends TestCase
 
         self::assertSame(ManageApiClient::class, $definition->getClass());
 
+        // The exchange is authentication, so it uses the auth Manage factory, not the
+        // consumer-facing one (asserted by name in testAuthClientsGetTheBundleDefault*).
         $factory = $definition->getFactory();
         self::assertIsArray($factory);
         self::assertInstanceOf(Reference::class, $factory[0]);
-        self::assertSame(ManageApiClientFactory::class, (string) $factory[0]);
+        self::assertNotSame(ManageApiClientFactory::class, (string) $factory[0]);
         self::assertSame('getClientForServiceAccountTokenPath', $factory[1]);
 
         // No explicit DNS type - the client follows the ServiceClient's configured default.
@@ -264,6 +268,19 @@ class KeboolaApiExtensionTest extends TestCase
         );
     }
 
+    public function testStorageClientOptionsBackoffMaxTriesCanBeSetToZero(): void
+    {
+        $container = $this->buildContainer([[
+            'storage_client_options' => [
+                'backoff_max_tries' => 0,
+            ],
+        ]]);
+
+        $base = $this->resolveSharedBaseClientOptions($container);
+
+        self::assertSame(0, $base->getArgument('$backoffMaxTries'));
+    }
+
     // -------------------------------------------------------------------------
     // run_id_generator
     // -------------------------------------------------------------------------
@@ -360,5 +377,204 @@ class KeboolaApiExtensionTest extends TestCase
     public static function createRunIdGenerator(): Closure
     {
         return static fn (ClientOptions $options): string => 'generated-run-id';
+    }
+
+    // -------------------------------------------------------------------------
+    // backoff_max_tries default, observed on the instantiated ClientOptions
+    // -------------------------------------------------------------------------
+
+    /**
+     * Instantiates the extension-built base {@see ClientOptions} for real. The Connection URL and
+     * logger are container references resolved at runtime, so they are swapped for literals here;
+     * everything else - including the addValuesFrom() merge the service form registers - is exactly
+     * what the extension produced. The service form's fallback (constructor sets the default, then
+     * addValuesFrom() merges non-null values on top) only exists at instantiation, so asserting on
+     * the Definition alone cannot catch a regression there.
+     *
+     * @param array<array<mixed>> $configs
+     */
+    private function instantiateBaseClientOptions(array $configs, ?Definition $referencedOptions): ClientOptions
+    {
+        $base = $this->resolveSharedBaseClientOptions($this->buildContainer($configs));
+        $base->setArgument('$url', 'https://connection.test');
+        $base->setArgument('$logger', new Definition(NullLogger::class));
+        $base->setPublic(true);
+
+        $container = new ContainerBuilder();
+        $container->setDefinition('base_options', $base);
+        if ($referencedOptions !== null) {
+            $container->setDefinition('app.storage_options', $referencedOptions);
+        }
+        $container->compile();
+
+        $options = $container->get('base_options');
+        self::assertInstanceOf(ClientOptions::class, $options);
+
+        return $options;
+    }
+
+    /**
+     * The controller-facing client is deliberately left alone: unconfigured, it keeps
+     * {@see \Keboola\StorageApi\Client}'s own default of 11. Only the authentication clients carry
+     * a bundle default, so upgrading changes nothing about a consumer's own Storage calls.
+     */
+    public function testAppFacingClientKeepsStorageClientDefaultWhenUnconfigured(): void
+    {
+        $options = $this->instantiateBaseClientOptions([[]], null);
+
+        self::assertNull($options->getBackoffMaxTries());
+        self::assertNull($options->getClientConstructOptions()['backoffMaxTries']);
+    }
+
+    public function testServiceFormOptionsWithoutBackoffLeaveAppFacingClientUnset(): void
+    {
+        $options = $this->instantiateBaseClientOptions(
+            [['storage_client_options' => 'app.storage_options']],
+            (new Definition(ClientOptions::class))->setArgument('$url', 'https://other.test'),
+        );
+
+        self::assertNull($options->getBackoffMaxTries());
+    }
+
+    public function testServiceFormOptionsWithBackoffOverrideBundleDefault(): void
+    {
+        $options = $this->instantiateBaseClientOptions(
+            [['storage_client_options' => 'app.storage_options']],
+            (new Definition(ClientOptions::class))
+                ->setArgument('$url', 'https://other.test')
+                ->setArgument('$backoffMaxTries', 7),
+        );
+
+        self::assertSame(7, $options->getBackoffMaxTries());
+    }
+
+    public function testObjectFormBackoffOverrideReachesStorageClientConstructOptions(): void
+    {
+        $options = $this->instantiateBaseClientOptions(
+            [['storage_client_options' => ['backoff_max_tries' => 0]]],
+            null,
+        );
+
+        self::assertSame(0, $options->getClientConstructOptions()['backoffMaxTries']);
+    }
+
+    // -------------------------------------------------------------------------
+    // auth.client_options
+    // -------------------------------------------------------------------------
+
+    public function testAuthClientsGetTheBundleDefaultWithNoConfiguration(): void
+    {
+        $container = $this->buildContainer([[]]);
+
+        $authOptionsRef = $container->getDefinition(StorageApiTokenFactory::class)
+            ->getArgument('$authClientOptions');
+        self::assertInstanceOf(Reference::class, $authOptionsRef);
+        self::assertSame(
+            3,
+            $container->getDefinition((string) $authOptionsRef)->getArgument('$backoffMaxTries'),
+        );
+
+        $manageFactoryRef = $container->getDefinition(ApplicationTokenAuthenticator::class)
+            ->getArgument('$manageApiClientFactory');
+        self::assertInstanceOf(Reference::class, $manageFactoryRef);
+        self::assertSame(KeboolaApiExtension::AUTH_MANAGE_CLIENT_FACTORY_ID, (string) $manageFactoryRef);
+        self::assertSame(
+            3,
+            $container->getDefinition((string) $manageFactoryRef)->getArgument('$backoffMaxTries'),
+        );
+    }
+
+    public function testAuthBackoffCanBeDisabledWithZero(): void
+    {
+        $container = $this->buildContainer([[
+            'auth' => ['client_options' => ['backoff_max_tries' => 0]],
+        ]]);
+
+        $authOptionsRef = $container->getDefinition(StorageApiTokenFactory::class)
+            ->getArgument('$authClientOptions');
+        self::assertInstanceOf(Reference::class, $authOptionsRef);
+        self::assertSame(
+            0,
+            $container->getDefinition((string) $authOptionsRef)->getArgument('$backoffMaxTries'),
+        );
+    }
+
+    public function testAuthClientOptionsBackoffAppliesToAuthStorageClientButNotTheAppClient(): void
+    {
+        $container = $this->buildContainer([[
+            'storage_client_options' => ['backoff_max_tries' => 11],
+            'auth' => ['client_options' => ['backoff_max_tries' => 2]],
+        ]]);
+
+        // the controller-facing client keeps the consumer's patient value
+        $base = $this->resolveSharedBaseClientOptions($container);
+        self::assertSame(11, $base->getArgument('$backoffMaxTries'));
+
+        // token verification gets the impatient one
+        $authOptionsRef = $container->getDefinition(StorageApiTokenFactory::class)
+            ->getArgument('$authClientOptions');
+        self::assertInstanceOf(Reference::class, $authOptionsRef);
+        self::assertSame(
+            2,
+            $container->getDefinition((string) $authOptionsRef)->getArgument('$backoffMaxTries'),
+        );
+    }
+
+    /**
+     * The asymmetry is only real if the override actually wins at runtime. This runs the genuine
+     * {@see StorageClientRequestFactory} merge rather than asserting on Definitions.
+     */
+    public function testAuthClientOptionsWinOverBaseOptionsAtRuntime(): void
+    {
+        $factory = new StorageClientRequestFactory(
+            new ClientOptions(url: 'https://connection.test', backoffMaxTries: 11),
+        );
+
+        $wrapper = $factory->createClientWrapper(
+            'my-token',
+            AuthType::STORAGE_TOKEN,
+            new Request(),
+            new ClientOptions(backoffMaxTries: 2),
+        );
+
+        self::assertSame(2, $wrapper->getClientOptionsReadOnly()->getBackoffMaxTries());
+    }
+
+    public function testAuthClientOptionsBackoffAppliesToBothManageAuthClients(): void
+    {
+        $container = $this->buildContainer([[
+            'auth' => ['client_options' => ['backoff_max_tries' => 2]],
+        ]]);
+
+        $authenticatorFactoryRef = $container->getDefinition(ApplicationTokenAuthenticator::class)
+            ->getArgument('$manageApiClientFactory');
+        self::assertInstanceOf(Reference::class, $authenticatorFactoryRef);
+        self::assertSame(
+            KeboolaApiExtension::AUTH_MANAGE_CLIENT_FACTORY_ID,
+            (string) $authenticatorFactoryRef,
+        );
+        self::assertSame(
+            2,
+            $container->getDefinition((string) $authenticatorFactoryRef)->getArgument('$backoffMaxTries'),
+        );
+
+        // the programmatic-token exchange resolver is an auth client too
+        $resolverFactory = $container
+            ->getDefinition(KeboolaApiExtension::STORAGE_TOKEN_RESOLVER_CLIENT_ID)
+            ->getFactory();
+        self::assertIsArray($resolverFactory);
+        self::assertInstanceOf(Reference::class, $resolverFactory[0]);
+        self::assertSame((string) $authenticatorFactoryRef, (string) $resolverFactory[0]);
+    }
+
+    public function testManageApiClientFactoryIsNotRegisteredUnderItsClassName(): void
+    {
+        $container = $this->buildContainer([[]]);
+
+        // Every Manage client the bundle builds is an authentication client, so the factory is
+        // bundle-private. A consumer autowiring it must fail loudly rather than quietly inherit the
+        // auth retry cap.
+        self::assertFalse($container->hasDefinition(ManageApiClientFactory::class));
+        self::assertTrue($container->hasDefinition(KeboolaApiExtension::AUTH_MANAGE_CLIENT_FACTORY_ID));
     }
 }

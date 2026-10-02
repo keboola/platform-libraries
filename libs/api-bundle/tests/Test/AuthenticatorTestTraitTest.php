@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Keboola\ApiBundle\Tests\Test;
 
+use Keboola\ApiBundle\Attribute\ApplicationTokenAuth;
 use Keboola\ApiBundle\DependencyInjection\KeboolaApiExtension;
+use Keboola\ApiBundle\Security\ApplicationToken\ApplicationTokenAuthenticator;
 use Keboola\ApiBundle\Security\ApplicationToken\ManageApiClientFactory;
 use Keboola\ApiBundle\StorageApiClient\StorageClientRequestFactory;
 use Keboola\ApiBundle\Test\AuthenticatorTestTrait;
@@ -12,6 +14,7 @@ use Keboola\ManageApi\Client as ManageApiClient;
 use Keboola\StorageApiBranch\Factory\AuthType;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\DependencyInjection\Exception\InvalidArgumentException;
+use Symfony\Component\HttpFoundation\Request;
 
 class AuthenticatorTestTraitTest extends WebTestCase
 {
@@ -71,7 +74,7 @@ class AuthenticatorTestTraitTest extends WebTestCase
     {
         $this->setupFakeManageApiToken('manage-token', ['some:scope'], ['feat-b']);
 
-        $factory = self::getContainer()->get(ManageApiClientFactory::class);
+        $factory = self::getContainer()->get(KeboolaApiExtension::AUTH_MANAGE_CLIENT_FACTORY_ID);
         self::assertInstanceOf(ManageApiClientFactory::class, $factory);
 
         $data = $factory->getClientForManageToken('manage-token')->verifyToken();
@@ -82,6 +85,28 @@ class AuthenticatorTestTraitTest extends WebTestCase
         // The Kubernetes ServiceAccount JWT path is stubbed identically.
         $jwtData = $factory->getClientForServiceAccountToken('manage-token')->verifyToken();
         self::assertSame(['some:scope'], $jwtData['scopes']);
+    }
+
+    /**
+     * The trait is only useful if the mock it registers is the one the authenticator actually
+     * resolves. Asserting on the factory alone cannot catch the wiring drifting to another service
+     * id - this drives the real {@see ApplicationTokenAuthenticator} out of the container, so it
+     * fails (with a live Manage API call) the moment the two diverge.
+     */
+    public function testFakeManageApiTokenReachesTheApplicationTokenAuthenticator(): void
+    {
+        $this->setupFakeManageApiToken('manage-token', ['some:scope'], ['feat-b']);
+
+        $authenticator = self::getContainer()->get(ApplicationTokenAuthenticator::class);
+        self::assertInstanceOf(ApplicationTokenAuthenticator::class, $authenticator);
+
+        $request = new Request();
+        $request->headers->set(ApplicationTokenAuthenticator::MANAGE_TOKEN_HEADER, 'manage-token');
+
+        $token = $authenticator->authenticateToken(new ApplicationTokenAuth(), 'manage-token', $request);
+
+        self::assertSame(['some:scope'], $token->getScopes());
+        self::assertSame(['feat-b'], $token->getFeatures());
     }
 
     public function testSetupFakeConnectionToken(): void
@@ -117,7 +142,7 @@ class AuthenticatorTestTraitTest extends WebTestCase
     {
         // A #[StorageApiTokenAuth] request initializes ManageApiClientFactory (it backs the token
         // exchange resolver); once initialized the test container can no longer replace it.
-        self::getContainer()->get(ManageApiClientFactory::class);
+        self::getContainer()->get(KeboolaApiExtension::AUTH_MANAGE_CLIENT_FACTORY_ID);
 
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessageMatches('/already initialized/');
@@ -129,13 +154,13 @@ class AuthenticatorTestTraitTest extends WebTestCase
     {
         // Initialize ManageApiClientFactory on the current container, as a #[StorageApiTokenAuth]
         // request would.
-        self::getContainer()->get(ManageApiClientFactory::class);
+        self::getContainer()->get(KeboolaApiExtension::AUTH_MANAGE_CLIENT_FACTORY_ID);
 
         // A fresh client gives a clean container where the factory can be stubbed again.
         self::bootCleanClient();
         $this->setupFakeManageApiToken('manage-token', ['some:scope']);
 
-        $factory = self::getContainer()->get(ManageApiClientFactory::class);
+        $factory = self::getContainer()->get(KeboolaApiExtension::AUTH_MANAGE_CLIENT_FACTORY_ID);
         self::assertInstanceOf(ManageApiClientFactory::class, $factory);
         self::assertSame(
             ['some:scope'],

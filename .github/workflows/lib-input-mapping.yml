@@ -201,14 +201,14 @@ jobs:
         run: docker compose logs
 
   bigquery:
-    name: BigQuery suite
+    name: GCP · BigQuery suite
     needs: [cs]
     runs-on: ubuntu-latest
     timeout-minutes: 60
     env:
-      STORAGE_API_URL: ${{ vars.STORAGE_API_URL_AWS }}
-      STORAGE_API_TOKEN: ${{ secrets.INPUT_MAPPING__STORAGE_API_TOKEN_AWS_BQ }}
-      STORAGE_API_TOKEN_MASTER: ${{ secrets.INPUT_MAPPING__STORAGE_API_TOKEN_AWS_BQ }}
+      STORAGE_API_URL: ${{ vars.STORAGE_API_URL_GCP }}
+      STORAGE_API_TOKEN: ${{ secrets.INPUT_MAPPING__STORAGE_API_TOKEN_GCP_BQ }}
+      STORAGE_API_TOKEN_MASTER: ${{ secrets.INPUT_MAPPING__STORAGE_API_TOKEN_GCP_BQ }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6

@@ -300,10 +300,12 @@ verifying a token is a small GET that should fail fast, while an application cal
 import worth waiting for. The `auth` node applies only to the clients that authenticate a request —
 Storage token verification and the Manage token exchange / application-token check.
 
-**`auth.client_options.backoff_max_tries` defaults to `3`**, capping the authentication retry window
-at `1 + 2 + 4 = 7` s. Left to the underlying clients it would be 11 tries for Storage (2047 s, 34
-min of blocking sleep) and 10 for Manage (1023 s) — long enough for one Connection blip to hold a
-worker for the whole ladder. Override it if you need to:
+**`auth.client_options.backoff_max_tries` defaults to `3`**, which caps the *sleep between retries*
+at `1 + 2 + 4 = 7` s. Left to the underlying clients that sleep would be 11 tries for Storage
+(2047 s, 34 min) and 10 for Manage (1023 s) — long enough for one Connection blip to hold a worker
+for the whole ladder. This setting does not bound the attempts themselves: the per-request timeout
+is unchanged (7200 s for Storage, none for Manage), so a single hanging connection can still hold a
+worker. Override it if you need to:
 
 ```yaml
 keboola_api:

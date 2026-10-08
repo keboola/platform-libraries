@@ -138,9 +138,6 @@ class KeboolaApiExtension extends Extension
         $connectionUrl = (new Definition())
             ->setFactory([new Reference(ServiceClient::class), 'getConnectionServiceUrl']);
 
-        // $backoffMaxTries must be set before applyStorageClientOptions(): the object form replaces
-        // the argument, and the service form early-returns after registering addValuesFrom(), which
-        // merges only non-null values on top. Setting it afterwards would clobber both overrides.
         $baseClientOptions = (new Definition(ClientOptions::class))
             ->setArgument('$url', $connectionUrl)
             ->setArgument('$logger', new Reference('logger'))

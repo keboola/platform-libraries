@@ -140,11 +140,11 @@ class KeboolaApiExtensionTest extends TestCase
         self::assertSame(ManageApiClient::class, $definition->getClass());
 
         // The exchange is authentication, so it uses the auth Manage factory, not the
-        // consumer-facing one (asserted by name in testAuthClientsGetTheBundleDefault*).
+        // consumer-facing one.
         $factory = $definition->getFactory();
         self::assertIsArray($factory);
         self::assertInstanceOf(Reference::class, $factory[0]);
-        self::assertNotSame(ManageApiClientFactory::class, (string) $factory[0]);
+        self::assertSame(KeboolaApiExtension::AUTH_MANAGE_CLIENT_FACTORY_ID, (string) $factory[0]);
         self::assertSame('getClientForServiceAccountTokenPath', $factory[1]);
 
         // No explicit DNS type - the client follows the ServiceClient's configured default.
@@ -387,9 +387,8 @@ class KeboolaApiExtensionTest extends TestCase
      * Instantiates the extension-built base {@see ClientOptions} for real. The Connection URL and
      * logger are container references resolved at runtime, so they are swapped for literals here;
      * everything else - including the addValuesFrom() merge the service form registers - is exactly
-     * what the extension produced. The service form's fallback (constructor sets the default, then
-     * addValuesFrom() merges non-null values on top) only exists at instantiation, so asserting on
-     * the Definition alone cannot catch a regression there.
+     * what the extension produced. That merge only happens at instantiation, so asserting on the
+     * Definition alone cannot catch a regression in it.
      *
      * @param array<array<mixed>> $configs
      */
@@ -436,7 +435,7 @@ class KeboolaApiExtensionTest extends TestCase
         self::assertNull($options->getBackoffMaxTries());
     }
 
-    public function testServiceFormOptionsWithBackoffOverrideBundleDefault(): void
+    public function testServiceFormOptionsWithBackoffReachAppFacingClient(): void
     {
         $options = $this->instantiateBaseClientOptions(
             [['storage_client_options' => 'app.storage_options']],

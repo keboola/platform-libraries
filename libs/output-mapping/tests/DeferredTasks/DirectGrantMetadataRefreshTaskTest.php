@@ -41,4 +41,23 @@ class DirectGrantMetadataRefreshTaskTest extends TestCase
 
         self::assertSame([], $task->getStorageJobIds());
     }
+
+    public function testStartingTwiceEnqueuesSingleRefresh(): void
+    {
+        $branchClient = $this->createMock(BranchAwareClient::class);
+        $branchClient->expects(self::once())
+            ->method('apiPostJson')
+            ->with('workspaces/1234/unload?only-direct-grants=1', [], false)
+            ->willReturn([['id' => '456']])
+        ;
+
+        $clientWrapper = $this->createMock(ClientWrapper::class);
+        $clientWrapper->method('getBranchClient')->willReturn($branchClient);
+
+        $task = new DirectGrantMetadataRefreshTask(1234);
+        $task->start($clientWrapper);
+        $task->start($clientWrapper);
+
+        self::assertSame(['456'], $task->getStorageJobIds());
+    }
 }

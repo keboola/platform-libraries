@@ -188,6 +188,10 @@ class LoadTableTaskCreator
             $loadOptions['deduplicationStrategy'] = $source->getDeduplicationStrategy();
         }
 
+        if ($source->isPartitionAwareImport()) {
+            $loadOptions['partitionAwareImport'] = true;
+        }
+
         return array_merge(
             $loadOptions,
             $strategy->prepareLoadTaskOptions($source),

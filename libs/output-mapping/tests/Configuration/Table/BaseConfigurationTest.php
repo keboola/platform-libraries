@@ -1147,6 +1147,71 @@ class BaseConfigurationTest extends TestCase
         }
     }
 
+    /**
+     * @dataProvider partitionAwareImportProvider
+     */
+    public function testPartitionAwareImportSuccess(bool $value): void
+    {
+        $config = [
+            'destination' => 'in.c-main.test',
+            'partition_aware_import' => $value,
+        ];
+
+        $manifest = (new Table\Manifest())->parse(['config' => $config]);
+        self::assertArrayHasKey('partition_aware_import', $manifest);
+        self::assertSame($value, $manifest['partition_aware_import']);
+
+        $configuration = (new Table\Configuration())->parse(['config' => $config]);
+        self::assertArrayHasKey('partition_aware_import', $configuration);
+        self::assertSame($value, $configuration['partition_aware_import']);
+    }
+
+    public function partitionAwareImportProvider(): Generator
+    {
+        yield 'enabled' => ['value' => true];
+        yield 'disabled' => ['value' => false];
+    }
+
+    public function testPartitionAwareImportNotSet(): void
+    {
+        $config = [
+            'destination' => 'in.c-main.test',
+        ];
+
+        self::assertArrayNotHasKey(
+            'partition_aware_import',
+            (new Table\Manifest())->parse(['config' => $config]),
+        );
+        self::assertArrayNotHasKey(
+            'partition_aware_import',
+            (new Table\Configuration())->parse(['config' => $config]),
+        );
+    }
+
+    public function testPartitionAwareImportInvalidValue(): void
+    {
+        $config = [
+            'destination' => 'in.c-main.test',
+            'partition_aware_import' => 'yes',
+        ];
+
+        try {
+            (new Table\Manifest())->parse(['config' => $config]);
+            self::fail('Exception should be thrown');
+        } catch (InvalidConfigurationException $e) {
+            self::assertStringContainsString('table.partition_aware_import', $e->getMessage());
+            self::assertStringContainsString('Expected "bool"', $e->getMessage());
+        }
+
+        try {
+            (new Table\Configuration())->parse(['config' => $config]);
+            self::fail('Exception should be thrown');
+        } catch (InvalidConfigurationException $e) {
+            self::assertStringContainsString('table.partition_aware_import', $e->getMessage());
+            self::assertStringContainsString('Expected "bool"', $e->getMessage());
+        }
+    }
+
     public function testUnloadStrategyDirectGrant(): void
     {
         $config = [

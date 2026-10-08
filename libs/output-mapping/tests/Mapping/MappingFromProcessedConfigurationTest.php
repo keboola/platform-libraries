@@ -579,4 +579,25 @@ class MappingFromProcessedConfigurationTest extends TestCase
         yield 'not set' => [[], null];
         yield 'direct-grant' => [['unload_strategy' => 'direct-grant'], 'direct-grant'];
     }
+
+    /**
+     * @dataProvider partitionAwareImportProvider
+     */
+    public function testIsPartitionAwareImport(array $mapping, bool $expected): void
+    {
+        $mapping += ['destination' => 'in.c-main.table'];
+        $mappingFromProcessedConfiguration = new MappingFromProcessedConfiguration(
+            $mapping,
+            $this->createMock(MappingFromRawConfigurationAndPhysicalDataWithManifest::class),
+        );
+
+        self::assertSame($expected, $mappingFromProcessedConfiguration->isPartitionAwareImport());
+    }
+
+    public function partitionAwareImportProvider(): Generator
+    {
+        yield 'not set' => ['mapping' => [], 'expected' => false];
+        yield 'enabled' => ['mapping' => ['partition_aware_import' => true], 'expected' => true];
+        yield 'disabled' => ['mapping' => ['partition_aware_import' => false], 'expected' => false];
+    }
 }

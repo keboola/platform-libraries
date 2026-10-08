@@ -94,6 +94,11 @@ class MappingFromProcessedConfiguration
         return $this->mapping['write_always'] ?? false;
     }
 
+    public function isPartitionAwareImport(): bool
+    {
+        return $this->mapping['partition_aware_import'] ?? false;
+    }
+
     public function hasColumns(): bool
     {
         return !empty($this->getColumns());

@@ -187,6 +187,7 @@ abstract class BaseConfiguration extends Configuration
                     ->end()
                 ->end()
                 ->booleanNode('write_always')->defaultValue(false)->end()
+                ->booleanNode('partition_aware_import')->end()
                 ->arrayNode('tags')->prototype('scalar')->cannotBeEmpty()->end()->end()
                 ->scalarNode('manifest_type')->end()
                 ->booleanNode('has_header')->end()

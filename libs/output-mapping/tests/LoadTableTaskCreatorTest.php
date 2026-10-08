@@ -699,5 +699,58 @@ class LoadTableTaskCreatorTest extends AbstractTestCase
                 'deduplicationStrategy' => DeduplicationStrategy::INSERT,
             ],
         ];
+
+        yield 'partition aware import enabled' => [
+            'sourceData' => [
+                'destination' => 'in.c-bucket.destinationTable',
+                'incremental' => true,
+                'primary_key' => ['id'],
+                'deduplication_strategy' => 'upsert',
+                'partition_aware_import' => true,
+            ],
+            'didTableExistBefore' => true,
+            'hasNewNativeTypesFeature' => false,
+            'treatValuesAsNullConfiguration' => null,
+            'expectedLoadOptions' => [
+                'columns' => [],
+                'primaryKey' => 'id',
+                'incremental' => true,
+                'deduplicationStrategy' => DeduplicationStrategy::UPSERT,
+                'partitionAwareImport' => true,
+            ],
+        ];
+
+        yield 'partition aware import disabled' => [
+            'sourceData' => [
+                'destination' => 'in.c-bucket.destinationTable',
+                'incremental' => true,
+                'primary_key' => ['id'],
+                'partition_aware_import' => false,
+            ],
+            'didTableExistBefore' => true,
+            'hasNewNativeTypesFeature' => false,
+            'treatValuesAsNullConfiguration' => null,
+            'expectedLoadOptions' => [
+                'columns' => [],
+                'primaryKey' => 'id',
+                'incremental' => true,
+            ],
+        ];
+
+        yield 'partition aware import not set' => [
+            'sourceData' => [
+                'destination' => 'in.c-bucket.destinationTable',
+                'incremental' => true,
+                'primary_key' => ['id'],
+            ],
+            'didTableExistBefore' => true,
+            'hasNewNativeTypesFeature' => false,
+            'treatValuesAsNullConfiguration' => null,
+            'expectedLoadOptions' => [
+                'columns' => [],
+                'primaryKey' => 'id',
+                'incremental' => true,
+            ],
+        ];
     }
 }

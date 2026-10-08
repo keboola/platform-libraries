@@ -856,6 +856,36 @@ class ConfigurationMergerTest extends TestCase
                     'primary_key' => [],
                 ],
             ],
+            'partition-aware-import-mapping-only' => [
+                'mapping' => [
+                    'partition_aware_import' => true,
+                ],
+                'manifest' => [],
+                'expected' => [
+                    'partition_aware_import' => true,
+                ],
+            ],
+            'partition-aware-import-manifest-only' => [
+                'mapping' => [],
+                'manifest' => [
+                    'partition_aware_import' => true,
+                ],
+                'expected' => [
+                    'partition_aware_import' => true,
+                ],
+            ],
+            // generic merge: a falsy mapping value never overrides the manifest
+            'partition-aware-import-mapping-false-keeps-manifest-true' => [
+                'mapping' => [
+                    'partition_aware_import' => false,
+                ],
+                'manifest' => [
+                    'partition_aware_import' => true,
+                ],
+                'expected' => [
+                    'partition_aware_import' => true,
+                ],
+            ],
         ];
     }
 }

@@ -68,6 +68,7 @@ class BigqueryStoragePreparerTest extends AbstractTestCase
                 ],
                 'basetype' => 'NUMERIC',
                 'canBeFiltered' => true,
+                'policyTagState' => 'unprotected',
             ],
             $newColumnDefinition,
         );
@@ -108,6 +109,7 @@ class BigqueryStoragePreparerTest extends AbstractTestCase
                 ],
                 'basetype' => 'NUMERIC',
                 'canBeFiltered' => true,
+                'policyTagState' => 'unprotected',
             ],
             $newColumnDefinition,
         );
@@ -147,6 +149,7 @@ class BigqueryStoragePreparerTest extends AbstractTestCase
                 ],
                 'basetype' => 'NUMERIC',
                 'canBeFiltered' => true,
+                'policyTagState' => 'unprotected',
             ],
             $newColumnDefinition,
         );

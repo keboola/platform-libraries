@@ -48,6 +48,7 @@ class BigqueryTableStructureModifierFromSchemaTest extends AbstractTestCase
                 ],
                 'basetype' => 'STRING',
                 'canBeFiltered' => true,
+                'policyTagState' => 'unprotected',
             ],
             $table['definition']['columns'][1],
         );
@@ -84,6 +85,7 @@ class BigqueryTableStructureModifierFromSchemaTest extends AbstractTestCase
                 ],
                 'basetype' => 'STRING',
                 'canBeFiltered' => true,
+                'policyTagState' => 'unprotected',
             ],
             $updatedTable['definition']['columns'][1],
         );
@@ -103,6 +105,7 @@ class BigqueryTableStructureModifierFromSchemaTest extends AbstractTestCase
                 ],
                 'basetype' => 'INTEGER',
                 'canBeFiltered' => true,
+                'policyTagState' => 'unprotected',
             ],
             $table['definition']['columns'][0],
         );

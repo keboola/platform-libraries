@@ -49,31 +49,28 @@ class TableLoader
             $configuration,
             $configuration->isFailedJob(),
         );
-        $combinedSources = $this->getCombinedSources($strategy, $configuration);
 
-        if ($configuration->hasSlicingFeature() && $strategy->hasSlicer()) {
-            $sourcesForSlicing = (new SlicerDecider($this->logger))->decideSliceFiles($combinedSources);
+        // The direct-grant tables are already written by the component, so their metadata must catch up even when
+        // the job failed - the refresh is an implicit write_always table. It goes first, so a load task failing to
+        // start cannot prevent it.
+        $tasks = $this->createDirectGrantMetadataRefreshTasks($strategy);
 
-            $strategy->sliceFiles($sourcesForSlicing, $configuration->getDataTypeSupport());
-
+        try {
             $combinedSources = $this->getCombinedSources($strategy, $configuration);
-        }
 
-        $tasks = [];
-        if ($strategy->hasDirectGrantUnloadStrategy()) {
-            if (!$strategy instanceof SqlWorkspaceTableStrategy) {
-                throw new LogicException(sprintf(
-                    'Direct-grant unload strategy is only supported for %s strategy but got %s.',
-                    SqlWorkspaceTableStrategy::class,
-                    $strategy::class,
-                ));
+            if ($configuration->hasSlicingFeature() && $strategy->hasSlicer()) {
+                $sourcesForSlicing = (new SlicerDecider($this->logger))->decideSliceFiles($combinedSources);
+
+                $strategy->sliceFiles($sourcesForSlicing, $configuration->getDataTypeSupport());
+
+                $combinedSources = $this->getCombinedSources($strategy, $configuration);
             }
-
-            // First in the list, so the refresh is enqueued even when enqueuing a table load fails - the
-            // direct-grant tables are already written at this point and their metadata must catch up.
-            $tasks[] = new DirectGrantMetadataRefreshTask(
-                (int) $strategy->getDataStorage()->getWorkspaceId(),
-            );
+        } catch (Throwable $e) {
+            if (!$configuration->isFailedJob()) {
+                throw $e;
+            }
+            $this->logger->warning('Failed to list output tables: ' . $e->getMessage());
+            $combinedSources = [];
         }
 
         /** @var array<string, TableDescription> $createdTableDescriptions */
@@ -90,100 +87,113 @@ class TableLoader
         foreach ($combinedSources as $combinedSource) {
             $this->logger->info(sprintf('Loading table "%s"', $combinedSource->getSourceName()));
 
-            $configFromMapping = $combinedSource->getConfiguration() ?
-                $combinedSource->getConfiguration()->asArray() :
-                [];
-
-            $configFromManifest = $combinedSource->getManifest() ?
-                $strategy->readFileManifest($combinedSource->getManifest()) : [];
-
-            $configFromMapping = $configWebalizer->webalize($configFromMapping);
-            $configFromManifest = $configWebalizer->webalize($configFromManifest);
-
             try {
-                $processedConfig = [];
-                $processedConfig = $tableConfigurationResolver->resolveTableConfiguration(
+                $configFromMapping = $combinedSource->getConfiguration() ?
+                    $combinedSource->getConfiguration()->asArray() :
+                    [];
+
+                $configFromManifest = $combinedSource->getManifest() ?
+                    $strategy->readFileManifest($combinedSource->getManifest()) : [];
+
+                $configFromMapping = $configWebalizer->webalize($configFromMapping);
+                $configFromManifest = $configWebalizer->webalize($configFromManifest);
+
+                try {
+                    $processedConfig = [];
+                    $processedConfig = $tableConfigurationResolver->resolveTableConfiguration(
+                        $configuration,
+                        $combinedSource,
+                        $configFromManifest,
+                        $configFromMapping,
+                        $systemMetadata,
+                    );
+
+                    $processedConfig = (new BranchResolver($this->clientWrapper))
+                        ->rewriteBranchSource($processedConfig);
+                    if ($configuration->getDataTypeSupport() === OutputMappingSettings::DATA_TYPES_SUPPORT_HINTS) {
+                        $processedConfig = $tableColumnsConfigurationHintsResolver
+                            ->resolveColumnsConfiguration($processedConfig);
+                    }
+
+                    $tableConfigurationValidator->validate($combinedSource, $processedConfig);
+                } catch (Throwable $e) {
+                    if (!$configuration->isFailedJob()) {
+                        throw $e;
+                    }
+                }
+
+                // If it is a failed job, we only want to upload if the table has write_always = true
+                if ($configuration->isFailedJob() && empty($processedConfig['write_always'])) {
+                    continue;
+                }
+
+                $processedSource = new MappingFromProcessedConfiguration($processedConfig, $combinedSource);
+
+                try {
+                    $factory = new TableStructureValidatorFactory($this->logger, $this->clientWrapper);
+                    $tableStructureValidator = $factory->ensureStructureValidator(
+                        $processedSource->getDestination()->getTableId(),
+                    );
+
+                    $tableChangesStore = $tableStructureValidator->validate($processedSource->getSchema());
+                } catch (TableNotFoundException) {
+                    $tableChangesStore = new TableChangesStore();
+                    // table not found, we will create it
+                } catch (InvalidTableStructureException $e) {
+                    throw new InvalidOutputException($e->getMessage(), $e->getCode(), $e);
+                }
+
+                $storagePreparer = new StoragePreparer(
+                    $this->clientWrapper,
+                    $this->logger,
+                    $configuration->hasNewNativeTypesFeature(),
+                    $configuration->hasBigqueryNativeTypesFeature(),
+                );
+                $storageSources = $storagePreparer->prepareStorageBucketAndTable(
+                    $processedSource,
+                    $systemMetadata,
+                    $tableChangesStore,
+                );
+
+                $loadTableTaskCreator = new LoadTableTaskCreator($this->clientWrapper, $this->logger);
+                $loadTableTaskResult = $loadTableTaskCreator->create(
+                    $strategy,
+                    $processedSource,
+                    $storageSources,
                     $configuration,
-                    $combinedSource,
-                    $configFromManifest,
-                    $configFromMapping,
+                    TableDescription::createFromMapping($processedSource),
+                );
+
+                $metadataSetter = new MetadataSetter();
+                $loadTableTask = $metadataSetter->setTableMetadata(
+                    $loadTableTaskResult->getLoadTableTask(),
+                    $processedSource,
+                    $storageSources,
                     $systemMetadata,
                 );
 
-                $processedConfig = (new BranchResolver($this->clientWrapper))->rewriteBranchSource($processedConfig);
-                if ($configuration->getDataTypeSupport() === OutputMappingSettings::DATA_TYPES_SUPPORT_HINTS) {
-                    $processedConfig = $tableColumnsConfigurationHintsResolver
-                        ->resolveColumnsConfiguration($processedConfig);
+                // Descriptions of a table created through a table definition are already part of the create
+                // payload and descriptions of a table which existed before were applied by StoragePreparer. What
+                // is left here is the table created by the load job itself, which has no create payload - such a
+                // description can only be stored once the load finishes and the table surely exists.
+                $descriptionsToStoreAfterLoad = $loadTableTaskResult->getDescriptionsNotEmbeddedInCreatePayload();
+                if ($descriptionsToStoreAfterLoad !== null) {
+                    $createdTableDescriptions[$descriptionsToStoreAfterLoad->getTableId()] =
+                        $descriptionsToStoreAfterLoad;
                 }
 
-                $tableConfigurationValidator->validate($combinedSource, $processedConfig);
+                $tasks[] = $loadTableTask;
             } catch (Throwable $e) {
                 if (!$configuration->isFailedJob()) {
                     throw $e;
                 }
+                // the failure of the job is what gets reported, the remaining write_always tables are still written
+                $this->logger->warning(sprintf(
+                    'Failed to load table "%s": %s',
+                    $combinedSource->getSourceName(),
+                    $e->getMessage(),
+                ));
             }
-
-            // If it is a failed job, we only want to upload if the table has write_always = true
-            if ($configuration->isFailedJob() && empty($processedConfig['write_always'])) {
-                continue;
-            }
-
-            $processedSource = new MappingFromProcessedConfiguration($processedConfig, $combinedSource);
-
-            try {
-                $factory = new TableStructureValidatorFactory($this->logger, $this->clientWrapper);
-                $tableStructureValidator = $factory->ensureStructureValidator(
-                    $processedSource->getDestination()->getTableId(),
-                );
-
-                $tableChangesStore = $tableStructureValidator->validate($processedSource->getSchema());
-            } catch (TableNotFoundException) {
-                $tableChangesStore = new TableChangesStore();
-                // table not found, we will create it
-            } catch (InvalidTableStructureException $e) {
-                throw new InvalidOutputException($e->getMessage(), $e->getCode(), $e);
-            }
-
-            $storagePreparer = new StoragePreparer(
-                $this->clientWrapper,
-                $this->logger,
-                $configuration->hasNewNativeTypesFeature(),
-                $configuration->hasBigqueryNativeTypesFeature(),
-            );
-            $storageSources = $storagePreparer->prepareStorageBucketAndTable(
-                $processedSource,
-                $systemMetadata,
-                $tableChangesStore,
-            );
-
-            $loadTableTaskCreator = new LoadTableTaskCreator($this->clientWrapper, $this->logger);
-            $loadTableTaskResult = $loadTableTaskCreator->create(
-                $strategy,
-                $processedSource,
-                $storageSources,
-                $configuration,
-                TableDescription::createFromMapping($processedSource),
-            );
-
-            $metadataSetter = new MetadataSetter();
-            $loadTableTask = $metadataSetter->setTableMetadata(
-                $loadTableTaskResult->getLoadTableTask(),
-                $processedSource,
-                $storageSources,
-                $systemMetadata,
-            );
-
-            // Descriptions of a table created through a table definition are already part of the create
-            // payload and descriptions of a table which existed before were applied by StoragePreparer. What
-            // is left here is the table created by the load job itself, which has no create payload - such a
-            // description can only be stored once the load finishes and the table surely exists.
-            $descriptionsToStoreAfterLoad = $loadTableTaskResult->getDescriptionsNotEmbeddedInCreatePayload();
-            if ($descriptionsToStoreAfterLoad !== null) {
-                $createdTableDescriptions[$descriptionsToStoreAfterLoad->getTableId()] =
-                    $descriptionsToStoreAfterLoad;
-            }
-
-            $tasks[] = $loadTableTask;
         }
 
         $tableQueue = new LoadTableQueue(
@@ -192,7 +202,7 @@ class TableLoader
             $tasks,
             $createdTableDescriptions,
         );
-        $tableQueue->start();
+        $tableQueue->start(skipFailedTasks: $configuration->isFailedJob());
         $tableQueue->loadCustomVariables(Path::join(
             $strategy->getMetadataStorage()->getPath(),
             dirname(rtrim($configuration->getSourcePathPrefix(), '/')),
@@ -200,6 +210,48 @@ class TableLoader
         ));
 
         return $tableQueue;
+    }
+
+    /**
+     * Refreshes metadata of the tables written through direct grants without loading any table. Meant for a job
+     * which never gets to uploadTables() - e.g. a terminated job - because the component may have changed the
+     * direct-grant tables anyway. The returned queue is already started; waiting for it is up to the caller.
+     */
+    public function refreshDirectGrantMetadata(OutputMappingSettings $configuration): LoadTableQueue
+    {
+        $strategy = $this->strategyFactory->getTableOutputStrategy(
+            $configuration,
+            $configuration->isFailedJob(),
+        );
+
+        $tableQueue = new LoadTableQueue(
+            $this->clientWrapper,
+            $this->logger,
+            $this->createDirectGrantMetadataRefreshTasks($strategy),
+        );
+        $tableQueue->start();
+
+        return $tableQueue;
+    }
+
+    /**
+     * @return DirectGrantMetadataRefreshTask[] the refresh, or nothing when no table is direct-grant
+     */
+    private function createDirectGrantMetadataRefreshTasks(StrategyInterface $strategy): array
+    {
+        if (!$strategy->hasDirectGrantUnloadStrategy()) {
+            return [];
+        }
+
+        if (!$strategy instanceof SqlWorkspaceTableStrategy) {
+            throw new LogicException(sprintf(
+                'Direct-grant unload strategy is only supported for %s strategy but got %s.',
+                SqlWorkspaceTableStrategy::class,
+                $strategy::class,
+            ));
+        }
+
+        return [new DirectGrantMetadataRefreshTask((int) $strategy->getDataStorage()->getWorkspaceId())];
     }
 
     /**

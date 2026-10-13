@@ -15,6 +15,7 @@ use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Metadata;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Psr\Log\LoggerInterface;
+use Throwable;
 
 class LoadTableQueue
 {
@@ -46,11 +47,40 @@ class LoadTableQueue
         $this->tableResult = new Result();
     }
 
-    public function start(): void
+    /**
+     * @param bool $skipFailedTasks a failed job writes what it can - a task which fails to start is dropped from
+     *  the queue instead of failing it
+     */
+    public function start(bool $skipFailedTasks = false): void
     {
-        foreach ($this->tasks as $task) {
-            $task->start($this->clientWrapper);
+        foreach ($this->tasks as $key => $task) {
+            try {
+                $task->start($this->clientWrapper);
+            } catch (Throwable $e) {
+                if (!$skipFailedTasks) {
+                    throw $e;
+                }
+                $this->logger->warning('Failed to start a Storage job of the output mapping: ' . $e->getMessage());
+                unset($this->tasks[$key]);
+                if ($task instanceof LoadTableTaskInterface) {
+                    $this->dropCreatedTableDescriptions($task->getDestinationTableName());
+                }
+            }
         }
+    }
+
+    /**
+     * The table of a task which never started has no load to wait for and so no description to store. Several
+     * sources may be mapped to the same table though, and another of them may still store it.
+     */
+    private function dropCreatedTableDescriptions(string $tableId): void
+    {
+        foreach ($this->getLoadTableTasks() as $task) {
+            if ($task->getDestinationTableName() === $tableId) {
+                return;
+            }
+        }
+        unset($this->createdTableDescriptions[$tableId]);
     }
 
     /**

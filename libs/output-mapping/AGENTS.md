@@ -92,17 +92,17 @@ is what lets many tables load in parallel and what makes `FailedLoadTableDecider
 `TableLoader` runs in a degraded mode when `OutputMappingSettings::isFailedJob()` is true: configuration
 resolution errors are swallowed instead of thrown, and only sources with `write_always = true` are
 uploaded. Any new validation added to the loop must respect that branch, or failed jobs will start
-throwing where they previously wrote their partial output. A failed job never throws while queueing: a
-source which cannot be listed or loaded, or a task which fails to start, is logged as a warning and skipped -
+throwing where they previously wrote their partial output. A failed job does not throw while queueing: a
+source which cannot be listed or loaded is logged as a warning and skipped -
 the runner reports the failure of the job anyway.
 
 ### Direct-grant metadata refresh
 
 Tables with `unload_strategy: direct-grant` are written by the component itself, so there is no load job and
 the component may have changed them even when it failed. `DirectGrantMetadataRefreshTask` is therefore an
-implicit `write_always` item: it is the first task in the queue for both a succeeded and a failed job. When
-the output mapping of a succeeded job fails before the queue starts, the runner retries it as a failed job,
-which does the refresh. `TableLoader::refreshDirectGrantMetadata()` does the refresh alone, for a runner which
+implicit `write_always` item: it is the first task in the queue for both a succeeded and a failed job, so it
+starts before any load can fail to start. When the output mapping of a succeeded job fails before the queue
+starts, the runner retries it as a failed job, which does the refresh. `TableLoader::refreshDirectGrantMetadata()` does the refresh alone, for a runner which
 does not call `uploadTables()` at all (terminated job, debug mode).
 
 ### Table structure reconciliation

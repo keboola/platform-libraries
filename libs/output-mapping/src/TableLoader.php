@@ -202,7 +202,7 @@ class TableLoader
             $tasks,
             $createdTableDescriptions,
         );
-        $tableQueue->start(skipFailedTasks: $configuration->isFailedJob());
+        $tableQueue->start();
         $tableQueue->loadCustomVariables(Path::join(
             $strategy->getMetadataStorage()->getPath(),
             dirname(rtrim($configuration->getSourcePathPrefix(), '/')),

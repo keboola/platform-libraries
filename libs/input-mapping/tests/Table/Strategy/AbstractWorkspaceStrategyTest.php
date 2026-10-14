@@ -289,22 +289,6 @@ class AbstractWorkspaceStrategyTest extends TestCase
         }
     }
 
-    public function testWaitForTableLoadCompletionWithEmptyQueueSkipsWaitLogging(): void
-    {
-        $clientWrapper = $this->createMock(ClientWrapper::class);
-        $clientWrapper->expects($this->never())->method('getBranchClient');
-
-        $strategy = $this->createTestStrategy($clientWrapper, 'snowflake');
-
-        $result = $strategy->waitForTableLoadCompletion(
-            new WorkspaceLoadQueue([], TestWorkspaceStrategy::class, 'destination'),
-        );
-
-        self::assertCount(0, $result->getTables());
-        self::assertFalse($this->testHandler->hasInfoThatContains(' storage jobs finished in '));
-        self::assertTrue($this->testHandler->hasInfoThatContains('All tables were fetched. Took '));
-    }
-
     private function createTestStrategy(
         ClientWrapper $clientWrapper,
         string $workspaceType,

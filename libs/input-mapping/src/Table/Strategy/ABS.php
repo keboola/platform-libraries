@@ -7,14 +7,12 @@ namespace Keboola\InputMapping\Table\Strategy;
 use Keboola\InputMapping\Exception\InputOperationException;
 use Keboola\InputMapping\Exception\InvalidInputException;
 use Keboola\InputMapping\Helper\PathHelper;
-use Keboola\InputMapping\Helper\Timer;
 use Keboola\StorageApi\Options\GetFileOptions;
 
 class ABS extends AbstractFileStrategy
 {
     public function prepareAndExecuteTableLoads(array $tables, bool $preserve): TableLoadQueueInterface
     {
-        $timer = Timer::start();
         $this->logger->info('Processing ' . count($tables) . ' ABS table exports.');
         $tablesByJobId = [];
         foreach ($tables as $table) {
@@ -26,13 +24,6 @@ class ABS extends AbstractFileStrategy
             );
             $tablesByJobId[$jobId] = $table;
         }
-
-        $this->logger->info(sprintf(
-            'Queued %s table exports in %.2f s.',
-            count($tablesByJobId),
-            $timer->getElapsedSeconds(),
-        ));
-
         return new TableExportQueue($tablesByJobId, static::class, $this->destination);
     }
 
@@ -47,7 +38,6 @@ class ABS extends AbstractFileStrategy
             $keyedResults[$result['id']] = $result;
         }
 
-        $timer = Timer::start();
         foreach ($queue->tablesByJobId as $jobId => $table) {
             $manifestPath = PathHelper::getManifestPath(
                 $this->metadataStorage,
@@ -66,13 +56,7 @@ class ABS extends AbstractFileStrategy
                 $table->getColumnNamesFromTypes(),
                 $this->format,
             );
-            $this->logTableFetched($table->getSource(), sprintf(
-                'Export job %s, file %s.',
-                $jobId,
-                $fileInfo['id'],
-            ));
         }
-        $this->logManifestsWritten(count($queue->tablesByJobId), $timer->getElapsedSeconds());
     }
 
     protected function getABSInfo(array $fileInfo): array

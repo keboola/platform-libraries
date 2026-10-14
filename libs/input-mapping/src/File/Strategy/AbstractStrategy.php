@@ -54,12 +54,10 @@ abstract class AbstractStrategy implements StrategyInterface
 
     public function downloadFiles(array $fileConfigurations, string $destination): InputFileStateList
     {
+        $timer = Timer::start();
         $fileOptions = new GetFileOptions();
         $fileOptions->setFederationToken(true);
         $outputStateList = [];
-        $totalTimer = Timer::start();
-        $totalBytes = 0;
-        $fileCount = 0;
         foreach ($fileConfigurations as $fileConfiguration) {
             $fileOptionsRewritten = Reader::getFiles($fileConfiguration, $this->clientWrapper, $this->logger);
             $options = $fileOptionsRewritten->getStorageApiFileListOptions($this->fileStateList);
@@ -92,7 +90,6 @@ abstract class AbstractStrategy implements StrategyInterface
                     ];
                     $biggestFileId = (int) $fileInfo['id'];
                 }
-                $fileTimer = Timer::start();
                 try {
                     $this->downloadFile(
                         $fileInfo,
@@ -124,41 +121,13 @@ abstract class AbstractStrategy implements StrategyInterface
                         $e,
                     );
                 }
-                $fileBytes = (int) ($fileInfo['sizeBytes'] ?? 0);
-                $totalBytes += $fileBytes;
-                $fileCount++;
-                $this->logFileFetched(
-                    basename($fileDestinationPath),
-                    $fileBytes,
-                    $fileTimer->getElapsedSeconds(),
-                );
+                $this->logger->info(sprintf('Fetched file "%s".', basename($fileDestinationPath)));
             }
             if (!empty($outputStateConfiguration)) {
                 $outputStateList[] = $outputStateConfiguration;
             }
         }
-        $this->logger->info(sprintf(
-            'All files were fetched. %s files, %s bytes in %.2f s.',
-            $fileCount,
-            $totalBytes,
-            $totalTimer->getElapsedSeconds(),
-        ));
+        $this->logger->info(sprintf('All files were fetched. Took %.2f s.', $timer->getElapsedSeconds()));
         return new InputFileStateList($outputStateList);
-    }
-
-    /**
-     * Emits the per-file completion line.
-     *
-     * `Fetched file "<name>".` is a log contract - job logs are grepped for it - so the message always
-     * starts with it; the downloaded size and duration are appended after it.
-     */
-    private function logFileFetched(string $fileName, int $bytes, float $seconds): void
-    {
-        $this->logger->info(sprintf(
-            'Fetched file "%s". Downloaded %s bytes in %.2f s.',
-            $fileName,
-            $bytes,
-            $seconds,
-        ));
     }
 }

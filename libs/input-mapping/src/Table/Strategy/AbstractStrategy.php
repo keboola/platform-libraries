@@ -22,75 +22,37 @@ abstract class AbstractStrategy implements StrategyInterface
     {
         $timer = Timer::start();
         $jobIds = $queue->getJobIds();
-        $jobResults = $jobIds === [] ? [] : $this->awaitJobs($jobIds);
+        $jobResults = [];
+        if ($jobIds !== []) {
+            $jobResults = $this->getAwaitingClient()->handleAsyncTasks($jobIds);
+            $this->logger->info(sprintf(
+                '%s storage jobs finished in %.2f s.',
+                count($jobIds),
+                $timer->getElapsedSeconds(),
+            ));
+        }
 
-        // per-table "Fetched table ..." lines are emitted by the strategies, as each table finishes
         $this->materializeTableLoads($queue, $jobResults);
 
         $outputStateConfiguration = [];
         $result = new Result();
-        $tables = $queue->getAllTables();
-        foreach ($tables as $table) {
+        foreach ($queue->getAllTables() as $table) {
             $outputStateConfiguration[] = [
                 'source' => $table->getSource(),
                 'lastImportDate' => $table->getTableInfo()['lastImportDate'],
             ];
+            $this->logger->info('Fetched table ' . $table->getSource() . '.');
             $result->addTable(new TableInfo($table->getTableInfo()));
         }
         $result->setMetrics($jobResults);
         $result->setInputTableStateList(new InputTableStateList($outputStateConfiguration));
-        $this->logger->info(sprintf(
-            'All tables were fetched. %s tables in %.2f s.',
-            count($tables),
-            $timer->getElapsedSeconds(),
-        ));
+        $this->logger->info(sprintf('All tables were fetched. Took %.2f s.', $timer->getElapsedSeconds()));
 
         return $result;
     }
 
     /**
-     * Storage jobs are polled sequentially by handleAsyncTasks(), so only the whole wait phase is
-     * timed - a per-job duration would just reflect the poll order.
-     *
-     * @param array<int|string> $jobIds
-     * @return array results of the finished Storage jobs, as returned by handleAsyncTasks()
-     */
-    private function awaitJobs(array $jobIds): array
-    {
-        $this->logger->info(sprintf('Waiting for %s storage jobs to finish.', count($jobIds)));
-        $timer = Timer::start();
-        $jobResults = $this->getAwaitingClient()->handleAsyncTasks($jobIds);
-        $this->logger->info(sprintf(
-            '%s storage jobs finished in %.2f s.',
-            count($jobIds),
-            $timer->getElapsedSeconds(),
-        ));
-
-        return $jobResults;
-    }
-
-    /**
-     * Emits the per-table completion line.
-     *
-     * `Fetched table <source>.` is a log contract - job logs are grepped for it - so the message always
-     * starts with it; timing, size and Storage job identifiers are appended after it.
-     */
-    protected function logTableFetched(string $source, string $details = ''): void
-    {
-        $message = sprintf('Fetched table %s.', $source);
-        if ($details !== '') {
-            $message .= ' ' . $details;
-        }
-        $this->logger->info($message);
-    }
-
-    protected function logManifestsWritten(int $count, float $seconds): void
-    {
-        $this->logger->info(sprintf('Wrote %s table manifests in %.2f s.', $count, $seconds));
-    }
-
-    /**
-     * Strategy-specific completion: download/enrich data, write manifests and log each finished table
+     * Strategy-specific completion: download/enrich data and write manifests
      *
      * @param array $jobResults results of the finished Storage jobs (untyped, as returned by handleAsyncTasks())
      */

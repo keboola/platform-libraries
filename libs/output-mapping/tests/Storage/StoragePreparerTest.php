@@ -199,7 +199,8 @@ class StoragePreparerTest extends AbstractTestCase
 
         $expectedTable = $table;
         $expectedTable['rowsCount'] -= 2;
-        $expectedTable['bucket']['rowsCount'] -= 2;
+        // Bucket stats are not refreshed synchronously after deleting rows.
+        unset($expectedTable['bucket'], $updatedTable['bucket']);
 
         self::assertEquals($this->dropTimestampParams($expectedTable), $this->dropTimestampParams($updatedTable));
 
@@ -261,7 +262,8 @@ class StoragePreparerTest extends AbstractTestCase
 
         $expectedTable = $table;
         $expectedTable['rowsCount'] -= 2;
-        $expectedTable['bucket']['rowsCount'] -= 2;
+        // Bucket stats are not refreshed synchronously after deleting rows.
+        unset($expectedTable['bucket'], $updatedTable['bucket']);
 
         self::assertEquals($this->dropTimestampParams($expectedTable), $this->dropTimestampParams($updatedTable));
 

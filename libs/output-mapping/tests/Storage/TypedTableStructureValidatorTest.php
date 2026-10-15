@@ -359,6 +359,80 @@ class TypedTableStructureValidatorTest extends TestCase
         $validator->validate($schema);
     }
 
+    public function testErrorSchemaColumnWithLengthTableColumnWithoutLength(): void
+    {
+        $clientMock = $this->createMock(Client::class);
+        $clientMock->method('getTable')->willReturn([
+            'id' => 'in.c-main.table',
+            'isTyped' => true,
+            'definition' => [
+                'primaryKeysNames' => [],
+                'columns' => [
+                    [
+                        'name' => 'col1',
+                        'definition' => [
+                            'type' => Snowflake::TYPE_VARCHAR,
+                            'nullable' => true,
+                            'length' => '255',
+                        ],
+                        'basetype' => BaseType::STRING,
+                    ],
+                    [
+                        'name' => 'col2',
+                        'definition' => [
+                            'type' => Snowflake::TYPE_FLOAT,
+                            'nullable' => true,
+                        ],
+                        'basetype' => BaseType::FLOAT,
+                    ],
+                ],
+            ],
+            'bucket' => [
+                'backend' => 'snowflake',
+            ],
+        ]);
+
+        $schema = [
+            new MappingFromConfigurationSchemaColumn([
+                'name' => 'col1',
+                'data_type' => [
+                    'base' => [
+                        'type' => 'STRING',
+                        'length' => '255',
+                    ],
+                    'snowflake' => [
+                        'type' => 'VARCHAR',
+                        'length' => '255',
+                    ],
+                ],
+            ]),
+            new MappingFromConfigurationSchemaColumn([
+                'name' => 'col2',
+                'data_type' => [
+                    'base' => [
+                        'type' => 'NUMERIC',
+                        'length' => '38,0',
+                    ],
+                    'snowflake' => [
+                        'type' => 'NUMBER',
+                        'length' => '38,0',
+                    ],
+                ],
+            ]),
+        ];
+
+        $validator = new TypedTableStructureValidator(
+            new NullLogger(),
+            $clientMock->getTable('in.c-main.table'),
+        );
+        $this->expectException(InvalidTableStructureException::class);
+        $this->expectExceptionMessage(
+            'Table "in.c-main.table" column "col2" has different type than the schema. '.
+            'Table type: "FLOAT", schema type: "NUMBER".',
+        );
+        $validator->validate($schema);
+    }
+
     public function testWrongColumnDataTypeBackendLength(): void
     {
         $col3 = new MappingFromConfigurationSchemaColumn([

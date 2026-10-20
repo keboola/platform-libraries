@@ -152,7 +152,7 @@ class TypedTableStructureValidator extends AbstractTableStructureValidator
 
             $hasLengthChanged = false;
             $length = $schemaColumn->getDataType()?->getLength($bucketBackend);
-            if ($length && $length !== $column['definition']['length']) {
+            if ($length && $length !== ($column['definition']['length'] ?? null)) {
                 $hasLengthChanged = true;
             }
 

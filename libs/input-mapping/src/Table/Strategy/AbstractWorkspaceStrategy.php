@@ -8,7 +8,6 @@ use InvalidArgumentException;
 use Keboola\InputMapping\Exception\InputOperationException;
 use Keboola\InputMapping\Helper\ManifestCreator;
 use Keboola\InputMapping\Helper\PathHelper;
-use Keboola\InputMapping\Helper\Timer;
 use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Options\RewrittenInputTableOptions;
 use Keboola\StagingProvider\Staging\File\FileFormat;
@@ -51,10 +50,7 @@ abstract class AbstractWorkspaceStrategy extends AbstractStrategy
 
         $this->logger->info('Processed ' . count($jobResults) . ' workspace exports.');
 
-        // one load job covers every table, so there is no per-table timing to report here
-        $timer = Timer::start();
-        $tables = $queue->getAllTables();
-        foreach ($tables as $table) {
+        foreach ($queue->getAllTables() as $table) {
             $manifestPath = PathHelper::getManifestPath(
                 $this->metadataStorage,
                 $this->destination,
@@ -66,9 +62,7 @@ abstract class AbstractWorkspaceStrategy extends AbstractStrategy
                 $table->getColumnNamesFromTypes(),
                 $this->format,
             );
-            $this->logTableFetched($table->getSource());
         }
-        $this->logManifestsWritten(count($tables), $timer->getElapsedSeconds());
     }
 
     /**

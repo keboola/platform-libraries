@@ -92,7 +92,7 @@ class MappingFromConfigurationSchemaColumnDataType
 
     public function hasBackendType(string $backend): bool
     {
-        if (!isset($this->mapping[$backend])) {
+        if (!isset($this->mapping[$backend]['type'])) {
             return false;
         }
         return true;

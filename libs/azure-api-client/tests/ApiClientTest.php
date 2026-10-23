@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\AzureApiClient\Tests;
 
+use Generator;
 use GuzzleHttp\Client as GuzzleClient;
 use GuzzleHttp\Promise\Create;
 use GuzzleHttp\Psr7\Request;
@@ -45,6 +46,68 @@ class ApiClientTest extends TestCase
         self::assertSame(['User-Agent' => 'Keboola Azure PHP Client'], $httpClientConfig['headers']);
         self::assertSame(120, $httpClientConfig['timeout']);
         self::assertSame(10, $httpClientConfig['connect_timeout']);
+    }
+
+    public function testCreateClientWithCustomTimeouts(): void
+    {
+        $client = new ApiClient(
+            configuration: new ApiClientConfiguration(
+                connectTimeout: 3,
+                requestTimeout: 20,
+            ),
+        );
+
+        $httpClient = self::getPrivatePropertyValue($client, 'httpClient');
+        self::assertInstanceOf(GuzzleClient::class, $httpClient);
+        $httpClientConfig = self::getPrivatePropertyValue($httpClient, 'config');
+        self::assertIsArray($httpClientConfig);
+
+        self::assertSame(20, $httpClientConfig['timeout']);
+        self::assertSame(3, $httpClientConfig['connect_timeout']);
+    }
+
+    /** @dataProvider provideInvalidTimeouts */
+    public function testInvalidTimeouts(int $connectTimeout, int $requestTimeout, string $expectedError): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage($expectedError);
+
+        new ApiClientConfiguration(
+            connectTimeout: $connectTimeout, // @phpstan-ignore-line intentionally passing invalid values
+            requestTimeout: $requestTimeout, // @phpstan-ignore-line intentionally passing invalid values
+        );
+    }
+
+    public static function provideInvalidTimeouts(): Generator
+    {
+        yield 'zero connectTimeout' => [
+            'connectTimeout' => 0,
+            'requestTimeout' => 1,
+            'expectedError' => 'Expected a value greater than 0. Got: 0',
+        ];
+
+        yield 'zero requestTimeout' => [
+            'connectTimeout' => 1,
+            'requestTimeout' => 0,
+            'expectedError' => 'Expected a value greater than 0. Got: 0',
+        ];
+    }
+
+    public function testSendRequestReturnsResponse(): void
+    {
+        $response = new Response(201, ['Location' => 'https://example.com/created'], 'boo');
+        $client = new ApiClient(
+            'https://example.com/',
+            new ApiClientConfiguration(
+                requestHandler: fn($request) => Create::promiseFor($response),
+            ),
+        );
+
+        $result = $client->sendRequest(new Request('POST', '/'));
+
+        self::assertSame(201, $result->getStatusCode());
+        self::assertSame('https://example.com/created', $result->getHeaderLine('Location'));
+        self::assertSame('boo', (string) $result->getBody());
     }
 
     /** @dataProvider provideInvalidOptions */

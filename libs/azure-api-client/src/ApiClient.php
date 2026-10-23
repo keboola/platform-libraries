@@ -68,8 +68,8 @@ class ApiClient
             'headers' => [
                 'User-Agent' => self::USER_AGENT,
             ],
-            'connect_timeout' => 10,
-            'timeout' => 120,
+            'connect_timeout' => $configuration->connectTimeout,
+            'timeout' => $configuration->requestTimeout,
         ]);
     }
 
@@ -112,9 +112,9 @@ class ApiClient
         }
     }
 
-    public function sendRequest(RequestInterface $request): void
+    public function sendRequest(RequestInterface $request): ResponseInterface
     {
-        $this->doSendRequest($request);
+        return $this->doSendRequest($request);
     }
 
     private function doSendRequest(RequestInterface $request, array $options = []): ResponseInterface

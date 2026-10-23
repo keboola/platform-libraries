@@ -68,8 +68,10 @@ class ApiClient
             'headers' => [
                 'User-Agent' => self::USER_AGENT,
             ],
-            'connect_timeout' => 10,
-            'timeout' => 120,
+            // the auth middleware would sign the redirected request too, handing credentials to the target host
+            'allow_redirects' => false,
+            'connect_timeout' => $configuration->connectTimeout,
+            'timeout' => $configuration->requestTimeout,
         ]);
     }
 
@@ -112,20 +114,35 @@ class ApiClient
         }
     }
 
-    public function sendRequest(RequestInterface $request): void
+    public function sendRequest(RequestInterface $request): ResponseInterface
     {
-        $this->doSendRequest($request);
+        return $this->doSendRequest($request);
     }
 
     private function doSendRequest(RequestInterface $request, array $options = []): ResponseInterface
     {
         try {
-            return $this->httpClient->send($request, $options);
+            $response = $this->httpClient->send($request, $options);
         } catch (RequestException $e) {
             throw $this->processRequestException($e) ?? new ClientException($e->getMessage(), $e->getCode(), $e);
         } catch (GuzzleException $e) {
             throw new ClientException($e->getMessage(), $e->getCode(), $e);
         }
+
+        // redirects are not followed, so a 3xx response carries no result the caller could use
+        $statusCode = $response->getStatusCode();
+        if ($statusCode >= 300 && $statusCode < 400) {
+            throw new ClientException(
+                sprintf(
+                    'Unexpected redirect response %d to "%s"',
+                    $statusCode,
+                    $response->getHeaderLine('Location'),
+                ),
+                $statusCode,
+            );
+        }
+
+        return $response;
     }
 
     private function processRequestException(RequestException $e): ?ClientException

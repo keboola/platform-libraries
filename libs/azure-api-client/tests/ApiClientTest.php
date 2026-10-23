@@ -46,6 +46,7 @@ class ApiClientTest extends TestCase
         self::assertSame(['User-Agent' => 'Keboola Azure PHP Client'], $httpClientConfig['headers']);
         self::assertSame(120, $httpClientConfig['timeout']);
         self::assertSame(10, $httpClientConfig['connect_timeout']);
+        self::assertFalse($httpClientConfig['allow_redirects']);
     }
 
     public function testCreateClientWithCustomTimeouts(): void
@@ -91,6 +92,47 @@ class ApiClientTest extends TestCase
             'requestTimeout' => 0,
             'expectedError' => 'Expected a value greater than 0. Got: 0',
         ];
+    }
+
+    /** @dataProvider provideRedirectStatusCodes */
+    public function testRedirectResponseIsAnError(int $statusCode): void
+    {
+        $client = new ApiClient(
+            'https://example.com/',
+            new ApiClientConfiguration(
+                requestHandler: fn($request) => Create::promiseFor(
+                    new Response($statusCode, ['Location' => 'https://other.example.com/x']),
+                ),
+            ),
+        );
+
+        $this->expectException(ClientException::class);
+        $this->expectExceptionCode($statusCode);
+        $this->expectExceptionMessage(sprintf(
+            'Unexpected redirect response %d to "https://other.example.com/x"',
+            $statusCode,
+        ));
+
+        $client->sendRequest(new Request('GET', '/'));
+    }
+
+    public static function provideRedirectStatusCodes(): Generator
+    {
+        yield '300' => [300];
+        yield '307' => [307];
+        yield '399' => [399];
+    }
+
+    public function testResponseJustBelowRedirectRangeIsReturned(): void
+    {
+        $client = new ApiClient(
+            'https://example.com/',
+            new ApiClientConfiguration(
+                requestHandler: fn($request) => Create::promiseFor(new Response(299)),
+            ),
+        );
+
+        self::assertSame(299, $client->sendRequest(new Request('GET', '/'))->getStatusCode());
     }
 
     public function testSendRequestReturnsResponse(): void

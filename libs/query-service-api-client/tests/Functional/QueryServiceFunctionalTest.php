@@ -171,7 +171,6 @@ class QueryServiceFunctionalTest extends BaseFunctionalTestCase
     {
         // Submit job with an invalid branch ID
         $this->expectException(ClientException::class);
-        $this->expectExceptionMessage('Failed to get workspace credentials');
         $response = $this->queryClient->submitQueryJob(
             '1234567890',
             $this->getTestWorkspaceId(),

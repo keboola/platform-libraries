@@ -1,0 +1,86 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Terraform user & remote state backend
+Parameters:
+  BackendPrefix:
+    Type: String
+    Description: Prefix for all Terraform Backend resources
+
+Resources:
+  TerraformRemoteStateS3Bucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    Properties:
+      BucketName:
+        Fn::Sub: "${BackendPrefix}-terraform-bucket"
+      AccessControl: Private
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: aws:kms
+      VersioningConfiguration:
+        Status: Enabled
+      Tags:
+        - Key: Name
+          Value:
+            Fn::Sub: "${BackendPrefix}-terraform-bucket"
+
+  TerraformRemoteStateLockDynamoDBTable:
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain
+    Properties:
+      TableName:
+        Fn::Sub: "${BackendPrefix}-terraform-table"
+      AttributeDefinitions:
+        - AttributeName: LockID
+          AttributeType: S
+      KeySchema:
+        - AttributeName: LockID
+          KeyType: HASH
+      ProvisionedThroughput:
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 5
+      SSESpecification:
+        SSEEnabled: true
+      Tags:
+        - Key: Name
+          Value:
+            Fn::Sub: "${BackendPrefix}-terraform-table"
+
+  AzurePipelinesUser:
+    Type: AWS::IAM::User
+    Properties:
+      UserName:
+        Fn::Sub: "${BackendPrefix}-terraform"
+      Policies:
+        - PolicyName: S3Access
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:*
+                Resource:
+                  Fn::Sub: arn:aws:s3:::${TerraformRemoteStateS3Bucket}/*
+        - PolicyName: DynamoDbAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Sid: DynamoDbAccess
+                Effect: Allow
+                Action:
+                  - dynamodb:*
+                Resource:
+                  Fn::GetAtt:
+                    - TerraformRemoteStateLockDynamoDBTable
+                    - Arn
+
+Outputs:
+  Region:
+    Value:
+      Ref: AWS::Region
+  S3BucketName:
+    Value:
+      Ref: TerraformRemoteStateS3Bucket
+  LockDynamoDBTableName:
+    Value:
+      Ref: TerraformRemoteStateLockDynamoDBTable

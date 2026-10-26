@@ -66,6 +66,17 @@ parallels of the base library's classes. Keep them aligned in spirit, but don't 
 Azure instance metadata service (managed identity) when any are missing. The choice is made lazily on first
 token request and then cached for the object's lifetime — so changing env vars mid-process has no effect.
 
+### Redirects are not followed
+
+`ApiClient` sets `allow_redirects => false` and turns any 3xx into `ClientException`. The `auth` middleware sits
+inside Guzzle's redirect middleware, so a followed redirect is signed again for its target — credentials would go to
+whatever host the `Location` points to, even across origins. None of the APIs this library calls (Service Bus,
+Event Grid, Marketplace, the token and metadata endpoints) redirect, so nothing is lost today.
+
+If a new client needs redirects (e.g. Container Registry redirects downloads to Blob Storage), allow same-origin
+redirects only, like the Azure Node SDK does: keep `allow_redirects` on and set its `on_redirect` callback to throw when
+`GuzzleHttp\Psr7\UriComparator::isCrossOrigin()` is true. Guzzle calls it before sending the redirected request.
+
 ### Service Bus and Event Grid clients
 
 `ServiceBus\ServiceBusApiClient` (send / peek-lock receive / delete of queue messages) and

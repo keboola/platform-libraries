@@ -1,0 +1,5 @@
+region = "eu-central-1"
+dynamodb_table = "ci-azure-api-client-terraform-table"
+bucket = "ci-azure-api-client-terraform-bucket"
+key = "terraform.tfstate"
+encrypt = true

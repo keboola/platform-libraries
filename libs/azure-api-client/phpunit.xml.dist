@@ -17,13 +17,6 @@
     <directory>tests/</directory>
   </testsuite>
 
-  <!-- the "azure" group needs provisioned Azure resources, run it with "composer tests-azure" -->
-  <groups>
-    <exclude>
-      <group>azure</group>
-    </exclude>
-  </groups>
-
   <coverage processUncoveredFiles="true">
     <include>
       <directory suffix=".php">src/</directory>

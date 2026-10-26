@@ -41,10 +41,10 @@ it from there — running Infection alone without a prior `composer tests` will 
 `ApiClientFunctionalTest` and the Marketplace tests drive the `mockserver` service via `tests/Mockserver.php`
 rather than a Guzzle mock handler, so they exercise real HTTP.
 
-Tests in the `azure` PHPUnit group (`*AzureTest.php`) need real Service Bus and Event Grid resources. They are
-excluded in `phpunit.xml.dist`, so `composer ci` (and therefore CI) does not run them; `composer tests-azure` does.
-`provisioning/` creates the resources and `provisioning/write-env.sh` writes their `AZURE_API_CLIENT_TEST__*`
-variables to the root `.env`, which `docker-compose.yml` passes into `dev-azure-api-client`. The README has the steps.
+Tests in the `e2e` PHPUnit group (`*E2ETest.php`) need real Service Bus and Event Grid resources and run as part
+of `composer ci`. Infection excludes the group (`infection.json.dist`), so mutants never call Azure.
+`provisioning/local/` creates the resources for a developer and `provisioning/ci/` for CI; `update-env.sh` writes their
+`AZURE_API_CLIENT_TEST__*` variables to `.env.local`, which `tests/bootstrap.php` loads. The README has the steps.
 
 ## Architecture
 

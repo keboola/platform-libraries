@@ -11,24 +11,24 @@ use Keboola\AzureApiClient\EventGrid\EventGridApiClient;
 use Keboola\AzureApiClient\EventGrid\Model\EventGridEvent;
 use Keboola\AzureApiClient\Json;
 use Keboola\AzureApiClient\ServiceBus\Model\ReceivedMessage;
-use Keboola\AzureApiClient\Tests\AzureTestEnvironment;
+use Keboola\AzureApiClient\Tests\E2ETestEnvironment;
 use PHPUnit\Framework\TestCase;
 
 /**
  * Publishes to the test topic and reads the event back from the Service Bus queue the topic delivers to.
  *
- * @group azure
+ * @group e2e
  */
-class EventGridApiClientAzureTest extends TestCase
+class EventGridApiClientE2ETest extends TestCase
 {
     private const DELIVERY_TIMEOUT_SECONDS = 60;
 
     public function testPublishWithAccessKey(): void
     {
         $this->assertEventIsDelivered(new EventGridApiClient(
-            AzureTestEnvironment::get('EVENT_GRID_TOPIC_HOSTNAME'),
+            E2ETestEnvironment::get('EVENT_GRID_TOPIC_HOSTNAME'),
             new ApiClientConfiguration(
-                authenticator: new CustomHeaderAuth('aeg-sas-key', AzureTestEnvironment::get('EVENT_GRID_ACCESS_KEY')),
+                authenticator: new CustomHeaderAuth('aeg-sas-key', E2ETestEnvironment::get('EVENT_GRID_ACCESS_KEY')),
             ),
         ));
     }
@@ -36,8 +36,8 @@ class EventGridApiClientAzureTest extends TestCase
     public function testPublishWithEntraToken(): void
     {
         $this->assertEventIsDelivered(new EventGridApiClient(
-            AzureTestEnvironment::get('EVENT_GRID_TOPIC_HOSTNAME'),
-            new ApiClientConfiguration(authenticator: AzureTestEnvironment::entraTokenAuth()),
+            E2ETestEnvironment::get('EVENT_GRID_TOPIC_HOSTNAME'),
+            new ApiClientConfiguration(authenticator: E2ETestEnvironment::entraAuth()),
         ));
     }
 
@@ -50,10 +50,10 @@ class EventGridApiClientAzureTest extends TestCase
             new EventGridEvent($eventId, 'TestSubject', ['foo' => 'bar'], 'Keboola.AzureApiClient.Test', $eventTime),
         ]);
 
-        $serviceBus = AzureTestEnvironment::serviceBusWithSas();
-        $message = AzureTestEnvironment::receiveMatching(
+        $serviceBus = E2ETestEnvironment::serviceBusWithSas();
+        $message = E2ETestEnvironment::receiveMatching(
             $serviceBus,
-            AzureTestEnvironment::get('EVENT_GRID_QUEUE'),
+            E2ETestEnvironment::get('EVENT_GRID_QUEUE'),
             fn(ReceivedMessage $message) => (Json::decodeArray($message->body)['id'] ?? null) === $eventId,
             self::DELIVERY_TIMEOUT_SECONDS,
         );
@@ -66,7 +66,7 @@ class EventGridApiClientAzureTest extends TestCase
         self::assertSame('1.0', $event['dataVersion']);
         self::assertEquals($eventTime, new DateTimeImmutable($event['eventTime']));
         self::assertStringEndsWith(
-            '/providers/Microsoft.EventGrid/topics/' . AzureTestEnvironment::get('EVENT_GRID_TOPIC_NAME'),
+            '/providers/Microsoft.EventGrid/topics/' . E2ETestEnvironment::get('EVENT_GRID_TOPIC_NAME'),
             $event['topic'],
         );
     }

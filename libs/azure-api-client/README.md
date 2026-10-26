@@ -170,40 +170,31 @@ needs the *EventGrid Data Sender* role.
 
 ## Development
 
+### Azure resources
+Tests in the `e2e` PHPUnit group run against real Service Bus and Event Grid resources. They are part of
+`composer ci`, so create the resources before running it. Log in to the Azure CLI (`az login`) with an identity that can
+create resources, service principals and role assignments in the Keboola DEV Platform Services Team subscription.
+Terraform keeps its state in the shared local-dev S3 bucket, so you also need AWS credentials that can assume the
+`kbc-local-dev-terraform` role.
+
 ```bash
+export NAME_PREFIX= # your name/nickname to make your resource unique & recognizable
+
+cat <<EOF > ./provisioning/local/terraform.tfvars
+name_prefix = "${NAME_PREFIX}"
+EOF
+
+terraform -chdir=./provisioning/local init -backend-config="key=azure-api-client/${NAME_PREFIX}.tfstate"
+terraform -chdir=./provisioning/local apply
+./provisioning/local/update-env.sh
+
 docker compose run --rm dev-azure-api-client composer install
 docker compose run --rm dev-azure-api-client composer ci
 ```
 
-### Azure resources
-Tests in the `azure` PHPUnit group run against real Service Bus and Event Grid resources and are not part of
-`composer ci`. Provision them with Terraform, logged in with `az login` to an identity that can create resources and
-role assignments in the subscription (Owner, or Contributor + User Access Administrator). The identity passed as
-`test_principal_object_id` gets the Service Bus and Event Grid data roles; the Entra token tests run as the identity
-logged in to the Azure CLI, so locally pass your own user:
-
-```bash
-cd libs/azure-api-client/provisioning
-terraform init
-terraform apply -var name_prefix=<your-nickname> -var az_tenant_id=<tenant-id> \
-  -var az_subscription_id=<subscription-id> -var az_location=westeurope \
-  -var test_principal_object_id="$(az ad signed-in-user show --query id -o tsv)"
-./write-env.sh   # writes AZURE_API_CLIENT_TEST__* variables to the monorepo root .env
-```
-
-`write-env.sh` also stores Entra tokens of the logged-in identity, which expire after about an hour; run it again
-before a later test run.
-
-Then run the group:
-
-```bash
-docker compose run --rm dev-azure-api-client composer tests-azure
-```
-
-Role assignments can take a few minutes to propagate after the first `apply`; until then the Entra token tests fail
-with 401. Remove the resources with `terraform destroy` with the same variables.
-
-The Terraform state is kept locally in `provisioning/` and contains the keys in plain text; it is gitignored, keep it that way.
+`update-env.sh` writes the `AZURE_API_CLIENT_TEST__*` variables to `.env.local`. The Entra token tests run as a
+service principal Terraform creates, with the same data roles a production sender and receiver get. Role assignments
+can take a few minutes to propagate after the first `apply`; until then those tests fail with 401.
 
 ## License
 

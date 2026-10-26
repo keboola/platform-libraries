@@ -1,5 +1,6 @@
 {
     "timeout": 60,
+    "testFrameworkOptions": "--exclude-group=e2e",
     "source": {
         "directories": [
             "src\/"

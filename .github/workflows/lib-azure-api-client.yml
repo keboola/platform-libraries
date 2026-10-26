@@ -17,6 +17,18 @@ jobs:
         uses: docker/setup-buildx-action@v4
       - name: Build image
         run: docker compose build dev-azure-api-client
+      - name: Install Terraform
+        run: ./libs/azure-api-client/provisioning/ci/pipelines-scripts/terraform-install.sh
+      - name: Initialize Terraform
+        run: ./libs/azure-api-client/provisioning/ci/pipelines-scripts/terraform-init.sh
+        env:
+          AWS_ACCESS_KEY_ID: ${{ vars.AZURE_API_CLIENT_TERRAFORM_AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AZURE_API_CLIENT_TERRAFORM_AWS_SECRET_ACCESS_KEY }}
+      - name: Provision test environment
+        run: ./libs/azure-api-client/provisioning/ci/update-env.sh -v -e .env.local
+        env:
+          AWS_ACCESS_KEY_ID: ${{ vars.AZURE_API_CLIENT_TERRAFORM_AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AZURE_API_CLIENT_TERRAFORM_AWS_SECRET_ACCESS_KEY }}
       - name: Run tests
         run: docker compose run --rm dev-azure-api-client bash -c 'composer install && composer ci'
       - name: Show logs on failure

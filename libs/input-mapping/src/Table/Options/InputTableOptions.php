@@ -35,7 +35,7 @@ class InputTableOptions
     {
         $colNamesFromTypes = $this->getColumnNamesFromTypes();
         // if both columns and column_types are entered, verify that the columns listed do match
-        if ($this->definition['columns'] && $this->definition['column_types']) {
+        if ($this->definition['columns'] && $this->hasSelectingColumnTypes()) {
             $diff = array_diff($this->definition['columns'], $colNamesFromTypes);
             if ($diff) {
                 throw new InvalidInputException(sprintf(
@@ -82,7 +82,27 @@ class InputTableOptions
      */
     public function getColumnNamesFromTypes(): array
     {
+        if (!$this->hasSelectingColumnTypes()) {
+            return $this->definition['columns'];
+        }
         return array_column($this->definition['column_types'], 'source');
+    }
+
+    private function hasSelectingColumnTypes(): bool
+    {
+        foreach ($this->definition['column_types'] as $item) {
+            if (!self::isDescriptionOnly($item)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // Description-only items carry a description override for Connection and never select columns.
+    private static function isDescriptionOnly(array $item): bool
+    {
+        return array_key_exists('description', $item)
+            && array_diff(array_keys($item), ['source', 'description']) === [];
     }
 
     /**

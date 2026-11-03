@@ -208,4 +208,45 @@ class RewrittenInputTableOptionsTest extends TestCase
             $definition->getStorageApiExportOptions($tablesState),
         );
     }
+
+    public function testGetExportOptionsIgnoresDescriptionOnlyItems(): void
+    {
+        $definition = new RewrittenInputTableOptions(
+            [
+                'source' => 'test',
+                'description' => 'Table override',
+                'column_types' => [
+                    ['source' => 'a', 'description' => 'A'],
+                    ['source' => 'b', 'description' => null],
+                ],
+            ],
+            'source',
+            12345,
+            ['a' => 'b'],
+        );
+        self::assertSame(
+            ['sourceBranchId' => 12345, 'overwrite' => false],
+            $definition->getStorageApiExportOptions(new InputTableStateList([])),
+        );
+    }
+
+    public function testGetExportOptionsDescriptionOnlyItemsWithColumns(): void
+    {
+        $definition = new RewrittenInputTableOptions(
+            [
+                'source' => 'test',
+                'columns' => ['a', 'b'],
+                'column_types' => [
+                    ['source' => 'c', 'description' => 'C'],
+                ],
+            ],
+            'source',
+            12345,
+            ['a' => 'b'],
+        );
+        self::assertSame(
+            ['sourceBranchId' => 12345, 'columns' => ['a', 'b'], 'overwrite' => false],
+            $definition->getStorageApiExportOptions(new InputTableStateList([])),
+        );
+    }
 }

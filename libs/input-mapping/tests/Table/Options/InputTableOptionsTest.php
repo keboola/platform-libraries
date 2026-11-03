@@ -365,4 +365,127 @@ class InputTableOptionsTest extends TestCase
         $definition = new InputTableOptions($configuration);
         self::assertSame($expectedBranchId, $definition->getSourceBranchId());
     }
+
+    public static function descriptionColumnSelectionProvider(): Generator
+    {
+        yield 'description-only items, no columns' => [
+            'configuration' => [
+                'column_types' => [
+                    ['source' => 'a', 'description' => 'A'],
+                    ['source' => 'b', 'description' => null],
+                ],
+            ],
+            'expectedSelection' => [],
+            'expectedColumnTypes' => [
+                ['source' => 'a', 'description' => 'A'],
+                ['source' => 'b', 'description' => null],
+            ],
+        ];
+        yield 'description-only items with columns' => [
+            'configuration' => [
+                'columns' => ['a', 'b'],
+                'column_types' => [
+                    ['source' => 'c', 'description' => 'C'],
+                ],
+            ],
+            'expectedSelection' => ['a', 'b'],
+            'expectedColumnTypes' => [
+                ['source' => 'c', 'description' => 'C'],
+            ],
+        ];
+        yield 'typed item and description-only item' => [
+            'configuration' => [
+                'column_types' => [
+                    ['source' => 'a', 'type' => 'VARCHAR'],
+                    ['source' => 'b', 'description' => 'B'],
+                ],
+            ],
+            'expectedSelection' => ['a', 'b'],
+            'expectedColumnTypes' => [
+                ['source' => 'a', 'type' => 'VARCHAR'],
+                ['source' => 'b', 'description' => 'B'],
+            ],
+        ];
+        yield 'typed items with inline description' => [
+            'configuration' => [
+                'column_types' => [
+                    ['source' => 'a', 'type' => 'VARCHAR', 'description' => 'A'],
+                    ['source' => 'b', 'type' => 'INTEGER'],
+                ],
+            ],
+            'expectedSelection' => ['a', 'b'],
+            'expectedColumnTypes' => [
+                ['source' => 'a', 'type' => 'VARCHAR', 'description' => 'A'],
+                ['source' => 'b', 'type' => 'INTEGER'],
+            ],
+        ];
+        yield 'source-only item still selects' => [
+            'configuration' => [
+                'column_types' => [
+                    ['source' => 'a'],
+                    ['source' => 'b', 'description' => 'B'],
+                ],
+            ],
+            'expectedSelection' => ['a', 'b'],
+            'expectedColumnTypes' => [
+                ['source' => 'a'],
+                ['source' => 'b', 'description' => 'B'],
+            ],
+        ];
+    }
+
+    /**
+     * @dataProvider descriptionColumnSelectionProvider
+     */
+    public function testDescriptionColumnSelection(
+        array $configuration,
+        array $expectedSelection,
+        array $expectedColumnTypes,
+    ): void {
+        $definition = new InputTableOptions(['source' => 'test'] + $configuration);
+
+        self::assertSame($expectedSelection, $definition->getColumnNamesFromTypes());
+        self::assertSame($expectedSelection, $definition->getDefinition()['columns']);
+        self::assertSame($expectedColumnTypes, $definition->getDefinition()['column_types']);
+    }
+
+    public function testTypedItemsStillCheckSurplusColumnsWithDescriptionOnlyItems(): void
+    {
+        $this->expectException(InvalidInputException::class);
+        $this->expectExceptionMessage(
+            'Both "columns" and "column_types" are specified, "columns" field contains surplus columns: "c".',
+        );
+        new InputTableOptions([
+            'source' => 'test',
+            'columns' => ['a', 'b', 'c'],
+            'column_types' => [
+                ['source' => 'a', 'type' => 'VARCHAR'],
+                ['source' => 'b', 'description' => 'B'],
+            ],
+        ]);
+    }
+
+    public function testGetWorkspaceLoadConfigurationKeepsDescriptions(): void
+    {
+        $definition = new InputTableOptions([
+            'source' => 'test',
+            'description' => 'Table override',
+            'column_types' => [
+                ['source' => 'a', 'description' => 'A'],
+                ['source' => 'b', 'description' => null],
+            ],
+        ]);
+
+        $config = $definition->getStorageApiWorkspaceLoadConfiguration(new InputTableStateList([]));
+
+        self::assertSame('Table override', $config['description']);
+        self::assertSame([], $config['columns']);
+        self::assertSame(
+            [
+                ['source' => 'a', 'description' => 'A'],
+                ['source' => 'b', 'description' => null],
+            ],
+            $config['column_types'],
+        );
+    }
 }

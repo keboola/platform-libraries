@@ -45,8 +45,9 @@ class RewrittenInputTableOptions extends InputTableOptions
             // passing null causes application error in connection, so here is a useless condition.
             $exportOptions['sourceBranchId'] = $this->getSourceBranchId();
         }
-        if (count($this->definition['column_types'])) {
-            $exportOptions['columns'] = $this->getColumnNamesFromTypes();
+        $columns = $this->getColumnNamesFromTypes();
+        if ($columns) {
+            $exportOptions['columns'] = $columns;
         }
         if (!empty($this->definition['days'])) {
             $exportOptions['changedSince'] = "-{$this->definition["days"]} days";

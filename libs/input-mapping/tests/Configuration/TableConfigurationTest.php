@@ -550,6 +550,31 @@ class TableConfigurationTest extends TestCase
                     'keep_internal_timestamp_column' => true,
                 ],
             ],
+            'DescriptionsConfiguration' => [
+                'config' => [
+                    'source' => 'in.c-main.test',
+                    'description' => 'Table description override',
+                    'column_types' => [
+                        ['source' => 'Id', 'type' => 'INTEGER', 'description' => 'Typed column description'],
+                        ['source' => 'Name', 'description' => 'Description-only item'],
+                        ['source' => 'Note', 'description' => null],
+                    ],
+                ],
+                'expected' => [
+                    'source' => 'in.c-main.test',
+                    'description' => 'Table description override',
+                    'columns' => [],
+                    'column_types' => [
+                        ['source' => 'Id', 'type' => 'INTEGER', 'description' => 'Typed column description'],
+                        ['source' => 'Name', 'description' => 'Description-only item'],
+                        ['source' => 'Note', 'description' => null],
+                    ],
+                    'where_values' => [],
+                    'where_operator' => 'eq',
+                    'overwrite' => false,
+                    'keep_internal_timestamp_column' => true,
+                ],
+            ],
         ];
     }
 
@@ -636,6 +661,24 @@ class TableConfigurationTest extends TestCase
                 InvalidConfigurationException::class,
                 'The value "INVALID" is not allowed for path "table.load_type". '
                     . 'Permissible values: "COPY", "CLONE", "VIEW", "AUTO".',
+            ],
+            'UnknownColumnTypesKey' => [
+                [
+                    'source' => 'in.c-main.test',
+                    'column_types' => [
+                        ['source' => 'Id', 'description' => 'desc', 'comment' => 'unknown'],
+                    ],
+                ],
+                InvalidConfigurationException::class,
+                'Unrecognized option "comment" under "table.column_types.0"',
+            ],
+            'UnknownTableKey' => [
+                [
+                    'source' => 'in.c-main.test',
+                    'descriptions' => 'typo',
+                ],
+                InvalidConfigurationException::class,
+                'Unrecognized option "descriptions" under "table"',
             ],
         ];
     }

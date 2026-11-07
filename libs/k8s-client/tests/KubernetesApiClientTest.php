@@ -14,6 +14,8 @@ use Kubernetes\Model\Io\K8s\Api\Core\V1\Event;
 use Kubernetes\Model\Io\K8s\Api\Core\V1\EventList;
 use Kubernetes\Model\Io\K8s\Apimachinery\Pkg\Apis\Meta\V1\Status;
 use PHPUnit\Framework\TestCase;
+use Retry\BackOff\NoBackOffPolicy;
+use Retry\Policy\SimpleRetryPolicy;
 use Retry\RetryProxy;
 
 class KubernetesApiClientTest extends TestCase
@@ -265,6 +267,106 @@ class KubernetesApiClientTest extends TestCase
                 $e->getMessage(),
             );
         }
+    }
+
+    public function testClusterRequestRetriesRawResult(): void
+    {
+        $client = new KubernetesApiClient(
+            new RetryProxy(new SimpleRetryPolicy(3), new NoBackOffPolicy()),
+            self::TEST_NAMESPACE,
+        );
+
+        $event = new Event(['name' => 'test-event']);
+        $results = [
+            'upstream connect error or disconnect/reset before headers. reset reason: connection timeout',
+            null,
+            $event,
+        ];
+
+        $eventsApiMock = $this->createMock(EventsApi::class);
+        $eventsApiMock->expects(self::exactly(3))
+            ->method('read')
+            ->with(self::TEST_NAMESPACE, 'event-name')
+            ->willReturnCallback(function () use (&$results) {
+                return array_shift($results);
+            })
+        ;
+
+        $result = $client->clusterRequest(
+            $eventsApiMock,
+            'read',
+            Event::class,
+            self::TEST_NAMESPACE,
+            'event-name',
+        );
+
+        self::assertSame($event, $result);
+    }
+
+    public function testClusterRequestFailsWhenRawResultPersists(): void
+    {
+        $client = new KubernetesApiClient(
+            new RetryProxy(new SimpleRetryPolicy(3), new NoBackOffPolicy()),
+            self::TEST_NAMESPACE,
+        );
+
+        $eventsApiMock = $this->createMock(EventsApi::class);
+        $eventsApiMock->expects(self::exactly(3))
+            ->method('read')
+            ->with(self::TEST_NAMESPACE, 'event-name')
+            ->willReturn('502 Bad Gateway')
+        ;
+
+        try {
+            $client->clusterRequest(
+                $eventsApiMock,
+                'read',
+                Event::class,
+                self::TEST_NAMESPACE,
+                'event-name',
+            );
+
+            $this->fail('Cluster request should throw KubernetesResponseException');
+        } catch (KubernetesResponseException $e) {
+            self::assertNull($e->getStatus());
+            self::assertSame(
+                sprintf(
+                    'Expected response class %s for request %s::read, found string: "502 Bad Gateway"',
+                    Event::class,
+                    get_class($eventsApiMock),
+                ),
+                $e->getMessage(),
+            );
+        }
+    }
+
+    public function testClusterRequestDoesNotRetryClientErrorStatus(): void
+    {
+        $client = new KubernetesApiClient(
+            new RetryProxy(new SimpleRetryPolicy(3), new NoBackOffPolicy()),
+            self::TEST_NAMESPACE,
+        );
+
+        $status = new Status();
+        $status->code = 409;
+        $status->status = 'Failure';
+        $status->reason = 'AlreadyExists';
+        $status->message = 'events "event-name" already exists';
+
+        $eventsApiMock = $this->createMock(EventsApi::class);
+        $eventsApiMock->expects(self::once())
+            ->method('create')
+            ->willReturn($status)
+        ;
+
+        $this->expectException(ResourceAlreadyExistsException::class);
+        $client->clusterRequest(
+            $eventsApiMock,
+            'create',
+            Event::class,
+            self::TEST_NAMESPACE,
+            $this->createMock(Event::class),
+        );
     }
 
     private function createRetryProxyMock(): RetryProxy

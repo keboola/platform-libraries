@@ -519,6 +519,21 @@ class KeboolaApiExtensionTest extends TestCase
         );
     }
 
+    public function testAuthStorageClientDoesNotRetryOnMaintenance(): void
+    {
+        $container = $this->buildContainer([[]]);
+
+        $authOptionsRef = $container->getDefinition(StorageApiTokenFactory::class)
+            ->getArgument('$authClientOptions');
+        self::assertInstanceOf(Reference::class, $authOptionsRef);
+        self::assertFalse(
+            $container->getDefinition((string) $authOptionsRef)->getArgument('$retryOnMaintenance'),
+        );
+
+        $base = $this->resolveSharedBaseClientOptions($container);
+        self::assertArrayNotHasKey('$retryOnMaintenance', $base->getArguments());
+    }
+
     /**
      * The asymmetry is only real if the override actually wins at runtime. This runs the genuine
      * {@see StorageClientRequestFactory} merge rather than asserting on Definitions.

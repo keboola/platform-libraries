@@ -5,6 +5,7 @@
     "require": {
         "php": ">=8.2",
         "cuyz/valinor-bundle": "^0.4",
+        "keboola/common-exceptions": "^1.1",
         "keboola/kbc-manage-api-php-client": "^v10.2",
         "keboola/permission-checker": "^2.0|^3.0",
         "keboola/service-client": "^1.0",

@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace Keboola\ApiBundle\Security;
 
 use Keboola\ApiBundle\Attribute\AuthAttributeInterface;
+use Keboola\ApiBundle\Exception\ContextualHttpException;
 use Keboola\ApiBundle\Util\ControllerReflector;
+use Keboola\CommonExceptions\ExceptionWithContextInterface;
 use Keboola\ErrorControl\ErrorResponse;
 use Psr\Container\ContainerInterface;
 use ReflectionAttribute;
@@ -93,11 +95,18 @@ class AttributeAuthenticator extends AbstractAuthenticator
             $exception->getMessage() :
             'Authorization failed';
 
-        return ErrorResponse::fromException(new HttpException(
-            $exception->getCode() > 0 ? $exception->getCode() : Response::HTTP_UNAUTHORIZED,
-            $errorMessage,
-            $exception,
-        ));
+        $statusCode = $exception->getCode() > 0 ? $exception->getCode() : Response::HTTP_UNAUTHORIZED;
+
+        if ($exception instanceof ExceptionWithContextInterface) {
+            return ErrorResponse::fromException(new ContextualHttpException(
+                $statusCode,
+                $errorMessage,
+                $exception->getContext(),
+                $exception,
+            ));
+        }
+
+        return ErrorResponse::fromException(new HttpException($statusCode, $errorMessage, $exception));
     }
 
     /**

@@ -180,7 +180,8 @@ class KeboolaApiExtension extends Extension
         // Merged on top of the base options for token verification only, leaving the
         // controller-facing client on whatever storage_client_options chose.
         $container->register(self::AUTH_STORAGE_CLIENT_OPTIONS_ID, ClientOptions::class)
-            ->setArgument('$backoffMaxTries', $authBackoffMaxTries);
+            ->setArgument('$backoffMaxTries', $authBackoffMaxTries)
+            ->setArgument('$retryOnMaintenance', false);
         $tokenFactory->setArgument(
             '$authClientOptions',
             new Reference(self::AUTH_STORAGE_CLIENT_OPTIONS_ID),

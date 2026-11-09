@@ -322,6 +322,18 @@ so `auth.client_options` is its only configuration. `0` disables authentication 
 
 Only settings that behave identically on both clients are accepted here.
 
+**Storage token verification does not retry `503`.** `Keboola\StorageApi\Client` turns every `503`
+into `MaintenanceException` — a disabled project (`Project "X" is disabled. - delayed payment`), real
+Storage maintenance, and a `503` from a load balancer in front of Storage alike. Authentication
+answers it at once with:
+
+```json
+{"error": "<Storage error, or reason>", "code": 503, "status": "error", "context": {"errorCode": "storage.maintenance"}}
+```
+
+The error is logged at `warning`. Other `5xx`, network errors and transient `409` are still retried
+up to `backoff_max_tries`. Callers that want to ride out a short `503` retry the whole request.
+
 `ManageApiClientFactory` stays autowirable under its class name and **keeps
 `Keboola\ManageApi\Client`'s own retry default** — the `auth` node never reaches it, so your own
 privileged Manage calls are unaffected by this setting.

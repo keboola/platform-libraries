@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\ApiBundle\Security\StorageApiToken;
 
-use Keboola\ApiBundle\Exception\ContextualAuthenticationException;
+use Keboola\ApiBundle\Exception\StorageMaintenanceAuthenticationException;
 use Keboola\ApiBundle\StorageApiClient\StorageClientRequestFactory;
 use Keboola\ManageApi\Client as ManageApiClient;
 use Keboola\ManageApi\ClientException as ManageApiClientException;
@@ -34,7 +34,6 @@ use Symfony\Component\Security\Core\Exception\CustomUserMessageAuthenticationExc
  */
 class StorageApiTokenFactory
 {
-    public const STORAGE_MAINTENANCE_ERROR_CODE = 'storage.maintenance';
     private const PROJECT_ID_HEADER = 'X-KBC-ProjectId';
 
     /**
@@ -55,8 +54,8 @@ class StorageApiTokenFactory
      * resulting {@see StorageApiToken} with $authType ({@see AuthType::STORAGE_TOKEN} for a legacy
      * `X-StorageApi-Token`, {@see AuthType::BEARER} for an OAuth bearer token, so it is later sent
      * with the matching scheme). 4xx Storage errors are surfaced to the caller; a Storage 503 is
-     * surfaced as 503 with errorCode {@see self::STORAGE_MAINTENANCE_ERROR_CODE}; other errors bubble
-     * up unchanged. Programmatic tokens never reach this — their detail comes from the resolver
+     * surfaced as {@see StorageMaintenanceAuthenticationException}; other errors bubble up unchanged.
+     * Programmatic tokens never reach this — their detail comes from the resolver
      * ({@see self::exchangeFromProgrammaticToken()}).
      */
     public function createFromValue(
@@ -82,12 +81,7 @@ class StorageApiTokenFactory
                 'reason' => $e->getMessage(),
                 'retryAfter' => $e->getRetryAfter(),
             ]);
-            throw new ContextualAuthenticationException(
-                $message,
-                Response::HTTP_SERVICE_UNAVAILABLE,
-                ['errorCode' => self::STORAGE_MAINTENANCE_ERROR_CODE],
-                $e,
-            );
+            throw new StorageMaintenanceAuthenticationException($message, $e);
         } catch (ClientException $e) {
             if ($e->getCode() >= 400 && $e->getCode() < 500) {
                 throw new CustomUserMessageAuthenticationException($e->getMessage(), [], $e->getCode(), $e);

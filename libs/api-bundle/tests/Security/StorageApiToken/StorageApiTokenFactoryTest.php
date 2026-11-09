@@ -10,9 +10,9 @@ use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\Psr7\Request as GuzzleRequest;
 use GuzzleHttp\Psr7\Response as GuzzleResponse;
+use Keboola\ApiBundle\Exception\StorageMaintenanceAuthenticationException;
 use Keboola\ApiBundle\Security\StorageApiToken\StorageApiTokenFactory;
 use Keboola\ApiBundle\StorageApiClient\StorageClientRequestFactory;
-use Keboola\CommonExceptions\ExceptionWithContextInterface;
 use Keboola\ManageApi\Client as ManageApiClient;
 use Keboola\ManageApi\ClientException as ManageApiClientException;
 use Keboola\ManageApi\MaintenanceException as ManageApiMaintenanceException;
@@ -202,7 +202,7 @@ class StorageApiTokenFactoryTest extends TestCase
 
         self::assertSame('Project "Acme" (673) is disabled. - delayed payment', $exception->getMessage());
         self::assertSame(503, $exception->getCode());
-        self::assertInstanceOf(ExceptionWithContextInterface::class, $exception);
+        self::assertInstanceOf(StorageMaintenanceAuthenticationException::class, $exception);
         self::assertSame(['errorCode' => 'storage.maintenance'], $exception->getContext());
     }
 

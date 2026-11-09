@@ -11,13 +11,25 @@ class StorageMaintenanceAuthenticationException extends ContextualAuthentication
 {
     public const ERROR_CODE = 'storage.maintenance';
 
-    public function __construct(string $message, ?Throwable $previous = null)
-    {
+    public function __construct(
+        string $message,
+        ?Throwable $previous = null,
+        private readonly ?int $retryAfter = null,
+    ) {
         parent::__construct(
             $message,
             Response::HTTP_SERVICE_UNAVAILABLE,
             ['errorCode' => self::ERROR_CODE],
             $previous,
         );
+    }
+
+    public function getResponseHeaders(): array
+    {
+        if ($this->retryAfter === null || $this->retryAfter <= 0) {
+            return [];
+        }
+
+        return ['Retry-After' => (string) $this->retryAfter];
     }
 }

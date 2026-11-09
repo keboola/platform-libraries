@@ -519,7 +519,7 @@ class KeboolaApiExtensionTest extends TestCase
         );
     }
 
-    public function testAuthStorageClientDoesNotRetryOnMaintenance(): void
+    public function testAuthStorageClientLeavesServiceUnavailableRetriesToTokenFactory(): void
     {
         $container = $this->buildContainer([[]]);
 

@@ -7,9 +7,12 @@ namespace Keboola\ApiBundle\Tests\Security\StorageApiToken;
 use Exception;
 use Generator;
 use GuzzleHttp\Exception\ConnectException;
+use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\Psr7\Request as GuzzleRequest;
+use GuzzleHttp\Psr7\Response as GuzzleResponse;
 use Keboola\ApiBundle\Security\StorageApiToken\StorageApiTokenFactory;
 use Keboola\ApiBundle\StorageApiClient\StorageClientRequestFactory;
+use Keboola\CommonExceptions\ExceptionWithContextInterface;
 use Keboola\ManageApi\Client as ManageApiClient;
 use Keboola\ManageApi\ClientException as ManageApiClientException;
 use Keboola\ManageApi\MaintenanceException as ManageApiMaintenanceException;
@@ -147,9 +150,9 @@ class StorageApiTokenFactoryTest extends TestCase
             'expectedExceptionMessage' => 'Invalid access token',
             'expectedExceptionCode' => 401,
         ];
-        yield 'maintenance exception' => [
+        yield 'maintenance exception without params' => [
             'clientException' => new MaintenanceException('Maintenance', null, 'token'),
-            'expectedExceptionClass' => MaintenanceException::class,
+            'expectedExceptionClass' => CustomUserMessageAuthenticationException::class,
             'expectedExceptionMessage' => 'Maintenance',
             'expectedExceptionCode' => 503,
         ];
@@ -159,6 +162,48 @@ class StorageApiTokenFactoryTest extends TestCase
             'expectedExceptionMessage' => 'Invalid access token',
             'expectedExceptionCode' => 500,
         ];
+    }
+
+    public function testVerifyFailureOnStorageMaintenanceResponse(): void
+    {
+        $storageResponseBody = [
+            'error' => 'Project "Acme" (673) is disabled. - delayed payment',
+            'reason' => 'delayed payment',
+            'status' => 'maintenance',
+        ];
+        $storageClient = new Client([
+            'url' => 'https://connection.keboola.test',
+            'token' => 'token',
+            'backoffMaxTries' => 0,
+            'handler' => new MockHandler([
+                new GuzzleResponse(
+                    503,
+                    ['Content-Type' => 'application/json'],
+                    (string) json_encode($storageResponseBody),
+                ),
+            ]),
+        ]);
+
+        $wrapperMock = $this->createMock(ClientWrapper::class);
+        $wrapperMock->expects(self::once())->method('getBasicClient')->willReturn($storageClient);
+
+        $factoryMock = $this->createMock(StorageClientRequestFactory::class);
+        $factoryMock->expects(self::once())->method('createClientWrapper')->willReturn($wrapperMock);
+
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects(self::once())->method('warning');
+        $logger->expects(self::never())->method('error');
+        $logger->expects(self::never())->method('critical');
+
+        $exception = $this->captureAuthException(
+            fn() => $this->createFactory(clientFactory: $factoryMock, logger: $logger)
+                ->createFromValue(Request::create('https://keboola.com'), 'token', AuthType::STORAGE_TOKEN),
+        );
+
+        self::assertSame('Project "Acme" (673) is disabled. - delayed payment', $exception->getMessage());
+        self::assertSame(503, $exception->getCode());
+        self::assertInstanceOf(ExceptionWithContextInterface::class, $exception);
+        self::assertSame(['errorCode' => 'storage.maintenance'], $exception->getContext());
     }
 
     // ---------------------------------------------------------------------------

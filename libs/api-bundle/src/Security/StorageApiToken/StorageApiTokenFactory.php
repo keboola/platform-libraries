@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace Keboola\ApiBundle\Security\StorageApiToken;
 
+use Keboola\ApiBundle\Exception\ContextualAuthenticationException;
 use Keboola\ApiBundle\StorageApiClient\StorageClientRequestFactory;
 use Keboola\ManageApi\Client as ManageApiClient;
 use Keboola\ManageApi\ClientException as ManageApiClientException;
 use Keboola\ManageApi\MaintenanceException;
 use Keboola\StorageApi\ClientException;
+use Keboola\StorageApi\MaintenanceException as StorageApiMaintenanceException;
 use Keboola\StorageApiBranch\Factory\AuthType;
 use Keboola\StorageApiBranch\Factory\ClientOptions;
 use Psr\Log\LoggerInterface;
@@ -32,6 +34,7 @@ use Symfony\Component\Security\Core\Exception\CustomUserMessageAuthenticationExc
  */
 class StorageApiTokenFactory
 {
+    public const STORAGE_MAINTENANCE_ERROR_CODE = 'storage.maintenance';
     private const PROJECT_ID_HEADER = 'X-KBC-ProjectId';
 
     /**
@@ -51,7 +54,8 @@ class StorageApiTokenFactory
      * Verifies a token whose value is itself a Storage credential against Storage API and types the
      * resulting {@see StorageApiToken} with $authType ({@see AuthType::STORAGE_TOKEN} for a legacy
      * `X-StorageApi-Token`, {@see AuthType::BEARER} for an OAuth bearer token, so it is later sent
-     * with the matching scheme). 4xx Storage errors are surfaced to the caller; other errors bubble
+     * with the matching scheme). 4xx Storage errors are surfaced to the caller; a Storage 503 is
+     * surfaced as 503 with errorCode {@see self::STORAGE_MAINTENANCE_ERROR_CODE}; other errors bubble
      * up unchanged. Programmatic tokens never reach this — their detail comes from the resolver
      * ({@see self::exchangeFromProgrammaticToken()}).
      */
@@ -68,6 +72,22 @@ class StorageApiTokenFactory
             $tokenInfo = $storageApiClient->verifyToken();
 
             return new StorageApiToken($tokenInfo, $storageApiClient->getTokenString(), $authType);
+        } catch (StorageApiMaintenanceException $e) {
+            $params = $e->getContextParams();
+            $message = is_array($params) && is_string($params['error'] ?? null)
+                ? $params['error']
+                : (string) $e->getMessage();
+
+            $this->logger->warning('Storage token verification unavailable: Storage API is in maintenance.', [
+                'reason' => $e->getMessage(),
+                'retryAfter' => $e->getRetryAfter(),
+            ]);
+            throw new ContextualAuthenticationException(
+                $message,
+                Response::HTTP_SERVICE_UNAVAILABLE,
+                ['errorCode' => self::STORAGE_MAINTENANCE_ERROR_CODE],
+                $e,
+            );
         } catch (ClientException $e) {
             if ($e->getCode() >= 400 && $e->getCode() < 500) {
                 throw new CustomUserMessageAuthenticationException($e->getMessage(), [], $e->getCode(), $e);

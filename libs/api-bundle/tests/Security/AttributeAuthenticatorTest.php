@@ -6,6 +6,7 @@ namespace Keboola\ApiBundle\Tests\Security;
 
 use Keboola\ApiBundle\Attribute\ApplicationTokenAuth;
 use Keboola\ApiBundle\Attribute\StorageApiTokenAuth;
+use Keboola\ApiBundle\Exception\ContextualAuthenticationException;
 use Keboola\ApiBundle\Security\AttributeAuthenticator;
 use Keboola\ApiBundle\Security\TokenAuthenticatorInterface;
 use Keboola\ApiBundle\Security\TokenInterface;
@@ -336,6 +337,49 @@ class AttributeAuthenticatorTest extends TestCase
         ;
 
         return $authenticator;
+    }
+
+    public function testAuthenticationFailureResponseCarriesExceptionContext(): void
+    {
+        $authenticator = $this->createAuthenticator(new class {
+            public function __invoke(): void {}
+        }, []);
+
+        $response = $authenticator->onAuthenticationFailure(
+            new Request(),
+            new ContextualAuthenticationException(
+                'Project "Acme" (673) is disabled. - delayed payment',
+                503,
+                ['errorCode' => 'storage.maintenance'],
+            ),
+        );
+
+        self::assertNotNull($response);
+        self::assertSame(503, $response->getStatusCode());
+        $body = json_decode((string) $response->getContent(), true, flags: JSON_THROW_ON_ERROR);
+        self::assertIsArray($body);
+        self::assertSame('Project "Acme" (673) is disabled. - delayed payment', $body['error']);
+        self::assertSame(503, $body['code']);
+        self::assertSame(['errorCode' => 'storage.maintenance'], $body['context']);
+    }
+
+    public function testAuthenticationFailureResponseWithoutContext(): void
+    {
+        $authenticator = $this->createAuthenticator(new class {
+            public function __invoke(): void {}
+        }, []);
+
+        $response = $authenticator->onAuthenticationFailure(
+            new Request(),
+            new CustomUserMessageAuthenticationException('Invalid access token', [], 401),
+        );
+
+        self::assertNotNull($response);
+        self::assertSame(401, $response->getStatusCode());
+        $body = json_decode((string) $response->getContent(), true, flags: JSON_THROW_ON_ERROR);
+        self::assertIsArray($body);
+        self::assertSame('Invalid access token', $body['error']);
+        self::assertSame([], $body['context']);
     }
 
     /**

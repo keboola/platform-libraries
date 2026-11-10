@@ -6,6 +6,7 @@ namespace Keboola\ApiBundle\Security;
 
 use Keboola\ApiBundle\Attribute\AuthAttributeInterface;
 use Keboola\ApiBundle\Exception\ContextualHttpException;
+use Keboola\ApiBundle\Exception\RetryAfterAwareExceptionInterface;
 use Keboola\ApiBundle\Util\ControllerReflector;
 use Keboola\CommonExceptions\ExceptionWithContextInterface;
 use Keboola\ErrorControl\ErrorResponse;
@@ -46,7 +47,9 @@ class AttributeAuthenticator extends AbstractAuthenticator
             $credential = $authenticator->extractCredential($request);
 
             if ($credential === null) {
-                $error = new CustomUserMessageAuthenticationException('Authentication token is missing');
+                if (!isset($error) || !self::outranksMissingCredential($error)) {
+                    $error = new CustomUserMessageAuthenticationException('Authentication token is missing');
+                }
                 continue;
             }
 
@@ -97,16 +100,22 @@ class AttributeAuthenticator extends AbstractAuthenticator
 
         $statusCode = $exception->getCode() > 0 ? $exception->getCode() : Response::HTTP_UNAUTHORIZED;
 
-        if ($exception instanceof ExceptionWithContextInterface) {
-            return ErrorResponse::fromException(new ContextualHttpException(
-                $statusCode,
-                $errorMessage,
-                $exception->getContext(),
-                $exception,
-            ));
+        $response = ErrorResponse::fromException(
+            $exception instanceof ExceptionWithContextInterface
+                ? new ContextualHttpException($statusCode, $errorMessage, $exception->getContext(), $exception)
+                : new HttpException($statusCode, $errorMessage, $exception),
+        );
+
+        if ($exception instanceof RetryAfterAwareExceptionInterface && $exception->getRetryAfter() !== null) {
+            $response->headers->set('Retry-After', (string) $exception->getRetryAfter());
         }
 
-        return ErrorResponse::fromException(new HttpException($statusCode, $errorMessage, $exception));
+        return $response;
+    }
+
+    private static function outranksMissingCredential(AuthenticationException $error): bool
+    {
+        return $error->getCode() >= Response::HTTP_INTERNAL_SERVER_ERROR;
     }
 
     /**

@@ -52,6 +52,8 @@ Consequences worth knowing:
 
 - Attributes are OR'd and failures are accumulated, but only the **last** error is thrown — a controller
   with several attributes reports the last scheme's message, which can be misleading when debugging a 401.
+  The one exception: a later "Authentication token is missing" does not replace an earlier error that has
+  a 5xx code (e.g. `storage.maintenance`).
 - Because the locator is keyed by attribute class, a missing optional client package surfaces as
   `Service "…\ApplicationTokenAuth" not found … smaller service locator` rather than a clear error.
 

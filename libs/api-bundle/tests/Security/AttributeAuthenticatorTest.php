@@ -7,6 +7,7 @@ namespace Keboola\ApiBundle\Tests\Security;
 use Keboola\ApiBundle\Attribute\ApplicationTokenAuth;
 use Keboola\ApiBundle\Attribute\StorageApiTokenAuth;
 use Keboola\ApiBundle\Exception\ContextualAuthenticationException;
+use Keboola\ApiBundle\Exception\StorageMaintenanceAuthenticationException;
 use Keboola\ApiBundle\Security\AttributeAuthenticator;
 use Keboola\ApiBundle\Security\TokenAuthenticatorInterface;
 use Keboola\ApiBundle\Security\TokenInterface;
@@ -337,6 +338,127 @@ class AttributeAuthenticatorTest extends TestCase
         ;
 
         return $authenticator;
+    }
+
+    public function testLaterMissingCredentialDoesNotHideStorageMaintenance(): void
+    {
+        $controller = new
+            #[StorageApiTokenAuth]
+            #[ApplicationTokenAuth]
+            class {
+                public function __invoke(): void {}
+            };
+
+        $request = $this->createControllerRequest($controller, [
+            'X-StorageApi-Token' => 'token',
+        ]);
+
+        $storageAuthenticator = $this->createMock(TokenAuthenticatorInterface::class);
+        $storageAuthenticator->expects(self::once())->method('extractCredential')->willReturn('token');
+        $storageAuthenticator->expects(self::once())
+            ->method('authenticateToken')
+            ->willThrowException(new StorageMaintenanceAuthenticationException(
+                'Project "Acme" (673) is disabled. - delayed payment',
+                retryAfter: 120,
+            ));
+        $storageAuthenticator->expects(self::never())->method('authorizeToken');
+
+        $applicationAuthenticator = $this->createMock(TokenAuthenticatorInterface::class);
+        $applicationAuthenticator->expects(self::once())->method('extractCredential')->willReturn(null);
+
+        $authenticator = $this->createAuthenticator(
+            $controller,
+            [
+                StorageApiTokenAuth::class => $storageAuthenticator,
+                ApplicationTokenAuth::class => $applicationAuthenticator,
+            ],
+        );
+
+        try {
+            $authenticator->authenticate($request);
+            self::fail('Expected AuthenticationException was not thrown.');
+        } catch (AuthenticationException $e) {
+            $response = $authenticator->onAuthenticationFailure($request, $e);
+        }
+
+        self::assertNotNull($response);
+        self::assertSame(503, $response->getStatusCode());
+        self::assertSame('120', $response->headers->get('Retry-After'));
+        $body = json_decode((string) $response->getContent(), true, flags: JSON_THROW_ON_ERROR);
+        self::assertIsArray($body);
+        self::assertSame('Project "Acme" (673) is disabled. - delayed payment', $body['error']);
+        self::assertSame(['errorCode' => 'storage.maintenance'], $body['context']);
+    }
+
+    public function testLaterMissingCredentialStillReplacesEarlierClientError(): void
+    {
+        $controller = new
+            #[StorageApiTokenAuth]
+            #[ApplicationTokenAuth]
+            class {
+                public function __invoke(): void {}
+            };
+
+        $request = $this->createControllerRequest($controller, [
+            'X-StorageApi-Token' => 'token',
+        ]);
+
+        $applicationAuthenticator = $this->createMock(TokenAuthenticatorInterface::class);
+        $applicationAuthenticator->expects(self::once())->method('extractCredential')->willReturn(null);
+
+        $authenticator = $this->createAuthenticator(
+            $controller,
+            [
+                StorageApiTokenAuth::class => $this->createAuthenticatorWithFailingAuthentication($request),
+                ApplicationTokenAuth::class => $applicationAuthenticator,
+            ],
+        );
+
+        $this->expectException(CustomUserMessageAuthenticationException::class);
+        $this->expectExceptionMessage('Authentication token is missing');
+
+        $authenticator->authenticate($request);
+    }
+
+    public function testLaterMissingCredentialReplacesEarlierContextualClientError(): void
+    {
+        $controller = new
+            #[StorageApiTokenAuth]
+            #[ApplicationTokenAuth]
+            class {
+                public function __invoke(): void {}
+            };
+
+        $request = $this->createControllerRequest($controller, [
+            'X-StorageApi-Token' => 'token',
+        ]);
+
+        $storageAuthenticator = $this->createMock(TokenAuthenticatorInterface::class);
+        $storageAuthenticator->expects(self::once())->method('extractCredential')->willReturn('token');
+        $storageAuthenticator->expects(self::once())
+            ->method('authenticateToken')
+            ->willThrowException(new ContextualAuthenticationException(
+                'Token is not valid',
+                401,
+                ['errorCode' => 'storage.tokenInvalid'],
+            ));
+        $storageAuthenticator->expects(self::never())->method('authorizeToken');
+
+        $applicationAuthenticator = $this->createMock(TokenAuthenticatorInterface::class);
+        $applicationAuthenticator->expects(self::once())->method('extractCredential')->willReturn(null);
+
+        $authenticator = $this->createAuthenticator(
+            $controller,
+            [
+                StorageApiTokenAuth::class => $storageAuthenticator,
+                ApplicationTokenAuth::class => $applicationAuthenticator,
+            ],
+        );
+
+        $this->expectException(CustomUserMessageAuthenticationException::class);
+        $this->expectExceptionMessage('Authentication token is missing');
+
+        $authenticator->authenticate($request);
     }
 
     public function testAuthenticationFailureResponseCarriesExceptionContext(): void

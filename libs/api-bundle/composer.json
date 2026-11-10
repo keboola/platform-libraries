@@ -8,6 +8,7 @@
         "keboola/common-exceptions": "^1.1",
         "keboola/kbc-manage-api-php-client": "^v10.2",
         "keboola/permission-checker": "^2.0|^3.0",
+        "keboola/retry": "^0.5.1",
         "keboola/service-client": "^1.0",
         "keboola/storage-api-php-client-branch-wrapper": "^7.0",
         "monolog/monolog": "^2.0|^3.0",

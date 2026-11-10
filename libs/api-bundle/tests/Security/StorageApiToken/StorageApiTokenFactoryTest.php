@@ -21,6 +21,7 @@ use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\MaintenanceException;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Keboola\StorageApiBranch\Factory\AuthType;
+use Keboola\StorageApiBranch\Factory\ClientOptions;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
@@ -38,11 +39,13 @@ class StorageApiTokenFactoryTest extends TestCase
         ?StorageClientRequestFactory $clientFactory = null,
         ?ManageApiClient $resolverClient = null,
         ?LoggerInterface $logger = null,
+        ?ClientOptions $authClientOptions = null,
     ): StorageApiTokenFactory {
         return new StorageApiTokenFactory(
             $clientFactory ?? $this->createMock(StorageClientRequestFactory::class),
             $resolverClient ?? $this->createMock(ManageApiClient::class),
             $logger ?? new NullLogger(),
+            $authClientOptions,
         );
     }
 
@@ -152,7 +155,7 @@ class StorageApiTokenFactoryTest extends TestCase
         ];
         yield 'maintenance exception without params' => [
             'clientException' => new MaintenanceException('Maintenance', null, 'token'),
-            'expectedExceptionClass' => CustomUserMessageAuthenticationException::class,
+            'expectedExceptionClass' => MaintenanceException::class,
             'expectedExceptionMessage' => 'Maintenance',
             'expectedExceptionCode' => 503,
         ];
@@ -164,24 +167,119 @@ class StorageApiTokenFactoryTest extends TestCase
         ];
     }
 
-    public function testVerifyFailureOnStorageMaintenanceResponse(): void
+    public function testVerifyFailureOnDisabledProjectIsNotRetried(): void
     {
         $storageResponseBody = [
             'error' => 'Project "Acme" (673) is disabled. - delayed payment',
+            'exceptionId' => 'exception-123',
             'reason' => 'delayed payment',
-            'status' => 'maintenance',
+            'code' => 'manage.project.disabled',
         ];
+        $factoryMock = $this->mockClientFactoryReturningStorageClient([
+            new GuzzleResponse(
+                503,
+                ['Content-Type' => 'application/json', 'Retry-After' => '120'],
+                (string) json_encode($storageResponseBody),
+            ),
+        ]);
+
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects(self::once())->method('warning');
+        $logger->expects(self::never())->method('error');
+        $logger->expects(self::never())->method('critical');
+
+        $exception = $this->captureAuthException(
+            fn() => $this->createFactory(
+                clientFactory: $factoryMock,
+                logger: $logger,
+                authClientOptions: new ClientOptions(backoffMaxTries: 3),
+            )->createFromValue(Request::create('https://keboola.com'), 'token', AuthType::STORAGE_TOKEN),
+        );
+
+        self::assertInstanceOf(StorageMaintenanceAuthenticationException::class, $exception);
+        self::assertSame('Project "Acme" (673) is disabled. - delayed payment', $exception->getMessage());
+        self::assertSame(503, $exception->getCode());
+        self::assertSame(['errorCode' => 'storage.maintenance'], $exception->getContext());
+        self::assertSame(120, $exception->getRetryAfter());
+    }
+
+    public function testVerifyFailureOnDisabledProjectWithoutRetryAfter(): void
+    {
+        $factoryMock = $this->mockClientFactoryReturningStorageClient([
+            new GuzzleResponse(
+                503,
+                ['Content-Type' => 'application/json'],
+                (string) json_encode(['error' => 'Project is disabled.', 'code' => 'manage.project.disabled']),
+            ),
+        ]);
+
+        $exception = $this->captureAuthException(
+            fn() => $this->createFactory(
+                clientFactory: $factoryMock,
+                authClientOptions: new ClientOptions(backoffMaxTries: 3),
+            )->createFromValue(Request::create('https://keboola.com'), 'token', AuthType::STORAGE_TOKEN),
+        );
+
+        self::assertInstanceOf(StorageMaintenanceAuthenticationException::class, $exception);
+        self::assertNull($exception->getRetryAfter());
+    }
+
+    public function testVerifyRetriesUncodedServiceUnavailable(): void
+    {
+        $handler = new MockHandler([
+            new GuzzleResponse(503, ['Content-Type' => 'text/html'], '<html>no healthy upstream</html>'),
+            new GuzzleResponse(
+                200,
+                ['Content-Type' => 'application/json'],
+                (string) json_encode(['id' => '42', 'description' => 'test']),
+            ),
+        ]);
+
+        $token = $this->createFactory(
+            clientFactory: $this->mockClientFactoryReturningStorageClient($handler),
+            authClientOptions: new ClientOptions(backoffMaxTries: 1),
+        )->createFromValue(Request::create('https://keboola.com'), 'token', AuthType::STORAGE_TOKEN);
+
+        self::assertSame('token', $token->getTokenValue());
+        self::assertCount(0, $handler);
+    }
+
+    public function testVerifyRethrowsUncodedServiceUnavailableWhenRetriesRunOut(): void
+    {
+        $handler = new MockHandler([
+            new GuzzleResponse(503, ['Content-Type' => 'text/html'], '<html>no healthy upstream</html>'),
+            new GuzzleResponse(503, ['Content-Type' => 'text/html'], '<html>no healthy upstream</html>'),
+            new GuzzleResponse(
+                200,
+                ['Content-Type' => 'application/json'],
+                (string) json_encode(['id' => '42', 'description' => 'test']),
+            ),
+        ]);
+
+        try {
+            $this->createFactory(
+                clientFactory: $this->mockClientFactoryReturningStorageClient($handler),
+                authClientOptions: new ClientOptions(backoffMaxTries: 1),
+            )->createFromValue(Request::create('https://keboola.com'), 'token', AuthType::STORAGE_TOKEN);
+            self::fail('Expected MaintenanceException was not thrown.');
+        } catch (MaintenanceException $e) {
+            self::assertSame(503, $e->getCode());
+        }
+
+        self::assertCount(1, $handler);
+    }
+
+    /**
+     * @param MockHandler|list<GuzzleResponse> $responses
+     */
+    private function mockClientFactoryReturningStorageClient(MockHandler|array $responses): StorageClientRequestFactory
+    {
         $storageClient = new Client([
             'url' => 'https://connection.keboola.test',
             'token' => 'token',
-            'backoffMaxTries' => 0,
-            'handler' => new MockHandler([
-                new GuzzleResponse(
-                    503,
-                    ['Content-Type' => 'application/json'],
-                    (string) json_encode($storageResponseBody),
-                ),
-            ]),
+            'backoffMaxTries' => 3,
+            'retryOnMaintenance' => false,
+            'handler' => $responses instanceof MockHandler ? $responses : new MockHandler($responses),
         ]);
 
         $wrapperMock = $this->createMock(ClientWrapper::class);
@@ -190,20 +288,7 @@ class StorageApiTokenFactoryTest extends TestCase
         $factoryMock = $this->createMock(StorageClientRequestFactory::class);
         $factoryMock->expects(self::once())->method('createClientWrapper')->willReturn($wrapperMock);
 
-        $logger = $this->createMock(LoggerInterface::class);
-        $logger->expects(self::once())->method('warning');
-        $logger->expects(self::never())->method('error');
-        $logger->expects(self::never())->method('critical');
-
-        $exception = $this->captureAuthException(
-            fn() => $this->createFactory(clientFactory: $factoryMock, logger: $logger)
-                ->createFromValue(Request::create('https://keboola.com'), 'token', AuthType::STORAGE_TOKEN),
-        );
-
-        self::assertSame('Project "Acme" (673) is disabled. - delayed payment', $exception->getMessage());
-        self::assertSame(503, $exception->getCode());
-        self::assertInstanceOf(StorageMaintenanceAuthenticationException::class, $exception);
-        self::assertSame(['errorCode' => 'storage.maintenance'], $exception->getContext());
+        return $factoryMock;
     }
 
     // ---------------------------------------------------------------------------

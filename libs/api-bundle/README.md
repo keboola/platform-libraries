@@ -322,17 +322,23 @@ so `auth.client_options` is its only configuration. `0` disables authentication 
 
 Only settings that behave identically on both clients are accepted here.
 
-**Storage token verification does not retry `503`.** `Keboola\StorageApi\Client` turns every `503`
-into `MaintenanceException` — a disabled project (`Project "X" is disabled. - delayed payment`), real
-Storage maintenance, and a `503` from a load balancer in front of Storage alike. Authentication
-answers it at once with:
+**Storage `503` during token verification.** `Keboola\StorageApi\Client` turns every `503` into
+`MaintenanceException`, so authentication looks at the body `code`:
 
-```json
-{"error": "<Storage error, or reason>", "code": 503, "status": "error", "context": {"errorCode": "storage.maintenance"}}
-```
+- `manage.project.disabled` (a disabled project, `Project "X" (123) is disabled. - delayed payment`):
+  not retried. Authentication answers at once, logs at `warning`, and forwards Storage's `Retry-After`
+  header when it is set:
 
-The error is logged at `warning`. Other `5xx`, network errors and transient `409` are still retried
-up to `backoff_max_tries`. Callers that want to ride out a short `503` retry the whole request.
+  ```json
+  {"error": "<Storage error>", "code": 503, "status": "error", "context": {"errorCode": "storage.maintenance"}}
+  ```
+
+- any other `503` (for example from a load balancer in front of Storage): retried with the same
+  exponential backoff and `backoff_max_tries` as other `5xx`. When the retries run out, the
+  `MaintenanceException` is rethrown unchanged.
+
+When a controller has several auth attributes, a later attribute whose credential is missing does
+not replace an earlier error that has a `5xx` code.
 
 `ManageApiClientFactory` stays autowirable under its class name and **keeps
 `Keboola\ManageApi\Client`'s own retry default** — the `auth` node never reaches it, so your own

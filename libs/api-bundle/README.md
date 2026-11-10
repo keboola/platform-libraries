@@ -338,7 +338,7 @@ Only settings that behave identically on both clients are accepted here.
   `MaintenanceException` is rethrown unchanged.
 
 When a controller has several auth attributes, a later attribute whose credential is missing does
-not replace an earlier error that has a context or a `5xx` code.
+not replace an earlier error that has a `5xx` code.
 
 `ManageApiClientFactory` stays autowirable under its class name and **keeps
 `Keboola\ManageApi\Client`'s own retry default** — the `auth` node never reaches it, so your own

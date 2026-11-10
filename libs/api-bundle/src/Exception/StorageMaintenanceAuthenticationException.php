@@ -8,7 +8,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Throwable;
 
 class StorageMaintenanceAuthenticationException extends ContextualAuthenticationException implements
-    RetryableExceptionInterface
+    RetryAfterAwareExceptionInterface
 {
     public const ERROR_CODE = 'storage.maintenance';
 

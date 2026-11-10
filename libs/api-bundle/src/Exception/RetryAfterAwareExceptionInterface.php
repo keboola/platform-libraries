@@ -6,7 +6,7 @@ namespace Keboola\ApiBundle\Exception;
 
 use Throwable;
 
-interface RetryableExceptionInterface extends Throwable
+interface RetryAfterAwareExceptionInterface extends Throwable
 {
     /**
      * Seconds the caller should wait before retrying, sent as the `Retry-After` header; null when unknown.

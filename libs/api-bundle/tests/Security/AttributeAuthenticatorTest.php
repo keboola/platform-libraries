@@ -420,6 +420,47 @@ class AttributeAuthenticatorTest extends TestCase
         $authenticator->authenticate($request);
     }
 
+    public function testLaterMissingCredentialReplacesEarlierContextualClientError(): void
+    {
+        $controller = new
+            #[StorageApiTokenAuth]
+            #[ApplicationTokenAuth]
+            class {
+                public function __invoke(): void {}
+            };
+
+        $request = $this->createControllerRequest($controller, [
+            'X-StorageApi-Token' => 'token',
+        ]);
+
+        $storageAuthenticator = $this->createMock(TokenAuthenticatorInterface::class);
+        $storageAuthenticator->expects(self::once())->method('extractCredential')->willReturn('token');
+        $storageAuthenticator->expects(self::once())
+            ->method('authenticateToken')
+            ->willThrowException(new ContextualAuthenticationException(
+                'Token is not valid',
+                401,
+                ['errorCode' => 'storage.tokenInvalid'],
+            ));
+        $storageAuthenticator->expects(self::never())->method('authorizeToken');
+
+        $applicationAuthenticator = $this->createMock(TokenAuthenticatorInterface::class);
+        $applicationAuthenticator->expects(self::once())->method('extractCredential')->willReturn(null);
+
+        $authenticator = $this->createAuthenticator(
+            $controller,
+            [
+                StorageApiTokenAuth::class => $storageAuthenticator,
+                ApplicationTokenAuth::class => $applicationAuthenticator,
+            ],
+        );
+
+        $this->expectException(CustomUserMessageAuthenticationException::class);
+        $this->expectExceptionMessage('Authentication token is missing');
+
+        $authenticator->authenticate($request);
+    }
+
     public function testAuthenticationFailureResponseCarriesExceptionContext(): void
     {
         $authenticator = $this->createAuthenticator(new class {

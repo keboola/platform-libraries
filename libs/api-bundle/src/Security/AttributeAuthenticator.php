@@ -6,7 +6,7 @@ namespace Keboola\ApiBundle\Security;
 
 use Keboola\ApiBundle\Attribute\AuthAttributeInterface;
 use Keboola\ApiBundle\Exception\ContextualHttpException;
-use Keboola\ApiBundle\Exception\RetryableExceptionInterface;
+use Keboola\ApiBundle\Exception\RetryAfterAwareExceptionInterface;
 use Keboola\ApiBundle\Util\ControllerReflector;
 use Keboola\CommonExceptions\ExceptionWithContextInterface;
 use Keboola\ErrorControl\ErrorResponse;
@@ -106,7 +106,7 @@ class AttributeAuthenticator extends AbstractAuthenticator
                 : new HttpException($statusCode, $errorMessage, $exception),
         );
 
-        if ($exception instanceof RetryableExceptionInterface && $exception->getRetryAfter() !== null) {
+        if ($exception instanceof RetryAfterAwareExceptionInterface && $exception->getRetryAfter() !== null) {
             $response->headers->set('Retry-After', (string) $exception->getRetryAfter());
         }
 
@@ -115,8 +115,7 @@ class AttributeAuthenticator extends AbstractAuthenticator
 
     private static function outranksMissingCredential(AuthenticationException $error): bool
     {
-        return $error instanceof ExceptionWithContextInterface
-            || $error->getCode() >= Response::HTTP_INTERNAL_SERVER_ERROR;
+        return $error->getCode() >= Response::HTTP_INTERNAL_SERVER_ERROR;
     }
 
     /**

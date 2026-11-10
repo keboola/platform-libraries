@@ -7,7 +7,8 @@ namespace Keboola\ApiBundle\Exception;
 use Symfony\Component\HttpFoundation\Response;
 use Throwable;
 
-class StorageMaintenanceAuthenticationException extends ContextualAuthenticationException
+class StorageMaintenanceAuthenticationException extends ContextualAuthenticationException implements
+    RetryableExceptionInterface
 {
     public const ERROR_CODE = 'storage.maintenance';
 
@@ -24,12 +25,8 @@ class StorageMaintenanceAuthenticationException extends ContextualAuthentication
         );
     }
 
-    public function getResponseHeaders(): array
+    public function getRetryAfter(): ?int
     {
-        if ($this->retryAfter === null || $this->retryAfter <= 0) {
-            return [];
-        }
-
-        return ['Retry-After' => (string) $this->retryAfter];
+        return $this->retryAfter !== null && $this->retryAfter > 0 ? $this->retryAfter : null;
     }
 }

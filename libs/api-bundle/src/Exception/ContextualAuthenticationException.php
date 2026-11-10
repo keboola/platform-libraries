@@ -27,12 +27,4 @@ class ContextualAuthenticationException extends CustomUserMessageAuthenticationE
     {
         return $this->context;
     }
-
-    /**
-     * @return array<string, string>
-     */
-    public function getResponseHeaders(): array
-    {
-        return [];
-    }
 }

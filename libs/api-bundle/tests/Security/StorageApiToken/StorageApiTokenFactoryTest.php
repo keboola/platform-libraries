@@ -205,7 +205,7 @@ class StorageApiTokenFactoryTest extends TestCase
         self::assertSame('Project "Acme" (673) is disabled. - delayed payment', $exception->getMessage());
         self::assertSame(503, $exception->getCode());
         self::assertSame(['errorCode' => 'storage.maintenance'], $exception->getContext());
-        self::assertSame(['Retry-After' => '120'], $exception->getResponseHeaders());
+        self::assertSame(120, $exception->getRetryAfter());
         self::assertSame([], $delays);
     }
 
@@ -228,7 +228,7 @@ class StorageApiTokenFactoryTest extends TestCase
         );
 
         self::assertInstanceOf(StorageMaintenanceAuthenticationException::class, $exception);
-        self::assertSame([], $exception->getResponseHeaders());
+        self::assertNull($exception->getRetryAfter());
     }
 
     public function testVerifyRetriesUncodedServiceUnavailable(): void

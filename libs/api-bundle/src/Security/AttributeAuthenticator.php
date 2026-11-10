@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Keboola\ApiBundle\Security;
 
 use Keboola\ApiBundle\Attribute\AuthAttributeInterface;
-use Keboola\ApiBundle\Exception\ContextualAuthenticationException;
 use Keboola\ApiBundle\Exception\ContextualHttpException;
+use Keboola\ApiBundle\Exception\RetryableExceptionInterface;
 use Keboola\ApiBundle\Util\ControllerReflector;
 use Keboola\CommonExceptions\ExceptionWithContextInterface;
 use Keboola\ErrorControl\ErrorResponse;
@@ -100,21 +100,17 @@ class AttributeAuthenticator extends AbstractAuthenticator
 
         $statusCode = $exception->getCode() > 0 ? $exception->getCode() : Response::HTTP_UNAUTHORIZED;
 
-        if ($exception instanceof ExceptionWithContextInterface) {
-            $response = ErrorResponse::fromException(new ContextualHttpException(
-                $statusCode,
-                $errorMessage,
-                $exception->getContext(),
-                $exception,
-            ));
-            if ($exception instanceof ContextualAuthenticationException) {
-                $response->headers->add($exception->getResponseHeaders());
-            }
+        $response = ErrorResponse::fromException(
+            $exception instanceof ExceptionWithContextInterface
+                ? new ContextualHttpException($statusCode, $errorMessage, $exception->getContext(), $exception)
+                : new HttpException($statusCode, $errorMessage, $exception),
+        );
 
-            return $response;
+        if ($exception instanceof RetryableExceptionInterface && $exception->getRetryAfter() !== null) {
+            $response->headers->set('Retry-After', (string) $exception->getRetryAfter());
         }
 
-        return ErrorResponse::fromException(new HttpException($statusCode, $errorMessage, $exception));
+        return $response;
     }
 
     private static function outranksMissingCredential(AuthenticationException $error): bool

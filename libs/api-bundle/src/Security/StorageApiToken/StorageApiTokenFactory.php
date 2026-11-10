@@ -15,7 +15,6 @@ use Keboola\StorageApiBranch\Factory\AuthType;
 use Keboola\StorageApiBranch\Factory\ClientOptions;
 use Psr\Log\LoggerInterface;
 use Retry\BackOff\ExponentialBackOffPolicy;
-use Retry\BackOff\SleeperInterface;
 use Retry\Policy\CallableRetryPolicy;
 use Retry\RetryProxy;
 use RuntimeException;
@@ -54,7 +53,6 @@ class StorageApiTokenFactory
         private readonly ManageApiClient $resolverClient,
         private readonly LoggerInterface $logger,
         private readonly ?ClientOptions $authClientOptions = null,
-        private readonly ?SleeperInterface $retrySleeper = null,
     ) {
     }
 
@@ -102,18 +100,13 @@ class StorageApiTokenFactory
 
     private function createServiceUnavailableRetryProxy(): RetryProxy
     {
-        $backOffPolicy = new ExponentialBackOffPolicy(self::RETRY_INITIAL_INTERVAL_MS);
-        if ($this->retrySleeper !== null) {
-            $backOffPolicy->setSleeper($this->retrySleeper);
-        }
-
         return new RetryProxy(
             new CallableRetryPolicy(
                 static fn(Throwable $e): bool => $e instanceof StorageApiMaintenanceException
                     && !self::isStorageMaintenance($e),
                 ($this->authClientOptions?->getBackoffMaxTries() ?? 0) + 1,
             ),
-            $backOffPolicy,
+            new ExponentialBackOffPolicy(self::RETRY_INITIAL_INTERVAL_MS),
             $this->logger,
         );
     }

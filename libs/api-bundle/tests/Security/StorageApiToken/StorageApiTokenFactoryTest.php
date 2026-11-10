@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Keboola\ApiBundle\Tests\Security\StorageApiToken;
 
-use Closure;
 use Exception;
 use Generator;
 use GuzzleHttp\Exception\ConnectException;
@@ -27,6 +26,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
+use Retry\BackOff\SleeperInterface;
 use RuntimeException;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Security\Core\Exception\CustomUserMessageAuthenticationException;
@@ -41,7 +41,7 @@ class StorageApiTokenFactoryTest extends TestCase
         ?ManageApiClient $resolverClient = null,
         ?LoggerInterface $logger = null,
         ?ClientOptions $authClientOptions = null,
-        ?Closure $sleeper = null,
+        ?SleeperInterface $sleeper = null,
     ): StorageApiTokenFactory {
         return new StorageApiTokenFactory(
             $clientFactory ?? $this->createMock(StorageClientRequestFactory::class),
@@ -191,7 +191,7 @@ class StorageApiTokenFactoryTest extends TestCase
         $logger->expects(self::never())->method('error');
         $logger->expects(self::never())->method('critical');
 
-        $sleeper = $this->recordingSleeper($delays);
+        $sleeper = new RecordingSleeper();
         $exception = $this->captureAuthException(
             fn() => $this->createFactory(
                 clientFactory: $factoryMock,
@@ -206,7 +206,7 @@ class StorageApiTokenFactoryTest extends TestCase
         self::assertSame(503, $exception->getCode());
         self::assertSame(['errorCode' => 'storage.maintenance'], $exception->getContext());
         self::assertSame(120, $exception->getRetryAfter());
-        self::assertSame([], $delays);
+        self::assertSame([], $sleeper->periods);
     }
 
     public function testVerifyFailureOnDisabledProjectWithoutRetryAfter(): void
@@ -223,7 +223,7 @@ class StorageApiTokenFactoryTest extends TestCase
             fn() => $this->createFactory(
                 clientFactory: $factoryMock,
                 authClientOptions: new ClientOptions(backoffMaxTries: 3),
-                sleeper: $this->recordingSleeper($delays),
+                sleeper: $sleeper = new RecordingSleeper(),
             )->createFromValue(Request::create('https://keboola.com'), 'token', AuthType::STORAGE_TOKEN),
         );
 
@@ -245,16 +245,15 @@ class StorageApiTokenFactoryTest extends TestCase
         $token = $this->createFactory(
             clientFactory: $factoryMock,
             authClientOptions: new ClientOptions(backoffMaxTries: 3),
-            sleeper: $this->recordingSleeper($delays),
+            sleeper: $sleeper = new RecordingSleeper(),
         )->createFromValue(Request::create('https://keboola.com'), 'token', AuthType::STORAGE_TOKEN);
 
         self::assertSame('token', $token->getTokenValue());
-        self::assertSame([1000], $delays);
+        self::assertSame([1000], $sleeper->periods);
     }
 
     public function testVerifyRethrowsUncodedServiceUnavailableWhenRetriesRunOut(): void
     {
-        $delays = [];
         $factoryMock = $this->mockClientFactoryReturningStorageClient(array_fill(
             0,
             4,
@@ -264,19 +263,20 @@ class StorageApiTokenFactoryTest extends TestCase
                 (string) json_encode(['error' => 'Maintenance', 'reason' => 'Maintenance']),
             ),
         ));
+        $sleeper = new RecordingSleeper();
 
         try {
             $this->createFactory(
                 clientFactory: $factoryMock,
                 authClientOptions: new ClientOptions(backoffMaxTries: 3),
-                sleeper: $this->recordingSleeper($delays),
+                sleeper: $sleeper,
             )->createFromValue(Request::create('https://keboola.com'), 'token', AuthType::STORAGE_TOKEN);
             self::fail('Expected MaintenanceException was not thrown.');
         } catch (MaintenanceException $e) {
             self::assertSame(503, $e->getCode());
         }
 
-        self::assertSame([1000, 2000, 4000], $delays);
+        self::assertSame([1000, 2000, 4000], $sleeper->periods);
     }
 
     /**
@@ -299,17 +299,6 @@ class StorageApiTokenFactoryTest extends TestCase
         $factoryMock->expects(self::once())->method('createClientWrapper')->willReturn($wrapperMock);
 
         return $factoryMock;
-    }
-
-    /**
-     * @param-out list<int> $delays
-     */
-    private function recordingSleeper(mixed &$delays): Closure
-    {
-        $delays = [];
-        return function (int $milliseconds) use (&$delays): void {
-            $delays[] = $milliseconds;
-        };
     }
 
     // ---------------------------------------------------------------------------

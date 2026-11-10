@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Keboola\ApiBundle\Security\StorageApiToken;
 
-use Closure;
 use Keboola\ApiBundle\Exception\StorageMaintenanceAuthenticationException;
 use Keboola\ApiBundle\StorageApiClient\StorageClientRequestFactory;
 use Keboola\ManageApi\Client as ManageApiClient;
@@ -15,11 +14,16 @@ use Keboola\StorageApi\MaintenanceException as StorageApiMaintenanceException;
 use Keboola\StorageApiBranch\Factory\AuthType;
 use Keboola\StorageApiBranch\Factory\ClientOptions;
 use Psr\Log\LoggerInterface;
+use Retry\BackOff\ExponentialBackOffPolicy;
+use Retry\BackOff\SleeperInterface;
+use Retry\Policy\CallableRetryPolicy;
+use Retry\RetryProxy;
 use RuntimeException;
 use SensitiveParameter;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Security\Core\Exception\CustomUserMessageAuthenticationException;
+use Throwable;
 
 /**
  * Builds a {@see StorageApiToken}. Tokens whose value is a Storage credential (legacy
@@ -38,25 +42,20 @@ class StorageApiTokenFactory
     private const PROJECT_ID_HEADER = 'X-KBC-ProjectId';
     private const STORAGE_MAINTENANCE_CODES = ['manage.project.disabled'];
 
-    /** @var Closure(int): void */
-    private readonly Closure $sleeper;
+    private const RETRY_INITIAL_INTERVAL_MS = 1000;
 
     /**
      * @param ?ClientOptions $authClientOptions Overrides merged on top of the factory's base options
      *     for token verification only, so authentication can be tuned separately from the
      *     controller-facing Storage client. Wired from `keboola_api.auth.client_options`.
-     * @param ?Closure(int): void $sleeper Waits the given number of milliseconds between retries.
      */
     public function __construct(
         private readonly StorageClientRequestFactory $clientFactory,
         private readonly ManageApiClient $resolverClient,
         private readonly LoggerInterface $logger,
         private readonly ?ClientOptions $authClientOptions = null,
-        ?Closure $sleeper = null,
+        private readonly ?SleeperInterface $retrySleeper = null,
     ) {
-        $this->sleeper = $sleeper ?? static function (int $milliseconds): void {
-            usleep($milliseconds * 1000);
-        };
     }
 
     /**
@@ -66,8 +65,8 @@ class StorageApiTokenFactory
      * with the matching scheme). 4xx Storage errors are surfaced to the caller. A Storage 503 whose body
      * carries a maintenance code (a disabled project) is surfaced at once as
      * {@see StorageMaintenanceAuthenticationException}. The auth Storage client does not retry 503
-     * (`retryOnMaintenance: false`), so any other 503 is retried here with the client's exponential
-     * backoff and rethrown when retries run out. Other errors bubble up unchanged.
+     * (`retryOnMaintenance: false`), so any other 503 is retried here through {@see RetryProxy} with
+     * the client's exponential backoff and rethrown when retries run out. Other errors bubble up unchanged.
      * Programmatic tokens never reach this — their detail comes from the resolver
      * ({@see self::exchangeFromProgrammaticToken()}).
      */
@@ -80,43 +79,61 @@ class StorageApiTokenFactory
         $storageApiClient = $this->clientFactory
             ->createClientWrapper($token, $authType, $request, $this->authClientOptions)
             ->getBasicClient();
-        $maxRetries = $this->authClientOptions?->getBackoffMaxTries() ?? 0;
 
-        for ($retries = 0;; $retries++) {
-            try {
-                $tokenInfo = $storageApiClient->verifyToken();
+        try {
+            /** @var array<mixed> $tokenInfo */
+            $tokenInfo = $this->createServiceUnavailableRetryProxy()->call(
+                static fn() => $storageApiClient->verifyToken(),
+            );
 
-                return new StorageApiToken($tokenInfo, $storageApiClient->getTokenString(), $authType);
-            } catch (StorageApiMaintenanceException $e) {
-                $params = $e->getContextParams();
-                if (is_array($params) && in_array($params['code'] ?? null, self::STORAGE_MAINTENANCE_CODES, true)) {
-                    throw $this->createStorageMaintenanceException($e, $params);
-                }
-                if ($retries >= $maxRetries) {
-                    throw $e;
-                }
-                ($this->sleeper)(2 ** $retries * 1000);
-            } catch (ClientException $e) {
-                if ($e->getCode() >= 400 && $e->getCode() < 500) {
-                    throw new CustomUserMessageAuthenticationException($e->getMessage(), [], $e->getCode(), $e);
-                }
-                throw $e;
+            return new StorageApiToken($tokenInfo, $storageApiClient->getTokenString(), $authType);
+        } catch (StorageApiMaintenanceException $e) {
+            if (self::isStorageMaintenance($e)) {
+                throw $this->createStorageMaintenanceException($e);
             }
+            throw $e;
+        } catch (ClientException $e) {
+            if ($e->getCode() >= 400 && $e->getCode() < 500) {
+                throw new CustomUserMessageAuthenticationException($e->getMessage(), [], $e->getCode(), $e);
+            }
+            throw $e;
         }
     }
 
-    /**
-     * @param array<mixed> $params
-     */
+    private function createServiceUnavailableRetryProxy(): RetryProxy
+    {
+        $backOffPolicy = new ExponentialBackOffPolicy(self::RETRY_INITIAL_INTERVAL_MS);
+        if ($this->retrySleeper !== null) {
+            $backOffPolicy->setSleeper($this->retrySleeper);
+        }
+
+        return new RetryProxy(
+            new CallableRetryPolicy(
+                static fn(Throwable $e): bool => $e instanceof StorageApiMaintenanceException
+                    && !self::isStorageMaintenance($e),
+                ($this->authClientOptions?->getBackoffMaxTries() ?? 0) + 1,
+            ),
+            $backOffPolicy,
+            $this->logger,
+        );
+    }
+
+    private static function isStorageMaintenance(StorageApiMaintenanceException $e): bool
+    {
+        $params = $e->getContextParams();
+
+        return is_array($params) && in_array($params['code'] ?? null, self::STORAGE_MAINTENANCE_CODES, true);
+    }
+
     private function createStorageMaintenanceException(
         StorageApiMaintenanceException $e,
-        array $params,
     ): StorageMaintenanceAuthenticationException {
+        $params = (array) $e->getContextParams();
         $message = is_string($params['error'] ?? null) ? $params['error'] : (string) $e->getMessage();
 
         $this->logger->warning('Storage token verification unavailable: Storage API is in maintenance.', [
             'reason' => $e->getMessage(),
-            'code' => $params['code'],
+            'code' => $params['code'] ?? null,
             'retryAfter' => $e->getRetryAfter(),
         ]);
 

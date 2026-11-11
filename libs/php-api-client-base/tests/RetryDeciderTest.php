@@ -10,7 +10,11 @@ use GuzzleHttp\Psr7\Response;
 use Keboola\ApiClientBase\RetryDecider;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
+use Psr\Log\AbstractLogger;
+use Psr\Log\LogLevel;
 use Psr\Log\NullLogger;
+use RuntimeException;
+use Stringable;
 
 class RetryDeciderTest extends TestCase
 {
@@ -68,6 +72,40 @@ class RetryDeciderTest extends TestCase
         self::assertTrue($decider(0, new Request('GET', '/'), new Response(409)));
         self::assertTrue($decider(0, new Request('GET', '/'), new Response(500)));
         self::assertFalse($decider(0, new Request('GET', '/'), new Response(404)));
+    }
+
+    public function testRetryableResponseTrueIsCappedByMaxRetries(): void
+    {
+        $decider = new RetryDecider(
+            3,
+            new NullLogger(),
+            retryableResponse: static fn(ResponseInterface $response): bool => true,
+        );
+        self::assertTrue($decider(2, new Request('GET', '/'), new Response(409)));
+        self::assertFalse($decider(3, new Request('GET', '/'), new Response(409)));
+    }
+
+    public function testThrowingRetryableResponseCallbackFallsBackToStatusCodeRules(): void
+    {
+        $logger = new class extends AbstractLogger {
+            /** @var list<string> */
+            public array $warnings = [];
+
+            public function log($level, string|Stringable $message, array $context = []): void
+            {
+                if ($level === LogLevel::WARNING) {
+                    $this->warnings[] = (string) $message;
+                }
+            }
+        };
+        $callback = static function (ResponseInterface $response): ?bool {
+            throw new RuntimeException('Syntax error');
+        };
+        $decider = new RetryDecider(3, $logger, retryableResponse: $callback);
+
+        self::assertTrue($decider(0, new Request('GET', '/'), new Response(503)));
+        self::assertFalse($decider(0, new Request('GET', '/'), new Response(404)));
+        self::assertContains('retryableResponse callback failed: Syntax error', $logger->warnings);
     }
 
     public function testRetryableResponseWinsOverRetryableStatusCodes(): void

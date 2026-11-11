@@ -31,8 +31,13 @@ composer require keboola/php-api-client-base
   `Closure(ResponseInterface): ?bool` decides whether a failed response
   (status >= 400) is retried: `true` (retry), `false` (do not retry, e.g. a 5xx
   the service marks as permanent) or `null` (default rules: retry 5xx, not
-  4xx). A response below 400 is never retried and never reaches it. The
-  response body is rewound after the callback.
+  4xx). A response below 400 is never retried and never reaches it. Only
+  return `true` for requests that are safe to repeat: a `true` for a 4xx also
+  retries a non-idempotent request, such as a `POST` answered with `409`. A
+  callback that throws is logged as a warning and counts as `null`. The
+  response body is rewound after the callback if it is seekable; with the
+  `stream` request option it is not, so a callback that reads it leaves the
+  error without a body.
   Transport errors are always retried, and `backoffMaxTries` always caps the
   retries. `retryableStatusCodes` is
   deprecated in favour of `retryableResponse`.

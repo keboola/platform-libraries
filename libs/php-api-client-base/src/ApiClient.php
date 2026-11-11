@@ -41,7 +41,8 @@ class ApiClient
      *     ($message, $code, $previous, $statusCode, $responseBody).
      * @param ?Closure(ResponseInterface): ?bool $retryableResponse Decides whether a failed response (status >= 400)
      *     is retried: true retries it, false does not (e.g. a 5xx the service marks as permanent), null leaves
-     *     it to the status-code rules. A response below 400 is never retried and never reaches it.
+     *     it to the status-code rules. A response below 400 is never retried and never reaches it. A callback
+     *     that throws counts as null. Return true only for requests that are safe to repeat.
      */
     public function __construct(
         ?string $baseUrl,

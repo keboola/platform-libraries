@@ -17,7 +17,8 @@ class RetryDecider
      *     also be retried (e.g. [429]).
      * @param ?Closure(ResponseInterface): ?bool $retryableResponse Decides whether a failed response (status >= 400)
      *     is retried: true retries it, false does not, null leaves it to the status-code rules. It is not asked for a
-     *     response below 400 (never retried) or a transport error. The body is rewound after the call.
+     *     response below 400 (never retried) or a transport error. A callback that throws counts as null. The body
+     *     is rewound after the call if it is seekable.
      */
     public function __construct(
         private readonly int $maxRetries,
@@ -75,6 +76,10 @@ class RetryDecider
 
         try {
             return ($this->retryableResponse)($response);
+        } catch (Throwable $e) {
+            $this->logger->warning('retryableResponse callback failed: ' . $e->getMessage());
+
+            return null;
         } finally {
             if ($response->getBody()->isSeekable()) {
                 $response->getBody()->rewind();

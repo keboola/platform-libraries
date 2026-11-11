@@ -16,6 +16,7 @@ use Keboola\ApiClientBase\Auth\NoAuthAuthenticator;
 use Keboola\ApiClientBase\Auth\RequestAuthenticatorInterface;
 use Keboola\ApiClientBase\ErrorMessageResolverInterface;
 use Keboola\ApiClientBase\Exception\ClientException;
+use Keboola\ApiClientBase\Json;
 use Keboola\ApiClientBase\Tests\Fixtures\DummyClientException;
 use Keboola\ApiClientBase\Tests\Fixtures\DummyModel;
 use PHPUnit\Framework\TestCase;
@@ -225,6 +226,31 @@ class ApiClientTest extends TestCase
         );
 
         $client->sendRequest(new Request('GET', 'foo'));
+
+        self::assertSame(0, $mock->count());
+    }
+
+    public function testThrowingRetryableResponseCallbackKeepsResponseAndRetries(): void
+    {
+        $mock = new MockHandler([
+            new Response(503, [], '<html>no healthy upstream</html>'),
+            new Response(503, [], '<html>no healthy upstream</html>'),
+        ]);
+        $client = new ApiClient(
+            'https://example.test',
+            new NoAuthAuthenticator(),
+            new ApiClientOptions(backoffMaxTries: 1, requestHandler: HandlerStack::create($mock)),
+            retryableResponse: static fn(ResponseInterface $response): ?bool
+                => Json::decodeArray((string) $response->getBody()) === [] ? false : null,
+        );
+
+        try {
+            $client->sendRequest(new Request('GET', 'foo'));
+            self::fail('Expected ClientException to be thrown');
+        } catch (ClientException $e) {
+            self::assertSame(503, $e->getStatusCode());
+            self::assertSame('<html>no healthy upstream</html>', $e->getResponseBody());
+        }
 
         self::assertSame(0, $mock->count());
     }

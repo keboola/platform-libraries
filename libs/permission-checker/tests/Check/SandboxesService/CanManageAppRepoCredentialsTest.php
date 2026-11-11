@@ -11,7 +11,18 @@ use PHPUnit\Framework\TestCase;
 
 class CanManageAppRepoCredentialsTest extends TestCase
 {
-    public function testAllowManageRepoCredentials(): void
+    public static function provideAllowedRoles(): iterable
+    {
+        yield 'admin' => ['role' => 'admin'];
+        yield 'guest' => ['role' => 'guest'];
+        yield 'share' => ['role' => 'share'];
+        yield 'developer' => ['role' => 'developer'];
+        yield 'reviewer' => ['role' => 'reviewer'];
+        yield 'productionManager' => ['role' => 'productionManager'];
+    }
+
+    /** @dataProvider provideAllowedRoles */
+    public function testAllowManageRepoCredentials(string $role): void
     {
         $this->expectNotToPerformAssertions();
 
@@ -20,6 +31,38 @@ class CanManageAppRepoCredentialsTest extends TestCase
 
         $checker = new CanManageAppRepoCredentials($appId, $projectId);
         $checker->checkPermissions(new StorageApiToken(
+            role: $role,
+            projectId: $projectId,
+            isAdminToken: true,
+        ));
+    }
+
+    public static function provideDeniedRoles(): iterable
+    {
+        yield 'no role' => [
+            'role' => null,
+            'error' => new PermissionDeniedException('Role "none" is not allowed to manage credentials of app \'1\''),
+        ];
+
+        yield 'readOnly' => [
+            'role' => 'readOnly',
+            'error' => new PermissionDeniedException(
+                'Role "readOnly" is not allowed to manage credentials of app \'1\'',
+            ),
+        ];
+    }
+
+    /** @dataProvider provideDeniedRoles */
+    public function testDenyRole(?string $role, PermissionDeniedException $error): void
+    {
+        $appId = 1;
+        $projectId = '123';
+
+        $this->expectExceptionObject($error);
+
+        $checker = new CanManageAppRepoCredentials($appId, $projectId);
+        $checker->checkPermissions(new StorageApiToken(
+            role: $role,
             projectId: $projectId,
             isAdminToken: true,
         ));
@@ -36,6 +79,7 @@ class CanManageAppRepoCredentialsTest extends TestCase
 
         $checker = new CanManageAppRepoCredentials($appId, $projectId);
         $checker->checkPermissions(new StorageApiToken(
+            role: 'admin',
             projectId: $projectId,
             isAdminToken: false,
         ));
@@ -53,6 +97,7 @@ class CanManageAppRepoCredentialsTest extends TestCase
 
         $checker = new CanManageAppRepoCredentials($appId, $appProjectId);
         $checker->checkPermissions(new StorageApiToken(
+            role: 'admin',
             projectId: $tokenProjectId,
             isAdminToken: true,
         ));

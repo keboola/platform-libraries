@@ -82,19 +82,18 @@ class RetryDeciderTest extends TestCase
         self::assertTrue($decider(0, new Request('GET', '/'), new Response(429)));
     }
 
-    public function testRetryableResponseCallbackIsAskedForSuccessfulResponse(): void
+    public function testRetryableResponseCallbackIsNotAskedForSuccessfulResponse(): void
     {
         $decider = new RetryDecider(
             3,
             new NullLogger(),
-            retryableResponse: static fn(ResponseInterface $response): ?bool => match ($response->getStatusCode()) {
-                202 => true,
-                default => null,
+            retryableResponse: static function (ResponseInterface $response): ?bool {
+                self::fail('Callback must not be asked for a response below 400.');
             },
         );
-        self::assertTrue($decider(0, new Request('GET', '/'), new Response(202)));
         self::assertFalse($decider(0, new Request('GET', '/'), new Response(200)));
-        self::assertFalse($decider(3, new Request('GET', '/'), new Response(202)));
+        self::assertFalse($decider(0, new Request('GET', '/'), new Response(202)));
+        self::assertFalse($decider(0, new Request('GET', '/'), new Response(302)));
     }
 
     public function testRetryableResponseCallbackIsNotAskedForTransportError(): void

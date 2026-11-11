@@ -15,9 +15,9 @@ class RetryDecider
     /**
      * @param list<int> $retryableStatusCodes Deprecated, use $retryableResponse. Non-5xx status codes that should
      *     also be retried (e.g. [429]).
-     * @param ?Closure(ResponseInterface): ?bool $retryableResponse Decides whether a response is retried: true
-     *     retries it, false does not, null leaves it to the status-code rules. It is asked for every response,
-     *     including a successful one, but not for a transport error. The body is rewound after the call.
+     * @param ?Closure(ResponseInterface): ?bool $retryableResponse Decides whether a failed response (status >= 400)
+     *     is retried: true retries it, false does not, null leaves it to the status-code rules. It is not asked for a
+     *     response below 400 (never retried) or a transport error. The body is rewound after the call.
      */
     public function __construct(
         private readonly int $maxRetries,
@@ -39,6 +39,9 @@ class RetryDecider
 
         if ($response !== null) {
             $code = $response->getStatusCode();
+            if ($code < 400) {
+                return false;
+            }
 
             $retryable = $this->isRetryableResponse($response);
             if ($retryable !== null) {
@@ -50,13 +53,11 @@ class RetryDecider
                 return $this->logAndRetry($code, $error, $retries);
             }
 
-            if ($code >= 400 && $code < 500) {
+            if ($code < 500) {
                 return false;
             }
 
-            if ($code >= 500) {
-                return $this->logAndRetry($code, $error, $retries);
-            }
+            return $this->logAndRetry($code, $error, $retries);
         }
 
         if ($error !== null) {

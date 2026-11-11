@@ -28,11 +28,11 @@ composer require keboola/php-api-client-base
   bodies) is used automatically. `retryableResponse` is an `ApiClient`
   constructor argument supplied by the service facade (it describes the
   service's API contract, not caller preferences). This
-  `Closure(ResponseInterface): ?bool` decides whether a response is retried:
-  `true` (retry), `false` (do not retry, e.g. a 5xx the service marks as
-  permanent) or `null` (default rules: retry 5xx, not 4xx). It is asked for
-  every response, including a successful one, so return `null` for statuses it
-  does not care about. The response body is rewound after the callback.
+  `Closure(ResponseInterface): ?bool` decides whether a failed response
+  (status >= 400) is retried: `true` (retry), `false` (do not retry, e.g. a 5xx
+  the service marks as permanent) or `null` (default rules: retry 5xx, not
+  4xx). A response below 400 is never retried and never reaches it. The
+  response body is rewound after the callback.
   Transport errors are always retried, and `backoffMaxTries` always caps the
   retries. `retryableStatusCodes` is
   deprecated in favour of `retryableResponse`.

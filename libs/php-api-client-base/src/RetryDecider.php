@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\ApiClientBase;
 
+use Closure;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Log\LoggerInterface;
@@ -12,12 +13,18 @@ use Throwable;
 class RetryDecider
 {
     /**
-     * @param list<int> $retryableStatusCodes Non-5xx status codes that should also be retried (e.g. [429]).
+     * @param list<int> $retryableStatusCodes Deprecated, use $retryableResponse. Non-5xx status codes that should
+     *     also be retried (e.g. [429]).
+     * @param ?Closure(ResponseInterface): ?bool $retryableResponse Decides whether a failed response (status >= 400)
+     *     is retried: true retries it, false does not, null leaves it to the status-code rules. It is not asked for a
+     *     response below 400 (never retried) or a transport error. A callback that throws counts as null. The body
+     *     is rewound after the call if it is seekable.
      */
     public function __construct(
         private readonly int $maxRetries,
         private readonly LoggerInterface $logger,
         private readonly array $retryableStatusCodes = [],
+        private readonly ?Closure $retryableResponse = null,
     ) {
     }
 
@@ -31,22 +38,53 @@ class RetryDecider
             return false;
         }
 
-        $code = $response?->getStatusCode();
+        if ($response !== null) {
+            $code = $response->getStatusCode();
+            if ($code < 400) {
+                return false;
+            }
 
-        // Explicitly retryable codes (e.g. 429) win over the generic 4xx no-retry rule.
-        if ($code !== null && in_array($code, $this->retryableStatusCodes, true)) {
+            $retryable = $this->isRetryableResponse($response);
+            if ($retryable !== null) {
+                return $retryable && $this->logAndRetry($code, $error, $retries);
+            }
+
+            // Explicitly retryable codes (e.g. 429) win over the generic 4xx no-retry rule.
+            if (in_array($code, $this->retryableStatusCodes, true)) {
+                return $this->logAndRetry($code, $error, $retries);
+            }
+
+            if ($code < 500) {
+                return false;
+            }
+
             return $this->logAndRetry($code, $error, $retries);
         }
 
-        if ($code !== null && $code >= 400 && $code < 500) {
-            return false;
-        }
-
-        if ($error !== null || ($code !== null && $code >= 500)) {
-            return $this->logAndRetry($code, $error, $retries);
+        if ($error !== null) {
+            return $this->logAndRetry(null, $error, $retries);
         }
 
         return false;
+    }
+
+    private function isRetryableResponse(ResponseInterface $response): ?bool
+    {
+        if ($this->retryableResponse === null) {
+            return null;
+        }
+
+        try {
+            return ($this->retryableResponse)($response);
+        } catch (Throwable $e) {
+            $this->logger->warning('retryableResponse callback failed: ' . $e->getMessage());
+
+            return null;
+        } finally {
+            if ($response->getBody()->isSeekable()) {
+                $response->getBody()->rewind();
+            }
+        }
     }
 
     private function logAndRetry(?int $code, mixed $error, int $retries): bool

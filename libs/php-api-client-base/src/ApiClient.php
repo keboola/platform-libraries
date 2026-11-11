@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\ApiClientBase;
 
+use Closure;
 use GuzzleHttp\Client as GuzzleClient;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\RequestException;
@@ -31,12 +32,17 @@ class ApiClient
 
     /**
      * @param non-empty-string|null $baseUrl
-     * @param list<int> $retryableStatusCodes Non-5xx status codes to also retry (e.g. [429]).
+     * @param list<int> $retryableStatusCodes Deprecated, use $retryableResponse. Non-5xx status codes to also
+     *     retry (e.g. [429]).
      * @param class-string<ClientException> $exceptionClass Exception class thrown on failure; a
      *     ClientException subclass lets callers identify the failing service. It is instantiated
      *     inline at each throw site so the exception originates there (clean stack trace). A
      *     subclass that wants richer construction does it in its own constructor, which receives
      *     ($message, $code, $previous, $statusCode, $responseBody).
+     * @param ?Closure(ResponseInterface): ?bool $retryableResponse Decides whether a failed response (status >= 400)
+     *     is retried: true retries it, false does not (e.g. a 5xx the service marks as permanent), null leaves
+     *     it to the status-code rules. A response below 400 is never retried and never reaches it. A callback
+     *     that throws counts as null. Return true only for requests that are safe to repeat.
      */
     public function __construct(
         ?string $baseUrl,
@@ -45,6 +51,7 @@ class ApiClient
         ?ErrorMessageResolverInterface $errorMessageResolver = null,
         array $retryableStatusCodes = [],
         string $exceptionClass = ClientException::class,
+        ?Closure $retryableResponse = null,
     ) {
         $options ??= new ApiClientOptions();
         $this->errorMessageResolver = $errorMessageResolver ?? new DefaultErrorMessageResolver();
@@ -65,6 +72,7 @@ class ApiClient
                 $options->backoffMaxTries,
                 $logger,
                 $retryableStatusCodes,
+                $retryableResponse,
             )));
         }
 

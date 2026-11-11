@@ -20,17 +20,30 @@ composer require keboola/php-api-client-base
 
 - `ApiClient` — Guzzle wrapper with per-request auth, retry, logging, and
   response-to-model mapping. Constructed as
-  `new ApiClient($baseUrl, $authenticator, $options, errorMessageResolver: ..., retryableStatusCodes: [...])`.
+  `new ApiClient($baseUrl, $authenticator, $options, errorMessageResolver: ..., retryableResponse: ...)`.
   The authenticator is **required**; pass `new NoAuthAuthenticator()` for
   unauthenticated clients. `errorMessageResolver` accepts a
   `?ErrorMessageResolverInterface` instance; when `null`, the shipped
   `DefaultErrorMessageResolver` (which extracts `error` or `message` from JSON
-  bodies) is used automatically. `retryableStatusCodes` are `ApiClient`
-  constructor arguments supplied by the service facade (they describe the
-  service's API contract, not caller preferences).
+  bodies) is used automatically. `retryableResponse` is an `ApiClient`
+  constructor argument supplied by the service facade (it describes the
+  service's API contract, not caller preferences). This
+  `Closure(ResponseInterface): ?bool` decides whether a failed response
+  (status >= 400) is retried: `true` (retry), `false` (do not retry, e.g. a 5xx
+  the service marks as permanent) or `null` (default rules: retry 5xx, not
+  4xx). A response below 400 is never retried and never reaches it. Only
+  return `true` for requests that are safe to repeat: a `true` for a 4xx also
+  retries a non-idempotent request, such as a `POST` answered with `409`. A
+  callback that throws is logged as a warning and counts as `null`. The
+  response body is rewound after the callback if it is seekable; with the
+  `stream` request option it is not, so a callback that reads it leaves the
+  error without a body.
+  Transport errors are always retried, and `backoffMaxTries` always caps the
+  retries. `retryableStatusCodes` is
+  deprecated in favour of `retryableResponse`.
 - `ApiClientOptions` — retries, timeouts, logger (no auth, no error resolver — the
   authenticator is a first-class `ApiClient` constructor argument; the error
-  resolver and retryable codes are also `ApiClient` constructor arguments).
+  resolver and the retry rules are also `ApiClient` constructor arguments).
 - `Auth\RequestAuthenticatorInterface` + ready authenticators for the Keboola
   auth schemes: `StorageApiTokenAuthenticator` (`X-StorageApi-Token`),
   `ManageApiTokenAuthenticator` (`X-KBC-ManageApiToken`),
@@ -52,6 +65,7 @@ use Keboola\ApiClientBase\Auth\StorageApiTokenAuthenticator;
 use Keboola\ApiClientBase\ErrorMessageResolverInterface;
 use Keboola\ApiClientBase\Json;
 use Keboola\ApiClientBase\ResponseModelInterface;
+use Psr\Http\Message\ResponseInterface;
 
 final class WidgetModel implements ResponseModelInterface
 {
@@ -88,7 +102,8 @@ final class MyServiceClient
             $authenticator,
             $options,
             errorMessageResolver: new MyServiceErrorResolver(),
-            retryableStatusCodes: [429],
+            retryableResponse: static fn(ResponseInterface $response): ?bool
+                => $response->getStatusCode() === 429 ? true : null,
         );
     }
 

@@ -9,7 +9,12 @@ use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
 use Keboola\ApiClientBase\RetryDecider;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Log\AbstractLogger;
+use Psr\Log\LogLevel;
 use Psr\Log\NullLogger;
+use RuntimeException;
+use Stringable;
 
 class RetryDeciderTest extends TestCase
 {
@@ -50,5 +55,109 @@ class RetryDeciderTest extends TestCase
     {
         $decider = new RetryDecider(3, new NullLogger());
         self::assertFalse($decider(0, new Request('GET', '/'), new Response(200)));
+    }
+
+    public function testRetryableResponseCallbackDecidesForResponse(): void
+    {
+        $decider = new RetryDecider(
+            3,
+            new NullLogger(),
+            retryableResponse: static fn(ResponseInterface $response): ?bool => match ($response->getStatusCode()) {
+                503 => false,
+                409 => true,
+                default => null,
+            },
+        );
+        self::assertFalse($decider(0, new Request('GET', '/'), new Response(503)));
+        self::assertTrue($decider(0, new Request('GET', '/'), new Response(409)));
+        self::assertTrue($decider(0, new Request('GET', '/'), new Response(500)));
+        self::assertFalse($decider(0, new Request('GET', '/'), new Response(404)));
+    }
+
+    public function testRetryableResponseTrueIsCappedByMaxRetries(): void
+    {
+        $decider = new RetryDecider(
+            3,
+            new NullLogger(),
+            retryableResponse: static fn(ResponseInterface $response): bool => true,
+        );
+        self::assertTrue($decider(2, new Request('GET', '/'), new Response(409)));
+        self::assertFalse($decider(3, new Request('GET', '/'), new Response(409)));
+    }
+
+    public function testThrowingRetryableResponseCallbackFallsBackToStatusCodeRules(): void
+    {
+        $logger = new class extends AbstractLogger {
+            /** @var list<string> */
+            public array $warnings = [];
+
+            public function log($level, string|Stringable $message, array $context = []): void
+            {
+                if ($level === LogLevel::WARNING) {
+                    $this->warnings[] = (string) $message;
+                }
+            }
+        };
+        $callback = static function (ResponseInterface $response): ?bool {
+            throw new RuntimeException('Syntax error');
+        };
+        $decider = new RetryDecider(3, $logger, retryableResponse: $callback);
+
+        self::assertTrue($decider(0, new Request('GET', '/'), new Response(503)));
+        self::assertFalse($decider(0, new Request('GET', '/'), new Response(404)));
+        self::assertContains('retryableResponse callback failed: Syntax error', $logger->warnings);
+    }
+
+    public function testRetryableResponseWinsOverRetryableStatusCodes(): void
+    {
+        $decider = new RetryDecider(3, new NullLogger(), [429], static fn(ResponseInterface $response): bool => false);
+        self::assertFalse($decider(0, new Request('GET', '/'), new Response(429)));
+    }
+
+    public function testNullRetryableResponseFallsBackToRetryableStatusCodes(): void
+    {
+        $decider = new RetryDecider(3, new NullLogger(), [429], static fn(ResponseInterface $response): ?bool => null);
+        self::assertTrue($decider(0, new Request('GET', '/'), new Response(429)));
+    }
+
+    public function testRetryableResponseCallbackIsNotAskedForSuccessfulResponse(): void
+    {
+        $decider = new RetryDecider(
+            3,
+            new NullLogger(),
+            retryableResponse: static function (ResponseInterface $response): ?bool {
+                self::fail('Callback must not be asked for a response below 400.');
+            },
+        );
+        self::assertFalse($decider(0, new Request('GET', '/'), new Response(200)));
+        self::assertFalse($decider(0, new Request('GET', '/'), new Response(202)));
+        self::assertFalse($decider(0, new Request('GET', '/'), new Response(302)));
+    }
+
+    public function testRetryableResponseCallbackIsNotAskedForTransportError(): void
+    {
+        $decider = new RetryDecider(
+            3,
+            new NullLogger(),
+            retryableResponse: static function (ResponseInterface $response): ?bool {
+                self::fail('Callback must not be asked without a response.');
+            },
+        );
+        $error = new ConnectException('connection refused', new Request('GET', '/'));
+        self::assertTrue($decider(0, new Request('GET', '/'), null, $error));
+    }
+
+    public function testResponseBodyIsRewoundAfterRetryableResponseCallback(): void
+    {
+        $response = new Response(503, [], '{"context":{"errorCode":"x"}}');
+        $decider = new RetryDecider(
+            3,
+            new NullLogger(),
+            retryableResponse: static fn(ResponseInterface $response): ?bool
+                => $response->getBody()->getContents() === '' ? false : null,
+        );
+
+        self::assertTrue($decider(0, new Request('GET', '/'), $response));
+        self::assertSame('{"context":{"errorCode":"x"}}', $response->getBody()->getContents());
     }
 }

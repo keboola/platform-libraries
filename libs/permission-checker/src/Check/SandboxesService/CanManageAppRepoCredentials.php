@@ -6,6 +6,7 @@ namespace Keboola\PermissionChecker\Check\SandboxesService;
 
 use Keboola\PermissionChecker\Exception\PermissionDeniedException;
 use Keboola\PermissionChecker\PermissionCheckInterface;
+use Keboola\PermissionChecker\Role;
 use Keboola\PermissionChecker\StorageApiToken;
 
 class CanManageAppRepoCredentials implements PermissionCheckInterface
@@ -30,6 +31,13 @@ class CanManageAppRepoCredentials implements PermissionCheckInterface
                 'Token is not authorized to manage credentials of app \'%s\', app is from different project',
                 $this->appId,
             ));
+        }
+
+        if ($token->isOneOfRoles([Role::NONE, Role::READ_ONLY])) {
+            throw PermissionDeniedException::roleDenied(
+                $token->getRole(),
+                sprintf('manage credentials of app \'%s\'', $this->appId),
+            );
         }
     }
 }

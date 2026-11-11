@@ -187,7 +187,7 @@ class ApiClientTest extends TestCase
         self::assertSame(0, $mock->count());
     }
 
-    public function testDoesNotRetryVetoedResponseAndKeepsItsBody(): void
+    public function testDoesNotRetryResponseMarkedNotRetryableAndKeepsItsBody(): void
     {
         $body = '{"error":"Project is disabled.","context":{"errorCode":"storage.maintenance"}}';
         $mock = new MockHandler([new Response(503, [], $body), new Response(200, [], '{}')]);
@@ -195,8 +195,8 @@ class ApiClientTest extends TestCase
             'https://example.test',
             new NoAuthAuthenticator(),
             new ApiClientOptions(backoffMaxTries: 2, requestHandler: HandlerStack::create($mock)),
-            isNonRetryableResponse: static fn(ResponseInterface $response): bool
-                => str_contains($response->getBody()->getContents(), 'storage.maintenance'),
+            retryableResponse: static fn(ResponseInterface $response): ?bool
+                => str_contains($response->getBody()->getContents(), 'storage.maintenance') ? false : null,
         );
 
         try {
@@ -210,7 +210,7 @@ class ApiClientTest extends TestCase
         self::assertSame(1, $mock->count());
     }
 
-    public function testRetriesResponseNotVetoed(): void
+    public function testRetriesResponseLeftToDefaultRules(): void
     {
         $mock = new MockHandler([
             new Response(503, [], '<html>no healthy upstream</html>'),
@@ -220,8 +220,8 @@ class ApiClientTest extends TestCase
             'https://example.test',
             new NoAuthAuthenticator(),
             new ApiClientOptions(backoffMaxTries: 2, requestHandler: HandlerStack::create($mock)),
-            isNonRetryableResponse: static fn(ResponseInterface $response): bool
-                => str_contains((string) $response->getBody(), 'storage.maintenance'),
+            retryableResponse: static fn(ResponseInterface $response): ?bool
+                => str_contains((string) $response->getBody(), 'storage.maintenance') ? false : null,
         );
 
         $client->sendRequest(new Request('GET', 'foo'));

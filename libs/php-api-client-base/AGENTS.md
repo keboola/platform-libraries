@@ -69,7 +69,7 @@ but are not:
 ## Design invariants to preserve
 
 - **Constructor args vs options is a semantic split, not style.** `ApiClient` constructor arguments
-  (authenticator, `errorMessageResolver`, `retryableStatusCodes`) describe *the service's API contract* and
+  (authenticator, `errorMessageResolver`, `retryableResponse`) describe *the service's API contract* and
   are set by the service facade; `ApiClientOptions` carries *caller* preferences (retries, timeouts,
   logger) only. Don't migrate one into the other for convenience.
 - The authenticator is required with no implicit default — `NoAuthAuthenticator` exists so that

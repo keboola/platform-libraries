@@ -32,14 +32,17 @@ class ApiClient
 
     /**
      * @param non-empty-string|null $baseUrl
-     * @param list<int> $retryableStatusCodes Non-5xx status codes to also retry (e.g. [429]).
+     * @param list<int> $retryableStatusCodes Deprecated, use $retryableResponse. Non-5xx status codes to also
+     *     retry (e.g. [429]).
      * @param class-string<ClientException> $exceptionClass Exception class thrown on failure; a
      *     ClientException subclass lets callers identify the failing service. It is instantiated
      *     inline at each throw site so the exception originates there (clean stack trace). A
      *     subclass that wants richer construction does it in its own constructor, which receives
      *     ($message, $code, $previous, $statusCode, $responseBody).
-     * @param ?Closure(ResponseInterface): bool $isNonRetryableResponse Returns true for a response that must
-     *     not be retried, whatever its status code (e.g. a 5xx the service marks as permanent).
+     * @param (Closure(ResponseInterface): ?bool)|bool|null $retryableResponse Decides whether a failed response
+     *     (status >= 400) is retried: true retries it, false does not (e.g. a 5xx the service marks as
+     *     permanent), null leaves it to the status-code rules. A bool is a shortcut for a callback that always
+     *     returns it.
      */
     public function __construct(
         ?string $baseUrl,
@@ -48,7 +51,7 @@ class ApiClient
         ?ErrorMessageResolverInterface $errorMessageResolver = null,
         array $retryableStatusCodes = [],
         string $exceptionClass = ClientException::class,
-        ?Closure $isNonRetryableResponse = null,
+        Closure|bool|null $retryableResponse = null,
     ) {
         $options ??= new ApiClientOptions();
         $this->errorMessageResolver = $errorMessageResolver ?? new DefaultErrorMessageResolver();
@@ -69,7 +72,7 @@ class ApiClient
                 $options->backoffMaxTries,
                 $logger,
                 $retryableStatusCodes,
-                $isNonRetryableResponse,
+                $retryableResponse,
             )));
         }
 

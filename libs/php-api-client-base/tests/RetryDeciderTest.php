@@ -53,49 +53,75 @@ class RetryDeciderTest extends TestCase
         self::assertFalse($decider(0, new Request('GET', '/'), new Response(200)));
     }
 
-    public function testDoesNotRetryResponseVetoedAsNonRetryable(): void
+    public function testRetryableResponseCallbackDecidesForFailedResponses(): void
     {
         $decider = new RetryDecider(
             3,
             new NullLogger(),
-            isNonRetryableResponse: static fn(ResponseInterface $response): bool => $response->getStatusCode() === 503,
+            retryableResponse: static fn(ResponseInterface $response): ?bool => match ($response->getStatusCode()) {
+                503 => false,
+                409 => true,
+                default => null,
+            },
         );
         self::assertFalse($decider(0, new Request('GET', '/'), new Response(503)));
+        self::assertTrue($decider(0, new Request('GET', '/'), new Response(409)));
         self::assertTrue($decider(0, new Request('GET', '/'), new Response(500)));
+        self::assertFalse($decider(0, new Request('GET', '/'), new Response(404)));
     }
 
-    public function testVetoWinsOverConfiguredStatusCode(): void
+    public function testRetryableResponseWinsOverRetryableStatusCodes(): void
     {
-        $decider = new RetryDecider(
-            3,
-            new NullLogger(),
-            [429],
-            static fn(ResponseInterface $response): bool => true,
-        );
+        $decider = new RetryDecider(3, new NullLogger(), [429], static fn(ResponseInterface $response): bool => false);
         self::assertFalse($decider(0, new Request('GET', '/'), new Response(429)));
     }
 
-    public function testVetoIsNotAskedWithoutResponse(): void
+    public function testNullRetryableResponseFallsBackToRetryableStatusCodes(): void
     {
-        $decider = new RetryDecider(
-            3,
-            new NullLogger(),
-            isNonRetryableResponse: static function (ResponseInterface $response): bool {
-                self::fail('Veto must not be called without a response.');
-            },
-        );
+        $decider = new RetryDecider(3, new NullLogger(), [429], static fn(ResponseInterface $response): ?bool => null);
+        self::assertTrue($decider(0, new Request('GET', '/'), new Response(429)));
+    }
+
+    public function testRetryableResponseTrueShortcutRetriesEveryFailedResponse(): void
+    {
+        $decider = new RetryDecider(3, new NullLogger(), retryableResponse: true);
+        self::assertTrue($decider(0, new Request('GET', '/'), new Response(404)));
+        self::assertTrue($decider(0, new Request('GET', '/'), new Response(503)));
+        self::assertFalse($decider(0, new Request('GET', '/'), new Response(200)));
+        self::assertFalse($decider(3, new Request('GET', '/'), new Response(503)));
+    }
+
+    public function testRetryableResponseFalseShortcutRetriesNoFailedResponse(): void
+    {
+        $decider = new RetryDecider(3, new NullLogger(), [429], retryableResponse: false);
+        self::assertFalse($decider(0, new Request('GET', '/'), new Response(503)));
+        self::assertFalse($decider(0, new Request('GET', '/'), new Response(429)));
         $error = new ConnectException('connection refused', new Request('GET', '/'));
         self::assertTrue($decider(0, new Request('GET', '/'), null, $error));
     }
 
-    public function testResponseBodyIsRewoundAfterVeto(): void
+    public function testRetryableResponseCallbackIsNotAskedForSuccessOrTransportError(): void
+    {
+        $decider = new RetryDecider(
+            3,
+            new NullLogger(),
+            retryableResponse: static function (ResponseInterface $response): ?bool {
+                self::fail('Callback must only be asked for a failed response.');
+            },
+        );
+        self::assertFalse($decider(0, new Request('GET', '/'), new Response(200)));
+        $error = new ConnectException('connection refused', new Request('GET', '/'));
+        self::assertTrue($decider(0, new Request('GET', '/'), null, $error));
+    }
+
+    public function testResponseBodyIsRewoundAfterRetryableResponseCallback(): void
     {
         $response = new Response(503, [], '{"context":{"errorCode":"x"}}');
         $decider = new RetryDecider(
             3,
             new NullLogger(),
-            isNonRetryableResponse: static fn(ResponseInterface $response): bool
-                => $response->getBody()->getContents() === '',
+            retryableResponse: static fn(ResponseInterface $response): ?bool
+                => $response->getBody()->getContents() === '' ? false : null,
         );
 
         self::assertTrue($decider(0, new Request('GET', '/'), $response));

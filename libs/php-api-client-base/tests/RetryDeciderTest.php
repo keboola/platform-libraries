@@ -53,7 +53,7 @@ class RetryDeciderTest extends TestCase
         self::assertFalse($decider(0, new Request('GET', '/'), new Response(200)));
     }
 
-    public function testRetryableResponseCallbackDecidesForFailedResponses(): void
+    public function testRetryableResponseCallbackDecidesForResponse(): void
     {
         $decider = new RetryDecider(
             3,
@@ -82,34 +82,30 @@ class RetryDeciderTest extends TestCase
         self::assertTrue($decider(0, new Request('GET', '/'), new Response(429)));
     }
 
-    public function testRetryableResponseTrueShortcutRetriesEveryFailedResponse(): void
+    public function testRetryableResponseCallbackIsAskedForSuccessfulResponse(): void
     {
-        $decider = new RetryDecider(3, new NullLogger(), retryableResponse: true);
-        self::assertTrue($decider(0, new Request('GET', '/'), new Response(404)));
-        self::assertTrue($decider(0, new Request('GET', '/'), new Response(503)));
+        $decider = new RetryDecider(
+            3,
+            new NullLogger(),
+            retryableResponse: static fn(ResponseInterface $response): ?bool => match ($response->getStatusCode()) {
+                202 => true,
+                default => null,
+            },
+        );
+        self::assertTrue($decider(0, new Request('GET', '/'), new Response(202)));
         self::assertFalse($decider(0, new Request('GET', '/'), new Response(200)));
-        self::assertFalse($decider(3, new Request('GET', '/'), new Response(503)));
+        self::assertFalse($decider(3, new Request('GET', '/'), new Response(202)));
     }
 
-    public function testRetryableResponseFalseShortcutRetriesNoFailedResponse(): void
-    {
-        $decider = new RetryDecider(3, new NullLogger(), [429], retryableResponse: false);
-        self::assertFalse($decider(0, new Request('GET', '/'), new Response(503)));
-        self::assertFalse($decider(0, new Request('GET', '/'), new Response(429)));
-        $error = new ConnectException('connection refused', new Request('GET', '/'));
-        self::assertTrue($decider(0, new Request('GET', '/'), null, $error));
-    }
-
-    public function testRetryableResponseCallbackIsNotAskedForSuccessOrTransportError(): void
+    public function testRetryableResponseCallbackIsNotAskedForTransportError(): void
     {
         $decider = new RetryDecider(
             3,
             new NullLogger(),
             retryableResponse: static function (ResponseInterface $response): ?bool {
-                self::fail('Callback must only be asked for a failed response.');
+                self::fail('Callback must not be asked without a response.');
             },
         );
-        self::assertFalse($decider(0, new Request('GET', '/'), new Response(200)));
         $error = new ConnectException('connection refused', new Request('GET', '/'));
         self::assertTrue($decider(0, new Request('GET', '/'), null, $error));
     }

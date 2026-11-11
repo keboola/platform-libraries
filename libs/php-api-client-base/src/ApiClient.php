@@ -39,10 +39,10 @@ class ApiClient
      *     inline at each throw site so the exception originates there (clean stack trace). A
      *     subclass that wants richer construction does it in its own constructor, which receives
      *     ($message, $code, $previous, $statusCode, $responseBody).
-     * @param (Closure(ResponseInterface): ?bool)|bool|null $retryableResponse Decides whether a failed response
-     *     (status >= 400) is retried: true retries it, false does not (e.g. a 5xx the service marks as
-     *     permanent), null leaves it to the status-code rules. A bool is a shortcut for a callback that always
-     *     returns it.
+     * @param ?Closure(ResponseInterface): ?bool $retryableResponse Decides whether a response is retried: true
+     *     retries it, false does not (e.g. a 5xx the service marks as permanent), null leaves it to the
+     *     status-code rules. It is asked for every response, including a successful one, but not for a
+     *     transport error.
      */
     public function __construct(
         ?string $baseUrl,
@@ -51,7 +51,7 @@ class ApiClient
         ?ErrorMessageResolverInterface $errorMessageResolver = null,
         array $retryableStatusCodes = [],
         string $exceptionClass = ClientException::class,
-        Closure|bool|null $retryableResponse = null,
+        ?Closure $retryableResponse = null,
     ) {
         $options ??= new ApiClientOptions();
         $this->errorMessageResolver = $errorMessageResolver ?? new DefaultErrorMessageResolver();

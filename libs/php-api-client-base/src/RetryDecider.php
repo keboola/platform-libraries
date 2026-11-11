@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\ApiClientBase;
 
+use Closure;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Log\LoggerInterface;
@@ -13,11 +14,14 @@ class RetryDecider
 {
     /**
      * @param list<int> $retryableStatusCodes Non-5xx status codes that should also be retried (e.g. [429]).
+     * @param ?Closure(ResponseInterface): bool $isNonRetryableResponse Returns true for a response that must
+     *     not be retried, whatever its status code. The body is rewound after the call.
      */
     public function __construct(
         private readonly int $maxRetries,
         private readonly LoggerInterface $logger,
         private readonly array $retryableStatusCodes = [],
+        private readonly ?Closure $isNonRetryableResponse = null,
     ) {
     }
 
@@ -28,6 +32,10 @@ class RetryDecider
         mixed $error = null,
     ): bool {
         if ($retries >= $this->maxRetries) {
+            return false;
+        }
+
+        if ($response !== null && $this->isNonRetryableResponse($response)) {
             return false;
         }
 
@@ -47,6 +55,21 @@ class RetryDecider
         }
 
         return false;
+    }
+
+    private function isNonRetryableResponse(ResponseInterface $response): bool
+    {
+        if ($this->isNonRetryableResponse === null) {
+            return false;
+        }
+
+        try {
+            return ($this->isNonRetryableResponse)($response);
+        } finally {
+            if ($response->getBody()->isSeekable()) {
+                $response->getBody()->rewind();
+            }
+        }
     }
 
     private function logAndRetry(?int $code, mixed $error, int $retries): bool

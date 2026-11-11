@@ -20,6 +20,7 @@ use Keboola\ApiClientBase\Tests\Fixtures\DummyClientException;
 use Keboola\ApiClientBase\Tests\Fixtures\DummyModel;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\ResponseInterface;
 use RuntimeException;
 
 class ApiClientTest extends TestCase
@@ -183,6 +184,48 @@ class ApiClientTest extends TestCase
             retryableStatusCodes: [429],
         );
         $client->sendRequest(new Request('GET', 'foo'));
+        self::assertSame(0, $mock->count());
+    }
+
+    public function testDoesNotRetryVetoedResponseAndKeepsItsBody(): void
+    {
+        $body = '{"error":"Project is disabled.","context":{"errorCode":"storage.maintenance"}}';
+        $mock = new MockHandler([new Response(503, [], $body), new Response(200, [], '{}')]);
+        $client = new ApiClient(
+            'https://example.test',
+            new NoAuthAuthenticator(),
+            new ApiClientOptions(backoffMaxTries: 2, requestHandler: HandlerStack::create($mock)),
+            isNonRetryableResponse: static fn(ResponseInterface $response): bool
+                => str_contains($response->getBody()->getContents(), 'storage.maintenance'),
+        );
+
+        try {
+            $client->sendRequest(new Request('GET', 'foo'));
+            self::fail('Expected ClientException to be thrown');
+        } catch (ClientException $e) {
+            self::assertSame(503, $e->getStatusCode());
+            self::assertSame($body, $e->getResponseBody());
+        }
+
+        self::assertSame(1, $mock->count());
+    }
+
+    public function testRetriesResponseNotVetoed(): void
+    {
+        $mock = new MockHandler([
+            new Response(503, [], '<html>no healthy upstream</html>'),
+            new Response(200, [], '{}'),
+        ]);
+        $client = new ApiClient(
+            'https://example.test',
+            new NoAuthAuthenticator(),
+            new ApiClientOptions(backoffMaxTries: 2, requestHandler: HandlerStack::create($mock)),
+            isNonRetryableResponse: static fn(ResponseInterface $response): bool
+                => str_contains((string) $response->getBody(), 'storage.maintenance'),
+        );
+
+        $client->sendRequest(new Request('GET', 'foo'));
+
         self::assertSame(0, $mock->count());
     }
 

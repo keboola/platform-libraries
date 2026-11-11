@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\ApiClientBase;
 
+use Closure;
 use GuzzleHttp\Client as GuzzleClient;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\RequestException;
@@ -37,6 +38,8 @@ class ApiClient
      *     inline at each throw site so the exception originates there (clean stack trace). A
      *     subclass that wants richer construction does it in its own constructor, which receives
      *     ($message, $code, $previous, $statusCode, $responseBody).
+     * @param ?Closure(ResponseInterface): bool $isNonRetryableResponse Returns true for a response that must
+     *     not be retried, whatever its status code (e.g. a 5xx the service marks as permanent).
      */
     public function __construct(
         ?string $baseUrl,
@@ -45,6 +48,7 @@ class ApiClient
         ?ErrorMessageResolverInterface $errorMessageResolver = null,
         array $retryableStatusCodes = [],
         string $exceptionClass = ClientException::class,
+        ?Closure $isNonRetryableResponse = null,
     ) {
         $options ??= new ApiClientOptions();
         $this->errorMessageResolver = $errorMessageResolver ?? new DefaultErrorMessageResolver();
@@ -65,6 +69,7 @@ class ApiClient
                 $options->backoffMaxTries,
                 $logger,
                 $retryableStatusCodes,
+                $isNonRetryableResponse,
             )));
         }
 

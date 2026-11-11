@@ -27,7 +27,10 @@ composer require keboola/php-api-client-base
   `DefaultErrorMessageResolver` (which extracts `error` or `message` from JSON
   bodies) is used automatically. `retryableStatusCodes` are `ApiClient`
   constructor arguments supplied by the service facade (they describe the
-  service's API contract, not caller preferences).
+  service's API contract, not caller preferences). So is `isNonRetryableResponse`,
+  an optional `Closure(ResponseInterface): bool` that stops the retry for a
+  response the service marks as permanent (e.g. a 5xx with a known error code);
+  the response body is rewound after the call.
 - `ApiClientOptions` — retries, timeouts, logger (no auth, no error resolver — the
   authenticator is a first-class `ApiClient` constructor argument; the error
   resolver and retryable codes are also `ApiClient` constructor arguments).

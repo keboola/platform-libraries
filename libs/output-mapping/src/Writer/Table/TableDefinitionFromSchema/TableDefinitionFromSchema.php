@@ -6,11 +6,13 @@ namespace Keboola\OutputMapping\Writer\Table\TableDefinitionFromSchema;
 
 use Keboola\OutputMapping\Mapping\MappingFromConfigurationSchemaColumn;
 use Keboola\OutputMapping\Writer\Table\TableDefinition\TableDefinitionDescriptionsTrait;
+use Keboola\OutputMapping\Writer\Table\TableDefinition\TableDefinitionLayoutTrait;
 use Keboola\OutputMapping\Writer\Table\TableDefinitionInterface;
 
 class TableDefinitionFromSchema implements TableDefinitionInterface
 {
     use TableDefinitionDescriptionsTrait;
+    use TableDefinitionLayoutTrait;
 
     private array $primaryKeys = [];
 
@@ -35,11 +37,11 @@ class TableDefinitionFromSchema implements TableDefinitionInterface
 
     public function getRequestData(): array
     {
-        return $this->withDescriptions([
+        return $this->withLayout($this->withDescriptions([
             'name' => $this->tableName,
             'primaryKeysNames' => $this->primaryKeys,
             'columns' => $this->columns,
-        ]);
+        ]));
     }
 
     public function getTableName(): string

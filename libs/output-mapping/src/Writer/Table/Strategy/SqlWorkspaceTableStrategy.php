@@ -37,7 +37,12 @@ class SqlWorkspaceTableStrategy implements StrategyInterface
 
     private readonly WorkspaceStagingInterface $dataStorage;
 
+    private const LAYOUT_KEYS = ['time_partitioning', 'range_partitioning', 'clustering'];
+
     private bool $hasDirectGrantUnloadStrategy = false;
+
+    /** @var array<string, string[]> */
+    private array $directGrantSourcesWithLayout = [];
 
     /** @var MappingFromRawConfiguration[] */
     private array $mapping = [];
@@ -62,6 +67,13 @@ class SqlWorkspaceTableStrategy implements StrategyInterface
             // These will be handled separately and don't need processing OM
             if (($mappingItem['unload_strategy'] ?? '') === SqlWorkspaceTableStrategy::DIRECT_GRANT_UNLOAD_STRATEGY) {
                 $this->hasDirectGrantUnloadStrategy = true;
+                $layoutKeys = array_values(array_filter(
+                    self::LAYOUT_KEYS,
+                    static fn(string $key): bool => isset($mappingItem[$key]),
+                ));
+                if ($layoutKeys) {
+                    $this->directGrantSourcesWithLayout[(string) ($mappingItem['source'] ?? '')] = $layoutKeys;
+                }
                 continue;
             }
             $this->mapping[] = new MappingFromRawConfiguration($mappingItem);
@@ -190,5 +202,13 @@ class SqlWorkspaceTableStrategy implements StrategyInterface
     public function hasDirectGrantUnloadStrategy(): bool
     {
         return $this->hasDirectGrantUnloadStrategy;
+    }
+
+    /**
+     * @return array<string, string[]>
+     */
+    public function getDirectGrantSourcesWithLayout(): array
+    {
+        return $this->directGrantSourcesWithLayout;
     }
 }

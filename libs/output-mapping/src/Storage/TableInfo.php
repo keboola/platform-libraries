@@ -43,6 +43,21 @@ class TableInfo
     }
 
     /**
+     * @return array<string, mixed> stored partitioning and clustering, keyed as Storage returns them
+     */
+    public function getLayout(): array
+    {
+        $layout = [];
+        foreach (['timePartitioning', 'rangePartitioning', 'clustering'] as $key) {
+            if (isset($this->tableInfo['definition'][$key])) {
+                $layout[$key] = $this->tableInfo['definition'][$key];
+            }
+        }
+
+        return $layout;
+    }
+
+    /**
      * Description stored in the native Storage description field, or null when the table has none. Read from
      * the table definition, the same source input mapping reads.
      */

@@ -28,6 +28,20 @@ class Webalizer
             $configuration['primary_key'] = $this->getWebalizedColumnNames($configuration['primary_key']);
         }
 
+        foreach (['time_partitioning', 'range_partitioning'] as $partitioningKey) {
+            if (isset($configuration[$partitioningKey]['field'])) {
+                $configuration[$partitioningKey]['field'] = $this->getWebalizedColumnNames(
+                    [$configuration[$partitioningKey]['field']],
+                )[0];
+            }
+        }
+
+        if (isset($configuration['clustering']['fields'])) {
+            $configuration['clustering']['fields'] = $this->getWebalizedColumnNames(
+                $configuration['clustering']['fields'],
+            );
+        }
+
         if (isset($configuration['column_metadata'])) {
             $configuration['column_metadata'] = $this->webalizeColumnsMetadata($configuration['column_metadata']);
         }

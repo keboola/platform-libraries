@@ -19,8 +19,12 @@ class DescriptionHelper
 {
     public const DESCRIPTION_METADATA_KEY = 'KBC.description';
 
+    /** The characters Storage trims from a description before it stores and compares it. */
+    private const TRIMMED_CHARACTERS = ' \t\n\r\0\x0B\x0C\x{A0}\x{FEFF}';
+
     /**
      * An empty description is treated as no description, so that it never clears a value stored in Storage.
+     * The value is trimmed the way Storage trims it, otherwise it never equals the stored one.
      */
     public static function normalizeDescription(mixed $description): ?string
     {
@@ -29,6 +33,11 @@ class DescriptionHelper
         }
 
         $description = (string) $description;
+        $description = preg_replace(
+            sprintf('/^[%1$s]+|[%1$s]+$/uD', self::TRIMMED_CHARACTERS),
+            '',
+            $description,
+        ) ?? $description;
 
         return $description !== '' ? $description : null;
     }

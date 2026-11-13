@@ -160,6 +160,29 @@ class TableDescriptionModifierTest extends TestCase
         );
     }
 
+    public function testNoChangeRejectionIsNotAnError(): void
+    {
+        $client = $this->createMock(Client::class);
+        $client->expects(self::once())
+            ->method('updateTableDefinition')
+            ->willThrowException(new ClientException(
+                'No table definition changes were provided.',
+                400,
+                null,
+                'storage.tables.definitionUpdateValidationFailed',
+            ));
+
+        $this->createModifier($client)->updateDescriptions(
+            $this->createTableInfo(columns: ['col1'], storedColumnDescriptions: ['col1' => 'col1 desc']),
+            new TableDescription(self::TABLE_ID, null, ['col1' => 'col1 desc differing only for Storage']),
+        );
+
+        self::assertTrue($this->logHandler->hasInfoThatContains(sprintf(
+            'Description of table "%s" is already up to date.',
+            self::TABLE_ID,
+        )));
+    }
+
     public function testUserErrorIsWrappedInInvalidOutputException(): void
     {
         $clientException = new ClientException('Table definition update failed', 400);

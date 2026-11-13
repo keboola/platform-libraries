@@ -21,6 +21,9 @@ use Psr\Log\LoggerInterface;
  */
 class TableDescriptionModifier
 {
+    private const VALIDATION_FAILED_STRING_CODE = 'storage.tables.definitionUpdateValidationFailed';
+    private const NO_CHANGES_MESSAGE = 'No table definition changes were provided.';
+
     public function __construct(
         private readonly ClientWrapper $clientWrapper,
         private readonly LoggerInterface $logger,
@@ -50,6 +53,15 @@ class TableDescriptionModifier
                 $tableDefinitionUpdate,
             );
         } catch (ClientException $e) {
+            if (self::isNoChangeRejection($e)) {
+                // Storage normalises a description before comparing it, so a diff found here can be empty there.
+                $this->logger->info(sprintf(
+                    'Description of table "%s" is already up to date.',
+                    $tableInfo->getId(),
+                ));
+                return;
+            }
+
             if ($e->getCode() < 400 || $e->getCode() >= 500) {
                 // Only a 4xx is the caller's fault. A Storage outage and a connection error (which carries no
                 // HTTP status, i.e. code 0) both stay a retryable application error, consistently with the
@@ -67,6 +79,13 @@ class TableDescriptionModifier
                 $e,
             );
         }
+    }
+
+    private static function isNoChangeRejection(ClientException $e): bool
+    {
+        // the string code is shared by every validation failure of the endpoint
+        return $e->getStringCode() === self::VALIDATION_FAILED_STRING_CODE
+            && str_contains($e->getMessage(), self::NO_CHANGES_MESSAGE);
     }
 
     /**

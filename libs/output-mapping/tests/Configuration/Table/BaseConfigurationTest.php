@@ -1317,4 +1317,114 @@ class BaseConfigurationTest extends TestCase
             self::assertEquals($expectedConfig, (new Table\Configuration())->parse(['config' => $config]));
         }
     }
+
+    /**
+     * @dataProvider tableLayoutProvider
+     */
+    public function testTableLayoutSuccess(array $layout): void
+    {
+        $config = ['destination' => 'in.c-main.test'] + $layout;
+
+        $manifest = (new Table\Manifest())->parse(['config' => $config]);
+        $configuration = (new Table\Configuration())->parse(['config' => $config]);
+
+        foreach ($layout as $key => $value) {
+            self::assertSame($value, $manifest[$key]);
+            self::assertSame($value, $configuration[$key]);
+        }
+        foreach (array_diff(['time_partitioning', 'range_partitioning', 'clustering'], array_keys($layout)) as $key) {
+            self::assertArrayNotHasKey($key, $manifest);
+            self::assertArrayNotHasKey($key, $configuration);
+        }
+    }
+
+    public function tableLayoutProvider(): Generator
+    {
+        yield 'time partitioning with field' => [
+            'layout' => ['time_partitioning' => ['type' => 'DAY', 'field' => 'report_date']],
+        ];
+        yield 'time partitioning without field with expiration' => [
+            'layout' => ['time_partitioning' => ['type' => 'HOUR', 'expiration_ms' => 86400000]],
+        ];
+        yield 'range partitioning' => [
+            'layout' => [
+                'range_partitioning' => [
+                    'field' => 'id',
+                    'range' => ['start' => 0, 'end' => 100, 'interval' => 10],
+                ],
+            ],
+        ];
+        yield 'clustering' => [
+            'layout' => ['clustering' => ['fields' => ['country', 'city']]],
+        ];
+        yield 'time partitioning and clustering' => [
+            'layout' => [
+                'time_partitioning' => ['type' => 'DAY', 'field' => 'report_date'],
+                'clustering' => ['fields' => ['country']],
+            ],
+        ];
+    }
+
+    public function testTableLayoutNotSet(): void
+    {
+        $config = ['destination' => 'in.c-main.test'];
+
+        $manifest = (new Table\Manifest())->parse(['config' => $config]);
+        $configuration = (new Table\Configuration())->parse(['config' => $config]);
+
+        foreach (['time_partitioning', 'range_partitioning', 'clustering'] as $key) {
+            self::assertArrayNotHasKey($key, $manifest);
+            self::assertArrayNotHasKey($key, $configuration);
+        }
+    }
+
+    /**
+     * @dataProvider invalidTableLayoutProvider
+     */
+    public function testTableLayoutInvalid(array $layout, string $expectedMessage): void
+    {
+        $config = ['destination' => 'in.c-main.test'] + $layout;
+
+        foreach ([new Table\Manifest(), new Table\Configuration()] as $definition) {
+            try {
+                $definition->parse(['config' => $config]);
+                self::fail('Exception should be thrown');
+            } catch (InvalidConfigurationException $e) {
+                self::assertStringContainsString($expectedMessage, $e->getMessage());
+            }
+        }
+    }
+
+    public function invalidTableLayoutProvider(): Generator
+    {
+        yield 'time partitioning without type' => [
+            'layout' => ['time_partitioning' => ['field' => 'report_date']],
+            'expectedMessage' => 'The child config "type" under "table.time_partitioning" must be configured.',
+        ];
+        yield 'range partitioning without interval' => [
+            'layout' => [
+                'range_partitioning' => ['field' => 'id', 'range' => ['start' => 0, 'end' => 100]],
+            ],
+            'expectedMessage' =>
+                'The child config "interval" under "table.range_partitioning.range" must be configured.',
+        ];
+        yield 'clustering with empty fields' => [
+            'layout' => ['clustering' => ['fields' => []]],
+            'expectedMessage' => 'The path "table.clustering.fields" should have at least 1 element(s) defined.',
+        ];
+        yield 'unknown child key' => [
+            'layout' => ['time_partitioning' => ['type' => 'DAY', 'foo' => 'bar']],
+            'expectedMessage' => 'Unrecognized option "foo" under "table.time_partitioning"',
+        ];
+        yield 'both partitionings' => [
+            'layout' => [
+                'time_partitioning' => ['type' => 'DAY'],
+                'range_partitioning' => [
+                    'field' => 'id',
+                    'range' => ['start' => 0, 'end' => 100, 'interval' => 10],
+                ],
+            ],
+            'expectedMessage' => 'Only one of "time_partitioning" or "range_partitioning" can be defined.',
+        ];
+    }
 }

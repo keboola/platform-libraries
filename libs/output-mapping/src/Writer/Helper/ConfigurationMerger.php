@@ -47,6 +47,11 @@ class ConfigurationMerger
                 $config[$key] = self::mergeKeyValueArray($config[$key] ?? [], $value);
             } elseif ($key === 'schema') {
                 $config[$key] = self::mergeSchema($config[$key] ?? [], $value);
+            } elseif ($key === 'time_partitioning' || $key === 'range_partitioning') {
+                if (is_array($value) && $value) {
+                    $config[$key] = $value;
+                    unset($config[$key === 'time_partitioning' ? 'range_partitioning' : 'time_partitioning']);
+                }
             } else {
                 if (!isset($config[$key]) || $value) {
                     $config[$key] = $value;

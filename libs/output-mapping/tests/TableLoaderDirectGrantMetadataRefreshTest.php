@@ -298,6 +298,55 @@ class TableLoaderDirectGrantMetadataRefreshTest extends TestCase
         self::assertSame([], $tableQueue->waitForAll());
     }
 
+    public function testDirectGrantItemWithLayoutLogsWarning(): void
+    {
+        $logsHandler = new TestHandler();
+        $tableLoader = $this->createTableLoader(
+            $this->createRefreshingBranchClient(),
+            $this->createStrategyFactory(
+                directGrantSourcesWithLayout: ['table1a' => ['time_partitioning', 'clustering']],
+            ),
+            new Logger('test', [$logsHandler]),
+        );
+        $tableLoader->uploadTables($this->createSettings(), new SystemMetadata(['componentId' => 'testComponent']));
+
+        $warnings = array_filter(
+            $logsHandler->getRecords(),
+            fn($record) => str_contains($record->message, 'has unload_strategy "direct-grant"'),
+        );
+        self::assertCount(1, $warnings);
+        self::assertTrue($logsHandler->hasWarning(
+            'Output table "table1a" has unload_strategy "direct-grant": output mapping does not create the table ' .
+            'and ignores "time_partitioning", "clustering". Create the table with this layout through the ' .
+            'Storage API beforehand.',
+        ));
+    }
+
+    public function testDirectGrantItemWithoutLayoutLogsNoLayoutWarning(): void
+    {
+        $logsHandler = new TestHandler();
+        $tableLoader = $this->createTableLoader(
+            $this->createRefreshingBranchClient(),
+            $this->createStrategyFactory(),
+            new Logger('test', [$logsHandler]),
+        );
+        $tableLoader->uploadTables($this->createSettings(), new SystemMetadata(['componentId' => 'testComponent']));
+
+        self::assertFalse($logsHandler->hasWarningThatContains('has unload_strategy "direct-grant"'));
+    }
+
+    private function createRefreshingBranchClient(): BranchAwareClient&MockObject
+    {
+        $branchClient = $this->createMock(BranchAwareClient::class);
+        $branchClient->expects(self::once())
+            ->method('apiPostJson')
+            ->with(self::UNLOAD_URL, [], false)
+            ->willReturn([['id' => '456']])
+        ;
+
+        return $branchClient;
+    }
+
     private function uploadTables(BranchAwareClient&MockObject $branchClient): LoadTableQueue
     {
         return $this->createTableLoader($branchClient, $this->createStrategyFactory())->uploadTables(
@@ -331,12 +380,14 @@ class TableLoaderDirectGrantMetadataRefreshTest extends TestCase
 
     /**
      * @param MappingFromRawConfigurationAndPhysicalDataWithManifest[] $sources
+     * @param array<string, string[]> $directGrantSourcesWithLayout
      */
     private function createStrategyFactory(
         bool $hasDirectGrantUnloadStrategy = true,
         bool $processesSources = true,
         ?SourcesValidatorInterface $sourcesValidator = null,
         array $sources = [],
+        array $directGrantSourcesWithLayout = [],
     ): StrategyFactory&MockObject {
         $dataStorage = $this->createMock(WorkspaceStagingInterface::class);
         $dataStorage->expects($hasDirectGrantUnloadStrategy ? self::once() : self::never())
@@ -369,6 +420,10 @@ class TableLoaderDirectGrantMetadataRefreshTest extends TestCase
         $strategy->method('listManifests')->willReturn([]);
         $strategy->method('hasSlicer')->willReturn(false);
         $strategy->method('hasDirectGrantUnloadStrategy')->willReturn($hasDirectGrantUnloadStrategy);
+        $strategy->expects($hasDirectGrantUnloadStrategy ? self::once() : self::never())
+            ->method('getDirectGrantSourcesWithLayout')
+            ->willReturn($directGrantSourcesWithLayout)
+        ;
         $strategy->method('getDataStorage')->willReturn($dataStorage);
         $strategy->method('getMetadataStorage')->willReturn($metadataStorage);
 

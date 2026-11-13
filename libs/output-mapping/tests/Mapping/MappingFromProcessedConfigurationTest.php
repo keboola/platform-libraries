@@ -600,4 +600,37 @@ class MappingFromProcessedConfigurationTest extends TestCase
         yield 'enabled' => ['mapping' => ['partition_aware_import' => true], 'expected' => true];
         yield 'disabled' => ['mapping' => ['partition_aware_import' => false], 'expected' => false];
     }
+
+    public function testGetTableLayout(): void
+    {
+        $mappingFromProcessedConfiguration = new MappingFromProcessedConfiguration(
+            [
+                'destination' => 'in.c-main.table',
+                'time_partitioning' => ['type' => 'DAY', 'field' => 'report_date'],
+                'clustering' => ['fields' => ['country']],
+            ],
+            $this->createMock(MappingFromRawConfigurationAndPhysicalDataWithManifest::class),
+        );
+
+        $layout = $mappingFromProcessedConfiguration->getTableLayout();
+        self::assertFalse($layout->isEmpty());
+        self::assertSame(['time_partitioning', 'clustering'], $layout->getConfiguredKeys());
+        self::assertSame(
+            [
+                'timePartitioning' => ['type' => 'DAY', 'field' => 'report_date'],
+                'clustering' => ['fields' => ['country']],
+            ],
+            $layout->toRequestData(),
+        );
+    }
+
+    public function testGetTableLayoutNotSet(): void
+    {
+        $mappingFromProcessedConfiguration = new MappingFromProcessedConfiguration(
+            ['destination' => 'in.c-main.table'],
+            $this->createMock(MappingFromRawConfigurationAndPhysicalDataWithManifest::class),
+        );
+
+        self::assertTrue($mappingFromProcessedConfiguration->getTableLayout()->isEmpty());
+    }
 }

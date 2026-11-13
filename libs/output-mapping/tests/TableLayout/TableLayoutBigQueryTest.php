@@ -7,10 +7,13 @@ namespace Keboola\OutputMapping\Tests\TableLayout;
 use Keboola\Datatype\Definition\BaseType;
 use Keboola\Datatype\Definition\Bigquery;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
+use Keboola\OutputMapping\Mapping\MappingFromConfigurationSchemaColumn;
+use Keboola\OutputMapping\Mapping\MappingTableLayout;
 use Keboola\OutputMapping\OutputMappingSettings;
 use Keboola\OutputMapping\SystemMetadata;
 use Keboola\OutputMapping\Tests\AbstractTestCase;
 use Keboola\OutputMapping\Tests\Needs\NeedsEmptyBigqueryOutputBucket;
+use Keboola\OutputMapping\Writer\Table\TableDefinitionFromSchema\TableDefinitionFromSchema;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Keboola\StorageApiBranch\Factory\AuthType;
 use Keboola\StorageApiBranch\Factory\ClientOptions;
@@ -105,18 +108,18 @@ class TableLayoutBigQueryTest extends AbstractTestCase
     #[NeedsEmptyBigqueryOutputBucket]
     public function testExistingTableWithDifferentLayoutLoadsAndLogsWarning(): void
     {
-        $this->createUntypedTableClusteredByCountry();
+        $this->createTypedTableClusteredByCountry();
         $this->writeHeadlessCsv();
-        $this->writeColumnsManifest();
 
         $jobIds = $this->runOutputMapping(
             [
                 'source' => self::SOURCE,
                 'destination' => $this->getTableId(),
+                'schema' => $this->getSchema(),
                 'incremental' => false,
                 'clustering' => ['fields' => ['id']],
             ],
-            OutputMappingSettings::DATA_TYPES_SUPPORT_NONE,
+            OutputMappingSettings::DATA_TYPES_SUPPORT_AUTHORITATIVE,
         );
 
         self::assertCount(1, $jobIds);
@@ -131,18 +134,18 @@ class TableLayoutBigQueryTest extends AbstractTestCase
     #[NeedsEmptyBigqueryOutputBucket]
     public function testExistingTableWithSameLayoutLogsNoWarning(): void
     {
-        $this->createUntypedTableClusteredByCountry();
+        $this->createTypedTableClusteredByCountry();
         $this->writeHeadlessCsv();
-        $this->writeColumnsManifest();
 
         $jobIds = $this->runOutputMapping(
             [
                 'source' => self::SOURCE,
                 'destination' => $this->getTableId(),
+                'schema' => $this->getSchema(),
                 'incremental' => false,
                 'clustering' => ['fields' => ['country']],
             ],
-            OutputMappingSettings::DATA_TYPES_SUPPORT_NONE,
+            OutputMappingSettings::DATA_TYPES_SUPPORT_AUTHORITATIVE,
         );
 
         self::assertCount(1, $jobIds);
@@ -294,20 +297,22 @@ class TableLayoutBigQueryTest extends AbstractTestCase
         $this->writeManifest(['columns' => ['id', 'report_date', 'country']]);
     }
 
-    private function createUntypedTableClusteredByCountry(): void
+    // same payload output mapping sends for this schema, so the existing table matches the mapping
+    private function createTypedTableClusteredByCountry(): void
     {
+        $tableDefinition = new TableDefinitionFromSchema(
+            self::TABLE_NAME,
+            array_map(
+                fn(array $column) => new MappingFromConfigurationSchemaColumn($column),
+                $this->getSchema(),
+            ),
+            'bigquery',
+        );
+        $tableDefinition->setLayout(new MappingTableLayout(null, null, ['fields' => ['country']]));
+
         $this->clientWrapper->getTableAndFileStorageClient()->createTableDefinition(
             $this->emptyBigqueryOutputBucketId,
-            [
-                'name' => self::TABLE_NAME,
-                'primaryKeysNames' => [],
-                'columns' => [
-                    ['name' => 'id'],
-                    ['name' => 'report_date'],
-                    ['name' => 'country'],
-                ],
-                'clustering' => ['fields' => ['country']],
-            ],
+            $tableDefinition->getRequestData(),
         );
     }
 

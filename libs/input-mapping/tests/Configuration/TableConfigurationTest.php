@@ -769,7 +769,7 @@ class TableConfigurationTest extends TestCase
                     'load_type' => 'CLONE',
                 ],
                 InvalidConfigurationException::class,
-                'Option "incremental" cannot be used with load_type "CLONE"',
+                'Invalid configuration for path "table": Option "incremental" cannot be used with load_type "CLONE"',
             ],
             'IncrementalNotBoolean' => [
                 [

@@ -35,12 +35,19 @@ You need to provide the following environment variables:
 
 ## Table option `incremental`
 
-`incremental: true` on a `storage.input.tables[]` item merges the table into an existing workspace table
-of the same `destination` instead of creating it: with a primary key, matching rows are updated and the rest
-appended; without one, all rows are appended. It only has an effect for
-workspace input mapping into a preserved workspace. It cannot be combined with `overwrite: true` or with
-`load_type` `VIEW` / `CLONE` (nor the legacy `use_view: true`), and file input mapping (`data/in`) rejects it.
-Without the key the table is loaded as before.
+`incremental: true` on a `storage.input.tables[]` item merges the table into the workspace table of the same
+`destination`. If that table does not exist yet, it is created. If it exists, its columns (including
+`_timestamp` unless `keep_internal_timestamp_column: false`) and its primary key must match the loaded table;
+rows with a matching primary key are updated and the rest appended, and without a primary key all rows are
+appended.
+
+The option is meant for workspace input mapping. When the load cleans the workspace first (the workspace is
+not preserved), the incremental destination tables survive the clean and the load merges into them; every
+other table is dropped.
+
+It cannot be combined with `overwrite: true` or with `load_type` `VIEW` / `CLONE` (nor the legacy
+`use_view: true`), and file input mapping (`data/in`) rejects it. When the key is missing or `false`, the
+table is loaded as a new workspace table.
 
 ## License
 

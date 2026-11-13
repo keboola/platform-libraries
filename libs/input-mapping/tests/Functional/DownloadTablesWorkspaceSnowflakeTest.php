@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\InputMapping\Tests\Functional;
 
+use Generator;
 use Keboola\Csv\CsvFile;
 use Keboola\InputMapping\Configuration\Table\Manifest\Adapter;
 use Keboola\InputMapping\Exception\InvalidInputException;
@@ -419,8 +420,20 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
         self::assertTrue($this->testHandler->hasInfoThatContains('Processed 1 workspace exports.'));
     }
 
+    public static function incrementalLoadWorkspaceProvider(): Generator
+    {
+        yield 'preserved workspace' => [true];
+        yield 'cleaned workspace' => [false];
+    }
+
+    /**
+     * The load endpoint keeps incremental destinations when it cleans the workspace, so the merge happens
+     * whether the workspace is preserved or not.
+     *
+     * @dataProvider incrementalLoadWorkspaceProvider
+     */
     #[NeedsTestTables(2), NeedsEmptyOutputBucket]
-    public function testIncrementalLoadMergesIntoPreservedWorkspaceTable(): void
+    public function testIncrementalLoadMergesIntoWorkspaceTable(bool $preserveWorkspace): void
     {
         $clientWrapper = $this->initClient();
         $storageClient = $clientWrapper->getTableAndFileStorageClient();
@@ -452,6 +465,12 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
                     'load_type' => 'COPY',
                     'keep_internal_timestamp_column' => false,
                 ],
+                [
+                    'source' => $this->firstTableId,
+                    'destination' => 'other',
+                    'load_type' => 'COPY',
+                    'keep_internal_timestamp_column' => false,
+                ],
             ]),
             new InputTableStateList([]),
             'download',
@@ -471,9 +490,23 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
             ]),
             new InputTableStateList([]),
             'download',
-            new ReaderOptions(true, preserveWorkspace: true),
+            new ReaderOptions(true, preserveWorkspace: $preserveWorkspace),
         );
 
+        // a clean drops every non-incremental table, a preserved workspace keeps it
+        $otherTableExists = true;
+        try {
+            $storageClient->createTableAsyncDirect(
+                $this->emptyOutputBucketId,
+                ['dataWorkspaceId' => $this->workspaceId, 'dataTableName' => 'other', 'name' => 'other'],
+            );
+        } catch (ClientException) {
+            $otherTableExists = false;
+        }
+        self::assertSame($preserveWorkspace, $otherTableExists);
+
+        // the job list lags behind finished jobs, same as in testTablesSnowflakeBackend
+        sleep(2);
         $incrementalJobParams = null;
         foreach ($storageClient->listJobs(['limit' => 200]) as $job) {
             if ($job['runId'] === $incrementalRunId && $job['operationName'] === 'workspaceLoad') {

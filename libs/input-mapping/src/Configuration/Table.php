@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Keboola\InputMapping\Configuration;
 
+use InvalidArgumentException;
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 use Symfony\Component\Config\Definition\Builder\NodeDefinition;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
-use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 
 class Table extends Configuration
 {
@@ -113,7 +113,8 @@ class Table extends Configuration
                     ($v['incremental'] ?? false) === true &&
                     in_array($v['load_type'] ?? null, ['VIEW', 'CLONE'], true))
                 ->then(function (array $v): void {
-                    throw new InvalidConfigurationException(sprintf(
+                    // InvalidArgumentException, unlike InvalidConfigurationException, gets the node path prefix
+                    throw new InvalidArgumentException(sprintf(
                         'Option "incremental" cannot be used with load_type "%s"; '
                         . 'an incremental load needs a writable copy of the table (COPY or AUTO).',
                         $v['load_type'],

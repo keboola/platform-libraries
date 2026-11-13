@@ -2022,7 +2022,10 @@ class StorageApiLocalTableWriterTest extends AbstractTestCase
             );
         }
         self::assertFalse($this->clientWrapper->getTableAndFileStorageClient()->tableExists($tableId));
-        self::assertTrue(
+        // Without manifest columns the table is created by the load job itself (create + import), and Storage
+        // drops the table of a failed create job (https://github.com/keboola/connection/pull/9348), so there
+        // is nothing left for output mapping to drop.
+        self::assertFalse(
             $this->testHandler->hasWarningThatContains(sprintf('Failed to load table "%s". Dropping table.', $tableId)),
         );
     }

@@ -85,12 +85,12 @@ class TableLayoutBigQueryTest extends AbstractTestCase
     public function testUntypedTableFromColumnsGetsClustering(): void
     {
         $this->writeHeadlessCsv();
+        $this->writeColumnsManifest();
 
         $this->runOutputMapping(
             [
                 'source' => self::SOURCE,
                 'destination' => $this->getTableId(),
-                'columns' => ['id', 'report_date', 'country'],
                 'clustering' => ['fields' => ['country']],
             ],
             OutputMappingSettings::DATA_TYPES_SUPPORT_NONE,
@@ -107,12 +107,12 @@ class TableLayoutBigQueryTest extends AbstractTestCase
     {
         $this->createUntypedTableClusteredByCountry();
         $this->writeHeadlessCsv();
+        $this->writeColumnsManifest();
 
         $jobIds = $this->runOutputMapping(
             [
                 'source' => self::SOURCE,
                 'destination' => $this->getTableId(),
-                'columns' => ['id', 'report_date', 'country'],
                 'incremental' => false,
                 'clustering' => ['fields' => ['id']],
             ],
@@ -133,12 +133,12 @@ class TableLayoutBigQueryTest extends AbstractTestCase
     {
         $this->createUntypedTableClusteredByCountry();
         $this->writeHeadlessCsv();
+        $this->writeColumnsManifest();
 
         $jobIds = $this->runOutputMapping(
             [
                 'source' => self::SOURCE,
                 'destination' => $this->getTableId(),
-                'columns' => ['id', 'report_date', 'country'],
                 'incremental' => false,
                 'clustering' => ['fields' => ['country']],
             ],
@@ -286,6 +286,12 @@ class TableLayoutBigQueryTest extends AbstractTestCase
             $this->temp->getTmpFolder() . '/upload/' . self::SOURCE . '.manifest',
             (string) json_encode($manifest),
         );
+    }
+
+    // with the slicing feature, `columns` are accepted from the manifest only
+    private function writeColumnsManifest(): void
+    {
+        $this->writeManifest(['columns' => ['id', 'report_date', 'country']]);
     }
 
     private function createUntypedTableClusteredByCountry(): void

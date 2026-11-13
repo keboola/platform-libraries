@@ -13,6 +13,7 @@ use Keboola\OutputMapping\Mapping\MappingFromConfigurationSchemaColumn;
 use Keboola\OutputMapping\Mapping\MappingFromProcessedConfiguration;
 use Keboola\OutputMapping\Mapping\MappingFromRawConfigurationAndPhysicalDataWithManifest;
 use Keboola\OutputMapping\Mapping\MappingStorageSources;
+use Keboola\OutputMapping\Mapping\MappingTableLayout;
 use Keboola\OutputMapping\Storage\BucketInfo;
 use Keboola\OutputMapping\Storage\TableDescription;
 use Keboola\OutputMapping\Tests\AbstractTestCase;
@@ -37,6 +38,8 @@ class LoadTableTaskCreatorTest extends AbstractTestCase
             ->willReturn([]);
 
         $source = self::createMock(MappingFromProcessedConfiguration::class);
+        $source->expects(self::once())->method('getTableLayout')
+            ->willReturn(new MappingTableLayout(null, null, null));
         $source->expects(self::once())->method('hasColumns')->willReturn(true);
         $source->expects(self::once())->method('hasColumnMetadata')->willReturn(true);
         $source->expects(self::once())->method('hasMetadata')->willReturn(false);
@@ -145,6 +148,8 @@ class LoadTableTaskCreatorTest extends AbstractTestCase
             ->willReturn([]);
 
         $source = self::createMock(MappingFromProcessedConfiguration::class);
+        $source->expects(self::once())->method('getTableLayout')
+            ->willReturn(new MappingTableLayout(null, null, null));
         $source->expects(self::exactly(3))->method('getDestination')->willReturn(
             new MappingDestination($this->emptyOutputBucketId . '.destinationTable'),
         );
@@ -256,6 +261,8 @@ class LoadTableTaskCreatorTest extends AbstractTestCase
             ->willReturn([]);
 
         $source = self::createMock(MappingFromProcessedConfiguration::class);
+        $source->expects(self::once())->method('getTableLayout')
+            ->willReturn(new MappingTableLayout(null, null, null));
         $source->expects(self::once())->method('hasColumns')->willReturn(true);
         $source->expects(self::exactly(3))->method('getDestination')->willReturn(
             new MappingDestination($this->emptyOutputBucketId . '.destinationTable'),
@@ -323,6 +330,8 @@ class LoadTableTaskCreatorTest extends AbstractTestCase
             ->willReturn([]);
 
         $source = self::createMock(MappingFromProcessedConfiguration::class);
+        $source->expects(self::once())->method('getTableLayout')
+            ->willReturn(new MappingTableLayout(null, null, null));
         $source->expects(self::once())->method('getDestination')->willReturn(
             new MappingDestination($this->testBucketId . '.test0'),
         );
@@ -369,6 +378,8 @@ class LoadTableTaskCreatorTest extends AbstractTestCase
             ->willReturn([]);
 
         $source = self::createMock(MappingFromProcessedConfiguration::class);
+        $source->expects(self::once())->method('getTableLayout')
+            ->willReturn(new MappingTableLayout(null, null, null));
         $source->expects(self::once())->method('hasColumns')->willReturn(false);
         $source->expects(self::once())->method('getDestination')->willReturn(
             new MappingDestination($this->emptyOutputBucketId . '.test0'),
@@ -420,6 +431,8 @@ class LoadTableTaskCreatorTest extends AbstractTestCase
             ->willReturn([]);
 
         $source = self::createMock(MappingFromProcessedConfiguration::class);
+        $source->expects(self::once())->method('getTableLayout')
+            ->willReturn(new MappingTableLayout(null, null, null));
         $source->expects(self::once())->method('hasColumns')->willReturn(false);
         $source->expects(self::once())->method('getDestination')->willReturn(
             new MappingDestination($this->emptyOutputBucketId . '.test0'),

@@ -68,6 +68,64 @@ class TableLoaderUnloadStrategyTest extends AbstractTestCase
     }
 
     #[NeedsEmptyOutputBucket]
+    #[NeedsTestTables(2)]
+    public function testDirectGrantItemWithLayoutLogsWarning(): void
+    {
+        $this->initWorkspace();
+        $this->prepareWorkspaceWithTables($this->testBucketId);
+
+        $configs = [
+            [
+                'source' => 'table1a',
+                'destination' => $this->emptyOutputBucketId . '.table1',
+                'unload_strategy' => 'direct-grant',
+                'clustering' => ['fields' => ['Id']],
+            ],
+        ];
+
+        $systemMetadata = new SystemMetadata([
+            'componentId' => 'testComponent',
+            'configurationId' => 'metadata-write-test',
+            'configurationRowId' => '12345',
+            'branchId' => '1234',
+            'runId' => '1234567',
+        ]);
+
+        $strategyFactory = $this->getWorkspaceStagingFactory(
+            clientWrapper: $this->clientWrapper,
+            logger: $this->testLogger,
+        );
+
+        $tableLoader = $this->getTableLoader(
+            clientWrapper: $this->clientWrapper,
+            logger: $this->testLogger,
+            strategyFactory: $strategyFactory,
+        );
+
+        $storageApiToken = $this->clientWrapper->getToken();
+
+        $configuration = new OutputMappingSettings(
+            [
+                'mapping' => $configs,
+            ],
+            '',
+            $storageApiToken,
+            false,
+            OutputMappingSettings::DATA_TYPES_SUPPORT_NONE,
+        );
+
+        $result = $tableLoader->uploadTables($configuration, $systemMetadata);
+        $result->waitForAll();
+
+        $tables = $this->clientWrapper->getTableAndFileStorageClient()->listTables($this->emptyOutputBucketId);
+        self::assertCount(0, $tables, 'No tables should be imported when unload_strategy is direct-grant');
+        self::assertTrue($this->testHandler->hasWarning(
+            'Output table "table1a" has unload_strategy "direct-grant": output mapping does not create the table ' .
+            'and ignores "clustering". Create the table with this layout through the Storage API beforehand.',
+        ));
+    }
+
+    #[NeedsEmptyOutputBucket]
     #[NeedsTestTables]
     public function testDirectGrantOnlyAppliesToWorkspaceStrategy(): void
     {

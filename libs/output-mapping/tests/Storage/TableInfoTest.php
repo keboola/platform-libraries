@@ -37,4 +37,36 @@ class TableInfoTest extends TestCase
 
         $this->assertFalse($tableInfo->isDescriptionSystemManaged());
     }
+
+    public function testGetLayout(): void
+    {
+        $layout = [
+            'timePartitioning' => ['type' => 'DAY', 'field' => 'report_date', 'expirationMs' => '1000'],
+            'rangePartitioning' => [
+                'field' => 'id',
+                'range' => ['start' => '0', 'end' => '100', 'interval' => '10'],
+            ],
+            'clustering' => ['fields' => ['country']],
+        ];
+        $tableInfo = new TableInfo([
+            'id' => 'tableId',
+            'definition' => $layout + [
+                'primaryKeysNames' => [],
+                'columns' => [],
+                'requirePartitionFilter' => false,
+                'partitions' => [],
+            ],
+        ]);
+
+        self::assertSame($layout, $tableInfo->getLayout());
+    }
+
+    public function testGetLayoutWithoutLayout(): void
+    {
+        self::assertSame([], (new TableInfo(['id' => 'tableId']))->getLayout());
+        self::assertSame(
+            [],
+            (new TableInfo(['id' => 'tableId', 'definition' => ['columns' => []]]))->getLayout(),
+        );
+    }
 }

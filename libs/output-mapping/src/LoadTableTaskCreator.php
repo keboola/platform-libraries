@@ -6,9 +6,11 @@ namespace Keboola\OutputMapping;
 
 use Keboola\OutputMapping\DeferredTasks\TableWriter\CreateAndLoadTableTask;
 use Keboola\OutputMapping\DeferredTasks\TableWriter\LoadTableTask;
+use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Mapping\MappingFromConfigurationSchemaColumn;
 use Keboola\OutputMapping\Mapping\MappingFromProcessedConfiguration;
 use Keboola\OutputMapping\Mapping\MappingStorageSources;
+use Keboola\OutputMapping\Mapping\MappingTableLayout;
 use Keboola\OutputMapping\Storage\NativeTypeDecisionHelper;
 use Keboola\OutputMapping\Storage\TableCreator;
 use Keboola\OutputMapping\Storage\TableDescription;
@@ -19,9 +21,12 @@ use Keboola\OutputMapping\Writer\Table\TableDefinitionFromSchema\TableDefinition
 use Keboola\OutputMapping\Writer\Table\TableDefinitionInterface;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Psr\Log\LoggerInterface;
+use Webmozart\Assert\Assert;
 
 class LoadTableTaskCreator
 {
+    private const BIGQUERY_BACKEND = 'bigquery';
+
     private TableCreator $tableCreator;
 
     public function __construct(readonly ClientWrapper $clientWrapper, readonly LoggerInterface $logger)
@@ -49,6 +54,7 @@ class LoadTableTaskCreator
             $settings->hasNewNativeTypesFeature(),
             $settings->getTreatValuesAsNull(),
         );
+        $layout = $this->resolveLayout($source, $storageSources);
 
         // some scenarios are not supported by the SAPI, so we need to take care of them manually here
         // - columns in config + headless CSV (SAPI always expect to have a header in CSV)
@@ -74,7 +80,7 @@ class LoadTableTaskCreator
                 $source->getPrimaryKey(),
                 $source->getColumnMetadata(),
             );
-            $this->createTableDefinition($source, $tableDefinition, $descriptions);
+            $this->createTableDefinition($source, $tableDefinition, $descriptions, $layout);
             return new LoadTableTaskResult(new LoadTableTask($source->getDestination(), $loadOptions, true));
         } elseif ($settings->hasNewNativeTypesFeature() &&
             !$storageSources->didTableExistBefore() &&
@@ -85,7 +91,7 @@ class LoadTableTaskCreator
                 $source->getSchema(),
                 $storageSources->getBucket()->backend,
             );
-            $this->createTableDefinition($source, $tableDefinition, $descriptions);
+            $this->createTableDefinition($source, $tableDefinition, $descriptions, $layout);
             return new LoadTableTaskResult(new LoadTableTask($source->getDestination(), $loadOptions, true));
         } elseif (!$storageSources->didTableExistBefore() && $source->hasColumns()) {
             // tabulka neexistuje a známe sloupce z manifestu - vytváříme ji přes table definition bez typů
@@ -94,13 +100,24 @@ class LoadTableTaskCreator
                 $source->getColumns(),
                 $source->getPrimaryKey(),
             );
-            $this->createTableDefinition($source, $tableDefinition, $descriptions);
+            $this->createTableDefinition($source, $tableDefinition, $descriptions, $layout);
             return new LoadTableTaskResult(new LoadTableTask($source->getDestination(), $loadOptions, true));
         } elseif ($storageSources->didTableExistBefore()) {
             // tabulka existuje takže nahráváme data
+            if ($layout !== null) {
+                $this->warnAboutDifferentLayout($source, $storageSources, $layout);
+            }
             return new LoadTableTaskResult(new LoadTableTask($source->getDestination(), $loadOptions, false));
         } else {
             // tabulka nemá manifest a tím nemá známé columns
+            if ($layout !== null) {
+                throw new InvalidOutputException(sprintf(
+                    'Cannot create table "%s" with the option(s) "%s": the columns of the table are unknown. ' .
+                    'Set "columns" or "schema" in the output mapping or in the manifest.',
+                    $source->getDestination()->getTableId(),
+                    implode('", "', $layout->getConfiguredKeys()),
+                ));
+            }
             if ($settings->getTreatValuesAsNull() !== null) {
                 // @TODO remove after https://keboola.atlassian.net/browse/CT-1858 will be resolved
                 $this->logger->warning(sprintf(
@@ -121,6 +138,7 @@ class LoadTableTaskCreator
         MappingFromProcessedConfiguration $source,
         TableDefinitionInterface $tableDefinition,
         ?TableDescription $descriptions,
+        ?MappingTableLayout $layout,
     ): void {
         // The table is brand new, therefore its description is always system-managed (Storage default) and
         // there is nothing to diff against.
@@ -128,10 +146,61 @@ class LoadTableTaskCreator
             $tableDefinition->setDescriptions($descriptions, $this->logger);
         }
 
+        if ($layout !== null) {
+            $tableDefinition->setLayout($layout);
+        }
+
         $this->tableCreator->createTableDefinition(
             $source->getDestination()->getBucketId(),
             $tableDefinition,
         );
+    }
+
+    private function resolveLayout(
+        MappingFromProcessedConfiguration $source,
+        MappingStorageSources $storageSources,
+    ): ?MappingTableLayout {
+        $layout = $source->getTableLayout();
+        if ($layout->isEmpty()) {
+            return null;
+        }
+
+        $backend = $storageSources->getBucket()->backend;
+        if ($backend !== self::BIGQUERY_BACKEND) {
+            $this->logger->warning(sprintf(
+                'Table "%s": the option(s) "%s" have no effect on the "%s" backend and were not sent to Storage.',
+                $source->getDestination()->getTableId(),
+                implode('", "', $layout->getConfiguredKeys()),
+                $backend,
+            ));
+            return null;
+        }
+
+        return $layout;
+    }
+
+    private function warnAboutDifferentLayout(
+        MappingFromProcessedConfiguration $source,
+        MappingStorageSources $storageSources,
+        MappingTableLayout $layout,
+    ): void {
+        $table = $storageSources->getTable();
+        Assert::notNull($table);
+
+        $differences = $layout->findDifferences($table);
+        if (!$differences) {
+            return;
+        }
+
+        $this->logger->warning(sprintf(
+            'Table "%s" already exists with layout %s, the requested layout %s differs in "%s". ' .
+            'The table is loaded with its current layout; output mapping does not change the layout of ' .
+            'an existing table.',
+            $source->getDestination()->getTableId(),
+            json_encode($table->getLayout()),
+            $layout->describeRequested(),
+            implode('", "', $differences),
+        ));
     }
 
     public function buildLoadOptions(

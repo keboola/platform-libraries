@@ -251,6 +251,15 @@ class TableLoader
             ));
         }
 
+        foreach ($strategy->getDirectGrantSourcesWithLayout() as $source => $keys) {
+            $this->logger->warning(sprintf(
+                'Output table "%s" has unload_strategy "direct-grant": output mapping does not create the table ' .
+                'and ignores "%s". Create the table with this layout through the Storage API beforehand.',
+                $source,
+                implode('", "', $keys),
+            ));
+        }
+
         return [new DirectGrantMetadataRefreshTask((int) $strategy->getDataStorage()->getWorkspaceId())];
     }
 

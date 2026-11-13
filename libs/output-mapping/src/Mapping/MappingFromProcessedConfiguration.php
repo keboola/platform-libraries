@@ -99,6 +99,15 @@ class MappingFromProcessedConfiguration
         return $this->mapping['partition_aware_import'] ?? false;
     }
 
+    public function getTableLayout(): MappingTableLayout
+    {
+        return new MappingTableLayout(
+            $this->mapping['time_partitioning'] ?? null,
+            $this->mapping['range_partitioning'] ?? null,
+            $this->mapping['clustering'] ?? null,
+        );
+    }
+
     public function hasColumns(): bool
     {
         return !empty($this->getColumns());

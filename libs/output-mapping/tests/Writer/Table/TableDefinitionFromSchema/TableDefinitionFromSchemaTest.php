@@ -6,8 +6,11 @@ namespace Keboola\OutputMapping\Tests\Writer\Table\TableDefinitionFromSchema;
 
 use Generator;
 use Keboola\OutputMapping\Mapping\MappingFromConfigurationSchemaColumn;
+use Keboola\OutputMapping\Mapping\MappingTableLayout;
+use Keboola\OutputMapping\Storage\TableDescription;
 use Keboola\OutputMapping\Writer\Table\TableDefinitionFromSchema\TableDefinitionFromSchema;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\NullLogger;
 
 class TableDefinitionFromSchemaTest extends TestCase
 {
@@ -89,5 +92,46 @@ class TableDefinitionFromSchemaTest extends TestCase
     {
         $tableDefinition = new TableDefinitionFromSchema('testTableName', [], 'snowflake');
         self::assertEquals('testTableName', $tableDefinition->getTableName());
+    }
+
+    public function testRequestDataWithLayout(): void
+    {
+        $tableDefinition = new TableDefinitionFromSchema(
+            'testTable',
+            [
+                new MappingFromConfigurationSchemaColumn(['name' => 'Id', 'primary_key' => true]),
+                new MappingFromConfigurationSchemaColumn(['name' => 'Name']),
+            ],
+            'bigquery',
+        );
+
+        self::assertArrayNotHasKey('timePartitioning', $tableDefinition->getRequestData());
+        self::assertArrayNotHasKey('rangePartitioning', $tableDefinition->getRequestData());
+        self::assertArrayNotHasKey('clustering', $tableDefinition->getRequestData());
+
+        $tableDefinition->setDescriptions(
+            new TableDescription('in.c-main.testTable', 'table description', ['Id' => 'id description']),
+            new NullLogger(),
+        );
+        $tableDefinition->setLayout(new MappingTableLayout(
+            ['type' => 'DAY', 'field' => 'Id', 'expiration_ms' => 1000],
+            null,
+            ['fields' => ['Name']],
+        ));
+
+        self::assertSame(
+            [
+                'name' => 'testTable',
+                'primaryKeysNames' => ['Id'],
+                'columns' => [
+                    ['name' => 'Id', 'definition' => ['description' => 'id description']],
+                    ['name' => 'Name'],
+                ],
+                'description' => 'table description',
+                'timePartitioning' => ['type' => 'DAY', 'field' => 'Id', 'expirationMs' => 1000],
+                'clustering' => ['fields' => ['Name']],
+            ],
+            $tableDefinition->getRequestData(),
+        );
     }
 }

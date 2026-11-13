@@ -886,6 +886,68 @@ class ConfigurationMergerTest extends TestCase
                     'partition_aware_import' => true,
                 ],
             ],
+            'clustering-manifest-only' => [
+                'mapping' => [],
+                'manifest' => [
+                    'clustering' => ['fields' => ['country']],
+                ],
+                'expected' => [
+                    'clustering' => ['fields' => ['country']],
+                ],
+            ],
+            'clustering-mapping-overrides-manifest' => [
+                'mapping' => [
+                    'clustering' => ['fields' => ['id']],
+                ],
+                'manifest' => [
+                    'clustering' => ['fields' => ['country', 'city']],
+                ],
+                'expected' => [
+                    'clustering' => ['fields' => ['id']],
+                ],
+            ],
+            'time-partitioning-mapping-replaces-manifest-range-partitioning' => [
+                'mapping' => [
+                    'time_partitioning' => ['type' => 'DAY', 'field' => 'report_date'],
+                ],
+                'manifest' => [
+                    'range_partitioning' => [
+                        'field' => 'id',
+                        'range' => ['start' => 0, 'end' => 100, 'interval' => 10],
+                    ],
+                    'clustering' => ['fields' => ['country']],
+                ],
+                'expected' => [
+                    'time_partitioning' => ['type' => 'DAY', 'field' => 'report_date'],
+                    'clustering' => ['fields' => ['country']],
+                ],
+            ],
+            'range-partitioning-mapping-replaces-manifest-time-partitioning' => [
+                'mapping' => [
+                    'range_partitioning' => [
+                        'field' => 'id',
+                        'range' => ['start' => 0, 'end' => 100, 'interval' => 10],
+                    ],
+                ],
+                'manifest' => [
+                    'time_partitioning' => ['type' => 'DAY', 'field' => 'report_date'],
+                ],
+                'expected' => [
+                    'range_partitioning' => [
+                        'field' => 'id',
+                        'range' => ['start' => 0, 'end' => 100, 'interval' => 10],
+                    ],
+                ],
+            ],
+            'time-partitioning-manifest-only' => [
+                'mapping' => [],
+                'manifest' => [
+                    'time_partitioning' => ['type' => 'DAY', 'field' => 'report_date'],
+                ],
+                'expected' => [
+                    'time_partitioning' => ['type' => 'DAY', 'field' => 'report_date'],
+                ],
+            ],
         ];
     }
 }

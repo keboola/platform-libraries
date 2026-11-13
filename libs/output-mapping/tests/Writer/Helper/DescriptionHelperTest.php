@@ -23,7 +23,12 @@ class DescriptionHelperTest extends TestCase
     {
         yield 'text' => ['description' => 'some description', 'expected' => 'some description'];
         yield 'empty string is no description' => ['description' => '', 'expected' => null];
-        yield 'whitespace is a description' => ['description' => ' ', 'expected' => ' '];
+        yield 'whitespace is no description' => ['description' => " \t\n", 'expected' => null];
+        yield 'surrounding whitespace is trimmed' => [
+            'description' => " some description\u{A0}\n",
+            'expected' => 'some description',
+        ];
+        yield 'inner whitespace is kept' => ['description' => "some\n description", 'expected' => "some\n description"];
         yield 'null' => ['description' => null, 'expected' => null];
         yield 'integer is cast' => ['description' => 42, 'expected' => '42'];
         yield 'zero is cast' => ['description' => 0, 'expected' => '0'];

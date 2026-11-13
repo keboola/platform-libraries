@@ -7,6 +7,7 @@ namespace Keboola\InputMapping\Configuration;
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 use Symfony\Component\Config\Definition\Builder\NodeDefinition;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
+use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 
 class Table extends Configuration
 {
@@ -69,6 +70,8 @@ class Table extends Configuration
                     ->end()
                 ->end()
                 ->booleanNode('overwrite')->defaultValue(false)->end()
+                // No default, so configurations without the key parse (and reach the workspace load) unchanged.
+                ->booleanNode('incremental')->end()
                 // Legacy flag kept for BC; converted to "load_type" in the validate() callback below and never
                 // emitted in the parsed output. No default so it cannot be re-added after being unset.
                 ->booleanNode('use_view')->end()
@@ -98,6 +101,24 @@ class Table extends Configuration
                 }
                 return $v;
             })
+            ->end()
+            // The incremental checks mirror the workspace load endpoint, which rejects the same combinations.
+            // They run after the always() callback above, so the legacy "use_view" is already "load_type".
+            ->validate()
+                ->ifTrue(fn($v) => ($v['incremental'] ?? false) === true && $v['overwrite'] === true)
+                ->thenInvalid('Options "incremental" and "overwrite" cannot be used together.')
+            ->end()
+            ->validate()
+                ->ifTrue(fn($v) =>
+                    ($v['incremental'] ?? false) === true &&
+                    in_array($v['load_type'] ?? null, ['VIEW', 'CLONE'], true))
+                ->then(function (array $v): void {
+                    throw new InvalidConfigurationException(sprintf(
+                        'Option "incremental" cannot be used with load_type "%s"; '
+                        . 'an incremental load needs a writable copy of the table (COPY or AUTO).',
+                        $v['load_type'],
+                    ));
+                })
             ->end()
             ->validate()
                 ->ifTrue(function ($v) {

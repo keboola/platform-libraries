@@ -33,6 +33,15 @@ You need to provide the following environment variables:
 * `composer tests` - Run tests with PHPUnit
 * `composer paratests` - Run tests in parallel with Paratest
 
+## Table option `incremental`
+
+`incremental: true` on a `storage.input.tables[]` item merges the table into an existing workspace table
+of the same `destination` instead of creating it: with a primary key, matching rows are updated and the rest
+appended; without one, all rows are appended. It only has an effect for
+workspace input mapping into a preserved workspace. It cannot be combined with `overwrite: true` or with
+`load_type` `VIEW` / `CLONE` (nor the legacy `use_view: true`), and file input mapping (`data/in`) rejects it.
+Without the key the table is loaded as before.
+
 ## License
 
 MIT licensed, see [LICENSE](./LICENSE) file.

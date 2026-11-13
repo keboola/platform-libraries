@@ -13,6 +13,7 @@ class ABS extends AbstractFileStrategy
 {
     public function prepareAndExecuteTableLoads(array $tables, bool $preserve): TableLoadQueueInterface
     {
+        $this->assertNoIncrementalTables($tables);
         $this->logger->info('Processing ' . count($tables) . ' ABS table exports.');
         $tablesByJobId = [];
         foreach ($tables as $table) {

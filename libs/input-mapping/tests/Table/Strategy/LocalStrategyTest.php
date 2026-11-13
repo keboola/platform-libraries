@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\InputMapping\Tests\Table\Strategy;
 
+use Keboola\InputMapping\Exception\InvalidInputException;
 use Keboola\InputMapping\State\InputTableStateList;
 use Keboola\InputMapping\Table\Options\RewrittenInputTableOptions;
 use Keboola\InputMapping\Table\Strategy\Local;
@@ -64,6 +65,38 @@ class LocalStrategyTest extends AbstractTestCase
             ],
             $queue->exportJobs[$jobIds[0]],
         );
+    }
+
+    #[NeedsTestTables]
+    public function testIncrementalIsRejected(): void
+    {
+        $strategy = new Local(
+            $this->clientWrapper,
+            new NullLogger(),
+            $this->getProvider(),
+            $this->getProvider(),
+            new InputTableStateList([]),
+            'boo',
+            FileFormat::Json,
+        );
+        $tableOptions = new RewrittenInputTableOptions(
+            [
+                'source' => $this->firstTableId,
+                'destination' => 'some-table.csv',
+                'incremental' => true,
+            ],
+            $this->firstTableId,
+            (int) $this->clientWrapper->getDefaultBranch()->id,
+            $this->clientWrapper->getBasicClient()->getTable($this->firstTableId),
+        );
+
+        $this->expectException(InvalidInputException::class);
+        $this->expectExceptionMessage(sprintf(
+            'Option "incremental" is supported only for workspace input mapping, '
+            . 'but table "%s" is exported to a file.',
+            $this->firstTableId,
+        ));
+        $strategy->prepareAndExecuteTableLoads([$tableOptions], true);
     }
 
     #[NeedsTestTables]

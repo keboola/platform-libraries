@@ -77,6 +77,11 @@ class InputTableOptions
         return (bool) $this->definition['overwrite'];
     }
 
+    public function isIncremental(): bool
+    {
+        return (bool) ($this->definition['incremental'] ?? false);
+    }
+
     /**
      * @return array<string>
      */

@@ -13,6 +13,7 @@ class S3 extends AbstractFileStrategy
 {
     public function prepareAndExecuteTableLoads(array $tables, bool $preserve): TableLoadQueueInterface
     {
+        $this->assertNoIncrementalTables($tables);
         $this->logger->info('Processing ' . count($tables) . ' S3 table exports.');
         $tablesByJobId = [];
         foreach ($tables as $table) {

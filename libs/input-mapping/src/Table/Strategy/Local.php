@@ -17,6 +17,7 @@ class Local extends AbstractFileStrategy
 
     public function prepareAndExecuteTableLoads(array $tables, bool $preserve): TableLoadQueueInterface
     {
+        $this->assertNoIncrementalTables($tables);
         $tokenInfo = $this->clientWrapper->getBranchClient()->verifyToken();
         $exportLimit = self::DEFAULT_MAX_EXPORT_SIZE_BYTES;
         if (!empty($tokenInfo['owner']['limits'][self::EXPORT_SIZE_LIMIT_NAME])) {

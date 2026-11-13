@@ -575,7 +575,70 @@ class TableConfigurationTest extends TestCase
                     'keep_internal_timestamp_column' => true,
                 ],
             ],
+            'IncrementalWithoutLoadType' => [
+                'config' => [
+                    'source' => 'in.c-main.test',
+                    'incremental' => true,
+                ],
+                'expected' => self::expectedIncrementalConfig(['incremental' => true]),
+            ],
+            'IncrementalWithAutoLoadType' => [
+                'config' => [
+                    'source' => 'in.c-main.test',
+                    'incremental' => true,
+                    'load_type' => 'auto',
+                ],
+                'expected' => self::expectedIncrementalConfig(['incremental' => true, 'load_type' => 'AUTO']),
+            ],
+            'IncrementalWithCopyLoadType' => [
+                'config' => [
+                    'source' => 'in.c-main.test',
+                    'incremental' => true,
+                    'load_type' => 'COPY',
+                ],
+                'expected' => self::expectedIncrementalConfig(['incremental' => true, 'load_type' => 'COPY']),
+            ],
+            'IncrementalWithLegacyUseViewFalse' => [
+                'config' => [
+                    'source' => 'in.c-main.test',
+                    'incremental' => true,
+                    'use_view' => false,
+                ],
+                'expected' => self::expectedIncrementalConfig(['incremental' => true]),
+            ],
+            'NotIncrementalWithOverwrite' => [
+                'config' => [
+                    'source' => 'in.c-main.test',
+                    'incremental' => false,
+                    'overwrite' => true,
+                ],
+                'expected' => self::expectedIncrementalConfig(['incremental' => false, 'overwrite' => true]),
+            ],
+            'NotIncrementalWithViewLoadType' => [
+                'config' => [
+                    'source' => 'in.c-main.test',
+                    'incremental' => false,
+                    'load_type' => 'VIEW',
+                ],
+                'expected' => self::expectedIncrementalConfig(['incremental' => false, 'load_type' => 'VIEW']),
+            ],
         ];
+    }
+
+    private static function expectedIncrementalConfig(array $overrides): array
+    {
+        return array_merge(
+            [
+                'source' => 'in.c-main.test',
+                'columns' => [],
+                'column_types' => [],
+                'where_values' => [],
+                'where_operator' => 'eq',
+                'overwrite' => false,
+                'keep_internal_timestamp_column' => true,
+            ],
+            $overrides,
+        );
     }
 
     /**
@@ -671,6 +734,50 @@ class TableConfigurationTest extends TestCase
                 ],
                 InvalidConfigurationException::class,
                 'Unrecognized option "comment" under "table.column_types.0"',
+            ],
+            'IncrementalWithOverwrite' => [
+                [
+                    'source' => 'in.c-main.test',
+                    'incremental' => true,
+                    'overwrite' => true,
+                ],
+                InvalidConfigurationException::class,
+                'Options "incremental" and "overwrite" cannot be used together.',
+            ],
+            'IncrementalWithViewLoadType' => [
+                [
+                    'source' => 'in.c-main.test',
+                    'incremental' => true,
+                    'load_type' => 'view',
+                ],
+                InvalidConfigurationException::class,
+                'Option "incremental" cannot be used with load_type "VIEW"',
+            ],
+            'IncrementalWithLegacyUseView' => [
+                [
+                    'source' => 'in.c-main.test',
+                    'incremental' => true,
+                    'use_view' => true,
+                ],
+                InvalidConfigurationException::class,
+                'Option "incremental" cannot be used with load_type "VIEW"',
+            ],
+            'IncrementalWithCloneLoadType' => [
+                [
+                    'source' => 'in.c-main.test',
+                    'incremental' => true,
+                    'load_type' => 'CLONE',
+                ],
+                InvalidConfigurationException::class,
+                'Option "incremental" cannot be used with load_type "CLONE"',
+            ],
+            'IncrementalNotBoolean' => [
+                [
+                    'source' => 'in.c-main.test',
+                    'incremental' => 'yes',
+                ],
+                InvalidConfigurationException::class,
+                'Invalid type for path "table.incremental". Expected "bool", but got "string".',
             ],
             'UnknownTableKey' => [
                 [

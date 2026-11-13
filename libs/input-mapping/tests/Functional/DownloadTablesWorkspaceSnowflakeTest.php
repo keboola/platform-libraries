@@ -15,6 +15,7 @@ use Keboola\InputMapping\Tests\AbstractTestCase;
 use Keboola\InputMapping\Tests\Needs\NeedsDevBranch;
 use Keboola\InputMapping\Tests\Needs\NeedsEmptyOutputBucket;
 use Keboola\InputMapping\Tests\Needs\NeedsTestTables;
+use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApiBranch\ClientWrapper;
 
@@ -416,5 +417,90 @@ class DownloadTablesWorkspaceSnowflakeTest extends AbstractTestCase
 
         self::assertTrue($this->testHandler->hasInfoThatContains('Loading 4 tables to workspace.'));
         self::assertTrue($this->testHandler->hasInfoThatContains('Processed 1 workspace exports.'));
+    }
+
+    #[NeedsTestTables(2), NeedsEmptyOutputBucket]
+    public function testIncrementalLoadMergesIntoPreservedWorkspaceTable(): void
+    {
+        $clientWrapper = $this->initClient();
+        $storageClient = $clientWrapper->getTableAndFileStorageClient();
+
+        // Both sources share the Id primary key; the second one carries a changed row (id2) and a new one (id4).
+        $storageClient->createTablePrimaryKey($this->firstTableId, ['Id']);
+        $storageClient->createTablePrimaryKey($this->secondTableId, ['Id']);
+        $csv = new CsvFile($this->temp->getTmpFolder() . DIRECTORY_SEPARATOR . 'increment.csv');
+        $csv->writeRow(['Id', 'Name', 'foo', 'bar']);
+        $csv->writeRow(['id2', 'name2-changed', 'foo2-changed', 'bar2-changed']);
+        $csv->writeRow(['id4', 'name4', 'foo4', 'bar4']);
+        $storageClient->writeTableAsync($this->secondTableId, $csv);
+
+        $reader = new Reader(
+            $clientWrapper,
+            $this->testLogger,
+            $this->getWorkspaceStagingFactory(
+                clientWrapper: $clientWrapper,
+                logger: $this->testLogger,
+            ),
+        );
+
+        // COPY and no _timestamp, so the workspace table is a plain writable table the increment can merge into
+        $reader->downloadTables(
+            new InputTableOptionsList([
+                [
+                    'source' => $this->firstTableId,
+                    'destination' => 'merged',
+                    'load_type' => 'COPY',
+                    'keep_internal_timestamp_column' => false,
+                ],
+            ]),
+            new InputTableStateList([]),
+            'download',
+            new ReaderOptions(true, preserveWorkspace: true),
+        );
+
+        $incrementalRunId = $clientWrapper->getBasicClient()->generateRunId();
+        $clientWrapper->getBranchClient()->setRunId($incrementalRunId);
+        $reader->downloadTables(
+            new InputTableOptionsList([
+                [
+                    'source' => $this->secondTableId,
+                    'destination' => 'merged',
+                    'incremental' => true,
+                    'keep_internal_timestamp_column' => false,
+                ],
+            ]),
+            new InputTableStateList([]),
+            'download',
+            new ReaderOptions(true, preserveWorkspace: true),
+        );
+
+        $incrementalJobParams = null;
+        foreach ($storageClient->listJobs(['limit' => 200]) as $job) {
+            if ($job['runId'] === $incrementalRunId && $job['operationName'] === 'workspaceLoad') {
+                $incrementalJobParams = $job['operationParams'];
+                break;
+            }
+        }
+        self::assertNotNull($incrementalJobParams);
+        self::assertCount(1, $incrementalJobParams['input']);
+        self::assertSame('merged', $incrementalJobParams['input'][0]['destination']);
+        self::assertTrue((bool) $incrementalJobParams['input'][0]['incremental']);
+
+        $mergedTableId = $storageClient->createTableAsyncDirect(
+            $this->emptyOutputBucketId,
+            ['dataWorkspaceId' => $this->workspaceId, 'dataTableName' => 'merged', 'name' => 'merged'],
+        );
+        $rows = Client::parseCsv((string) $storageClient->getTableDataPreview($mergedTableId), false);
+        usort($rows, fn(array $a, array $b) => strcmp((string) $a[0], (string) $b[0]));
+        self::assertSame(
+            [
+                ['Id', 'Name', 'foo', 'bar'],
+                ['id1', 'name1', 'foo1', 'bar1'],
+                ['id2', 'name2-changed', 'foo2-changed', 'bar2-changed'],
+                ['id3', 'name3', 'foo3', 'bar3'],
+                ['id4', 'name4', 'foo4', 'bar4'],
+            ],
+            $rows,
+        );
     }
 }

@@ -2809,16 +2809,21 @@ CSV;
         self::assertSame('snowflake', $bucket['backend'], 'The import method is only accepted by Snowflake.');
 
         $root = $this->temp->getTmpFolder();
-        // headless CSVs with `columns` in the mapping: the table is created from its definition first and the data
-        // then go through import-async, the endpoint which takes the import method
-        file_put_contents($root . '/upload/table-single.csv', "\"1\",\"a\"\n\"2\",\"b\"\n");
-        file_put_contents($root . '/upload/table-default.csv', "\"1\",\"a\"\n\"2\",\"b\"\n");
+        // headless CSVs with columns in the manifest: the table is created from its definition first and the data
+        // then go through import-async, the endpoint which takes the import method (create-async does not);
+        // the manifest rather than the mapping holds the columns, because sliced uploads reject mapping columns
+        foreach (['table-single.csv', 'table-default.csv'] as $fileName) {
+            file_put_contents($root . '/upload/' . $fileName, "\"1\",\"a\"\n\"2\",\"b\"\n");
+            file_put_contents(
+                $root . '/upload/' . $fileName . '.manifest',
+                (string) json_encode(['columns' => ['Id', 'Name']]),
+            );
+        }
 
         $configs = [
             [
                 'source' => 'table-single.csv',
                 'destination' => $this->emptyOutputBucketId . '.tableSingle',
-                'columns' => ['Id', 'Name'],
                 'primary_key' => ['Id'],
                 'incremental' => true,
                 'import_method' => 'single_statement',
@@ -2826,7 +2831,6 @@ CSV;
             [
                 'source' => 'table-default.csv',
                 'destination' => $this->emptyOutputBucketId . '.tableDefault',
-                'columns' => ['Id', 'Name'],
                 'primary_key' => ['Id'],
                 'incremental' => true,
             ],

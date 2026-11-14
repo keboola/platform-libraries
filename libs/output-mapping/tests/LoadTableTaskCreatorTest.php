@@ -737,6 +737,59 @@ class LoadTableTaskCreatorTest extends AbstractTestCase
             ],
         ];
 
+        yield 'import method single statement' => [
+            'sourceData' => [
+                'destination' => 'in.c-bucket.destinationTable',
+                'incremental' => true,
+                'primary_key' => ['id'],
+                'import_method' => 'single_statement',
+            ],
+            'didTableExistBefore' => true,
+            'hasNewNativeTypesFeature' => false,
+            'treatValuesAsNullConfiguration' => null,
+            'expectedLoadOptions' => [
+                'columns' => [],
+                'primaryKey' => 'id',
+                'incremental' => true,
+                'importMethod' => 'single_statement',
+            ],
+        ];
+
+        yield 'import method multi statement' => [
+            'sourceData' => [
+                'destination' => 'in.c-bucket.destinationTable',
+                'incremental' => false,
+                'primary_key' => ['id'],
+                'import_method' => 'multi_statement',
+            ],
+            'didTableExistBefore' => false,
+            'hasNewNativeTypesFeature' => false,
+            'treatValuesAsNullConfiguration' => null,
+            'expectedLoadOptions' => [
+                'columns' => [],
+                'primaryKey' => 'id',
+                'incremental' => false,
+                'importMethod' => 'multi_statement',
+            ],
+        ];
+
+        yield 'import method auto' => [
+            'sourceData' => [
+                'destination' => 'in.c-bucket.destinationTable',
+                'incremental' => true,
+                'primary_key' => ['id'],
+                'import_method' => 'auto',
+            ],
+            'didTableExistBefore' => true,
+            'hasNewNativeTypesFeature' => false,
+            'treatValuesAsNullConfiguration' => null,
+            'expectedLoadOptions' => [
+                'columns' => [],
+                'primaryKey' => 'id',
+                'incremental' => true,
+            ],
+        ];
+
         yield 'partition aware import not set' => [
             'sourceData' => [
                 'destination' => 'in.c-bucket.destinationTable',

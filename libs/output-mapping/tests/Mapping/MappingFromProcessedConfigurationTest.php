@@ -6,6 +6,7 @@ namespace Keboola\OutputMapping\Tests\Mapping;
 
 use Generator;
 use Keboola\OutputMapping\Configuration\Table\DeduplicationStrategy;
+use Keboola\OutputMapping\Configuration\Table\ImportMethod;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Mapping\MappingFromProcessedConfiguration;
 use Keboola\OutputMapping\Mapping\MappingFromRawConfigurationAndPhysicalData;
@@ -599,5 +600,33 @@ class MappingFromProcessedConfigurationTest extends TestCase
         yield 'not set' => ['mapping' => [], 'expected' => false];
         yield 'enabled' => ['mapping' => ['partition_aware_import' => true], 'expected' => true];
         yield 'disabled' => ['mapping' => ['partition_aware_import' => false], 'expected' => false];
+    }
+
+    /**
+     * @dataProvider importMethodProvider
+     */
+    public function testGetImportMethod(array $mapping, ?ImportMethod $expected): void
+    {
+        $mapping += ['destination' => 'in.c-main.table'];
+        $mappingFromProcessedConfiguration = new MappingFromProcessedConfiguration(
+            $mapping,
+            $this->createMock(MappingFromRawConfigurationAndPhysicalDataWithManifest::class),
+        );
+
+        self::assertSame($expected, $mappingFromProcessedConfiguration->getImportMethod());
+    }
+
+    public static function importMethodProvider(): Generator
+    {
+        yield 'not set' => ['mapping' => [], 'expected' => null];
+        yield 'auto' => ['mapping' => ['import_method' => 'auto'], 'expected' => ImportMethod::AUTO];
+        yield 'single statement' => [
+            'mapping' => ['import_method' => 'single_statement'],
+            'expected' => ImportMethod::SINGLE_STATEMENT,
+        ];
+        yield 'multi statement' => [
+            'mapping' => ['import_method' => 'multi_statement'],
+            'expected' => ImportMethod::MULTI_STATEMENT,
+        ];
     }
 }

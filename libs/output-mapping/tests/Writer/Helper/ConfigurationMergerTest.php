@@ -886,6 +886,36 @@ class ConfigurationMergerTest extends TestCase
                     'partition_aware_import' => true,
                 ],
             ],
+            'import-method-mapping-only' => [
+                'mapping' => [
+                    'import_method' => 'single_statement',
+                ],
+                'manifest' => [],
+                'expected' => [
+                    'import_method' => 'single_statement',
+                ],
+            ],
+            'import-method-manifest-only' => [
+                'mapping' => [],
+                'manifest' => [
+                    'import_method' => 'multi_statement',
+                ],
+                'expected' => [
+                    'import_method' => 'multi_statement',
+                ],
+            ],
+            // an explicit `auto` in the mapping is a choice of the platform default, it beats the manifest
+            'import-method-mapping-auto-overrides-manifest' => [
+                'mapping' => [
+                    'import_method' => 'auto',
+                ],
+                'manifest' => [
+                    'import_method' => 'single_statement',
+                ],
+                'expected' => [
+                    'import_method' => 'auto',
+                ],
+            ],
         ];
     }
 }

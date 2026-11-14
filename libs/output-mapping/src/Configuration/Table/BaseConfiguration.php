@@ -14,6 +14,7 @@ abstract class BaseConfiguration extends Configuration
     public const DEFAULT_DELIMITER = ',';
     public const DEFAULT_ENCLOSURE = '"';
     public const FIELD_DEDUPLICATION_STRATEGY = 'deduplication_strategy';
+    public const FIELD_IMPORT_METHOD = 'import_method';
 
     private const DEFAULT_DELETE_WHERE_OPERATOR = 'eq';
 
@@ -188,6 +189,9 @@ abstract class BaseConfiguration extends Configuration
                 ->end()
                 ->booleanNode('write_always')->defaultValue(false)->end()
                 ->booleanNode('partition_aware_import')->end()
+                ->enumNode(self::FIELD_IMPORT_METHOD)
+                    ->values(array_map(fn(ImportMethod $method) => $method->value, ImportMethod::cases()))
+                ->end()
                 ->arrayNode('tags')->prototype('scalar')->cannotBeEmpty()->end()->end()
                 ->scalarNode('manifest_type')->end()
                 ->booleanNode('has_header')->end()

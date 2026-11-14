@@ -6,6 +6,7 @@ namespace Keboola\OutputMapping\Mapping;
 
 use Keboola\OutputMapping\Configuration\Table\Configuration;
 use Keboola\OutputMapping\Configuration\Table\DeduplicationStrategy;
+use Keboola\OutputMapping\Configuration\Table\ImportMethod;
 use Keboola\OutputMapping\Writer\Helper\DescriptionHelper;
 use Keboola\OutputMapping\Writer\Helper\RestrictedColumnsHelper;
 use Keboola\OutputMapping\Writer\Table\MappingDestination;
@@ -317,6 +318,15 @@ class MappingFromProcessedConfiguration
 
         return $value !== null
             ? DeduplicationStrategy::from($value)
+            : null;
+    }
+
+    public function getImportMethod(): ?ImportMethod
+    {
+        $value = $this->mapping['import_method'] ?? null;
+
+        return $value !== null
+            ? ImportMethod::from($value)
             : null;
     }
 

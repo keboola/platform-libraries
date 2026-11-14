@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping;
 
+use Keboola\OutputMapping\Configuration\Table\ImportMethod;
 use Keboola\OutputMapping\DeferredTasks\TableWriter\CreateAndLoadTableTask;
 use Keboola\OutputMapping\DeferredTasks\TableWriter\LoadTableTask;
 use Keboola\OutputMapping\Mapping\MappingFromConfigurationSchemaColumn;
@@ -190,6 +191,12 @@ class LoadTableTaskCreator
 
         if ($source->isPartitionAwareImport()) {
             $loadOptions['partitionAwareImport'] = true;
+        }
+
+        // `auto` leaves the choice to Storage, which is the same as not sending the option at all.
+        $importMethod = $source->getImportMethod();
+        if ($importMethod !== null && $importMethod !== ImportMethod::AUTO) {
+            $loadOptions['importMethod'] = $importMethod->value;
         }
 
         return array_merge(

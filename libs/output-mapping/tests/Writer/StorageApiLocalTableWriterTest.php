@@ -2860,7 +2860,11 @@ CSV;
 
         $singleParams = $importParamsByTable[$this->emptyOutputBucketId . '.tableSingle'] ?? null;
         self::assertIsArray($singleParams);
-        self::assertArrayHasKey('importMethod', $singleParams);
+        self::assertArrayHasKey(
+            'importMethod',
+            $singleParams,
+            sprintf('Import job params recorded by Storage: %s', implode(', ', array_keys($singleParams))),
+        );
         self::assertSame('single_statement', $singleParams['importMethod']);
 
         $defaultParams = $importParamsByTable[$this->emptyOutputBucketId . '.tableDefault'] ?? null;

@@ -904,8 +904,8 @@ class ConfigurationMergerTest extends TestCase
                     'import_method' => 'multi_statement',
                 ],
             ],
-            // an explicit `auto` in the mapping is a choice of the platform default, it beats the manifest
-            'import-method-mapping-auto-overrides-manifest' => [
+            // `auto` is the default of every parsed mapping, so like the other defaults it keeps the manifest value
+            'import-method-mapping-auto-keeps-manifest' => [
                 'mapping' => [
                     'import_method' => 'auto',
                 ],
@@ -913,7 +913,18 @@ class ConfigurationMergerTest extends TestCase
                     'import_method' => 'single_statement',
                 ],
                 'expected' => [
-                    'import_method' => 'auto',
+                    'import_method' => 'single_statement',
+                ],
+            ],
+            'import-method-mapping-overrides-manifest' => [
+                'mapping' => [
+                    'import_method' => 'multi_statement',
+                ],
+                'manifest' => [
+                    'import_method' => 'single_statement',
+                ],
+                'expected' => [
+                    'import_method' => 'multi_statement',
                 ],
             ],
         ];

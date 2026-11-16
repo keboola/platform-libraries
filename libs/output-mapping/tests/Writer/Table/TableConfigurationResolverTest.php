@@ -79,6 +79,7 @@ class TableConfigurationResolverTest extends TestCase
             'metadata' => [],
             'column_metadata' => [],
             'write_always' => false,
+            'import_method' => 'auto',
             'tags' => [],
             'schema' => [],
         ];
@@ -140,6 +141,7 @@ class TableConfigurationResolverTest extends TestCase
             'metadata' => [],
             'column_metadata' => [],
             'write_always' => false,
+            'import_method' => 'auto',
             'tags' => [],
             'schema' => [],
         ];
@@ -202,6 +204,7 @@ class TableConfigurationResolverTest extends TestCase
             'metadata' => [],
             'column_metadata' => [],
             'write_always' => false,
+            'import_method' => 'auto',
             'tags' => [],
             'schema' => [],
         ];
@@ -255,6 +258,7 @@ class TableConfigurationResolverTest extends TestCase
             'metadata' => [],
             'column_metadata' => [],
             'write_always' => false,
+            'import_method' => 'auto',
             'tags' => [
                 'componentId: keboola.ex-db-snowflake',
                 'configurationId: 123',
@@ -515,6 +519,7 @@ class TableConfigurationResolverTest extends TestCase
             'metadata' => [],
             'column_metadata' => [],
             'write_always' => false,
+            'import_method' => 'auto',
             'tags' => [],
             'schema' => [],
             'delete_where' => [

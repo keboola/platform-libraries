@@ -321,13 +321,9 @@ class MappingFromProcessedConfiguration
             : null;
     }
 
-    public function getImportMethod(): ?ImportMethod
+    public function getImportMethod(): ImportMethod
     {
-        $value = $this->mapping['import_method'] ?? null;
-
-        return $value !== null
-            ? ImportMethod::from($value)
-            : null;
+        return ImportMethod::from($this->mapping['import_method'] ?? ImportMethod::AUTO->value);
     }
 
     public function getUnloadStrategy(): ?string

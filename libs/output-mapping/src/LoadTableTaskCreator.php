@@ -195,7 +195,7 @@ class LoadTableTaskCreator
 
         // `auto` leaves the choice to Storage, which is the same as not sending the option at all.
         $importMethod = $source->getImportMethod();
-        if ($importMethod !== null && $importMethod !== ImportMethod::AUTO) {
+        if ($importMethod !== ImportMethod::AUTO) {
             $loadOptions['importMethod'] = $importMethod->value;
         }
 

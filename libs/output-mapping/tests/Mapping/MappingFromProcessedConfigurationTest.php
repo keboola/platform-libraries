@@ -605,7 +605,7 @@ class MappingFromProcessedConfigurationTest extends TestCase
     /**
      * @dataProvider importMethodProvider
      */
-    public function testGetImportMethod(array $mapping, ?ImportMethod $expected): void
+    public function testGetImportMethod(array $mapping, ImportMethod $expected): void
     {
         $mapping += ['destination' => 'in.c-main.table'];
         $mappingFromProcessedConfiguration = new MappingFromProcessedConfiguration(
@@ -618,7 +618,8 @@ class MappingFromProcessedConfigurationTest extends TestCase
 
     public static function importMethodProvider(): Generator
     {
-        yield 'not set' => ['mapping' => [], 'expected' => null];
+        yield 'not set' => ['mapping' => [], 'expected' => ImportMethod::AUTO];
+        yield 'null' => ['mapping' => ['import_method' => null], 'expected' => ImportMethod::AUTO];
         yield 'auto' => ['mapping' => ['import_method' => 'auto'], 'expected' => ImportMethod::AUTO];
         yield 'single statement' => [
             'mapping' => ['import_method' => 'single_statement'],

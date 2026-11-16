@@ -30,6 +30,7 @@ class BaseConfigurationTest extends TestCase
             'metadata' => [],
             'column_metadata' => [],
             'write_always' => false,
+            'import_method' => 'auto',
             'tags' => [],
             'schema' => [],
         ];
@@ -65,6 +66,7 @@ class BaseConfigurationTest extends TestCase
             'metadata' => [],
             'column_metadata' => [],
             'write_always' => false,
+            'import_method' => 'auto',
             'tags' => [],
             'schema' => [
                 [
@@ -119,6 +121,7 @@ class BaseConfigurationTest extends TestCase
             'metadata' => [],
             'column_metadata' => [],
             'write_always' => false,
+            'import_method' => 'auto',
             'tags' => [],
             'schema' => [
                 [
@@ -180,6 +183,7 @@ class BaseConfigurationTest extends TestCase
             'metadata' => [],
             'column_metadata' => [],
             'write_always' => false,
+            'import_method' => 'auto',
             'tags' => [],
             'schema' => [
                 [
@@ -237,6 +241,7 @@ class BaseConfigurationTest extends TestCase
             'metadata' => [],
             'column_metadata' => [],
             'write_always' => false,
+            'import_method' => 'auto',
             'tags' => [],
             'schema' => [
                 [
@@ -317,6 +322,7 @@ class BaseConfigurationTest extends TestCase
             'metadata' => [],
             'column_metadata' => [],
             'write_always' => false,
+            'import_method' => 'auto',
             'tags' => [],
             'table_metadata' => [
                 'KBC.table_metadata' => 'test_metadata',
@@ -636,6 +642,7 @@ class BaseConfigurationTest extends TestCase
             'enclosure' => '"',
             'metadata' => [],
             'write_always' => false,
+            'import_method' => 'auto',
             'tags' => [],
             'schema' => [],
         ];
@@ -926,6 +933,7 @@ class BaseConfigurationTest extends TestCase
             'metadata' => [],
             'column_metadata' => [],
             'write_always' => false,
+            'import_method' => 'auto',
             'tags' => [],
             'schema' => [],
             'delete_where' => $expectedDeleteWhereConfig,
@@ -1238,20 +1246,21 @@ class BaseConfigurationTest extends TestCase
         yield 'multi statement' => ['value' => 'multi_statement'];
     }
 
-    public function testImportMethodNotSet(): void
+    /**
+     * @dataProvider importMethodDefaultProvider
+     */
+    public function testImportMethodDefaultsToAuto(array $config): void
     {
-        $config = [
-            'destination' => 'in.c-main.test',
-        ];
+        $config += ['destination' => 'in.c-main.test'];
 
-        self::assertArrayNotHasKey(
-            'import_method',
-            (new Table\Manifest())->parse(['config' => $config]),
-        );
-        self::assertArrayNotHasKey(
-            'import_method',
-            (new Table\Configuration())->parse(['config' => $config]),
-        );
+        self::assertSame('auto', (new Table\Manifest())->parse(['config' => $config])['import_method']);
+        self::assertSame('auto', (new Table\Configuration())->parse(['config' => $config])['import_method']);
+    }
+
+    public static function importMethodDefaultProvider(): Generator
+    {
+        yield 'not set' => ['config' => []];
+        yield 'null' => ['config' => ['import_method' => null]];
     }
 
     public function testImportMethodInvalidValue(): void
@@ -1299,6 +1308,7 @@ class BaseConfigurationTest extends TestCase
             'metadata' => [],
             'column_metadata' => [],
             'write_always' => false,
+            'import_method' => 'auto',
             'tags' => [],
             'schema' => [],
         ];
@@ -1327,6 +1337,7 @@ class BaseConfigurationTest extends TestCase
             'metadata' => [],
             'column_metadata' => [],
             'write_always' => false,
+            'import_method' => 'auto',
             'tags' => [],
             'schema' => [],
         ];
@@ -1353,6 +1364,7 @@ class BaseConfigurationTest extends TestCase
             'metadata' => [],
             'column_metadata' => [],
             'write_always' => false,
+            'import_method' => 'auto',
             'tags' => [],
             'schema' => [],
         ];

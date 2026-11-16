@@ -183,6 +183,44 @@ class TableDescriptionModifierTest extends TestCase
         )));
     }
 
+    public function testOtherValidationFailureIsStillAnError(): void
+    {
+        $client = $this->createMock(Client::class);
+        $client->expects(self::once())
+            ->method('updateTableDefinition')
+            ->willThrowException(new ClientException(
+                'Invalid length "x" for type "VARCHAR".',
+                400,
+                null,
+                'storage.tables.definitionUpdateValidationFailed',
+            ));
+
+        $this->expectException(InvalidOutputException::class);
+        $this->createModifier($client)->updateDescriptions(
+            $this->createTableInfo(columns: ['col1']),
+            new TableDescription(self::TABLE_ID, null, ['col1' => 'col1 desc']),
+        );
+    }
+
+    public function testNoChangeMessageWithDifferentStringCodeIsStillAnError(): void
+    {
+        $client = $this->createMock(Client::class);
+        $client->expects(self::once())
+            ->method('updateTableDefinition')
+            ->willThrowException(new ClientException(
+                'No table definition changes were provided.',
+                400,
+                null,
+                'storage.tables.validation',
+            ));
+
+        $this->expectException(InvalidOutputException::class);
+        $this->createModifier($client)->updateDescriptions(
+            $this->createTableInfo(columns: ['col1']),
+            new TableDescription(self::TABLE_ID, null, ['col1' => 'col1 desc']),
+        );
+    }
+
     public function testUserErrorIsWrappedInInvalidOutputException(): void
     {
         $clientException = new ClientException('Table definition update failed', 400);

@@ -29,6 +29,7 @@ class ManifestTest extends TestCase
             'metadata' => [],
             'column_metadata' => [],
             'write_always' => false,
+            'import_method' => 'auto',
             'tags' => [],
             'schema' => [],
         ];
@@ -53,6 +54,7 @@ class ManifestTest extends TestCase
             'metadata' => [],
             'column_metadata' => [],
             'write_always' => false,
+            'import_method' => 'auto',
             'tags' => [],
             'schema' => [],
             'manifest_type' => 'output',
@@ -106,6 +108,7 @@ class ManifestTest extends TestCase
             'enclosure' => '"',
             'column_metadata' => [],
             'write_always' => false,
+            'import_method' => 'auto',
             'tags' => [],
             'schema' => [],
         ];
@@ -155,6 +158,7 @@ class ManifestTest extends TestCase
             'enclosure' => '"',
             'metadata' => [],
             'write_always' => false,
+            'import_method' => 'auto',
             'tags' => [],
             'schema' => [],
         ];

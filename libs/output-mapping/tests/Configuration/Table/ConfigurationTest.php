@@ -30,6 +30,7 @@ class ConfigurationTest extends ManifestTest
             'metadata' => [],
             'column_metadata' => [],
             'write_always' => false,
+            'import_method' => 'auto',
             'tags' => [],
             'source' => 'in.c-main.source',
             'schema' => [],

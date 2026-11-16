@@ -30,6 +30,7 @@ class BaseConfigurationTest extends TestCase
             'metadata' => [],
             'column_metadata' => [],
             'write_always' => false,
+            'import_method' => 'auto',
             'tags' => [],
             'schema' => [],
         ];
@@ -65,6 +66,7 @@ class BaseConfigurationTest extends TestCase
             'metadata' => [],
             'column_metadata' => [],
             'write_always' => false,
+            'import_method' => 'auto',
             'tags' => [],
             'schema' => [
                 [
@@ -119,6 +121,7 @@ class BaseConfigurationTest extends TestCase
             'metadata' => [],
             'column_metadata' => [],
             'write_always' => false,
+            'import_method' => 'auto',
             'tags' => [],
             'schema' => [
                 [
@@ -180,6 +183,7 @@ class BaseConfigurationTest extends TestCase
             'metadata' => [],
             'column_metadata' => [],
             'write_always' => false,
+            'import_method' => 'auto',
             'tags' => [],
             'schema' => [
                 [
@@ -237,6 +241,7 @@ class BaseConfigurationTest extends TestCase
             'metadata' => [],
             'column_metadata' => [],
             'write_always' => false,
+            'import_method' => 'auto',
             'tags' => [],
             'schema' => [
                 [
@@ -317,6 +322,7 @@ class BaseConfigurationTest extends TestCase
             'metadata' => [],
             'column_metadata' => [],
             'write_always' => false,
+            'import_method' => 'auto',
             'tags' => [],
             'table_metadata' => [
                 'KBC.table_metadata' => 'test_metadata',
@@ -636,6 +642,7 @@ class BaseConfigurationTest extends TestCase
             'enclosure' => '"',
             'metadata' => [],
             'write_always' => false,
+            'import_method' => 'auto',
             'tags' => [],
             'schema' => [],
         ];
@@ -926,6 +933,7 @@ class BaseConfigurationTest extends TestCase
             'metadata' => [],
             'column_metadata' => [],
             'write_always' => false,
+            'import_method' => 'auto',
             'tags' => [],
             'schema' => [],
             'delete_where' => $expectedDeleteWhereConfig,
@@ -1212,6 +1220,73 @@ class BaseConfigurationTest extends TestCase
         }
     }
 
+    /**
+     * @dataProvider importMethodProvider
+     */
+    public function testImportMethodSuccess(string $value): void
+    {
+        $config = [
+            'destination' => 'in.c-main.test',
+            'import_method' => $value,
+        ];
+
+        $manifest = (new Table\Manifest())->parse(['config' => $config]);
+        self::assertArrayHasKey('import_method', $manifest);
+        self::assertSame($value, $manifest['import_method']);
+
+        $configuration = (new Table\Configuration())->parse(['config' => $config]);
+        self::assertArrayHasKey('import_method', $configuration);
+        self::assertSame($value, $configuration['import_method']);
+    }
+
+    public static function importMethodProvider(): Generator
+    {
+        yield 'auto' => ['value' => 'auto'];
+        yield 'single statement' => ['value' => 'single_statement'];
+        yield 'multi statement' => ['value' => 'multi_statement'];
+    }
+
+    /**
+     * @dataProvider importMethodDefaultProvider
+     */
+    public function testImportMethodDefaultsToAuto(array $config): void
+    {
+        $config += ['destination' => 'in.c-main.test'];
+
+        self::assertSame('auto', (new Table\Manifest())->parse(['config' => $config])['import_method']);
+        self::assertSame('auto', (new Table\Configuration())->parse(['config' => $config])['import_method']);
+    }
+
+    public static function importMethodDefaultProvider(): Generator
+    {
+        yield 'not set' => ['config' => []];
+        yield 'null' => ['config' => ['import_method' => null]];
+    }
+
+    public function testImportMethodInvalidValue(): void
+    {
+        $config = [
+            'destination' => 'in.c-main.test',
+            'import_method' => 'merge',
+        ];
+
+        try {
+            (new Table\Manifest())->parse(['config' => $config]);
+            self::fail('Exception should be thrown');
+        } catch (InvalidConfigurationException $e) {
+            self::assertStringContainsString('table.import_method', $e->getMessage());
+            self::assertStringContainsString('"auto", "single_statement", "multi_statement"', $e->getMessage());
+        }
+
+        try {
+            (new Table\Configuration())->parse(['config' => $config]);
+            self::fail('Exception should be thrown');
+        } catch (InvalidConfigurationException $e) {
+            self::assertStringContainsString('table.import_method', $e->getMessage());
+            self::assertStringContainsString('"auto", "single_statement", "multi_statement"', $e->getMessage());
+        }
+    }
+
     public function testUnloadStrategyDirectGrant(): void
     {
         $config = [
@@ -1233,6 +1308,7 @@ class BaseConfigurationTest extends TestCase
             'metadata' => [],
             'column_metadata' => [],
             'write_always' => false,
+            'import_method' => 'auto',
             'tags' => [],
             'schema' => [],
         ];
@@ -1261,6 +1337,7 @@ class BaseConfigurationTest extends TestCase
             'metadata' => [],
             'column_metadata' => [],
             'write_always' => false,
+            'import_method' => 'auto',
             'tags' => [],
             'schema' => [],
         ];
@@ -1287,6 +1364,7 @@ class BaseConfigurationTest extends TestCase
             'metadata' => [],
             'column_metadata' => [],
             'write_always' => false,
+            'import_method' => 'auto',
             'tags' => [],
             'schema' => [],
         ];

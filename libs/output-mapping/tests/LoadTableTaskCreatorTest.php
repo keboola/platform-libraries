@@ -6,6 +6,7 @@ namespace Keboola\OutputMapping;
 
 use Generator;
 use Keboola\OutputMapping\Configuration\Table\DeduplicationStrategy;
+use Keboola\OutputMapping\Configuration\Table\ImportMethod;
 use Keboola\OutputMapping\DeferredTasks\TableWriter\CreateAndLoadTableTask;
 use Keboola\OutputMapping\DeferredTasks\TableWriter\LoadTableTask;
 use Keboola\OutputMapping\Mapping\MappingColumnMetadata;
@@ -37,6 +38,8 @@ class LoadTableTaskCreatorTest extends AbstractTestCase
             ->willReturn([]);
 
         $source = self::createMock(MappingFromProcessedConfiguration::class);
+
+        $source->expects(self::once())->method('getImportMethod')->willReturn(ImportMethod::AUTO);
         $source->expects(self::once())->method('hasColumns')->willReturn(true);
         $source->expects(self::once())->method('hasColumnMetadata')->willReturn(true);
         $source->expects(self::once())->method('hasMetadata')->willReturn(false);
@@ -145,6 +148,8 @@ class LoadTableTaskCreatorTest extends AbstractTestCase
             ->willReturn([]);
 
         $source = self::createMock(MappingFromProcessedConfiguration::class);
+
+        $source->expects(self::once())->method('getImportMethod')->willReturn(ImportMethod::AUTO);
         $source->expects(self::exactly(3))->method('getDestination')->willReturn(
             new MappingDestination($this->emptyOutputBucketId . '.destinationTable'),
         );
@@ -256,6 +261,8 @@ class LoadTableTaskCreatorTest extends AbstractTestCase
             ->willReturn([]);
 
         $source = self::createMock(MappingFromProcessedConfiguration::class);
+
+        $source->expects(self::once())->method('getImportMethod')->willReturn(ImportMethod::AUTO);
         $source->expects(self::once())->method('hasColumns')->willReturn(true);
         $source->expects(self::exactly(3))->method('getDestination')->willReturn(
             new MappingDestination($this->emptyOutputBucketId . '.destinationTable'),
@@ -323,6 +330,8 @@ class LoadTableTaskCreatorTest extends AbstractTestCase
             ->willReturn([]);
 
         $source = self::createMock(MappingFromProcessedConfiguration::class);
+
+        $source->expects(self::once())->method('getImportMethod')->willReturn(ImportMethod::AUTO);
         $source->expects(self::once())->method('getDestination')->willReturn(
             new MappingDestination($this->testBucketId . '.test0'),
         );
@@ -369,6 +378,8 @@ class LoadTableTaskCreatorTest extends AbstractTestCase
             ->willReturn([]);
 
         $source = self::createMock(MappingFromProcessedConfiguration::class);
+
+        $source->expects(self::once())->method('getImportMethod')->willReturn(ImportMethod::AUTO);
         $source->expects(self::once())->method('hasColumns')->willReturn(false);
         $source->expects(self::once())->method('getDestination')->willReturn(
             new MappingDestination($this->emptyOutputBucketId . '.test0'),
@@ -420,6 +431,8 @@ class LoadTableTaskCreatorTest extends AbstractTestCase
             ->willReturn([]);
 
         $source = self::createMock(MappingFromProcessedConfiguration::class);
+
+        $source->expects(self::once())->method('getImportMethod')->willReturn(ImportMethod::AUTO);
         $source->expects(self::once())->method('hasColumns')->willReturn(false);
         $source->expects(self::once())->method('getDestination')->willReturn(
             new MappingDestination($this->emptyOutputBucketId . '.test0'),
@@ -726,6 +739,59 @@ class LoadTableTaskCreatorTest extends AbstractTestCase
                 'incremental' => true,
                 'primary_key' => ['id'],
                 'partition_aware_import' => false,
+            ],
+            'didTableExistBefore' => true,
+            'hasNewNativeTypesFeature' => false,
+            'treatValuesAsNullConfiguration' => null,
+            'expectedLoadOptions' => [
+                'columns' => [],
+                'primaryKey' => 'id',
+                'incremental' => true,
+            ],
+        ];
+
+        yield 'import method single statement' => [
+            'sourceData' => [
+                'destination' => 'in.c-bucket.destinationTable',
+                'incremental' => true,
+                'primary_key' => ['id'],
+                'import_method' => 'single_statement',
+            ],
+            'didTableExistBefore' => true,
+            'hasNewNativeTypesFeature' => false,
+            'treatValuesAsNullConfiguration' => null,
+            'expectedLoadOptions' => [
+                'columns' => [],
+                'primaryKey' => 'id',
+                'incremental' => true,
+                'importMethod' => 'single_statement',
+            ],
+        ];
+
+        yield 'import method multi statement' => [
+            'sourceData' => [
+                'destination' => 'in.c-bucket.destinationTable',
+                'incremental' => false,
+                'primary_key' => ['id'],
+                'import_method' => 'multi_statement',
+            ],
+            'didTableExistBefore' => false,
+            'hasNewNativeTypesFeature' => false,
+            'treatValuesAsNullConfiguration' => null,
+            'expectedLoadOptions' => [
+                'columns' => [],
+                'primaryKey' => 'id',
+                'incremental' => false,
+                'importMethod' => 'multi_statement',
+            ],
+        ];
+
+        yield 'import method auto' => [
+            'sourceData' => [
+                'destination' => 'in.c-bucket.destinationTable',
+                'incremental' => true,
+                'primary_key' => ['id'],
+                'import_method' => 'auto',
             ],
             'didTableExistBefore' => true,
             'hasNewNativeTypesFeature' => false,

@@ -4,13 +4,20 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping\Writer\Helper;
 
+use Keboola\OutputMapping\Configuration\Table\ImportMethod;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 
 class ConfigurationMerger
 {
     public static function mergeConfigurations(array $configFromManifest, array $configFromMapping): array
     {
-        $defaults = ['incremental' => false, 'delete_where_operator' => 'eq', 'delimiter' => ',', 'enclosure' => '"'];
+        $defaults = [
+            'incremental' => false,
+            'delete_where_operator' => 'eq',
+            'delimiter' => ',',
+            'enclosure' => '"',
+            'import_method' => ImportMethod::AUTO->value,
+        ];
         $config = $configFromManifest;
         foreach ($configFromMapping as $key => $value) {
             if (in_array($key, array_keys($defaults))) {

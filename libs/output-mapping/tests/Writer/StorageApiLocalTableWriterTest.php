@@ -2800,4 +2800,84 @@ CSV;
         self::assertSame([], $tableQueue->getTableResult()->getCustomVariables());
         self::assertTrue($this->testHandler->hasWarningThatContains('Failed to parse result.json file'));
     }
+
+    #[NeedsEmptyOutputBucket]
+    public function testWriteTableImportMethodReachesImportJob(): void
+    {
+        $bucket = $this->clientWrapper->getTableAndFileStorageClient()->getBucket($this->emptyOutputBucketId);
+        // Storage rejects an explicit import method on a non-Snowflake bucket
+        self::assertSame('snowflake', $bucket['backend'], 'The import method is only accepted by Snowflake.');
+
+        $root = $this->temp->getTmpFolder();
+        // headless CSVs with columns in the manifest: the table is created from its definition first and the data
+        // then go through import-async, the endpoint which takes the import method (create-async does not);
+        // the manifest rather than the mapping holds the columns, because sliced uploads reject mapping columns
+        foreach (['table-single.csv', 'table-default.csv'] as $fileName) {
+            file_put_contents($root . '/upload/' . $fileName, "\"1\",\"a\"\n\"2\",\"b\"\n");
+            file_put_contents(
+                $root . '/upload/' . $fileName . '.manifest',
+                (string) json_encode(['columns' => ['Id', 'Name']]),
+            );
+        }
+
+        $configs = [
+            [
+                'source' => 'table-single.csv',
+                'destination' => $this->emptyOutputBucketId . '.tableSingle',
+                'primary_key' => ['Id'],
+                'incremental' => true,
+                'import_method' => 'single_statement',
+            ],
+            [
+                'source' => 'table-default.csv',
+                'destination' => $this->emptyOutputBucketId . '.tableDefault',
+                'primary_key' => ['Id'],
+                'incremental' => true,
+            ],
+        ];
+
+        $tableQueue = $this->getTableLoader()->uploadTables(
+            configuration: new OutputMappingSettings(
+                configuration: ['mapping' => $configs],
+                sourcePathPrefix: 'upload',
+                storageApiToken: $this->clientWrapper->getToken(),
+                isFailedJob: false,
+                dataTypeSupport: 'none',
+            ),
+            systemMetadata: new SystemMetadata(['componentId' => 'foo']),
+        );
+        $jobIds = $tableQueue->waitForAll();
+        self::assertCount(2, $jobIds);
+
+        $importParamsByTable = [];
+        foreach ($jobIds as $jobId) {
+            /** @var array{
+             *     operationName: string,
+             *     tableId: string,
+             *     operationParams: array{params: array<string, mixed>},
+             * } $job
+             */
+            $job = $this->clientWrapper->getBranchClient()->getJob($jobId);
+            self::assertSame('tableImport', $job['operationName']);
+            $importParamsByTable[$job['tableId']] = $job['operationParams']['params'];
+        }
+
+        $singleParams = $importParamsByTable[$this->emptyOutputBucketId . '.tableSingle'] ?? null;
+        self::assertIsArray($singleParams);
+        self::assertArrayHasKey(
+            'importMethod',
+            $singleParams,
+            sprintf('Import job params recorded by Storage: %s', implode(', ', array_keys($singleParams))),
+        );
+        self::assertSame('single_statement', $singleParams['importMethod']);
+
+        $defaultParams = $importParamsByTable[$this->emptyOutputBucketId . '.tableDefault'] ?? null;
+        self::assertIsArray($defaultParams);
+        self::assertArrayNotHasKey('importMethod', $defaultParams);
+
+        $this->assertTableRowsEquals(
+            $this->emptyOutputBucketId . '.tableSingle',
+            ['"id","name"', '"1","a"', '"2","b"'],
+        );
+    }
 }

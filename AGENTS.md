@@ -58,6 +58,30 @@ Input/output mapping libraries use `staging-provider` to configure their strateg
 ```
 Dependencies between libraries use `"*@dev"` to always use the local version.
 
+## Configuration Schema Changes Are Cross-Service Contracts
+
+The Symfony Config trees in `output-mapping` and `input-mapping` (embedded in the job configuration of
+`keboola/job-queue-job-configuration`) are parsed
+strictly by every service that handles a job configuration: job-queue public-api, job-queue-daemon, the
+service container, the input and output mapping components of the job pod, runner-sync-api,
+sandboxes-service, editor-service, data-loader-api and sandboxes. An unknown key is a hard error
+(`Unrecognized option "<key>" under "configuration.storage.output.tables.0"`), and these services are
+deployed independently, so for a while old and new library versions run side by side.
+
+- **A new key gets no default value in the schema** — no `defaultValue()`, no
+  `beforeNormalization()->ifNull()->then(...)`, no `addDefaultsIfNotSet()` that adds it. A normalized
+  configuration is passed on to the next service, so a schema default writes the key into every
+  configuration, including those whose owners never set it, and every service still on the old version
+  rejects all of them. Apply the default where the value is read (`$config['key'] ?? Default::X`).
+- If a default in the schema cannot be avoided, the PR description must list every consumer and the release
+  order: all readers on the new version before any writer. The PR is not mergeable until that order is
+  agreed with the job-queue owners.
+- `import_method` in `libs/output-mapping/src/Configuration/Table/BaseConfiguration.php` is the counterexample:
+  its schema default makes output-mapping 27.13.0 incompatible with every older reader of the same
+  configuration.
+- Releasing such a change through the job pod follows the mapping components release runbook in
+  keboola/job-queue (`docs/runbooks/mapping-components-release.md`).
+
 ## Agent Guidance Files
 
 Each library has a `libs/<lib>/AGENTS.md` covering its architecture, commands and gotchas, plus a `libs/<lib>/CLAUDE.md` that only points at it. The tool-neutral `AGENTS.md` name is what Codex, Cursor, Gemini CLI and others look for; the `CLAUDE.md` files exist so Claude Code finds them too. This file is the root equivalent, and the root `CLAUDE.md` is its pointer.

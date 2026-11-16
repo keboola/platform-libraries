@@ -25,6 +25,18 @@ into it on every green build and force-pushes the result, so any commit made the
 - Monorepo-wide conventions (Docker-based dev workflow, coding standards, CI layout) are in the monorepo's
   root `AGENTS.md`.
 
+## Configuration schema changes break older readers
+
+The configuration tree under `src/Configuration/` is parsed strictly by every service that passes a job
+configuration on (job-queue, the job pod's service container and mapping components, runner-sync-api,
+sandboxes, editor-service, data-loader-api), and they upgrade at different times. **Never give a new key a
+default in the schema** (`defaultValue()`, `beforeNormalization()->ifNull()`): the normalized configuration
+then carries the key everywhere and every older reader rejects it with `Unrecognized option`. Apply the
+default where the value is read. The `import_method` default in `Table/BaseConfiguration.php` is the counterexample. Rules
+and release order: section "Configuration Schema Changes Are Cross-Service Contracts" in the monorepo's
+root `AGENTS.md`, and the mapping components release runbook in keboola/job-queue
+(`docs/runbooks/mapping-components-release.md`).
+
 ## Commands
 
 Docker service `dev-output-mapping` (PHP 8.2). Beyond the README's list:

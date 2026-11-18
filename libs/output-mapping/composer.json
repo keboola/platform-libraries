@@ -35,7 +35,7 @@
         "ext-json": "*",
         "keboola/input-mapping": "*@dev",
         "keboola/key-generator": "*@dev",
-        "keboola/php-datatypes": "^8.0",
+        "keboola/php-datatypes": "^8.2",
         "keboola/php-file-storage-utils": "^0.2",
         "keboola/php-storage-names-sanitizer": "*@dev",
         "keboola/slicer": "*@dev",

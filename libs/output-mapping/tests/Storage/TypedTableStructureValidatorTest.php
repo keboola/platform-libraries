@@ -730,19 +730,26 @@ class TypedTableStructureValidatorTest extends TestCase
         $message = 'Table "in.c-main.table" column "col" has different type than the schema.'
             . ' Table type: "%s", schema type: "%s".';
 
-        yield 'NUMERIC vs BIGNUMERIC' => ['NUMERIC', 'BIGNUMERIC', sprintf($message, 'NUMERIC', 'BIGNUMERIC')];
-        yield 'BIGNUMERIC vs NUMERIC' => ['BIGNUMERIC', 'NUMERIC', sprintf($message, 'BIGNUMERIC', 'NUMERIC')];
-        yield 'DECIMAL vs BIGDECIMAL' => ['DECIMAL', 'BIGDECIMAL', sprintf($message, 'NUMERIC', 'BIGNUMERIC')];
-        yield 'FLOAT64 vs NUMERIC' => ['FLOAT64', 'NUMERIC', sprintf($message, 'FLOAT64', 'NUMERIC')];
-        yield 'FLOAT vs NUMERIC' => ['FLOAT', 'NUMERIC', sprintf($message, 'FLOAT64', 'NUMERIC')];
-        yield 'INTEGER vs FLOAT64' => ['INTEGER', 'FLOAT64', sprintf($message, 'INTEGER', 'FLOAT64')];
-        yield 'BOOLEAN vs STRING' => ['BOOLEAN', 'STRING', sprintf($message, 'BOOL', 'STRING')];
-        yield 'STRING vs TIMESTAMP' => ['STRING', 'TIMESTAMP', sprintf($message, 'STRING', 'TIMESTAMP')];
-        yield 'unknown table type keeps raw comparison' => [
-            'LEGACY_TYPE',
-            'STRING',
-            sprintf($message, 'LEGACY_TYPE', 'STRING'),
+        // [table type, schema type, normalized table type in the message, normalized schema type in the message]
+        $cases = [
+            'NUMERIC vs BIGNUMERIC' => ['NUMERIC', 'BIGNUMERIC', 'NUMERIC', 'BIGNUMERIC'],
+            'BIGNUMERIC vs NUMERIC' => ['BIGNUMERIC', 'NUMERIC', 'BIGNUMERIC', 'NUMERIC'],
+            'DECIMAL vs BIGDECIMAL' => ['DECIMAL', 'BIGDECIMAL', 'NUMERIC', 'BIGNUMERIC'],
+            'FLOAT64 vs NUMERIC' => ['FLOAT64', 'NUMERIC', 'FLOAT64', 'NUMERIC'],
+            'FLOAT vs NUMERIC' => ['FLOAT', 'NUMERIC', 'FLOAT64', 'NUMERIC'],
+            'INTEGER vs FLOAT64' => ['INTEGER', 'FLOAT64', 'INTEGER', 'FLOAT64'],
+            'BOOLEAN vs STRING' => ['BOOLEAN', 'STRING', 'BOOL', 'STRING'],
+            'STRING vs TIMESTAMP' => ['STRING', 'TIMESTAMP', 'STRING', 'TIMESTAMP'],
+            'unknown table type keeps raw comparison' => ['LEGACY_TYPE', 'STRING', 'LEGACY_TYPE', 'STRING'],
         ];
+
+        foreach ($cases as $name => [$tableType, $schemaType, $messageTableType, $messageSchemaType]) {
+            yield $name => [
+                'tableType' => $tableType,
+                'schemaType' => $schemaType,
+                'expectedMessage' => sprintf($message, $messageTableType, $messageSchemaType),
+            ];
+        }
     }
 
     private function createBigqueryValidator(string $tableType): TypedTableStructureValidator

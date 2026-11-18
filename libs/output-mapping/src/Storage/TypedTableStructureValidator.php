@@ -88,7 +88,7 @@ class TypedTableStructureValidator extends AbstractTableStructureValidator
                 if (method_exists($columnDefinition, 'getBackendBasetype')) {
                     $schemaColumnType = $columnDefinition->getBackendBasetype();
                 }
-                if ($this->table['bucket']['backend'] === 'bigquery') {
+                if ($this->table['bucket']['backend'] === Bigquery::METADATA_BACKEND) {
                     $tableColumnType = $this->normalizeBigqueryType($tableColumnType);
                 }
             } catch (InvalidOutputException) {

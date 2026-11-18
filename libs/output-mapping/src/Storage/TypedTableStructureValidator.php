@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping\Storage;
 
+use Keboola\Datatype\Definition\Bigquery;
+use Keboola\Datatype\Definition\Exception\InvalidTypeException;
 use Keboola\OutputMapping\Exception\InvalidOutputException;
 use Keboola\OutputMapping\Exception\InvalidTableStructureException;
 use Keboola\OutputMapping\Mapping\MappingFromConfigurationSchemaColumn;
@@ -86,6 +88,9 @@ class TypedTableStructureValidator extends AbstractTableStructureValidator
                 if (method_exists($columnDefinition, 'getBackendBasetype')) {
                     $schemaColumnType = $columnDefinition->getBackendBasetype();
                 }
+                if ($this->table['bucket']['backend'] === 'bigquery') {
+                    $tableColumnType = $this->normalizeBigqueryType($tableColumnType);
+                }
             } catch (InvalidOutputException) {
                 $schemaColumnType = $schemaColumn->getDataType()->getBaseTypeName();
                 $tableColumnType = $tableColumn['basetype'];
@@ -115,6 +120,20 @@ class TypedTableStructureValidator extends AbstractTableStructureValidator
 
         if ($validationErrors) {
             throw new InvalidTableStructureException(implode(' ', $validationErrors));
+        }
+    }
+
+    /**
+     * Storage may hold either the SQL name (FLOAT64) or the REST API name (FLOAT) of a BigQuery type,
+     * so both sides of the comparison go through the same canonical mapping. A type unknown to
+     * php-datatypes is returned as is and then reported as a mismatch by the caller.
+     */
+    private function normalizeBigqueryType(string $type): string
+    {
+        try {
+            return (new Bigquery($type))->getBackendBasetype();
+        } catch (InvalidTypeException) {
+            return $type;
         }
     }
 

@@ -8,7 +8,7 @@ use Generator;
 use Keboola\AppsApiClient\Model\Deployment;
 use Keboola\AppsApiClient\Tests\AppTestData;
 use PHPUnit\Framework\TestCase;
-use Webmozart\Assert\InvalidArgumentException;
+use TypeError;
 
 class DeploymentTest extends TestCase
 {
@@ -44,22 +44,12 @@ class DeploymentTest extends TestCase
         self::assertSame('2026-11-19T09:00:00+00:00', $deployment->archivedAt);
     }
 
-    public function testFromResponseDataRejectsMissingRunState(): void
-    {
-        $data = AppTestData::deployment();
-        unset($data['runState']);
-
-        $this->expectException(InvalidArgumentException::class);
-
-        Deployment::fromResponseData($data);
-    }
-
     /**
      * @dataProvider wrongTypeProvider
      */
     public function testFromResponseDataRejectsWrongType(array $data): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(TypeError::class);
 
         Deployment::fromResponseData($data);
     }
@@ -70,7 +60,6 @@ class DeploymentTest extends TestCase
         yield 'runState of wrong type' => [AppTestData::deployment(['runState' => null])];
         yield 'archived of wrong type' => [AppTestData::deployment(['archived' => 0])];
         yield 'configVersion of wrong type' => [AppTestData::deployment(['configVersion' => 7])];
-        yield 'empty configVersion' => [AppTestData::deployment(['configVersion' => ''])];
         yield 'archivedAt of wrong type' => [AppTestData::deployment(['archivedAt' => 1])];
     }
 }

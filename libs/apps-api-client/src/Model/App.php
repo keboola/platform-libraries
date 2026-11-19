@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Keboola\AppsApiClient\Model;
 
 use Keboola\ApiClientBase\ResponseModelInterface;
-use Webmozart\Assert\Assert;
 
 final readonly class App implements ResponseModelInterface
 {
@@ -31,26 +30,20 @@ final readonly class App implements ResponseModelInterface
 
     public static function fromResponseData(array $data): static
     {
-        Assert::keyExists($data, 'id');
-        Assert::keyExists($data, 'projectId');
-        Assert::keyExists($data, 'componentId');
-        Assert::keyExists($data, 'branchId');
-        Assert::keyExists($data, 'configId');
-        Assert::keyExists($data, 'url');
-        Assert::keyExists($data, 'hasManagedGitRepo');
-        Assert::keyExists($data, 'production');
-        Assert::keyExists($data, 'state');
-        Assert::string($data['id']);
-        Assert::string($data['projectId']);
-        Assert::string($data['componentId']);
-        Assert::nullOrString($data['branchId']);
-        Assert::string($data['configId']);
-        Assert::nullOrString($data['type'] ?? null);
-        Assert::nullOrString($data['url']);
-        Assert::boolean($data['hasManagedGitRepo']);
-        Assert::isArray($data['production']);
-        Assert::string($data['state']);
-
+        /**
+         * @var array{
+         *     id: string,
+         *     projectId: string,
+         *     componentId: string,
+         *     branchId: string|null,
+         *     configId: string,
+         *     type?: string|null,
+         *     url: string|null,
+         *     hasManagedGitRepo: bool,
+         *     production: array<mixed>,
+         *     state: string,
+         * } $data
+         */
         return new self(
             $data['id'],
             $data['projectId'],

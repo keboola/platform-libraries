@@ -7,7 +7,7 @@ namespace Keboola\AppsApiClient\Tests\Model;
 use Generator;
 use Keboola\AppsApiClient\Model\AppProduction;
 use PHPUnit\Framework\TestCase;
-use Webmozart\Assert\InvalidArgumentException;
+use TypeError;
 
 class AppProductionTest extends TestCase
 {
@@ -31,24 +31,19 @@ class AppProductionTest extends TestCase
     }
 
     /**
-     * @dataProvider invalidDataProvider
+     * @dataProvider wrongTypeProvider
      */
-    public function testFromResponseDataRejectsInvalidData(array $data): void
+    public function testFromResponseDataRejectsWrongType(array $data): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(TypeError::class);
 
         AppProduction::fromResponseData($data);
     }
 
-    public static function invalidDataProvider(): Generator
+    public static function wrongTypeProvider(): Generator
     {
         foreach (array_keys(self::DATA) as $key) {
-            $missing = self::DATA;
-            unset($missing[$key]);
-            yield 'missing ' . $key => [$missing];
             yield 'non-string ' . $key => [array_merge(self::DATA, [$key => 42])];
         }
-        yield 'empty desiredConfigVersion' => [array_merge(self::DATA, ['desiredConfigVersion' => ''])];
-        yield 'empty actualConfigVersion' => [array_merge(self::DATA, ['actualConfigVersion' => ''])];
     }
 }

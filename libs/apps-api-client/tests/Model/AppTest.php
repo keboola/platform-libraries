@@ -8,7 +8,7 @@ use Generator;
 use Keboola\AppsApiClient\Model\App;
 use Keboola\AppsApiClient\Tests\AppTestData;
 use PHPUnit\Framework\TestCase;
-use Webmozart\Assert\InvalidArgumentException;
+use TypeError;
 
 class AppTest extends TestCase
 {
@@ -59,22 +59,12 @@ class AppTest extends TestCase
         self::assertSame(App::STATE_NOT_DEPLOYED, $app->state);
     }
 
-    public function testFromResponseDataRejectsMissingProduction(): void
-    {
-        $data = AppTestData::app();
-        unset($data['production']);
-
-        $this->expectException(InvalidArgumentException::class);
-
-        App::fromResponseData($data);
-    }
-
     /**
      * @dataProvider wrongTypeProvider
      */
     public function testFromResponseDataRejectsWrongType(array $data): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(TypeError::class);
 
         App::fromResponseData($data);
     }

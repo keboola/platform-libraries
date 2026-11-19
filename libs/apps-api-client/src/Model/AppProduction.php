@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Keboola\AppsApiClient\Model;
 
 use Keboola\ApiClientBase\ResponseModelInterface;
-use Webmozart\Assert\Assert;
 
 final readonly class AppProduction implements ResponseModelInterface
 {
@@ -24,17 +23,15 @@ final readonly class AppProduction implements ResponseModelInterface
 
     public static function fromResponseData(array $data): static
     {
-        Assert::keyExists($data, 'desiredDeploymentId');
-        Assert::keyExists($data, 'actualDeploymentId');
-        Assert::keyExists($data, 'desiredConfigVersion');
-        Assert::keyExists($data, 'actualConfigVersion');
-        Assert::keyExists($data, 'desiredCreatedAt');
-        Assert::nullOrString($data['desiredDeploymentId']);
-        Assert::nullOrString($data['actualDeploymentId']);
-        Assert::nullOrStringNotEmpty($data['desiredConfigVersion']);
-        Assert::nullOrStringNotEmpty($data['actualConfigVersion']);
-        Assert::nullOrString($data['desiredCreatedAt']);
-
+        /**
+         * @var array{
+         *     desiredDeploymentId: string|null,
+         *     actualDeploymentId: string|null,
+         *     desiredConfigVersion: non-empty-string|null,
+         *     actualConfigVersion: non-empty-string|null,
+         *     desiredCreatedAt: string|null,
+         * } $data
+         */
         return new self(
             $data['desiredDeploymentId'],
             $data['actualDeploymentId'],

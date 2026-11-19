@@ -49,6 +49,8 @@ load balancer adds the `/v2` prefix on `apps.{hostnameSuffix}`, so request paths
 
 - Every public method is one `sendRequestAndMapResponse()` call on the one private `ApiClient`.
 - Response types live in `Model\` and implement `ResponseModelInterface::fromResponseData()`, nested ones
-  included. States are plain strings with `STATE_*` / `RUN_STATE_*` / `BUILD_STATE_*` constants, not enums:
+  included. `fromResponseData()` describes `$data` with a PHPDoc array shape and has no `Assert` calls: a wrong
+  type fails on the typed constructor (`TypeError`), which `ApiClient` wraps in `AppsClientException`. A
+  missing nullable field becomes `null`. States are plain strings with `STATE_*` / `RUN_STATE_*` / `BUILD_STATE_*` constants, not enums:
   the API is experimental, and a new state must not break response mapping.
 - `AppsApiErrorMessageResolver` is the single place that knows the error body shape (`{"error": "..."}`).

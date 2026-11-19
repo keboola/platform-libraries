@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Keboola\AppsApiClient\Model;
 
 use Keboola\ApiClientBase\ResponseModelInterface;
-use Webmozart\Assert\Assert;
 
 final readonly class Deployment implements ResponseModelInterface
 {
@@ -40,24 +39,19 @@ final readonly class Deployment implements ResponseModelInterface
 
     public static function fromResponseData(array $data): static
     {
-        Assert::keyExists($data, 'id');
-        Assert::keyExists($data, 'configVersion');
-        Assert::keyExists($data, 'gitCommitSha');
-        Assert::keyExists($data, 'buildState');
-        Assert::keyExists($data, 'runState');
-        Assert::keyExists($data, 'archived');
-        Assert::keyExists($data, 'archivedAt');
-        Assert::keyExists($data, 'createdAt');
-        Assert::string($data['id']);
-        Assert::stringNotEmpty($data['configVersion']);
-        Assert::nullOrString($data['gitCommitSha']);
-        Assert::nullOrString($data['runtimeSize'] ?? null);
-        Assert::string($data['buildState']);
-        Assert::string($data['runState']);
-        Assert::boolean($data['archived']);
-        Assert::nullOrString($data['archivedAt']);
-        Assert::string($data['createdAt']);
-
+        /**
+         * @var array{
+         *     id: string,
+         *     configVersion: non-empty-string,
+         *     gitCommitSha: string|null,
+         *     runtimeSize?: string|null,
+         *     buildState: string,
+         *     runState: string,
+         *     archived: bool,
+         *     archivedAt: string|null,
+         *     createdAt: string,
+         * } $data
+         */
         return new self(
             $data['id'],
             $data['configVersion'],

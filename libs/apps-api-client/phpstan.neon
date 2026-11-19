@@ -7,4 +7,3 @@ parameters:
 
 includes:
     - vendor/phpstan/phpstan-phpunit/extension.neon
-    - vendor/phpstan/phpstan-webmozart-assert/extension.neon

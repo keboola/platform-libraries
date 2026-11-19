@@ -169,7 +169,7 @@ class AppsApiClientTest extends TestCase
 
     public function testUnexpectedResponseShapeThrowsException(): void
     {
-        $mock = new MockHandler([new Response(200, [], (string) json_encode(['id' => '123']))]);
+        $mock = new MockHandler([new Response(200, [], (string) json_encode(AppTestData::app(['state' => null])))]);
 
         $this->expectException(AppsClientException::class);
         $this->expectExceptionMessage('Failed to map response data');

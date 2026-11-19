@@ -12,6 +12,7 @@ use RuntimeException;
 class ServiceClientTest extends TestCase
 {
     private const PUBLIC_AI_SERVICE = 'https://ai.north-europe.azure.keboola.com';
+    private const PUBLIC_APPS = 'https://apps.north-europe.azure.keboola.com';
     private const PUBLIC_BILLING_SERVICE = 'https://billing.north-europe.azure.keboola.com';
     private const PUBLIC_BUFFER_SERVICE = 'https://buffer.north-europe.azure.keboola.com';
     private const PUBLIC_CONNECTION_SERVICE = 'https://connection.north-europe.azure.keboola.com';
@@ -53,6 +54,7 @@ class ServiceClientTest extends TestCase
         $client = new ServiceClient('north-europe.azure.keboola.com', ServiceDnsType::INTERNAL);
 
         self::assertSame(self::PUBLIC_AI_SERVICE, $client->getAiServiceUrl(ServiceDnsType::PUBLIC));
+        self::assertSame(self::PUBLIC_APPS, $client->getAppsUrl(ServiceDnsType::PUBLIC));
         self::assertSame(self::PUBLIC_BILLING_SERVICE, $client->getBillingServiceUrl(ServiceDnsType::PUBLIC));
         self::assertSame(self::PUBLIC_BUFFER_SERVICE, $client->getBufferServiceUrl(ServiceDnsType::PUBLIC));
         self::assertSame(self::PUBLIC_CONNECTION_SERVICE, $client->getConnectionServiceUrl(ServiceDnsType::PUBLIC));
@@ -75,6 +77,7 @@ class ServiceClientTest extends TestCase
         $client = new ServiceClient('north-europe.azure.keboola.com', ServiceDnsType::PUBLIC);
 
         self::assertSame(self::PUBLIC_AI_SERVICE, $client->getAiServiceUrl());
+        self::assertSame(self::PUBLIC_APPS, $client->getAppsUrl());
         self::assertSame(self::PUBLIC_BILLING_SERVICE, $client->getBillingServiceUrl());
         self::assertSame(self::PUBLIC_BUFFER_SERVICE, $client->getBufferServiceUrl());
         self::assertSame(self::PUBLIC_CONNECTION_SERVICE, $client->getConnectionServiceUrl());
@@ -131,6 +134,26 @@ class ServiceClientTest extends TestCase
         $this->expectExceptionMessage('Git service does not have public DNS');
 
         $client->getGitServiceUrl();
+    }
+
+    public function testGetExplicitInternalUrlOfAppsThrows(): void
+    {
+        $client = new ServiceClient('north-europe.azure.keboola.com', ServiceDnsType::PUBLIC);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Apps API does not have internal DNS');
+
+        $client->getAppsUrl(ServiceDnsType::INTERNAL);
+    }
+
+    public function testGetDefaultInternalUrlOfAppsThrows(): void
+    {
+        $client = new ServiceClient('north-europe.azure.keboola.com', ServiceDnsType::INTERNAL);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Apps API does not have internal DNS');
+
+        $client->getAppsUrl();
     }
 
     public function testGetExplicitInternalUrlMethods(): void

@@ -9,6 +9,7 @@ use RuntimeException;
 enum Service
 {
     case AI;
+    case APPS;
     case BILLING;
     case BUFFER;
     case CONNECTION;
@@ -31,6 +32,7 @@ enum Service
     {
         return match ($this) {
             self::AI => 'ai',
+            self::APPS => 'apps',
             self::BILLING => 'billing',
             self::BUFFER => 'buffer',
             self::CONNECTION => 'connection',
@@ -55,6 +57,7 @@ enum Service
     {
         return match ($this) {
             self::AI => 'ai-service-api.default',
+            self::APPS => throw new RuntimeException('Apps API does not have internal DNS'),
             self::BILLING => 'billing-api.default',
             self::BUFFER => 'buffer-api.buffer',
             self::CONNECTION => 'connection-api.connection',

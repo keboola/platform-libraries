@@ -48,5 +48,7 @@ class AppProductionTest extends TestCase
             yield 'missing ' . $key => [$missing];
             yield 'non-string ' . $key => [array_merge(self::DATA, [$key => 42])];
         }
+        yield 'empty desiredConfigVersion' => [array_merge(self::DATA, ['desiredConfigVersion' => ''])];
+        yield 'empty actualConfigVersion' => [array_merge(self::DATA, ['actualConfigVersion' => ''])];
     }
 }

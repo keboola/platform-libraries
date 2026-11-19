@@ -70,6 +70,7 @@ class DeploymentTest extends TestCase
         yield 'runState of wrong type' => [AppTestData::deployment(['runState' => null])];
         yield 'archived of wrong type' => [AppTestData::deployment(['archived' => 0])];
         yield 'configVersion of wrong type' => [AppTestData::deployment(['configVersion' => 7])];
+        yield 'empty configVersion' => [AppTestData::deployment(['configVersion' => ''])];
         yield 'archivedAt of wrong type' => [AppTestData::deployment(['archivedAt' => 1])];
     }
 }

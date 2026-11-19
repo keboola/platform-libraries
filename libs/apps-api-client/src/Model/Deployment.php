@@ -22,6 +22,9 @@ final readonly class Deployment implements ResponseModelInterface
     public const RUN_STATE_STOPPED = 'stopped';
     public const RUN_STATE_FAILED = 'failed';
 
+    /**
+     * @param non-empty-string $configVersion
+     */
     public function __construct(
         public string $id,
         public string $configVersion,
@@ -46,7 +49,7 @@ final readonly class Deployment implements ResponseModelInterface
         Assert::keyExists($data, 'archivedAt');
         Assert::keyExists($data, 'createdAt');
         Assert::string($data['id']);
-        Assert::string($data['configVersion']);
+        Assert::stringNotEmpty($data['configVersion']);
         Assert::nullOrString($data['gitCommitSha']);
         Assert::nullOrString($data['runtimeSize'] ?? null);
         Assert::string($data['buildState']);

@@ -9,6 +9,10 @@ use Webmozart\Assert\Assert;
 
 final readonly class AppProduction implements ResponseModelInterface
 {
+    /**
+     * @param non-empty-string|null $desiredConfigVersion
+     * @param non-empty-string|null $actualConfigVersion
+     */
     public function __construct(
         public ?string $desiredDeploymentId,
         public ?string $actualDeploymentId,
@@ -27,8 +31,8 @@ final readonly class AppProduction implements ResponseModelInterface
         Assert::keyExists($data, 'desiredCreatedAt');
         Assert::nullOrString($data['desiredDeploymentId']);
         Assert::nullOrString($data['actualDeploymentId']);
-        Assert::nullOrString($data['desiredConfigVersion']);
-        Assert::nullOrString($data['actualConfigVersion']);
+        Assert::nullOrStringNotEmpty($data['desiredConfigVersion']);
+        Assert::nullOrStringNotEmpty($data['actualConfigVersion']);
         Assert::nullOrString($data['desiredCreatedAt']);
 
         return new self(

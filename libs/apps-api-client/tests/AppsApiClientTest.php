@@ -90,22 +90,6 @@ class AppsApiClientTest extends TestCase
         );
     }
 
-    public function testCreateDeploymentIsNotRetried(): void
-    {
-        $mock = new MockHandler([
-            new Response(500, [], (string) json_encode(['error' => 'Internal Server Error'])),
-            new Response(202, [], (string) json_encode(AppTestData::deployment())),
-        ]);
-
-        try {
-            $this->buildClient($mock, backoffMaxTries: 3)->createDeployment('123');
-            self::fail('Expected exception was not thrown.');
-        } catch (AppsClientException $e) {
-            self::assertSame(500, $e->getStatusCode());
-        }
-        self::assertCount(1, $mock);
-    }
-
     public function testGetAppIsRetriedOn5xx(): void
     {
         $mock = new MockHandler([

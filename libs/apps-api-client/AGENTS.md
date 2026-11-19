@@ -47,11 +47,7 @@ endpoints a consumer needs — add more as consumers need them. The API is `/v2`
 load balancer adds the `/v2` prefix on `apps.{hostnameSuffix}`, so request paths here start at `apps/`, as in
 `docs/swagger-apps.yaml` in `keboola/sandboxes-service`.
 
-- Every public method is one `sendRequestAndMapResponse()` call. A request that is not idempotent (any
-  `POST` that creates something) goes through `$nonRetryingApiClient`: the base client's retry decider
-  retries every method on 5xx, so a retried create would make a duplicate.
-- Each inner `ApiClient` needs its own `HandlerStack`. `ApiClient` pushes its retry and auth middleware onto
-  a passed stack, so a shared one would carry the retry middleware into the non-retrying client.
+- Every public method is one `sendRequestAndMapResponse()` call on the one private `ApiClient`.
 - Response types live in `Model\` and implement `ResponseModelInterface::fromResponseData()`, nested ones
   included. States are plain strings with `STATE_*` / `RUN_STATE_*` / `BUILD_STATE_*` constants, not enums:
   the API is experimental, and a new state must not break response mapping.

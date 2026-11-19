@@ -22,9 +22,6 @@ class AppsApiClient
 
     private ApiClient $apiClient;
 
-    /** Sends the requests that are not idempotent: a retry would repeat their side effect. */
-    private ApiClient $nonRetryingApiClient;
-
     /**
      * @param non-empty-string $baseUrl Apps API URL, e.g. https://apps.keboola.com
      * @param non-empty-string $storageToken
@@ -40,35 +37,20 @@ class AppsApiClient
         string $userAgent = self::FALLBACK_USER_AGENT,
         null|Closure|HandlerStack $requestHandler = null,
     ) {
-        // ApiClient pushes its middleware onto a passed HandlerStack, so each client needs its own copy.
-        $copyHandler = static fn(): null|Closure|HandlerStack => $requestHandler instanceof HandlerStack
-            ? clone $requestHandler
-            : $requestHandler;
-
-        $createApiClient = static fn(ApiClientOptions $options): ApiClient => new ApiClient(
+        $this->apiClient = new ApiClient(
             $baseUrl,
             new StorageApiTokenAuthenticator($storageToken),
-            $options,
+            new ApiClientOptions(
+                userAgent: $userAgent,
+                backoffMaxTries: $backoffMaxTries,
+                connectTimeout: $connectTimeout,
+                requestTimeout: $requestTimeout,
+                requestHandler: $requestHandler,
+                logger: $logger,
+            ),
             errorMessageResolver: new AppsApiErrorMessageResolver(),
             exceptionClass: AppsClientException::class,
         );
-
-        $this->apiClient = $createApiClient(new ApiClientOptions(
-            userAgent: $userAgent,
-            backoffMaxTries: $backoffMaxTries,
-            connectTimeout: $connectTimeout,
-            requestTimeout: $requestTimeout,
-            requestHandler: $copyHandler(),
-            logger: $logger,
-        ));
-        $this->nonRetryingApiClient = $createApiClient(new ApiClientOptions(
-            userAgent: $userAgent,
-            backoffMaxTries: 0,
-            connectTimeout: $connectTimeout,
-            requestTimeout: $requestTimeout,
-            requestHandler: $copyHandler(),
-            logger: $logger,
-        ));
     }
 
     public function getApp(string $appId): App
@@ -91,8 +73,6 @@ class AppsApiClient
     }
 
     /**
-     * Not idempotent and never retried: a repeated request creates another deployment.
-     *
      * @param non-empty-string|null $configVersion null deploys the latest config version
      * @param bool $promote false stages the deployment without running it
      */
@@ -106,7 +86,7 @@ class AppsApiClient
             $body['promote'] = false;
         }
 
-        return $this->nonRetryingApiClient->sendRequestAndMapResponse(
+        return $this->apiClient->sendRequestAndMapResponse(
             new Request(
                 'POST',
                 'apps/' . rawurlencode($appId) . '/deployments',

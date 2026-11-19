@@ -38,8 +38,6 @@ new AppsApiClient(
 );
 ```
 
-A passed `HandlerStack` is copied when the client is created, so middleware pushed onto it later has no effect.
-
 ### Apps
 
 ```php
@@ -68,7 +66,8 @@ $deployment = $client->getDeployment('123', $deployment->id);
 $deployment->runState;                  // Deployment::RUN_STATE_* — failed means it crashed or could not start
 ```
 
-`createDeployment()` is not idempotent, so it is never retried, whatever `$backoffMaxTries` is.
+`createDeployment()` is not idempotent. Like every request, it is retried on 5xx, so a retry after a failure on
+the server side can create a second deployment.
 
 ### Errors
 

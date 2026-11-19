@@ -27,7 +27,7 @@ class ApplicationToken implements TokenInterface
      * @param array{
      *     id: int,
      *     description: string,
-     *     created: string,
+     *     created: string|null,
      *     lastUsed: string|null,
      *     expires: string|null,
      *     isSessionToken: bool,

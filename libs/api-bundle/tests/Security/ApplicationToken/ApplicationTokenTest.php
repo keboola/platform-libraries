@@ -44,6 +44,28 @@ class ApplicationTokenTest extends TestCase
         self::assertSame(true, $token->isSuperAdmin());
     }
 
+    public function testFromVerifyResponseWithoutCreated(): void
+    {
+        $token = ApplicationToken::fromVerifyResponse([
+            'id' => 100001,
+            'description' => 'test',
+            'created' => null,
+            'lastUsed' => null,
+            'expires' => null,
+            'isSessionToken' => false,
+            'isExpired' => false,
+            'isDisabled' => false,
+            'scopes' => [],
+            'type' => 'admin',
+            'creator' => [
+                'id' => 3801,
+                'name' => 'John Doe',
+            ],
+        ]);
+
+        self::assertSame('100001', $token->getUserIdentifier());
+    }
+
     public function testHasScope(): void
     {
         $token = ApplicationToken::fromVerifyResponse([

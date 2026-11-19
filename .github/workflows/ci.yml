@@ -43,6 +43,12 @@ jobs:
     uses: ./.github/workflows/lib-api-bundle.yml
     secrets: inherit
 
+  apps-api-client:
+    needs: [detect-changes]
+    if: contains(needs.detect-changes.outputs.libs, '"apps-api-client"')
+    uses: ./.github/workflows/lib-apps-api-client.yml
+    secrets: inherit
+
   azure-api-client:
     needs: [detect-changes]
     if: contains(needs.detect-changes.outputs.libs, '"azure-api-client"')
@@ -179,6 +185,7 @@ jobs:
     needs:
       - detect-changes
       - api-bundle
+      - apps-api-client
       - azure-api-client
       - configuration-variables-resolver
       - doctrine-retry-bundle

@@ -56,6 +56,11 @@ services:
     image: keboola/api-bundle
     working_dir: /code/libs/api-bundle
 
+  dev-apps-api-client:
+    <<: *dev82
+    image: keboola/apps-api-client
+    working_dir: /code/libs/apps-api-client
+
   dev-azure-api-client:
     <<: *dev81
     image: keboola/azure-api-client

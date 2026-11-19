@@ -677,6 +677,129 @@ class TypedTableStructureValidatorTest extends TestCase
         self::assertTrue(true);
     }
 
+    /**
+     * @dataProvider bigqueryAliasPairsProvider
+     */
+    public function testBigqueryAliasesPass(string $tableType, string $schemaType): void
+    {
+        $this->createBigqueryValidator($tableType)->validate($this->createBigquerySchema($schemaType));
+
+        self::assertTrue(true);
+    }
+
+    public static function bigqueryAliasPairsProvider(): Generator
+    {
+        $aliasGroups = [
+            ['FLOAT', 'FLOAT64'],
+            ['BOOLEAN', 'BOOL'],
+            ['INTEGER', 'INT64', 'INT', 'SMALLINT', 'BIGINT', 'TINYINT', 'BYTEINT'],
+            ['DECIMAL', 'NUMERIC'],
+            ['BIGDECIMAL', 'BIGNUMERIC'],
+            ['STRING'],
+        ];
+
+        foreach ($aliasGroups as $group) {
+            foreach ($group as $tableType) {
+                foreach ($group as $schemaType) {
+                    yield sprintf('table %s, schema %s', $tableType, $schemaType) => [
+                        'tableType' => $tableType,
+                        'schemaType' => $schemaType,
+                    ];
+                }
+            }
+        }
+    }
+
+    /**
+     * @dataProvider bigqueryRealMismatchProvider
+     */
+    public function testBigqueryRealMismatchStillFails(
+        string $tableType,
+        string $schemaType,
+        string $expectedMessage,
+    ): void {
+        $validator = $this->createBigqueryValidator($tableType);
+
+        $this->expectException(InvalidTableStructureException::class);
+        $this->expectExceptionMessage($expectedMessage);
+        $validator->validate($this->createBigquerySchema($schemaType));
+    }
+
+    public static function bigqueryRealMismatchProvider(): Generator
+    {
+        $message = 'Table "in.c-main.table" column "col" has different type than the schema.'
+            . ' Table type: "%s", schema type: "%s".';
+
+        // [table type, schema type, normalized table type in the message, normalized schema type in the message]
+        $cases = [
+            'NUMERIC vs BIGNUMERIC' => ['NUMERIC', 'BIGNUMERIC', 'NUMERIC', 'BIGNUMERIC'],
+            'BIGNUMERIC vs NUMERIC' => ['BIGNUMERIC', 'NUMERIC', 'BIGNUMERIC', 'NUMERIC'],
+            'DECIMAL vs BIGDECIMAL' => ['DECIMAL', 'BIGDECIMAL', 'NUMERIC', 'BIGNUMERIC'],
+            'FLOAT64 vs NUMERIC' => ['FLOAT64', 'NUMERIC', 'FLOAT64', 'NUMERIC'],
+            'FLOAT vs NUMERIC' => ['FLOAT', 'NUMERIC', 'FLOAT64', 'NUMERIC'],
+            'INTEGER vs FLOAT64' => ['INTEGER', 'FLOAT64', 'INTEGER', 'FLOAT64'],
+            'BOOLEAN vs STRING' => ['BOOLEAN', 'STRING', 'BOOL', 'STRING'],
+            'STRING vs TIMESTAMP' => ['STRING', 'TIMESTAMP', 'STRING', 'TIMESTAMP'],
+            'unknown table type keeps raw comparison' => ['LEGACY_TYPE', 'STRING', 'LEGACY_TYPE', 'STRING'],
+        ];
+
+        foreach ($cases as $name => [$tableType, $schemaType, $messageTableType, $messageSchemaType]) {
+            yield $name => [
+                'tableType' => $tableType,
+                'schemaType' => $schemaType,
+                'expectedMessage' => sprintf($message, $messageTableType, $messageSchemaType),
+            ];
+        }
+    }
+
+    private function createBigqueryValidator(string $tableType): TypedTableStructureValidator
+    {
+        return new TypedTableStructureValidator(
+            new NullLogger(),
+            [
+                'id' => 'in.c-main.table',
+                'isTyped' => true,
+                'definition' => [
+                    'primaryKeysNames' => [],
+                    'columns' => [
+                        [
+                            'name' => 'col',
+                            'definition' => [
+                                'type' => $tableType,
+                                'nullable' => true,
+                            ],
+                            'basetype' => BaseType::STRING,
+                        ],
+                    ],
+                ],
+                'bucket' => [
+                    'backend' => 'bigquery',
+                ],
+            ],
+        );
+    }
+
+    /**
+     * @return MappingFromConfigurationSchemaColumn[]
+     */
+    private function createBigquerySchema(string $schemaType): array
+    {
+        return [
+            new MappingFromConfigurationSchemaColumn([
+                'name' => 'col',
+                'data_type' => [
+                    'base' => [
+                        'type' => BaseType::STRING,
+                    ],
+                    'bigquery' => [
+                        'type' => $schemaType,
+                    ],
+                ],
+                'nullable' => true,
+            ]),
+        ];
+    }
+
     public function testValidateColumnTimestampAliases(): void
     {
         $clientMock = $this->createMock(Client::class);

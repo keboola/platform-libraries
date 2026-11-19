@@ -16,6 +16,7 @@ A monorepo containing 20+ PHP libraries for the Keboola platform. All libraries 
 - **query-service-api-client** - Query Service API client
 - **sync-actions-api-php-client** - Sync Actions API client
 - **sandboxes-service-api-client** - Sandboxes Service API client
+- **apps-api-client** - Apps API (v2) client
 - **azure-api-client** - Azure API client
 - **vault-api-client** - Vault API client
 

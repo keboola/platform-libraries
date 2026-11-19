@@ -22,6 +22,7 @@ fi
 # target repo name differs from the library directory. This is the only place the mapping lives —
 # both the split-library and create-release actions call this script.
 case "${1}" in
+  apps-api-client)              echo "apps-api-php-client" ;;
   git-service-api-client)       echo "git-service-php-api-client" ;;
   key-generator)                echo "php-key-generator" ;;
   query-service-api-client)     echo "query-service-api-php-client" ;;

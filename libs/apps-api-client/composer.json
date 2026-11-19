@@ -1,0 +1,64 @@
+{
+    "name": "keboola/apps-api-client",
+    "type": "library",
+    "license": "MIT",
+    "description": "Keboola Apps API client",
+    "authors": [
+        {
+            "name": "Keboola",
+            "email": "devel@keboola.com"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "Keboola\\AppsApiClient\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Keboola\\AppsApiClient\\Tests\\": "tests/"
+        }
+    },
+    "repositories": {
+        "libs": {
+            "type": "path",
+            "url": "../../libs/*"
+        }
+    },
+    "require": {
+        "php": "^8.2",
+        "guzzlehttp/guzzle": "^7.5",
+        "keboola/php-api-client-base": "*@dev",
+        "psr/http-message": "^1.0|^2.0",
+        "psr/log": "^1.0|^2.0|^3.0"
+    },
+    "config": {
+        "lock": false,
+        "sort-packages": true,
+        "allow-plugins": {
+            "dealerdirect/phpcodesniffer-composer-installer": true
+        }
+    },
+    "require-dev": {
+        "keboola/coding-standard": "^15.0",
+        "phpstan/phpstan": "^1.10",
+        "phpstan/phpstan-phpunit": "^1.3",
+        "phpunit/phpunit": "^9.6",
+        "sempro/phpunit-pretty-print": "^1.4"
+    },
+    "scripts": {
+        "ci": [
+            "@composer validate --no-check-publish --no-check-all",
+            "@phpcs",
+            "@phpstan",
+            "@phpunit"
+        ],
+        "phpcs": "phpcs -n --ignore=vendor,cache --extensions=php .",
+        "phpcbf": "phpcbf --extensions=php src tests",
+        "phpstan": "phpstan analyse --no-progress -c phpstan.neon",
+        "phpunit": [
+            "@putenv XDEBUG_MODE=coverage",
+            "phpunit --coverage-clover /tmp/build-logs/clover.xml --coverage-xml=/tmp/build-logs/coverage-xml --log-junit=/tmp/build-logs/phpunit.junit.xml"
+        ]
+    }
+}

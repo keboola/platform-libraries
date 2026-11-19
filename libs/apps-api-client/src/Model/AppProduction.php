@@ -4,9 +4,10 @@ declare(strict_types=1);
 
 namespace Keboola\AppsApiClient\Model;
 
+use Keboola\ApiClientBase\ResponseModelInterface;
 use Webmozart\Assert\Assert;
 
-final readonly class AppProduction
+final readonly class AppProduction implements ResponseModelInterface
 {
     public function __construct(
         public ?string $desiredDeploymentId,
@@ -17,7 +18,7 @@ final readonly class AppProduction
     ) {
     }
 
-    public static function fromResponseData(array $data): self
+    public static function fromResponseData(array $data): static
     {
         Assert::keyExists($data, 'desiredDeploymentId');
         Assert::keyExists($data, 'actualDeploymentId');

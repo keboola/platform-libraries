@@ -6,6 +6,6 @@ namespace Keboola\AppsApiClient\Exception;
 
 use Keboola\ApiClientBase\Exception\ClientException;
 
-final class AppsApiClientException extends ClientException
+final class AppsClientException extends ClientException
 {
 }

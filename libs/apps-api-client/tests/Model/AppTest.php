@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\AppsApiClient\Tests\Model;
 
+use Generator;
 use Keboola\AppsApiClient\Model\App;
 use Keboola\AppsApiClient\Tests\AppTestData;
 use PHPUnit\Framework\TestCase;
@@ -66,5 +67,24 @@ class AppTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
 
         App::fromResponseData($data);
+    }
+
+    /**
+     * @dataProvider wrongTypeProvider
+     */
+    public function testFromResponseDataRejectsWrongType(array $data): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        App::fromResponseData($data);
+    }
+
+    public static function wrongTypeProvider(): Generator
+    {
+        yield 'id of wrong type' => [AppTestData::app(['id' => 123])];
+        yield 'state of wrong type' => [AppTestData::app(['state' => null])];
+        yield 'hasManagedGitRepo of wrong type' => [AppTestData::app(['hasManagedGitRepo' => 'false'])];
+        yield 'production of wrong type' => [AppTestData::app(['production' => 'none'])];
+        yield 'branchId of wrong type' => [AppTestData::app(['branchId' => 2])];
     }
 }

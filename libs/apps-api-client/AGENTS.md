@@ -10,13 +10,13 @@ conventions.
 `apps-api-client` is developed in the
 **[keboola/platform-libraries](https://github.com/keboola/platform-libraries)**
 monorepo, under `libs/apps-api-client/`. It is published to the standalone
-**[keboola/apps-api-php-client](https://github.com/keboola/apps-api-php-client)** repository
+**[keboola/apps-api-client](https://github.com/keboola/apps-api-client)** repository
 only so that Composer can install it — that repository is a **read-only mirror**. CI re-splits the
 monorepo subdirectory into it on every green build and force-pushes the result, so any commit made there
 is overwritten and lost.
 
 - **Open pull requests against `keboola/platform-libraries`, never against
-  `keboola/apps-api-php-client`.** A pull request on the mirror cannot be merged and will be closed.
+  `keboola/apps-api-client`.** A pull request on the mirror cannot be merged and will be closed.
 - If the checkout you are in has no `libs/` directory at its root, you are in the mirror. Stop, clone
   `keboola/platform-libraries`, and make the change in `libs/apps-api-client/` there.
 - Commit messages are Conventional Commits scoped to the library: `fix(apps-api-client): …`.
@@ -24,6 +24,12 @@ is overwritten and lost.
   derived from it with the `apps-api-client/` prefix stripped.
 - Monorepo-wide conventions (Docker-based dev workflow, coding standards, CI layout) are in the monorepo's
   root `AGENTS.md`.
+
+## Not the sandboxes client
+
+`sandboxes-service-api-client` also has an `Apps\AppsApiClient` and an `Apps\App` model. Those talk to the
+v1 data-apps API on `data-apps.{hostnameSuffix}`. This library is the v2 API on `apps.{hostnameSuffix}`; the
+short class names are the same, so check the namespace of an import.
 
 ## Commands
 
@@ -46,7 +52,7 @@ load balancer adds the `/v2` prefix on `apps.{hostnameSuffix}`, so request paths
   retries every method on 5xx, so a retried create would make a duplicate.
 - Each inner `ApiClient` needs its own `HandlerStack`. `ApiClient` pushes its retry and auth middleware onto
   a passed stack, so a shared one would carry the retry middleware into the non-retrying client.
-- Response types live in `Model\` and implement `ResponseModelInterface::fromResponseData()`. States are
-  plain strings with `STATE_*` / `RUN_STATE_*` constants, not enums: the API is experimental, and a new
-  state must not break response mapping.
+- Response types live in `Model\` and implement `ResponseModelInterface::fromResponseData()`, nested ones
+  included. States are plain strings with `STATE_*` / `RUN_STATE_*` / `BUILD_STATE_*` constants, not enums:
+  the API is experimental, and a new state must not break response mapping.
 - `AppsApiErrorMessageResolver` is the single place that knows the error body shape (`{"error": "..."}`).

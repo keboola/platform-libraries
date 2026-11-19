@@ -10,7 +10,7 @@ use GuzzleHttp\Psr7\Request;
 use Keboola\ApiClientBase\ApiClient;
 use Keboola\ApiClientBase\ApiClientOptions;
 use Keboola\ApiClientBase\Auth\StorageApiTokenAuthenticator;
-use Keboola\AppsApiClient\Exception\AppsApiClientException;
+use Keboola\AppsApiClient\Exception\AppsClientException;
 use Keboola\AppsApiClient\Model\App;
 use Keboola\AppsApiClient\Model\Deployment;
 use Psr\Log\LoggerInterface;
@@ -50,7 +50,7 @@ class AppsApiClient
             new StorageApiTokenAuthenticator($storageToken),
             $options,
             errorMessageResolver: new AppsApiErrorMessageResolver(),
-            exceptionClass: AppsApiClientException::class,
+            exceptionClass: AppsClientException::class,
         );
 
         $this->apiClient = $createApiClient(new ApiClientOptions(
@@ -93,7 +93,7 @@ class AppsApiClient
     /**
      * Not idempotent and never retried: a repeated request creates another deployment.
      *
-     * @param string|null $configVersion null deploys the latest config version
+     * @param non-empty-string|null $configVersion null deploys the latest config version
      * @param bool $promote false stages the deployment without running it
      */
     public function createDeployment(string $appId, ?string $configVersion = null, bool $promote = true): Deployment

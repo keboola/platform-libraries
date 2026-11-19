@@ -15,10 +15,6 @@ final readonly class App implements ResponseModelInterface
     public const STATE_SUSPENDED = 'suspended';
     public const STATE_DISABLED = 'disabled';
 
-    /**
-     * @param string $state One of the STATE_* constants. It is a plain string, so a state added by the API
-     *     does not break the response mapping.
-     */
     public function __construct(
         public string $id,
         public string $projectId,

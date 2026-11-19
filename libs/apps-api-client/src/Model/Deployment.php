@@ -22,11 +22,6 @@ final readonly class Deployment implements ResponseModelInterface
     public const RUN_STATE_STOPPED = 'stopped';
     public const RUN_STATE_FAILED = 'failed';
 
-    /**
-     * @param string $buildState One of the BUILD_STATE_* constants, kept a plain string like $runState.
-     * @param string $runState One of the RUN_STATE_* constants. It is a plain string, so a state added by the
-     *     API does not break the response mapping.
-     */
     public function __construct(
         public string $id,
         public string $configVersion,

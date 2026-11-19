@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\AppsApiClient\Tests\Model;
 
+use Generator;
 use Keboola\AppsApiClient\Model\Deployment;
 use Keboola\AppsApiClient\Tests\AppTestData;
 use PHPUnit\Framework\TestCase;
@@ -51,5 +52,24 @@ class DeploymentTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
 
         Deployment::fromResponseData($data);
+    }
+
+    /**
+     * @dataProvider wrongTypeProvider
+     */
+    public function testFromResponseDataRejectsWrongType(array $data): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        Deployment::fromResponseData($data);
+    }
+
+    public static function wrongTypeProvider(): Generator
+    {
+        yield 'id of wrong type' => [AppTestData::deployment(['id' => 1])];
+        yield 'runState of wrong type' => [AppTestData::deployment(['runState' => null])];
+        yield 'archived of wrong type' => [AppTestData::deployment(['archived' => 0])];
+        yield 'configVersion of wrong type' => [AppTestData::deployment(['configVersion' => 7])];
+        yield 'archivedAt of wrong type' => [AppTestData::deployment(['archivedAt' => 1])];
     }
 }

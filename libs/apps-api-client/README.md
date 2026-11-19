@@ -6,6 +6,9 @@ PHP client for the Keboola Apps API (`/v2` App Deployments API of Sandboxes Serv
 The API is served on `https://apps.{hostnameSuffix}`, e.g. `https://apps.keboola.com`. Its OpenAPI spec is
 `docs/swagger-apps.yaml` in `keboola/sandboxes-service` and is marked experimental.
 
+Not to be confused with `Keboola\SandboxesServiceApiClient\Apps\AppsApiClient` in
+`keboola/sandboxes-service-api-client`, which is the v1 data-apps API on `data-apps.{hostnameSuffix}`.
+
 ## Installation
 
 ```bash
@@ -27,13 +30,15 @@ new AppsApiClient(
     string $baseUrl,
     string $storageToken,                   // sent in X-StorageApi-Token
     ?Psr\Log\LoggerInterface $logger = null,
-    int $backoffMaxTries = 3,               // retries on 5xx / transport errors, never 4xx
+    int $backoffMaxTries = 5,               // retries on 5xx / transport errors, never 4xx
     int $connectTimeout = 10,
     int $requestTimeout = 120,
     string $userAgent = 'Keboola Apps API PHP Client',
     null|Closure|GuzzleHttp\HandlerStack $requestHandler = null, // inject a mock handler in tests
 );
 ```
+
+A passed `HandlerStack` is copied when the client is created, so middleware pushed onto it later has no effect.
 
 ### Apps
 
@@ -67,5 +72,5 @@ $deployment->runState;                  // Deployment::RUN_STATE_* — failed me
 
 ### Errors
 
-Every failure throws `Keboola\AppsApiClient\Exception\AppsApiClientException`. The message is the `error`
+Every failure throws `Keboola\AppsApiClient\Exception\AppsClientException`. The message is the `error`
 field of the API response; `getStatusCode()` returns the HTTP status, or `null` without a response.

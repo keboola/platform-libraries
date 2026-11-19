@@ -8,7 +8,7 @@ use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Psr7\Response;
 use Keboola\AppsApiClient\AppsApiClient;
-use Keboola\AppsApiClient\Exception\AppsApiClientException;
+use Keboola\AppsApiClient\Exception\AppsClientException;
 use Keboola\AppsApiClient\Model\App;
 use Keboola\AppsApiClient\Model\Deployment;
 use PHPUnit\Framework\TestCase;
@@ -100,10 +100,23 @@ class AppsApiClientTest extends TestCase
         try {
             $this->buildClient($mock, backoffMaxTries: 3)->createDeployment('123');
             self::fail('Expected exception was not thrown.');
-        } catch (AppsApiClientException $e) {
+        } catch (AppsClientException $e) {
             self::assertSame(500, $e->getStatusCode());
         }
         self::assertCount(1, $mock);
+    }
+
+    public function testGetAppIsRetriedOn5xx(): void
+    {
+        $mock = new MockHandler([
+            new Response(500),
+            new Response(200, [], (string) json_encode(AppTestData::app())),
+        ]);
+
+        $app = $this->buildClient($mock, backoffMaxTries: 1)->getApp('123');
+
+        self::assertSame('123', $app->id);
+        self::assertCount(0, $mock);
     }
 
     public function testGetDeployment(): void
@@ -141,9 +154,42 @@ class AppsApiClientTest extends TestCase
         try {
             $this->buildClient($mock)->resumeApp('123');
             self::fail('Expected exception was not thrown.');
-        } catch (AppsApiClientException $e) {
+        } catch (AppsClientException $e) {
             self::assertSame('App "123" has no currently serving deployment', $e->getMessage());
             self::assertSame(409, $e->getStatusCode());
         }
+    }
+
+    public function testErrorResponseWithoutJsonThrowsException(): void
+    {
+        $mock = new MockHandler([new Response(502, [], '<html>Bad Gateway</html>')]);
+
+        try {
+            $this->buildClient($mock)->getApp('123');
+            self::fail('Expected exception was not thrown.');
+        } catch (AppsClientException $e) {
+            self::assertSame(502, $e->getStatusCode());
+            self::assertStringContainsString('502 Bad Gateway', $e->getMessage());
+        }
+    }
+
+    public function testInvalidJsonResponseThrowsException(): void
+    {
+        $mock = new MockHandler([new Response(200, [], 'not json')]);
+
+        $this->expectException(AppsClientException::class);
+        $this->expectExceptionMessage('Response is not valid JSON');
+
+        $this->buildClient($mock)->getApp('123');
+    }
+
+    public function testUnexpectedResponseShapeThrowsException(): void
+    {
+        $mock = new MockHandler([new Response(200, [], (string) json_encode(['id' => '123']))]);
+
+        $this->expectException(AppsClientException::class);
+        $this->expectExceptionMessage('Failed to map response data');
+
+        $this->buildClient($mock)->getApp('123');
     }
 }

@@ -14,6 +14,7 @@ class ServiceTest extends TestCase
     public static function providePublicSubdomains(): iterable
     {
         yield 'ai' => [Service::AI, 'ai'];
+        yield 'apps' => [Service::APPS, 'apps'];
         yield 'billing' => [Service::BILLING, 'billing'];
         yield 'buffer' => [Service::BUFFER, 'buffer'];
         yield 'connection' => [Service::CONNECTION, 'connection'];
@@ -49,6 +50,14 @@ class ServiceTest extends TestCase
         $this->expectExceptionMessage($expectedError);
 
         $service->getPublicSubdomain();
+    }
+
+    public function testGetInternalServiceNameThrowsExceptionForServiceWithoutInternalDns(): void
+    {
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Apps API does not have internal DNS');
+
+        Service::APPS->getInternalServiceName();
     }
 
     public static function provideInternalServiceNames(): iterable

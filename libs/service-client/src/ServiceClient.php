@@ -46,6 +46,14 @@ class ServiceClient
     /**
      * @return non-empty-string
      */
+    public function getAppsUrl(?ServiceDnsType $dnsType = null): string
+    {
+        return $this->getServiceUrl(Service::APPS, $dnsType);
+    }
+
+    /**
+     * @return non-empty-string
+     */
     public function getBillingServiceUrl(?ServiceDnsType $dnsType = null): string
     {
         return $this->getServiceUrl(Service::BILLING, $dnsType);

@@ -52,6 +52,9 @@ Some services intentionally have no public DNS (`GIT_SERVICE`, `QUEUE_INTERNAL_A
 `getPublicSubdomain()` arm **throws** rather than returning a value. Callers that may run in either mode
 must therefore pass the DNS type explicitly instead of relying on the default. Keep that pattern for new
 internal-only services — a placeholder subdomain would silently produce a URL that resolves to nothing.
+The reverse holds for `APPS`, which has no internal DNS yet: its `getInternalServiceName()` arm throws. The
+Apps API is served by `sandboxes-service-api`, but only `apps.{hostnameSuffix}` adds the `/v2` path prefix it
+needs, so the plain internal service URL would reach the wrong routes.
 
 `ServiceDnsType` is accepted as either the enum or its string value in the constructor, because consumers
 wire it from environment variables (see `api-bundle`'s `default_service_dns_type`).

@@ -56,11 +56,11 @@ While a promotion is in progress, `state` describes the deployment being replace
 ### Deployments
 
 ```php
-// deploy the latest config version and promote it to production
+// stage the latest config version without running it
 $deployment = $client->createDeployment('123');
 
-// deploy a pinned config version, or stage it without running it
-$deployment = $client->createDeployment('123', configVersion: '7', promote: false);
+// deploy a pinned config version and promote it to production
+$deployment = $client->createDeployment('123', configVersion: '7', promote: true);
 
 $deployment = $client->getDeployment('123', $deployment->id);
 $deployment->runState;                  // Deployment::RUN_STATE_* — failed means it crashed or could not start

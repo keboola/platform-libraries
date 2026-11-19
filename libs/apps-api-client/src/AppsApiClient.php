@@ -10,6 +10,7 @@ use GuzzleHttp\Psr7\Request;
 use Keboola\ApiClientBase\ApiClient;
 use Keboola\ApiClientBase\ApiClientOptions;
 use Keboola\ApiClientBase\Auth\StorageApiTokenAuthenticator;
+use Keboola\ApiClientBase\Json;
 use Keboola\AppsApiClient\Exception\AppsClientException;
 use Keboola\AppsApiClient\Model\App;
 use Keboola\AppsApiClient\Model\Deployment;
@@ -74,24 +75,23 @@ class AppsApiClient
 
     /**
      * @param non-empty-string|null $configVersion null deploys the latest config version
-     * @param bool $promote false stages the deployment without running it
+     * @param bool $promote true promotes the deployment to production and starts it, false only stages it
      */
-    public function createDeployment(string $appId, ?string $configVersion = null, bool $promote = true): Deployment
+    public function createDeployment(string $appId, ?string $configVersion = null, bool $promote = false): Deployment
     {
         $body = [];
         if ($configVersion !== null) {
             $body['configVersion'] = $configVersion;
         }
-        if (!$promote) {
-            $body['promote'] = false;
-        }
+        // Always sent: the API defaults to promoting, this method does not.
+        $body['promote'] = $promote;
 
         return $this->apiClient->sendRequestAndMapResponse(
             new Request(
                 'POST',
                 'apps/' . rawurlencode($appId) . '/deployments',
                 self::JSON_HEADERS,
-                json_encode((object) $body, JSON_THROW_ON_ERROR),
+                Json::encodeArray($body),
             ),
             Deployment::class,
         );

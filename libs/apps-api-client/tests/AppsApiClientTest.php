@@ -64,7 +64,7 @@ class AppsApiClientTest extends TestCase
         self::assertSame('https://apps.keboola.com/apps/123/resume', (string) $request->getUri());
     }
 
-    public function testCreateDeploymentOfLatestConfigVersion(): void
+    public function testCreateDeploymentStagesLatestConfigVersionByDefault(): void
     {
         $mock = new MockHandler([new Response(202, [], (string) json_encode(AppTestData::deployment()))]);
 
@@ -75,17 +75,17 @@ class AppsApiClientTest extends TestCase
         self::assertSame('POST', $request->getMethod());
         self::assertSame('https://apps.keboola.com/apps/123/deployments', (string) $request->getUri());
         self::assertSame('application/json', $request->getHeaderLine('Content-Type'));
-        self::assertSame('{}', (string) $request->getBody());
+        self::assertSame('{"promote":false}', (string) $request->getBody());
     }
 
     public function testCreateDeploymentWithOptions(): void
     {
         $mock = new MockHandler([new Response(202, [], (string) json_encode(AppTestData::deployment()))]);
 
-        $this->buildClient($mock)->createDeployment('123', configVersion: '7', promote: false);
+        $this->buildClient($mock)->createDeployment('123', configVersion: '7', promote: true);
 
         self::assertSame(
-            '{"configVersion":"7","promote":false}',
+            '{"configVersion":"7","promote":true}',
             (string) self::lastRequest($mock)->getBody(),
         );
     }

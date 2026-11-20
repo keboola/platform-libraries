@@ -21,7 +21,7 @@ class Table extends Configuration
     public static function configureNode(NodeDefinition $node): void
     {
         // BEFORE MODIFICATION OF THIS CONFIGURATION, READ AND UNDERSTAND
-        // https://keboola.atlassian.net/wiki/spaces/ENGG/pages/3283910830/Job+configuration+validation
+        // https://github.com/keboola/platform-libraries/blob/main/docs/job-configuration.md
         /** @var ArrayNodeDefinition $node */
         $node
             ->children()
@@ -120,6 +120,6 @@ class Table extends Configuration
             ->end()
         ;
         // BEFORE MODIFICATION OF THIS CONFIGURATION, READ AND UNDERSTAND
-        // https://keboola.atlassian.net/wiki/spaces/ENGG/pages/3283910830/Job+configuration+validation
+        // https://github.com/keboola/platform-libraries/blob/main/docs/job-configuration.md
     }
 }

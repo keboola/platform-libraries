@@ -101,8 +101,13 @@ class TableLayoutBigQueryTest extends AbstractTestCase
 
         $table = $this->clientWrapper->getTableAndFileStorageClient()->getTable($this->getTableId());
         self::assertFalse($table['isTyped']);
-        // Storage does not return the layout of an untyped table yet, so it is not read back here
         self::assertSame(2, $this->getRowsCount());
+
+        if (!isset($table['definition']['clustering'])) {
+            // returned since keboola/connection#9576 (DMD-2951); skipped until the stack has it deployed
+            self::markTestSkipped('Storage on this stack does not return the layout of an untyped table yet.');
+        }
+        self::assertSame(['country'], $table['definition']['clustering']['fields']);
     }
 
     #[NeedsEmptyBigqueryOutputBucket]

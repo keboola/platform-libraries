@@ -60,11 +60,15 @@ Dependencies between libraries use `"*@dev"` to always use the local version.
 
 ## Configuration Schema Changes Are Cross-Service Contracts
 
+[`docs/job-configuration.md`](docs/job-configuration.md) is the canonical description of the job
+configuration: where it is defined, the validation rules and the rollout order for a schema change. The
+summary for agents:
+
 The Symfony Config trees in `output-mapping` and `input-mapping` (embedded in the job configuration of
-`keboola/job-queue-job-configuration`) are parsed
-strictly by every service that handles a job configuration: job-queue public-api, job-queue-daemon, the
-service container, the input and output mapping components of the job pod, runner-sync-api,
-sandboxes-service, editor-service, data-loader-api and sandboxes. An unknown key is a hard error
+`keboola/job-queue-job-configuration` and of keboola/docker-bundle) are parsed strictly by every service
+that handles a job configuration: job-queue public-api, job-queue-daemon, the service container, the input
+and output mapping components of the job pod, job-runner, runner-sync-api, sandboxes-service,
+editor-service, data-loader-api and sandboxes. An unknown key is a hard error
 (`Unrecognized option "<key>" under "configuration.storage.output.tables.0"`), and these services are
 deployed independently, so for a while old and new library versions run side by side.
 

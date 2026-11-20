@@ -16,7 +16,6 @@ final readonly class Run implements ResponseModelInterface
     public function __construct(
         public string $id,
         public string $appId,
-        public ?string $deploymentId,
         public ?string $state,
         public ?string $createdAt,
         public ?string $startedAt,
@@ -31,7 +30,6 @@ final readonly class Run implements ResponseModelInterface
          * @var array{
          *     id: string,
          *     appId: string,
-         *     deploymentId: string|null,
          *     state: string|null,
          *     createdAt: string|null,
          *     startedAt: string|null,
@@ -42,7 +40,6 @@ final readonly class Run implements ResponseModelInterface
         return new self(
             $data['id'],
             $data['appId'],
-            $data['deploymentId'],
             $data['state'],
             $data['createdAt'],
             $data['startedAt'],

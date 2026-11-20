@@ -18,7 +18,6 @@ class RunTest extends TestCase
 
         self::assertSame(AppTestData::RUN_ID, $run->id);
         self::assertSame('123', $run->appId);
-        self::assertSame(AppTestData::DEPLOYMENT_ID, $run->deploymentId);
         self::assertSame(Run::STATE_RUNNING, $run->state);
         self::assertSame('2026-11-20T10:00:00+00:00', $run->createdAt);
         self::assertSame('2026-11-20T10:00:30+00:00', $run->startedAt);
@@ -54,7 +53,6 @@ class RunTest extends TestCase
 
         self::assertNull($run->state);
         self::assertNull($run->createdAt);
-        self::assertNull($run->deploymentId);
         self::assertNotNull($run->failureReason);
         self::assertNull($run->failureReason->reason);
         self::assertNull($run->failureReason->message);

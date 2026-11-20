@@ -65,35 +65,18 @@ class AppsApiClientTest extends TestCase
         self::assertSame('https://apps.keboola.com/apps/123/resume', (string) $request->getUri());
     }
 
-    public function testRestartApp(): void
-    {
-        $mock = new MockHandler([
-            new Response(202, [], (string) json_encode(AppTestData::app(['state' => 'starting']))),
-        ]);
-
-        $app = $this->buildClient($mock)->restartApp('123');
-
-        self::assertSame(App::STATE_STARTING, $app->state);
-        $request = self::lastRequest($mock);
-        self::assertSame('POST', $request->getMethod());
-        self::assertSame('https://apps.keboola.com/apps/123/restart', (string) $request->getUri());
-    }
-
-    public function testRestartDeployment(): void
+    public function testResumeAppWithRestartIfRunning(): void
     {
         $mock = new MockHandler([
             new Response(202, [], (string) json_encode(AppTestData::app(['state' => 'running']))),
         ]);
 
-        $app = $this->buildClient($mock)->restartDeployment('123', AppTestData::DEPLOYMENT_ID);
+        $app = $this->buildClient($mock)->resumeApp('123', restartIfRunning: true);
 
         self::assertSame(App::STATE_RUNNING, $app->state);
         $request = self::lastRequest($mock);
         self::assertSame('POST', $request->getMethod());
-        self::assertSame(
-            'https://apps.keboola.com/apps/123/deployments/' . AppTestData::DEPLOYMENT_ID . '/restart',
-            (string) $request->getUri(),
-        );
+        self::assertSame('https://apps.keboola.com/apps/123/resume?restartIfRunning=true', (string) $request->getUri());
     }
 
     public function testListRuns(): void

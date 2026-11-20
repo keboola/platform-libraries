@@ -65,38 +65,16 @@ class AppsApiClient
 
     /**
      * Wakes the deployment that serves production. A 409 means the app has no serving deployment to wake.
+     *
+     * With $restartIfRunning, it also gets a new container and Storage token: a running app restarts, a
+     * stopped one starts on the new container. The new container shows up as a new run.
      */
-    public function resumeApp(string $appId): App
-    {
-        return $this->apiClient->sendRequestAndMapResponse(
-            new Request('POST', 'apps/' . rawurlencode($appId) . '/resume'),
-            App::class,
-        );
-    }
-
-    /**
-     * Shortcut for restartDeployment() on the deployment that serves production. A 409 means the app has
-     * no serving deployment to restart.
-     */
-    public function restartApp(string $appId): App
-    {
-        return $this->apiClient->sendRequestAndMapResponse(
-            new Request('POST', 'apps/' . rawurlencode($appId) . '/restart'),
-            App::class,
-        );
-    }
-
-    /**
-     * Gives the deployment a new container and Storage token. The new container shows up as a new run;
-     * a stopped deployment gets it when it next starts. Restarting the deployment that serves production
-     * also starts the app.
-     */
-    public function restartDeployment(string $appId, string $deploymentId): App
+    public function resumeApp(string $appId, bool $restartIfRunning = false): App
     {
         return $this->apiClient->sendRequestAndMapResponse(
             new Request(
                 'POST',
-                'apps/' . rawurlencode($appId) . '/deployments/' . rawurlencode($deploymentId) . '/restart',
+                'apps/' . rawurlencode($appId) . '/resume' . ($restartIfRunning ? '?restartIfRunning=true' : ''),
             ),
             App::class,
         );

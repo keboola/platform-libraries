@@ -239,6 +239,44 @@ class WebalizerTest extends TestCase
         ];
     }
 
+    public function testLegacyWebalizeLayoutFields(): void
+    {
+        $clientMock = self::createMock(Client::class);
+        $clientMock->expects(self::never())->method('webalizeColumnNames');
+
+        $webalizator = new Webalizer($clientMock, new Logger('test'), false);
+
+        self::assertSame(
+            [
+                'time_partitioning' => ['type' => 'DAY', 'field' => 'report_date'],
+                'range_partitioning' => [
+                    'field' => 'escrzyaieuu',
+                    'range' => ['start' => 0, 'end' => 100, 'interval' => 10],
+                ],
+                'clustering' => ['fields' => ['webalize_test', 'col3']],
+            ],
+            $webalizator->webalize([
+                'time_partitioning' => ['type' => 'DAY', 'field' => 'report date'],
+                'range_partitioning' => [
+                    'field' => 'ěščřžýáíéúů',
+                    'range' => ['start' => 0, 'end' => 100, 'interval' => 10],
+                ],
+                'clustering' => ['fields' => ['webalize | test 😁', 'col3']],
+            ]),
+        );
+    }
+
+    public function testLegacyWebalizeKeepsLayoutWithoutField(): void
+    {
+        $clientMock = self::createMock(Client::class);
+        $clientMock->expects(self::never())->method('webalizeColumnNames');
+
+        $webalizator = new Webalizer($clientMock, new Logger('test'), false);
+        $config = ['time_partitioning' => ['type' => 'DAY', 'expiration_ms' => 1000]];
+
+        self::assertSame($config, $webalizator->webalize($config));
+    }
+
     protected function initClient(?string $branchId = null): void
     {
         $clientOptions = (new ClientOptions())

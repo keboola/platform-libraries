@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Keboola\OutputMapping\Writer\Table\TableDefinition;
 
 use Keboola\OutputMapping\Writer\Table\TableDefinitionInterface;
+use Keboola\OutputMapping\Writer\Table\TableDefinitionWithLayoutInterface;
 
 /**
  * Table definition for a non-typed table created from a plain list of column names, i.e. when the manifest
@@ -14,7 +15,7 @@ use Keboola\OutputMapping\Writer\Table\TableDefinitionInterface;
  * Keboola\Connection\Storage\Request\Bucket\CreateTableDefinition\BaseCreateTableDefinitionRequest::isTypedTable()
  * only reports a typed table when at least one column has `definition.type` or `basetype`.
  */
-class TableDefinitionFromColumns implements TableDefinitionInterface
+class TableDefinitionFromColumns implements TableDefinitionInterface, TableDefinitionWithLayoutInterface
 {
     use TableDefinitionDescriptionsTrait;
     use TableDefinitionLayoutTrait;

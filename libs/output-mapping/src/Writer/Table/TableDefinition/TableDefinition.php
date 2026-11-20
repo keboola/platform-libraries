@@ -5,8 +5,9 @@ declare(strict_types=1);
 namespace Keboola\OutputMapping\Writer\Table\TableDefinition;
 
 use Keboola\OutputMapping\Writer\Table\TableDefinitionInterface;
+use Keboola\OutputMapping\Writer\Table\TableDefinitionWithLayoutInterface;
 
-class TableDefinition implements TableDefinitionInterface
+class TableDefinition implements TableDefinitionInterface, TableDefinitionWithLayoutInterface
 {
     use TableDefinitionDescriptionsTrait;
     use TableDefinitionLayoutTrait;

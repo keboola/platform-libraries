@@ -20,6 +20,7 @@ use Keboola\OutputMapping\Writer\Table\TableDefinition\TableDefinitionFactory;
 use Keboola\OutputMapping\Writer\Table\TableDefinition\TableDefinitionFromColumns;
 use Keboola\OutputMapping\Writer\Table\TableDefinitionFromSchema\TableDefinitionFromSchema;
 use Keboola\OutputMapping\Writer\Table\TableDefinitionInterface;
+use Keboola\OutputMapping\Writer\Table\TableDefinitionWithLayoutInterface;
 use Keboola\StorageApiBranch\ClientWrapper;
 use Psr\Log\LoggerInterface;
 use Webmozart\Assert\Assert;
@@ -137,7 +138,7 @@ class LoadTableTaskCreator
 
     private function createTableDefinition(
         MappingFromProcessedConfiguration $source,
-        TableDefinitionInterface $tableDefinition,
+        TableDefinitionInterface&TableDefinitionWithLayoutInterface $tableDefinition,
         ?TableDescription $descriptions,
         ?MappingTableLayout $layout,
     ): void {

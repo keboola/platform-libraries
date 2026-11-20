@@ -8,8 +8,9 @@ use Keboola\OutputMapping\Mapping\MappingFromConfigurationSchemaColumn;
 use Keboola\OutputMapping\Writer\Table\TableDefinition\TableDefinitionDescriptionsTrait;
 use Keboola\OutputMapping\Writer\Table\TableDefinition\TableDefinitionLayoutTrait;
 use Keboola\OutputMapping\Writer\Table\TableDefinitionInterface;
+use Keboola\OutputMapping\Writer\Table\TableDefinitionWithLayoutInterface;
 
-class TableDefinitionFromSchema implements TableDefinitionInterface
+class TableDefinitionFromSchema implements TableDefinitionInterface, TableDefinitionWithLayoutInterface
 {
     use TableDefinitionDescriptionsTrait;
     use TableDefinitionLayoutTrait;

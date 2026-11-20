@@ -68,11 +68,13 @@ class AppsApiClient
      */
     public function resumeApp(string $appId, bool $restartIfRunning = false): App
     {
+        $query = http_build_query(array_filter(
+            ['restartIfRunning' => $restartIfRunning ? 'true' : null],
+            static fn(mixed $value): bool => $value !== null,
+        ));
+
         return $this->apiClient->sendRequestAndMapResponse(
-            new Request(
-                'POST',
-                'apps/' . rawurlencode($appId) . '/resume' . ($restartIfRunning ? '?restartIfRunning=true' : ''),
-            ),
+            new Request('POST', 'apps/' . rawurlencode($appId) . '/resume' . ($query === '' ? '' : '?' . $query)),
             App::class,
         );
     }

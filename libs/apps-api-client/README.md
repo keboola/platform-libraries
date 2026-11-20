@@ -49,7 +49,7 @@ $app->production->desiredDeploymentId;  // deployment being promoted to producti
 // wakes the deployment that serves production; 409 when the app has none
 $app = $client->resumeApp('123');
 
-// the same, with a new container and Storage token: a running app restarts, a stopped one starts
+// the same, with a new container: a running app restarts, a stopped one starts
 $app = $client->resumeApp('123', restartIfRunning: true);
 
 // runs of the app, newest first; a restart opens a new run

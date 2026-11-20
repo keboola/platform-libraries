@@ -66,8 +66,8 @@ class AppsApiClient
     /**
      * Wakes the deployment that serves production. A 409 means the app has no serving deployment to wake.
      *
-     * With $restartIfRunning, it also gets a new container and Storage token: a running app restarts, a
-     * stopped one starts on the new container. The new container shows up as a new run.
+     * With $restartIfRunning, it also gets a new container: a running app restarts, a stopped one starts on
+     * the new container. The new container shows up as a new run.
      */
     public function resumeApp(string $appId, bool $restartIfRunning = false): App
     {

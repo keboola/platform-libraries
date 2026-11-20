@@ -88,8 +88,8 @@ class AppsApiClient
 
     /**
      * Restarts the deployment in place: same deployment, config and code, a new container and Storage
-     * token. The new container shows up as a new run. Only the deployment that serves production can be
-     * restarted; any other is a 409.
+     * token. The new container shows up as a new run; a stopped deployment gets it when it next starts.
+     * Restarting the deployment that serves production also starts the app.
      */
     public function restartDeployment(string $appId, string $deploymentId): App
     {

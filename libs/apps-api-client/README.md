@@ -65,7 +65,7 @@ While a promotion is in progress, `state` describes the deployment being replace
 
 ```php
 // restarts the deployment in place: same deployment, config and code, a new container and
-// Storage token; only the deployment that serves production, any other is a 409
+// Storage token; for the deployment that serves production, it also starts the app
 $app = $client->restartDeployment('123', $app->production->actualDeploymentId);
 
 // stage the latest config version without running it

@@ -49,8 +49,7 @@ $app->production->desiredDeploymentId;  // deployment being promoted to producti
 // wakes the deployment that serves production; 409 when the app has none
 $app = $client->resumeApp('123');
 
-// restarts the deployment that serves production in place: same deployment, config and code,
-// a new container and Storage token; 409 when the app has none
+// shortcut for restartDeployment() of the deployment that serves production; 409 when the app has none
 $app = $client->restartApp('123');
 
 // runs of the app, newest first; a restart opens a new run
@@ -65,6 +64,10 @@ While a promotion is in progress, `state` describes the deployment being replace
 ### Deployments
 
 ```php
+// restarts the deployment in place: same deployment, config and code, a new container and
+// Storage token; only the deployment that serves production, any other is a 409
+$app = $client->restartDeployment('123', $app->production->actualDeploymentId);
+
 // stage the latest config version without running it
 $deployment = $client->createDeployment('123');
 

@@ -75,14 +75,29 @@ class AppsApiClient
     }
 
     /**
-     * Restarts the deployment that serves production in place: same deployment, config and code, a new
-     * container and Storage token. The new container shows up as a new run. A 409 means the app has no
-     * serving deployment to restart.
+     * Shortcut for restartDeployment() on the deployment that serves production. A 409 means the app has
+     * no serving deployment to restart.
      */
     public function restartApp(string $appId): App
     {
         return $this->apiClient->sendRequestAndMapResponse(
             new Request('POST', 'apps/' . rawurlencode($appId) . '/restart'),
+            App::class,
+        );
+    }
+
+    /**
+     * Restarts the deployment in place: same deployment, config and code, a new container and Storage
+     * token. The new container shows up as a new run. Only the deployment that serves production can be
+     * restarted; any other is a 409.
+     */
+    public function restartDeployment(string $appId, string $deploymentId): App
+    {
+        return $this->apiClient->sendRequestAndMapResponse(
+            new Request(
+                'POST',
+                'apps/' . rawurlencode($appId) . '/deployments/' . rawurlencode($deploymentId) . '/restart',
+            ),
             App::class,
         );
     }

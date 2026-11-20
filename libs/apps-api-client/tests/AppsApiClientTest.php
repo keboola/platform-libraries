@@ -79,6 +79,23 @@ class AppsApiClientTest extends TestCase
         self::assertSame('https://apps.keboola.com/apps/123/restart', (string) $request->getUri());
     }
 
+    public function testRestartDeployment(): void
+    {
+        $mock = new MockHandler([
+            new Response(202, [], (string) json_encode(AppTestData::app(['state' => 'running']))),
+        ]);
+
+        $app = $this->buildClient($mock)->restartDeployment('123', AppTestData::DEPLOYMENT_ID);
+
+        self::assertSame(App::STATE_RUNNING, $app->state);
+        $request = self::lastRequest($mock);
+        self::assertSame('POST', $request->getMethod());
+        self::assertSame(
+            'https://apps.keboola.com/apps/123/deployments/' . AppTestData::DEPLOYMENT_ID . '/restart',
+            (string) $request->getUri(),
+        );
+    }
+
     public function testListRuns(): void
     {
         $mock = new MockHandler([new Response(200, [], (string) json_encode([

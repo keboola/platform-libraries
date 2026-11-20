@@ -14,6 +14,7 @@ use Keboola\ApiClientBase\Json;
 use Keboola\AppsApiClient\Exception\AppsClientException;
 use Keboola\AppsApiClient\Model\App;
 use Keboola\AppsApiClient\Model\Deployment;
+use Keboola\AppsApiClient\Model\Run;
 use Psr\Log\LoggerInterface;
 
 class AppsApiClient
@@ -65,11 +66,36 @@ class AppsApiClient
     /**
      * Wakes the deployment that serves production. A 409 means the app has no serving deployment to wake.
      */
-    public function resumeApp(string $appId): App
+    public function resumeApp(string $appId, bool $restartIfRunning = false): App
     {
+        $query = http_build_query(array_filter(
+            ['restartIfRunning' => $restartIfRunning ? 'true' : null],
+            static fn(mixed $value): bool => $value !== null,
+        ));
+
         return $this->apiClient->sendRequestAndMapResponse(
-            new Request('POST', 'apps/' . rawurlencode($appId) . '/resume'),
+            new Request('POST', 'apps/' . rawurlencode($appId) . '/resume' . ($query === '' ? '' : '?' . $query)),
             App::class,
+        );
+    }
+
+    /**
+     * Newest first.
+     *
+     * @param int<1, 500>|null $limit
+     * @return list<Run>
+     */
+    public function listRuns(string $appId, ?string $deploymentId = null, ?int $limit = null): array
+    {
+        $query = http_build_query(array_filter(
+            ['deploymentId' => $deploymentId, 'limit' => $limit],
+            static fn(mixed $value): bool => $value !== null,
+        ));
+
+        return $this->apiClient->sendRequestAndMapResponse(
+            new Request('GET', 'apps/' . rawurlencode($appId) . '/runs' . ($query === '' ? '' : '?' . $query)),
+            Run::class,
+            isList: true,
         );
     }
 

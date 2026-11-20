@@ -11,6 +11,7 @@ use Keboola\AppsApiClient\AppsApiClient;
 use Keboola\AppsApiClient\Exception\AppsClientException;
 use Keboola\AppsApiClient\Model\App;
 use Keboola\AppsApiClient\Model\Deployment;
+use Keboola\AppsApiClient\Model\Run;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\RequestInterface;
 
@@ -62,6 +63,50 @@ class AppsApiClientTest extends TestCase
         $request = self::lastRequest($mock);
         self::assertSame('POST', $request->getMethod());
         self::assertSame('https://apps.keboola.com/apps/123/resume', (string) $request->getUri());
+    }
+
+    public function testRestartApp(): void
+    {
+        $mock = new MockHandler([
+            new Response(202, [], (string) json_encode(AppTestData::app(['state' => 'starting']))),
+        ]);
+
+        $app = $this->buildClient($mock)->restartApp('123');
+
+        self::assertSame(App::STATE_STARTING, $app->state);
+        $request = self::lastRequest($mock);
+        self::assertSame('POST', $request->getMethod());
+        self::assertSame('https://apps.keboola.com/apps/123/restart', (string) $request->getUri());
+    }
+
+    public function testListRuns(): void
+    {
+        $mock = new MockHandler([new Response(200, [], (string) json_encode([
+            AppTestData::run(),
+            AppTestData::run(['id' => 'older-run', 'state' => 'finished']),
+        ]))]);
+
+        $runs = $this->buildClient($mock)->listRuns('123');
+
+        self::assertCount(2, $runs);
+        self::assertSame(AppTestData::RUN_ID, $runs[0]->id);
+        self::assertSame(Run::STATE_FINISHED, $runs[1]->state);
+        $request = self::lastRequest($mock);
+        self::assertSame('GET', $request->getMethod());
+        self::assertSame('https://apps.keboola.com/apps/123/runs', (string) $request->getUri());
+    }
+
+    public function testListRunsOfDeployment(): void
+    {
+        $mock = new MockHandler([new Response(200, [], '[]')]);
+
+        $runs = $this->buildClient($mock)->listRuns('123', deploymentId: AppTestData::DEPLOYMENT_ID, limit: 1);
+
+        self::assertSame([], $runs);
+        self::assertSame(
+            'https://apps.keboola.com/apps/123/runs?deploymentId=' . AppTestData::DEPLOYMENT_ID . '&limit=1',
+            (string) self::lastRequest($mock)->getUri(),
+        );
     }
 
     public function testCreateDeploymentStagesLatestConfigVersionByDefault(): void

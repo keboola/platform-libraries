@@ -14,6 +14,7 @@ use Keboola\ApiClientBase\Json;
 use Keboola\AppsApiClient\Exception\AppsClientException;
 use Keboola\AppsApiClient\Model\App;
 use Keboola\AppsApiClient\Model\Deployment;
+use Keboola\AppsApiClient\Model\Run;
 use Psr\Log\LoggerInterface;
 
 class AppsApiClient
@@ -70,6 +71,39 @@ class AppsApiClient
         return $this->apiClient->sendRequestAndMapResponse(
             new Request('POST', 'apps/' . rawurlencode($appId) . '/resume'),
             App::class,
+        );
+    }
+
+    /**
+     * Restarts the deployment that serves production in place: same deployment, config and code, a new
+     * container and Storage token. The new container shows up as a new run. A 409 means the app has no
+     * serving deployment to restart.
+     */
+    public function restartApp(string $appId): App
+    {
+        return $this->apiClient->sendRequestAndMapResponse(
+            new Request('POST', 'apps/' . rawurlencode($appId) . '/restart'),
+            App::class,
+        );
+    }
+
+    /**
+     * Runs of the app, newest first.
+     *
+     * @param int<1, 500>|null $limit
+     * @return list<Run>
+     */
+    public function listRuns(string $appId, ?string $deploymentId = null, ?int $limit = null): array
+    {
+        $query = http_build_query(array_filter(
+            ['deploymentId' => $deploymentId, 'limit' => $limit],
+            static fn(mixed $value): bool => $value !== null,
+        ));
+
+        return $this->apiClient->sendRequestAndMapResponse(
+            new Request('GET', 'apps/' . rawurlencode($appId) . '/runs' . ($query === '' ? '' : '?' . $query)),
+            Run::class,
+            isList: true,
         );
     }
 

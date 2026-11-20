@@ -48,6 +48,15 @@ $app->production->desiredDeploymentId;  // deployment being promoted to producti
 
 // wakes the deployment that serves production; 409 when the app has none
 $app = $client->resumeApp('123');
+
+// restarts the deployment that serves production in place: same deployment, config and code,
+// a new container and Storage token; 409 when the app has none
+$app = $client->restartApp('123');
+
+// runs of the app, newest first; a restart opens a new run
+$runs = $client->listRuns('123', deploymentId: $app->production->actualDeploymentId, limit: 1);
+$runs[0]->state;                        // Run::STATE_* — starting, running, failed, finished
+$runs[0]->failureReason?->message;      // why a failed run failed, safe to show
 ```
 
 While a promotion is in progress, `state` describes the deployment being replaced. Compare

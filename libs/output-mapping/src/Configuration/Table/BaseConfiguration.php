@@ -15,6 +15,7 @@ abstract class BaseConfiguration extends Configuration
     public const DEFAULT_ENCLOSURE = '"';
     public const FIELD_DEDUPLICATION_STRATEGY = 'deduplication_strategy';
     public const FIELD_IMPORT_METHOD = 'import_method';
+    public const FIELD_POLICY_TAGS = 'policy_tags';
 
     private const DEFAULT_DELETE_WHERE_OPERATOR = 'eq';
 
@@ -228,6 +229,17 @@ abstract class BaseConfiguration extends Configuration
                 ->booleanNode('has_header')->end()
                 ->scalarNode('description')->end()
                 ->variableNode('table_metadata')->end()
+                // A map of column name to BigQuery policy tag resource name. It is a variable node on purpose:
+                // a prototyped array node would write an empty default into every normalized configuration,
+                // which older readers reject. The key is accepted and not used yet.
+                ->variableNode(self::FIELD_POLICY_TAGS)
+                    ->validate()
+                        ->ifTrue(fn($v) => !self::isValidPolicyTagsMap($v))
+                        ->thenInvalid(
+                            'The "policy_tags" option must be a map of column names to non-empty tag names, %s given.',
+                        )
+                    ->end()
+                ->end()
                 ->arrayNode('schema')
                     ->prototype('array')
                         ->children()
@@ -343,6 +355,20 @@ abstract class BaseConfiguration extends Configuration
             ;
         // BEFORE MODIFICATION OF THIS CONFIGURATION, READ AND UNDERSTAND
         // https://keboola.atlassian.net/wiki/spaces/ENGG/pages/3283910830/Job+configuration+validation
+    }
+
+    private static function isValidPolicyTagsMap(mixed $value): bool
+    {
+        // A JSON list decodes to a PHP list; a JSON object with a numeric column name ("123") has an integer key.
+        if (!is_array($value) || ($value !== [] && array_is_list($value))) {
+            return false;
+        }
+        foreach ($value as $column => $tag) {
+            if ((string) $column === '' || !is_string($tag) || $tag === '') {
+                return false;
+            }
+        }
+        return true;
     }
 
     private static function getStringNormalizer(): Closure

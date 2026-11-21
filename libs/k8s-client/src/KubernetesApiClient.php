@@ -67,7 +67,7 @@ class KubernetesApiClient
         // inside the $api Guzzle is configured to not throw exception for 4xx/5xx status, it has to be handled manually
         // https://github.com/allansun/kubernetes-php-runtime/blob/f4d9466c1c8edc62c1f756f2812ceeb77f62b196/src/Client.php#L58
 
-        $result = $this->retryProxy->call(function () use ($api, $method, $args) {
+        $result = $this->retryProxy->call(function () use ($api, $method, $expectedResult, $args) {
             $result = $api->{$method}(...$args);
 
             if ($result instanceof Status && $result->code >= 500) {
@@ -75,6 +75,12 @@ class KubernetesApiClient
                     sprintf('K8S request has failed: %s', $result->message),
                     $result,
                 );
+            }
+
+            // a body the runtime could not map onto a model comes from something in front of the API server
+            // (e.g. "upstream connect error or disconnect/reset before headers") and is treated as transient
+            if (!is_object($result)) {
+                throw self::unexpectedResultException($api, $method, $expectedResult, $result);
             }
 
             return $result;
@@ -105,7 +111,16 @@ class KubernetesApiClient
             return $result;
         }
 
-        throw new KubernetesResponseException(
+        throw self::unexpectedResultException($api, $method, $expectedResult, $result);
+    }
+
+    private static function unexpectedResultException(
+        AbstractAPI $api,
+        string $method,
+        string $expectedResult,
+        mixed $result,
+    ): KubernetesResponseException {
+        return new KubernetesResponseException(
             sprintf(
                 'Expected response class %s for request %s::%s, found %s',
                 $expectedResult,

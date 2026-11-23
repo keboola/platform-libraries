@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping\Tests\Configuration;
 
+use Generator;
 use Keboola\OutputMapping\Configuration\Table;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
@@ -193,5 +194,74 @@ class TableTest extends TestCase
         self::expectExceptionMessage('The child config "source" under "table" must be configured.');
 
         (new Table())->parse(['config' => $config]);
+    }
+
+    public function testPolicyTagsAreAccepted(): void
+    {
+        $policyTags = [
+            'email' => 'projects/acme-gov/locations/eu/taxonomies/123/policyTags/456',
+            '123' => 'projects/acme-gov/locations/eu/taxonomies/123/policyTags/789',
+        ];
+        $config = [
+            'source' => 'data.csv',
+            'destination' => 'in.c-main.test',
+            'policy_tags' => $policyTags,
+        ];
+
+        $processedConfiguration = (new Table())->parse(['config' => $config]);
+        self::assertSame($policyTags, $processedConfiguration['policy_tags']);
+
+        $processedConfiguration = (new Table\Configuration())->parse(['config' => $config]);
+        self::assertSame($policyTags, $processedConfiguration['policy_tags']);
+    }
+
+    public function testEmptyPolicyTagsAreAccepted(): void
+    {
+        $processedConfiguration = (new Table())->parse(['config' => [
+            'source' => 'data.csv',
+            'destination' => 'in.c-main.test',
+            'policy_tags' => [],
+        ]]);
+        self::assertSame([], $processedConfiguration['policy_tags']);
+    }
+
+    public function testPolicyTagsHaveNoDefault(): void
+    {
+        // Older readers reject the key, so it must never be added to a configuration which does not set it.
+        $config = [
+            'source' => 'data.csv',
+            'destination' => 'in.c-main.test',
+        ];
+
+        self::assertArrayNotHasKey('policy_tags', (new Table())->parse(['config' => $config]));
+        self::assertArrayNotHasKey('policy_tags', (new Table\Configuration())->parse(['config' => $config]));
+        unset($config['source']);
+        self::assertArrayNotHasKey('policy_tags', (new Table\Manifest())->parse(['config' => $config]));
+    }
+
+    /** @dataProvider provideInvalidPolicyTags */
+    public function testInvalidPolicyTags(mixed $policyTags): void
+    {
+        $this->expectException(InvalidConfigurationException::class);
+        $this->expectExceptionMessage(
+            'The "policy_tags" option must be a map of column names to non-empty tag names',
+        );
+
+        (new Table())->parse(['config' => [
+            'source' => 'data.csv',
+            'destination' => 'in.c-main.test',
+            'policy_tags' => $policyTags,
+        ]]);
+    }
+
+    public static function provideInvalidPolicyTags(): Generator
+    {
+        yield 'string' => ['projects/p/locations/eu/taxonomies/1/policyTags/2'];
+        yield 'list' => [['projects/p/locations/eu/taxonomies/1/policyTags/2']];
+        yield 'empty tag' => [['email' => '']];
+        yield 'non-string tag' => [['email' => 123]];
+        yield 'nested tag' => [['email' => ['name' => 'projects/p/locations/eu/taxonomies/1/policyTags/2']]];
+        yield 'empty column' => [['' => 'projects/p/locations/eu/taxonomies/1/policyTags/2']];
+        yield 'null' => [null];
     }
 }

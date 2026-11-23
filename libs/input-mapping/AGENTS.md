@@ -24,6 +24,18 @@ into it on every green build and force-pushes the result, so any commit made the
 - Monorepo-wide conventions (Docker-based dev workflow, coding standards, CI layout) are in the monorepo's
   root `AGENTS.md`.
 
+## Configuration schema changes break older readers
+
+The configuration tree under `src/Configuration/` is parsed strictly by every service that passes a job
+configuration on (job-queue, the job pod's service container and mapping components, docker-bundle in
+job-runner, runner-sync-api, sandboxes, editor-service, data-loader-api), and they upgrade at different
+times. **Never give a new key a default in the schema** (`defaultValue()`, `beforeNormalization()->ifNull()`):
+the normalized configuration then carries the key everywhere and every older reader rejects it with
+`Unrecognized option`. Apply the default where the value is read. Definition, validation rules and rollout
+order: the monorepo's `docs/job-configuration.md`
+(https://github.com/keboola/platform-libraries/blob/main/docs/job-configuration.md); job pod release steps:
+the mapping components release runbook in keboola/job-queue (`docs/runbooks/mapping-components-release.md`).
+
 ## Commands
 
 Docker service `dev-input-mapping` (PHP 8.2). Beyond what the README lists:

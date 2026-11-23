@@ -20,7 +20,7 @@ class TableFile extends Configuration
     public static function configureNode(ArrayNodeDefinition $node): void
     {
         // BEFORE MODIFICATION OF THIS CONFIGURATION, READ AND UNDERSTAND
-        // https://keboola.atlassian.net/wiki/spaces/ENGG/pages/3283910830/Job+configuration+validation
+        // https://github.com/keboola/platform-libraries/blob/main/docs/job-configuration.md
         $node
             ->children()
             ->arrayNode('tags')->prototype('scalar')->end()->end()

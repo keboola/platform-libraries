@@ -30,6 +30,7 @@ final class AppTestData
                 'desiredConfigVersion' => '7',
                 'actualConfigVersion' => '7',
                 'desiredCreatedAt' => '2026-11-19T08:00:00+00:00',
+                'activeRunId' => self::RUN_ID,
             ],
             'state' => 'running',
         ], $overrides);
@@ -72,6 +73,7 @@ final class AppTestData
             'runtimeSize' => 'small',
             'buildState' => 'ready',
             'runState' => 'neverRun',
+            'activeRunId' => null,
             'archived' => false,
             'archivedAt' => null,
             'createdAt' => '2026-11-19T08:00:00+00:00',

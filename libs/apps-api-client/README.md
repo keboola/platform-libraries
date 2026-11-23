@@ -45,6 +45,7 @@ $app = $client->getApp('123');
 $app->state;                            // App::STATE_* — notDeployed, starting, running, suspended, disabled
 $app->production->actualDeploymentId;   // deployment serving production now
 $app->production->desiredDeploymentId;  // deployment being promoted to production
+$app->production->activeRunId;          // run serving production now; null while nothing serves
 
 // wakes the deployment that serves production; 409 when the app has none
 $app = $client->resumeApp('123');
@@ -72,7 +73,11 @@ $deployment = $client->createDeployment('123', configVersion: '7', promote: true
 
 $deployment = $client->getDeployment('123', $deployment->id);
 $deployment->runState;                  // Deployment::RUN_STATE_* — failed means it crashed or could not start
+$deployment->activeRunId;               // run serving this deployment now; null while nothing serves
 ```
+
+`activeRunId` switches to a new run only once that run is running, so after a restart it keeps naming the old
+run until the new container serves. It is `null` when the server does not send it.
 
 `createDeployment()` is not idempotent. Like every request, it is retried on 5xx, so a retry after a failure on
 the server side can create a second deployment.

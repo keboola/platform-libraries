@@ -14,7 +14,7 @@ class TableLayoutSnowflakeTest extends AbstractTestCase
     private const SOURCE = 'tableLayout.csv';
     private const OTHER_BACKEND_WARNING = '": the option(s) "time_partitioning", "clustering" have no effect on the ' .
         '"snowflake" backend and were not sent to Storage.';
-    private const DIFFERENT_LAYOUT_WARNING = 'already exists with layout';
+    private const DIFFERENT_LAYOUT_MESSAGE = 'already exists with layout';
 
     #[NeedsEmptyOutputBucket]
     public function testLayoutKeysAreNotSentOnSnowflake(): void
@@ -39,7 +39,8 @@ class TableLayoutSnowflakeTest extends AbstractTestCase
         $this->runOutputMapping();
 
         self::assertTrue($this->testHandler->hasWarningThatContains(self::OTHER_BACKEND_WARNING));
-        self::assertFalse($this->testHandler->hasWarningThatContains(self::DIFFERENT_LAYOUT_WARNING));
+        self::assertFalse($this->testHandler->hasWarningThatContains(self::DIFFERENT_LAYOUT_MESSAGE));
+        self::assertFalse($this->testHandler->hasNoticeThatContains(self::DIFFERENT_LAYOUT_MESSAGE));
     }
 
     private function runOutputMapping(): void

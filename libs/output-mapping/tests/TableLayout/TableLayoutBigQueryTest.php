@@ -23,7 +23,7 @@ class TableLayoutBigQueryTest extends AbstractTestCase
 {
     private const SOURCE = 'tableLayout.csv';
     private const TABLE_NAME = 'tableLayout';
-    private const DIFFERENT_LAYOUT_WARNING = 'already exists with layout';
+    private const DIFFERENT_LAYOUT_MESSAGE = 'already exists with layout';
     private const OTHER_BACKEND_WARNING = 'have no effect on the';
 
     public function setUp(): void
@@ -55,7 +55,7 @@ class TableLayoutBigQueryTest extends AbstractTestCase
         $this->assertTimePartitioningAndClustering();
         self::assertSame(2, $this->getRowsCount());
         self::assertFalse($this->testHandler->hasWarningThatContains(self::OTHER_BACKEND_WARNING));
-        self::assertFalse($this->testHandler->hasWarningThatContains(self::DIFFERENT_LAYOUT_WARNING));
+        self::assertFalse($this->testHandler->hasNoticeThatContains(self::DIFFERENT_LAYOUT_MESSAGE));
     }
 
     #[NeedsEmptyBigqueryOutputBucket]
@@ -132,8 +132,9 @@ class TableLayoutBigQueryTest extends AbstractTestCase
         self::assertSame('success', $job['status']);
         self::assertSame(2, $this->getRowsCount());
         self::assertSame(['country'], $this->getTableDefinition()['clustering']['fields']);
-        self::assertTrue($this->testHandler->hasWarningThatContains(self::DIFFERENT_LAYOUT_WARNING));
-        self::assertTrue($this->testHandler->hasWarningThatContains('differs in "clustering"'));
+        self::assertTrue($this->testHandler->hasNoticeThatContains(self::DIFFERENT_LAYOUT_MESSAGE));
+        self::assertFalse($this->testHandler->hasWarningThatContains(self::DIFFERENT_LAYOUT_MESSAGE));
+        self::assertTrue($this->testHandler->hasNoticeThatContains('differs in "clustering"'));
     }
 
     #[NeedsEmptyBigqueryOutputBucket]
@@ -156,7 +157,7 @@ class TableLayoutBigQueryTest extends AbstractTestCase
         self::assertCount(1, $jobIds);
         self::assertSame(2, $this->getRowsCount());
         self::assertSame(['country'], $this->getTableDefinition()['clustering']['fields']);
-        self::assertFalse($this->testHandler->hasWarningThatContains(self::DIFFERENT_LAYOUT_WARNING));
+        self::assertFalse($this->testHandler->hasNoticeThatContains(self::DIFFERENT_LAYOUT_MESSAGE));
     }
 
     #[NeedsEmptyBigqueryOutputBucket]

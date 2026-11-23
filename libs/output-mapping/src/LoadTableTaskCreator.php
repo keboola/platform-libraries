@@ -194,7 +194,7 @@ class LoadTableTaskCreator
             return;
         }
 
-        $this->logger->warning(sprintf(
+        $this->logger->notice(sprintf(
             'Table "%s" already exists with layout %s, the requested layout %s differs in "%s". ' .
             'The table is loaded with its current layout; output mapping does not change the layout of ' .
             'an existing table.',

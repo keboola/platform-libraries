@@ -34,6 +34,7 @@ final readonly class Deployment implements ResponseModelInterface
         public bool $archived,
         public ?string $archivedAt,
         public string $createdAt,
+        public ?string $activeRunId = null,
     ) {
     }
 
@@ -50,6 +51,7 @@ final readonly class Deployment implements ResponseModelInterface
          *     archived: bool,
          *     archivedAt: string|null,
          *     createdAt: string,
+         *     activeRunId?: string|null,
          * } $data
          */
         return new self(
@@ -62,6 +64,7 @@ final readonly class Deployment implements ResponseModelInterface
             $data['archived'],
             $data['archivedAt'],
             $data['createdAt'],
+            $data['activeRunId'] ?? null,
         );
     }
 }

@@ -18,6 +18,7 @@ final readonly class AppProduction implements ResponseModelInterface
         public ?string $desiredConfigVersion,
         public ?string $actualConfigVersion,
         public ?string $desiredCreatedAt,
+        public ?string $activeRunId = null,
     ) {
     }
 
@@ -30,6 +31,7 @@ final readonly class AppProduction implements ResponseModelInterface
          *     desiredConfigVersion: non-empty-string|null,
          *     actualConfigVersion: non-empty-string|null,
          *     desiredCreatedAt: string|null,
+         *     activeRunId?: string|null,
          * } $data
          */
         return new self(
@@ -38,6 +40,7 @@ final readonly class AppProduction implements ResponseModelInterface
             $data['desiredConfigVersion'],
             $data['actualConfigVersion'],
             $data['desiredCreatedAt'],
+            $data['activeRunId'] ?? null,
         );
     }
 }

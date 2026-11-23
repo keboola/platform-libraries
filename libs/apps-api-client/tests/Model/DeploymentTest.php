@@ -22,6 +22,7 @@ class DeploymentTest extends TestCase
         self::assertSame('small', $deployment->runtimeSize);
         self::assertSame(Deployment::BUILD_STATE_READY, $deployment->buildState);
         self::assertSame(Deployment::RUN_STATE_NEVER_RUN, $deployment->runState);
+        self::assertNull($deployment->activeRunId);
         self::assertFalse($deployment->archived);
         self::assertNull($deployment->archivedAt);
         self::assertSame('2026-11-19T08:00:00+00:00', $deployment->createdAt);
@@ -44,6 +45,25 @@ class DeploymentTest extends TestCase
         self::assertSame('2026-11-19T09:00:00+00:00', $deployment->archivedAt);
     }
 
+    public function testFromResponseDataOfARunningDeployment(): void
+    {
+        $deployment = Deployment::fromResponseData(AppTestData::deployment([
+            'runState' => 'running',
+            'activeRunId' => AppTestData::RUN_ID,
+        ]));
+
+        self::assertSame(AppTestData::RUN_ID, $deployment->activeRunId);
+    }
+
+    /** A server that predates the field does not send it. */
+    public function testAnAbsentActiveRunIdIsNull(): void
+    {
+        $data = AppTestData::deployment();
+        unset($data['activeRunId']);
+
+        self::assertNull(Deployment::fromResponseData($data)->activeRunId);
+    }
+
     /**
      * @dataProvider wrongTypeProvider
      */
@@ -58,6 +78,7 @@ class DeploymentTest extends TestCase
     {
         yield 'id of wrong type' => [AppTestData::deployment(['id' => 1])];
         yield 'runState of wrong type' => [AppTestData::deployment(['runState' => null])];
+        yield 'activeRunId of wrong type' => [AppTestData::deployment(['activeRunId' => 42])];
         yield 'archived of wrong type' => [AppTestData::deployment(['archived' => 0])];
         yield 'configVersion of wrong type' => [AppTestData::deployment(['configVersion' => 7])];
         yield 'archivedAt of wrong type' => [AppTestData::deployment(['archivedAt' => 1])];

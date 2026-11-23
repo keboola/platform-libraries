@@ -17,6 +17,7 @@ class AppProductionTest extends TestCase
         'desiredConfigVersion' => '8',
         'actualConfigVersion' => '7',
         'desiredCreatedAt' => '2026-11-19T08:00:00+00:00',
+        'activeRunId' => 'run-active',
     ];
 
     public function testFromResponseData(): void
@@ -28,6 +29,16 @@ class AppProductionTest extends TestCase
         self::assertSame('8', $production->desiredConfigVersion);
         self::assertSame('7', $production->actualConfigVersion);
         self::assertSame('2026-11-19T08:00:00+00:00', $production->desiredCreatedAt);
+        self::assertSame('run-active', $production->activeRunId);
+    }
+
+    /** A server that predates the field does not send it. */
+    public function testAnAbsentActiveRunIdIsNull(): void
+    {
+        $data = self::DATA;
+        unset($data['activeRunId']);
+
+        self::assertNull(AppProduction::fromResponseData($data)->activeRunId);
     }
 
     /**

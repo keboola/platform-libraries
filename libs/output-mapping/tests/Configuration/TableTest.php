@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\OutputMapping\Tests\Configuration;
 
+use Generator;
 use Keboola\OutputMapping\Configuration\Table;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
@@ -241,8 +242,8 @@ class TableTest extends TestCase
     /** @dataProvider provideInvalidPolicyTags */
     public function testInvalidPolicyTags(mixed $policyTags): void
     {
-        self::expectException(InvalidConfigurationException::class);
-        self::expectExceptionMessage(
+        $this->expectException(InvalidConfigurationException::class);
+        $this->expectExceptionMessage(
             'The "policy_tags" option must be a map of column names to non-empty tag names',
         );
 
@@ -253,7 +254,7 @@ class TableTest extends TestCase
         ]]);
     }
 
-    public static function provideInvalidPolicyTags(): iterable
+    public static function provideInvalidPolicyTags(): Generator
     {
         yield 'string' => ['projects/p/locations/eu/taxonomies/1/policyTags/2'];
         yield 'list' => [['projects/p/locations/eu/taxonomies/1/policyTags/2']];

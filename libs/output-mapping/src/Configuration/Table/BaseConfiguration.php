@@ -231,7 +231,7 @@ abstract class BaseConfiguration extends Configuration
                 ->variableNode('table_metadata')->end()
                 // A map of column name to BigQuery policy tag resource name. It is a variable node on purpose:
                 // a prototyped array node would write an empty default into every normalized configuration,
-                // which older readers reject. The key is accepted and not used yet.
+                // which older readers reject.
                 ->variableNode(self::FIELD_POLICY_TAGS)
                     ->validate()
                         ->ifTrue(fn($v) => !self::isValidPolicyTagsMap($v))
